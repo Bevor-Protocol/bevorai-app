@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
       <div className="max-w-[1200px] justify-between m-auto md:flex hidden">
         <div className="flex grow gap-8 items-center *:cursor-pointer z-10">
           <Link
-            href="https://x.com/CertaiK_Agent"
+            href="https://x.com/BevorAI_Agent"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:opacity-80 transition-opacity"

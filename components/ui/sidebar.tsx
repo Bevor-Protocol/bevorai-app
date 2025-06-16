@@ -96,7 +96,7 @@ const Sidebar: React.FC = () => {
           <div className="p-4 h-24">
             <div className="size-full flex justify-between items-center *:cursor-pointer">
               <Link
-                href="https://x.com/CertaiK_Agent"
+                href="https://x.com/BevorAI_Agent"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:opacity-80 transition-opacity"
