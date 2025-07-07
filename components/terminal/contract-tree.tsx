@@ -5,61 +5,160 @@ import { useState } from "react";
 
 interface ContractTreeProps {
   tree: TreeResponseI;
-  selectedContracts: string[];
-  onContractSelect: (contractId: string) => void;
+  selectedScope?: { identifier: string; level: string }[];
+  onScopeSelect?: (scope: { identifier: string; level: string }) => void;
   className?: string;
 }
 
 const ContractTree = ({
   tree,
-  selectedContracts,
-  onContractSelect,
+  selectedScope = [],
+  onScopeSelect,
   className,
 }: ContractTreeProps): JSX.Element => {
   const [expandedSources, setExpandedSources] = useState<Record<string, boolean>>({});
+  const [expandedContracts, setExpandedContracts] = useState<Record<string, boolean>>({});
 
-  const toggleSource = (sourcePath: string): void => {
+  const toggleSource = (sourceId: string): void => {
     setExpandedSources((prev) => ({
       ...prev,
-      [sourcePath]: !prev[sourcePath],
+      [sourceId]: !prev[sourceId],
+    }));
+  };
+
+  const toggleContract = (contractId: string): void => {
+    setExpandedContracts((prev) => ({
+      ...prev,
+      [contractId]: !prev[contractId],
     }));
   };
 
   return (
     <div className={cn("font-mono text-sm", className)}>
       {tree.sources.map((source) => {
-        const isExpanded = expandedSources[source.path] ?? false;
+        const isSourceSelected = selectedScope.some(
+          (scope) => scope.identifier === source.id && scope.level === "source",
+        );
+        const isSourceExpanded = expandedSources[source.id] ?? false;
+        const hasAuditableFcts =
+          source.contracts.reduce(
+            (acc, contract) =>
+              acc + contract.functions.reduce((acc, func) => acc + Number(func.is_auditable), 0),
+            0,
+          ) > 0;
+
         return (
-          <div key={source.path} className="mb-2">
-            <div
-              className="flex items-center cursor-pointer hover:text-blue-300"
-              onClick={() => toggleSource(source.path)}
-            >
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4 mr-1" />
+          <div key={source.id} className="mb-2">
+            <div className="flex items-center">
+              {hasAuditableFcts ? (
+                <button
+                  onClick={() => toggleSource(source.id)}
+                  className="mr-1 p-1 hover:bg-gray-700/50 rounded"
+                >
+                  {isSourceExpanded ? (
+                    <ChevronDown className="w-3 h-3" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3" />
+                  )}
+                </button>
               ) : (
-                <ChevronRight className="w-4 h-4 mr-1" />
+                <div className="mr-1 p-1 w-3 h-3" />
               )}
-              <span className="text-blue-400">{source.path}</span>
+              <span
+                className={cn(
+                  hasAuditableFcts ? "cursor-pointer" : "cursor-not-allowed text-gray-500",
+                  isSourceSelected
+                    ? "text-green-400"
+                    : hasAuditableFcts
+                      ? "text-white"
+                      : "text-gray-500",
+                )}
+                onClick={() =>
+                  hasAuditableFcts && onScopeSelect
+                    ? onScopeSelect({ identifier: source.id, level: "source" })
+                    : toggleSource(source.id)
+                }
+              >
+                {source.path}
+              </span>
             </div>
-            {isExpanded && (
-              <div className="ml-6 mt-1 space-y-1">
+            {isSourceExpanded && hasAuditableFcts && (
+              <div className="ml-4">
                 {source.contracts.map((contract) => {
-                  const isSelected = selectedContracts.includes(contract.id);
+                  const isContractSelected = selectedScope.some(
+                    (scope) => scope.identifier === contract.id && scope.level === "contract",
+                  );
+                  const isContractExpanded = expandedContracts[contract.id] ?? false;
+                  const hasAuditableFcts =
+                    contract.functions.reduce((acc, func) => acc + Number(func.is_auditable), 0) >
+                    0;
+
                   return (
-                    <div
-                      key={contract.id}
-                      className={cn(
-                        "flex items-center cursor-pointer px-2 py-1 rounded",
-                        "hover:bg-gray-700/50",
-                        isSelected && "bg-gray-700/50",
+                    <div key={contract.id} className="mb-1">
+                      <div className="flex items-center">
+                        {hasAuditableFcts && (
+                          <button
+                            onClick={() => toggleContract(contract.id)}
+                            className="mr-1 p-1 hover:bg-gray-700/50 rounded"
+                          >
+                            {isContractExpanded ? (
+                              <ChevronDown className="w-3 h-3" />
+                            ) : (
+                              <ChevronRight className="w-3 h-3" />
+                            )}
+                          </button>
+                        )}
+                        <span
+                          className={cn(
+                            hasAuditableFcts
+                              ? "cursor-pointer"
+                              : "cursor-not-allowed text-gray-500",
+                            isContractSelected
+                              ? "text-green-400"
+                              : hasAuditableFcts
+                                ? "text-white"
+                                : "text-gray-500",
+                          )}
+                          onClick={() =>
+                            onScopeSelect
+                              ? onScopeSelect({ identifier: contract.id, level: "contract" })
+                              : toggleContract(contract.id)
+                          }
+                        >
+                          {contract.name}
+                        </span>
+                      </div>
+                      {isContractExpanded && (
+                        <div className="ml-4">
+                          {contract.functions
+                            .filter((func) => func.is_auditable)
+                            .map((func) => {
+                              const isFunctionSelected = selectedScope.some(
+                                (scope) =>
+                                  scope.identifier === func.id && scope.level === "function",
+                              );
+                              return (
+                                <div key={func.id} className="mb-1">
+                                  <span
+                                    className={cn(
+                                      "cursor-pointer",
+                                      isFunctionSelected ? "text-green-400" : "text-white",
+                                    )}
+                                    onClick={() =>
+                                      func.is_auditable &&
+                                      onScopeSelect &&
+                                      onScopeSelect({ identifier: func.id, level: "function" })
+                                    }
+                                  >
+                                    {func.name}{" "}
+                                    {func.is_inherited &&
+                                      `(inherited from ${func.contract_name_defined})`}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                        </div>
                       )}
-                      onClick={() => onContractSelect(contract.id)}
-                    >
-                      <span className={cn("text-white", isSelected && "text-green-400")}>
-                        {contract.name}
-                      </span>
-                      <span className="ml-2 text-gray-400 text-xs">({contract.kind})</span>
                     </div>
                   );
                 })}

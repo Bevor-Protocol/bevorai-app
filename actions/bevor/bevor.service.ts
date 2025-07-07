@@ -9,14 +9,21 @@ import {
   ChatResponseI,
   ChatWithAuditResponseI,
   ContractResponseI,
+  ContractSourceResponseI,
+  ContractVersionI,
   CreditSyncResponseI,
+  FunctionChunkResponseI,
+  MultiTimeseriesResponseI,
   PromptResponseI,
   StatsResponseI,
+  TimeseriesResponseI,
+  TreeResponseI,
   UserInfoResponseI,
   UserSearchResponseI,
+  UserTimeseriesResponseI,
 } from "@/utils/types";
 
-class CertaikApiService {
+class BevorService {
   async isAdmin(userId: string): Promise<boolean> {
     const headers = {
       headers: {
@@ -151,13 +158,14 @@ class CertaikApiService {
       });
   }
 
-  async runEval(
-    contractId: string,
-    promptType: string,
+  async initiateAudit(
+    projectId: string,
+    versionId: string,
+    scopes: { identifier: string; level: string }[],
     userId: string,
   ): Promise<{
     id: string;
-    job_id: string;
+    status: string;
   }> {
     const headers = {
       headers: {
@@ -169,8 +177,9 @@ class CertaikApiService {
       .post(
         "/audit",
         {
-          contract_id: contractId,
-          audit_type: promptType,
+          code_project_id: projectId,
+          code_version_id: versionId,
+          scopes,
         },
         headers,
       )
@@ -180,6 +189,24 @@ class CertaikApiService {
         }
         return response.data;
       });
+  }
+
+  async getAudit(id: string): Promise<AuditResponseI> {
+    return api.get(`/audit/${id}`).then((response) => {
+      if (!response.data) {
+        throw new Error(response.statusText);
+      }
+      return response.data;
+    });
+  }
+
+  async getAuditStatus(id: string): Promise<AuditStatusResponseI> {
+    return api.get(`/audit/${id}/status`).then((response) => {
+      if (!response.data) {
+        throw new Error(response.statusText);
+      }
+      return response.data;
+    });
   }
 
   async syncCredits(userId: string): Promise<CreditSyncResponseI> {
@@ -211,7 +238,7 @@ class CertaikApiService {
       formData.append("files", file, relativePath);
     });
 
-    return api.post("/contract/project/folder", formData, headers).then((response) => {
+    return api.post("/contract/folder", formData, headers).then((response) => {
       if (!response.data) {
         throw new Error(response.statusText);
       }
@@ -229,7 +256,7 @@ class CertaikApiService {
     const formData = new FormData();
     formData.append("file", file);
 
-    return api.post("/contract/project/file", formData, headers).then((response) => {
+    return api.post("/contract/file", formData, headers).then((response) => {
       if (!response.data) {
         throw new Error(response.statusText);
       }
@@ -244,11 +271,10 @@ class CertaikApiService {
       },
     };
 
-    return api.post("/contract/project/scan", { address }, headers).then((response) => {
+    return api.post("/contract/scan", { address }, headers).then((response) => {
       if (!response.data) {
         throw new Error(response.statusText);
       }
-      console.log(response.data);
       return response.data;
     });
   }
@@ -260,7 +286,67 @@ class CertaikApiService {
       },
     };
 
-    return api.post("/contract/project/paste", { code }, headers).then((response) => {
+    return api.post("/contract/paste", { code }, headers).then((response) => {
+      if (!response.data) {
+        throw new Error(response.statusText);
+      }
+      return response.data;
+    });
+  }
+
+  async getContractVersion(versionId: string, userId: string): Promise<ContractVersionI> {
+    const headers = {
+      headers: {
+        "Bevor-User-Identifier": userId,
+      },
+    };
+
+    return api.get(`/contract/version/${versionId}`, headers).then((response) => {
+      if (!response.data) {
+        throw new Error(response.statusText);
+      }
+      return response.data;
+    });
+  }
+
+  async getContractTree(versionId: string, userId: string): Promise<TreeResponseI> {
+    const headers = {
+      headers: {
+        "Bevor-User-Identifier": userId,
+      },
+    };
+
+    return api.get(`/contract/version/${versionId}/tree`, headers).then((response) => {
+      if (!response.data) {
+        throw new Error(response.statusText);
+      }
+      return response.data;
+    });
+  }
+
+  async getContractSources(versionId: string, userId: string): Promise<ContractSourceResponseI[]> {
+    const headers = {
+      headers: {
+        "Bevor-User-Identifier": userId,
+      },
+    };
+
+    return api.get(`/contract/version/${versionId}/sources`, headers).then((response) => {
+      if (!response.data) {
+        throw new Error(response.statusText);
+      }
+      return response.data;
+    });
+  }
+
+  async getFunctionChunk(functionId: string, userId: string): Promise<FunctionChunkResponseI> {
+    const headers = {
+      headers: {
+        "Bevor-User-Identifier": userId,
+      },
+    };
+
+    return api.get(`/contract/function/${functionId}`, headers).then((response) => {
       if (!response.data) {
         throw new Error(response.statusText);
       }
@@ -316,7 +402,7 @@ class CertaikApiService {
   }
 
   async getStats(): Promise<StatsResponseI> {
-    return api.get("/app/stats").then((response) => {
+    return api.get("/platform/stats").then((response) => {
       if (!response.data) {
         throw new Error(response.statusText);
       }
@@ -324,8 +410,8 @@ class CertaikApiService {
     });
   }
 
-  async getAudit(id: string): Promise<AuditResponseI> {
-    return api.get(`/audit/${id}`).then((response) => {
+  async getTimeseriesAudits(): Promise<TimeseriesResponseI> {
+    return api.get("/summary/audits").then((response) => {
       if (!response.data) {
         throw new Error(response.statusText);
       }
@@ -333,8 +419,26 @@ class CertaikApiService {
     });
   }
 
-  async getAuditStatus(id: string): Promise<AuditStatusResponseI> {
-    return api.get(`/audit/${id}/status`).then((response) => {
+  async getTimeseriesContracts(): Promise<TimeseriesResponseI> {
+    return api.get("/summary/contracts").then((response) => {
+      if (!response.data) {
+        throw new Error(response.statusText);
+      }
+      return response.data;
+    });
+  }
+
+  async getTimeseriesUsers(): Promise<TimeseriesResponseI> {
+    return api.get("/summary/users").then((response) => {
+      if (!response.data) {
+        throw new Error(response.statusText);
+      }
+      return response.data;
+    });
+  }
+
+  async getTimeseriesFindings(type: string): Promise<MultiTimeseriesResponseI> {
+    return api.get(`/summary/findings/${type}`).then((response) => {
       if (!response.data) {
         throw new Error(response.statusText);
       }
@@ -349,6 +453,20 @@ class CertaikApiService {
       },
     };
     return api.get("/user/info", headers).then((response) => {
+      if (!response.data) {
+        throw new Error(response.statusText);
+      }
+      return response.data;
+    });
+  }
+
+  async getUserTimeSeries(userId: string): Promise<UserTimeseriesResponseI> {
+    const headers = {
+      headers: {
+        "Bevor-User-Identifier": userId,
+      },
+    };
+    return api.get("/user/timeseries", headers).then((response) => {
       if (!response.data) {
         throw new Error(response.statusText);
       }
@@ -521,5 +639,5 @@ class CertaikApiService {
   }
 }
 
-const certaikApiService = new CertaikApiService();
-export default certaikApiService;
+const bevorService = new BevorService();
+export default bevorService;

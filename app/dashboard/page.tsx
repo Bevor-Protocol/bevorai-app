@@ -1,4 +1,4 @@
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import Content from "@/components/content";
 import ApiContent from "@/components/screens/api-keys";
 import { ApiKeyManagement, AppManagement, CreditMetric } from "@/components/screens/dashboard";
@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 const Dashboard = async (): Promise<JSX.Element> => {
-  const user = await certaikApiAction.getUserInfo();
+  const user = await bevorAction.getUserInfo();
 
   return (
     <div
@@ -24,7 +24,8 @@ const Dashboard = async (): Promise<JSX.Element> => {
           View <ArrowUpRight size={16} className="inline-block align-baseline" color="gray" />
         </Link>
       </MetricCard>
-      <MetricCard title="Unique Contracts" Icon={BarChart3} stat={user.n_contracts} />
+      {/* <MetricCard title="# Projects" Icon={BarChart3} stat={user.n_projects} /> */}
+      <MetricCard title="# Contracts" Icon={BarChart3} stat={user.n_versions} />
       <CreditMetric credits={user.total_credits} />
       <MetricCard title="Remaining Credits" Icon={DollarSign} stat={user.remaining_credits} />
       <ApiKeyManagement userAuth={user.auth} />

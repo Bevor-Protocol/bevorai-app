@@ -1,6 +1,6 @@
 "use client";
 
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/ui/loader";
 import { cn } from "@/lib/utils";
@@ -48,7 +48,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }): JSX.Element
   }, [messages, streamedMessage]);
 
   useEffect(() => {
-    if (pathname.startsWith("/analytics/audit")) {
+    if (pathname.startsWith("audits")) {
       setCurrentAuditId(pathname.split("/").slice(-1)[0]);
     } else {
       setCurrentAuditId(null);
@@ -57,7 +57,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }): JSX.Element
 
   const { data: chats, refetch: refetchChats } = useQuery({
     queryKey: ["chats"],
-    queryFn: async () => certaikApiAction.getChats(),
+    queryFn: async () => bevorAction.getChats(),
   });
 
   const openChat = (): void => setIsOpen(true);
@@ -82,7 +82,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }): JSX.Element
     }
 
     try {
-      const chat = await certaikApiAction.initiateChat(currentAuditId);
+      const chat = await bevorAction.initiateChat(currentAuditId);
 
       setCurrentChat(chat);
       setMessages([]);
@@ -96,7 +96,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }): JSX.Element
   const loadChatHistory = async (chatId: string): Promise<void> => {
     if (!chats) return;
 
-    const chat = await certaikApiAction.getChat(chatId);
+    const chat = await bevorAction.getChat(chatId);
 
     const { messages, ...rest } = chat;
 
@@ -251,7 +251,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }): JSX.Element
 
               {!!currentChat && (
                 <Link
-                  href={`/analytics/audit/${currentChat.audit_id}`}
+                  href={`audits/${currentChat.audit_id}`}
                   className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300"
                 >
                   <span>View Audit</span>

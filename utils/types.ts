@@ -52,22 +52,39 @@ export interface StatsResponseI {
   n_users: number;
   n_apps: number;
   findings: { [key: string]: { [key: string]: string[] } };
-  users_timeseries: { date: string; count: number }[];
-  audits_timeseries: { date: string; count: number }[];
+}
+
+export interface TimeseriesResponseI {
+  count: number;
+  timeseries: { date: Date; count: number }[];
+}
+
+interface StringIntDict {
+  [key: string]: number;
+}
+
+export interface MultiTimeseriesResponseI {
+  counts: StringIntDict;
+  timeseries: {
+    date: Date;
+    counts: StringIntDict;
+  }[];
+  levels: string[];
 }
 
 interface AuditObservationI {
   n: number;
   id: string;
   created_at: string;
-  audit_type: string;
   status: string;
+  logic_version: string;
+  processing_time_seconds: number;
   contract: {
     id: string;
-    method: string;
-    address?: string;
+    source_type: string;
+    target: string;
     network?: string;
-    is_available: boolean;
+    solc_version: string;
   };
   user: {
     id: string;
@@ -83,38 +100,38 @@ export interface AuditTableReponseI {
 
 export interface FindingI {
   id: string;
-  created_at: string;
+  type: string;
   level: FindingLevel;
   name: string;
   explanation: string;
   recommendation: string;
-  reference?: string;
+  reference: string;
+  feedback?: string;
+  attested_at?: Date;
   is_attested: boolean;
   is_verified: boolean;
-  feedback?: string;
+  function_id: string;
+}
+
+export interface UserI {
+  id: string;
+  address: string;
 }
 
 export interface AuditResponseI {
   id: string;
   created_at: string;
+  project_id: string;
+  version_id: string;
   status: AuditStatus;
-  version: string;
-  audit_type: string;
   processing_time_seconds: number;
-  result: string;
-  contract: {
-    id: string;
-    method: string;
-    address: string;
-    network: string;
-    code: string;
-    is_available: boolean;
-  };
-  user: {
-    id: string;
-    address: string;
-  };
+  level: string;
+  logic_version: string;
+  n_findings: number;
+  n_failures: number;
+  markdown: string;
   findings: FindingI[];
+  user: UserI;
 }
 
 export interface UserInfoResponseI {
@@ -136,24 +153,69 @@ export interface UserInfoResponseI {
     can_create_auth: boolean;
   };
   n_audits: number;
+  n_projects: number;
+  n_versions: number;
+}
+
+export interface UserTimeseriesResponseI {
+  n_audits: number;
   n_contracts: number;
+  audit_history: { date: string; count: number }[];
+  contract_history: { date: string; count: number }[];
 }
 
 export interface ContractResponseI {
+  project_id: string;
+  version_id: string;
+}
+
+export interface ContractVersionI {
+  network?: string;
+  source_type: string;
+  target: string;
+  solc_version: string;
+  block_explorer_url: string;
+}
+
+export interface TreeResponseI {
   id: string;
-  message: string;
   sources: {
     id: string;
     path: string;
+    is_imported: boolean;
+    is_known_target: boolean;
     contracts: {
       id: string;
       name: string;
-      entry_point_functions: {
+      functions: {
         id: string;
         name: string;
+        is_inherited: boolean;
+        is_auditable: boolean;
+        is_entry_point: boolean;
+        is_override: boolean;
+        contract_name_defined: string;
       }[];
     }[];
   }[];
+}
+
+export interface ContractSourceResponseI {
+  id: string;
+  is_known_target: boolean;
+  is_imported_dependency: boolean;
+  path: string;
+  content: string;
+  solidity_version: string;
+}
+
+export interface FunctionChunkResponseI {
+  source_id: string;
+  version_id: string;
+  contract_id: string;
+  contract_name: string;
+  function_name: string;
+  chunk: string;
 }
 
 export interface CreditSyncResponseI {
@@ -163,11 +225,8 @@ export interface CreditSyncResponseI {
 }
 
 export interface AuditStatusResponseI {
+  id: string;
   status: string;
-  steps: {
-    step: string;
-    status: string;
-  }[];
 }
 
 export interface UserSearchResponseI {
@@ -204,19 +263,14 @@ export interface AuditWithChildrenResponseI {
   id: string;
   created_at: string;
   status: AuditStatus;
-  audit_type: "gas" | "security";
+  project_id: string;
+  version_id: string;
+  level: string;
   processing_time_seconds: number;
-  result: string;
-  intermediate_responses: {
-    id: string;
-    created_at: string;
-    audit_id: string;
-    prompt_id: string;
-    step: string;
-    status: AuditStatus;
-    processing_time_seconds: number;
-    result: string;
-  }[];
+  logic_version: string;
+  n_findings: number;
+  n_failures: number;
+  markdown: string;
   findings: FindingI[];
 }
 

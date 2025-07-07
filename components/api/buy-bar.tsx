@@ -1,5 +1,5 @@
 import abiJSON from "@/abis/APICredits.json";
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import AdminTools from "@/components/admin-tools";
 import { Button } from "@/components/ui/button";
 import { useCertaiBalance } from "@/hooks/useBalances";
@@ -108,7 +108,7 @@ const BuyBar = (): JSX.Element => {
       onTxn,
       onSuccess: async () => {
         onSuccess({ keys: [credit.queryKey, token.queryKey, deposit.queryKey] });
-        await certaikApiAction.syncCredits();
+        await bevorAction.syncCredits();
         router.refresh();
       },
     });

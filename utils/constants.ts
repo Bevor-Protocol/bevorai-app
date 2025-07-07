@@ -9,6 +9,7 @@ export const stepText = {
   [TerminalStep.AUDIT_TYPE]: "audit type",
   [TerminalStep.RESULTS]: "results",
   [TerminalStep.INPUT_AGENT]: "Input Agent",
+  [TerminalStep.SCOPE_DEFINITION]: "scope",
 };
 
 export const iconSizeMapper: Record<string, Record<string, string>> = {
@@ -71,4 +72,12 @@ export const BlockExplorerMapper = {
   bsc_test: "https://testnet.bscscan.com",
   polygon_amoy: "https://amoy.polygonscan.com",
   base_sepolia: "https://sepolia.basescan.org",
+};
+
+// CSS custom properties for use with Tailwind
+export const severityColorMap = {
+  critical: "var(--color-critical)",
+  high: "var(--color-high)",
+  medium: "var(--color-medium)",
+  low: "var(--color-low)",
 };

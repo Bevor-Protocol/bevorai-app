@@ -1,12 +1,9 @@
 "use client";
 
-import AuditTypeStep from "@/components/terminal/steps/audit_type";
 import InitialStep from "@/components/terminal/steps/initial";
 import AddressStep from "@/components/terminal/steps/input_address";
-import FolderUploadStep from "@/components/terminal/steps/input_folder";
-import PasteStep from "@/components/terminal/steps/input_paste";
-import UploadStep from "@/components/terminal/steps/input_upload";
 import ResultsStep from "@/components/terminal/steps/results";
+import ScopeDefinitionStep from "@/components/terminal/steps/scope_definition";
 import { cn } from "@/lib/utils";
 import { stepText } from "@/utils/constants";
 import { TerminalStep } from "@/utils/enums";
@@ -16,8 +13,9 @@ import { useState } from "react";
 
 const TerminalContainer: React.FC = () => {
   const [terminalStep, setTerminalStep] = useState<TerminalStep>(TerminalStep.INITIAL);
-  const [contractId, setContractId] = useState("");
-  const [promptType, setPromptType] = useState<string>("");
+  const [projectId, setProjectId] = useState("");
+  const [versionId, setVersionId] = useState("");
+  const [scopes, setScopes] = useState<{ identifier: string; level: string }[]>([]);
   const [terminalState, setTerminalState] =
     useState<Record<TerminalStep, MessageType[]>>(initialState);
   const [stack, setStack] = useState<TerminalStep[]>([TerminalStep.INITIAL]);
@@ -57,7 +55,8 @@ const TerminalContainer: React.FC = () => {
     setStack(interStack.concat(s));
     setTerminalStep(s);
     if (shouldResetContract) {
-      setContractId("");
+      setProjectId("");
+      setVersionId("");
     }
   };
 
@@ -82,15 +81,17 @@ const TerminalContainer: React.FC = () => {
               setTerminalStep={handleGlobalStep}
               handleGlobalState={handleGlobalState}
               state={terminalState[TerminalStep.INPUT_ADDRESS]}
-              setContractId={setContractId}
+              setProjectId={setProjectId}
+              setVersionId={setVersionId}
             />
           )}
-          {terminalStep == TerminalStep.INPUT_UPLOAD && (
+          {/* {terminalStep == TerminalStep.INPUT_UPLOAD && (
             <UploadStep
               setTerminalStep={handleGlobalStep}
               handleGlobalState={handleGlobalState}
               state={terminalState[TerminalStep.INPUT_UPLOAD]}
-              setContractId={setContractId}
+              setProjectId={setProjectId}
+              setVersionId={setVersionId}
             />
           )}
           {terminalStep == TerminalStep.INPUT_FOLDER && (
@@ -98,7 +99,8 @@ const TerminalContainer: React.FC = () => {
               setTerminalStep={handleGlobalStep}
               handleGlobalState={handleGlobalState}
               state={terminalState[TerminalStep.INPUT_FOLDER]}
-              setContractId={setContractId}
+              setProjectId={setProjectId}
+              setVersionId={setVersionId}
               contractId={contractId}
             />
           )}
@@ -107,19 +109,29 @@ const TerminalContainer: React.FC = () => {
               setTerminalStep={handleGlobalStep}
               handleGlobalState={handleGlobalState}
               state={terminalState[TerminalStep.INPUT_PASTE]}
-              setContractId={setContractId}
+              setProjectId={setProjectId}
+              setVersionId={setVersionId}
             />
-          )}
-          {terminalStep == TerminalStep.AUDIT_TYPE && (
+          )} */}
+          {/* {terminalStep == TerminalStep.AUDIT_TYPE && (
             <AuditTypeStep
               setTerminalStep={handleGlobalStep}
               handleGlobalState={handleGlobalState}
               state={terminalState[TerminalStep.AUDIT_TYPE]}
               setPromptType={setPromptType}
             />
+          )} */}
+          {terminalStep == TerminalStep.SCOPE_DEFINITION && (
+            <ScopeDefinitionStep
+              setTerminalStep={handleGlobalStep}
+              state={terminalState[TerminalStep.SCOPE_DEFINITION]}
+              versionId={versionId}
+              scopes={scopes}
+              setScopes={setScopes}
+            />
           )}
           {terminalStep == TerminalStep.RESULTS && (
-            <ResultsStep promptType={promptType} contractId={contractId} />
+            <ResultsStep projectId={projectId} versionId={versionId} scopes={scopes} />
           )}
         </div>
       </div>

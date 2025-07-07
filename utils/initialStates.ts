@@ -17,7 +17,7 @@ Upload file\n3. Upload folder\n4. Paste code",
   [TerminalStep.INPUT_ADDRESS]: [
     {
       type: Message.SYSTEM,
-      content: "Input a contract address to get started",
+      content: "Input a contract address to get started. Make sure the source code is validated.",
     },
   ],
   [TerminalStep.INPUT_PASTE]: [
@@ -42,6 +42,14 @@ Upload file\n3. Upload folder\n4. Paste code",
     {
       type: Message.SYSTEM,
       content: "Input an agent twitter handle to get started",
+    },
+  ],
+  [TerminalStep.SCOPE_DEFINITION]: [
+    {
+      type: Message.SYSTEM,
+      content:
+        "Select your scope, if you'd like to adjust it.\
+\nThese only represent valid entry point functions, on deployable contracts.",
     },
   ],
   [TerminalStep.AUDIT_TYPE]: [

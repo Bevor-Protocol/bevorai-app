@@ -20,7 +20,7 @@ import React, { useEffect, useState } from "react";
 const navItems = [
   { name: "terminal", path: "/terminal", icon: <Terminal size={18} /> },
   { name: "analytics", path: "/analytics", icon: <LineChart size={18} /> },
-  { name: "audits", path: "/analytics/history", icon: <FileText size={18} /> },
+  { name: "audits", path: "/audits", icon: <FileText size={18} /> },
   { name: "dashboard", path: "/dashboard", icon: <Home size={18} /> },
 ];
 

@@ -1,4 +1,4 @@
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import { cn } from "@/lib/utils";
 import { Message, TerminalStep } from "@/utils/enums";
 import { MessageType } from "@/utils/types";
@@ -36,7 +36,7 @@ const UploadStep = ({
   }, [history]);
 
   const handleUpload = (file: File): void => {
-    certaikApiAction
+    bevorAction
       .contractUploadFile(file)
       .then((result) => {
         if (!result) {

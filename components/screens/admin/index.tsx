@@ -1,6 +1,6 @@
 "use client";
 
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -33,17 +33,17 @@ const AdminPanel = (): JSX.Element => {
 
   const { data: users } = useQuery({
     queryKey: ["users", userSearch],
-    queryFn: async () => await certaikApiAction.searchUsers(userSearch),
+    queryFn: async () => await bevorAction.searchUsers(userSearch),
   });
 
   const { data: apps } = useQuery({
     queryKey: ["apps", appSearch],
-    queryFn: async () => await certaikApiAction.searchApps(appSearch),
+    queryFn: async () => await bevorAction.searchApps(appSearch),
   });
 
   const { data: prompts } = useQuery({
     queryKey: ["prompts"],
-    queryFn: async () => await certaikApiAction.getPrompts(),
+    queryFn: async () => await bevorAction.getPrompts(),
   });
 
   const { mutate: updateUserPermissions, isPending: userPending } = useMutation({
@@ -57,7 +57,7 @@ const AdminPanel = (): JSX.Element => {
       canCreateApp: boolean;
       canCreateApiKey: boolean;
     }) =>
-      certaikApiAction.updateUserPermissions({
+      bevorAction.updateUserPermissions({
         toUpdateId,
         canCreateApp,
         canCreateApiKey,
@@ -75,7 +75,7 @@ const AdminPanel = (): JSX.Element => {
       canCreateApp: boolean;
       canCreateApiKey: boolean;
     }) =>
-      certaikApiAction.updateAppPermissions({
+      bevorAction.updateAppPermissions({
         toUpdateId,
         canCreateApp,
         canCreateApiKey,
@@ -93,7 +93,7 @@ const AdminPanel = (): JSX.Element => {
       content?: string;
       version?: string;
       is_active?: boolean;
-    }) => certaikApiAction.updatePrompt(data),
+    }) => bevorAction.updatePrompt(data),
   });
 
   const { mutate: createPrompt, isPending: promptCreatePending } = useMutation({
@@ -107,7 +107,7 @@ const AdminPanel = (): JSX.Element => {
       content: string;
       version: string;
       is_active?: boolean;
-    }) => certaikApiAction.addPrompt(data),
+    }) => bevorAction.addPrompt(data),
   });
 
   const promptTypes = useMemo(() => {

@@ -1,4 +1,4 @@
-import authService from "@/actions/auth/auth.service";
+import authController from "@/actions/auth/auth.controller";
 import { streaming_api } from "@/lib/api";
 import { NextRequest } from "next/server";
 
@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest): Promise<Response> {
   try {
     const { message, chatId } = await req.json();
-    const user = await authService.currentUser();
+    const user = await authController.currentUser();
     const headers = {
       headers: {
         "Bevor-User-Identifier": user?.user_id,

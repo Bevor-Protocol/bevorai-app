@@ -1,6 +1,6 @@
 "use client";
 
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import * as Dropdown from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
@@ -82,9 +82,6 @@ const getInitialState = (query: { [key: string]: string }, key: string): Dropdow
 export const AuditsSearch = ({ query }: { query?: { [key: string]: string } }): JSX.Element => {
   const router = useRouter();
 
-  const [auditTypesSelected, setAuditTypesSelected] = useState<DropdownOption[]>(
-    getInitialState(query || {}, "audit_type"),
-  );
   // const [projectTypeSelected, setProjectTypeSelected] = useState<DropdownOption[]>(
   //   getInitialState(query || {}, "project_type"),
   // );
@@ -96,7 +93,6 @@ export const AuditsSearch = ({ query }: { query?: { [key: string]: string } }): 
 
   const submitHandler = (): void => {
     const search = constructSearchQuery({
-      audits: auditTypesSelected,
       networks: networkTypesSelected,
       address,
       contract,
@@ -106,7 +102,6 @@ export const AuditsSearch = ({ query }: { query?: { [key: string]: string } }): 
   };
 
   const resetHandler = (): void => {
-    setAuditTypesSelected([]);
     setNetworkTypesSelected([]);
     setAddress("");
     setContract("");
@@ -138,10 +133,7 @@ export const AuditsSearch = ({ query }: { query?: { [key: string]: string } }): 
         <Dropdown.Trigger>
           <div className="relative">
             <FilterIcon size={20} />
-            {(!!address ||
-              !!contract ||
-              auditTypesSelected.length > 0 ||
-              networkTypesSelected.length > 0) && (
+            {(!!address || !!contract || networkTypesSelected.length > 0) && (
               <span className="absolute h-2 w-2 bg-green-400 rounded-full -top-2 -right-2" />
             )}
           </div>
@@ -150,8 +142,6 @@ export const AuditsSearch = ({ query }: { query?: { [key: string]: string } }): 
           <AuditSearchDropdown
             address={address}
             setAddress={setAddress}
-            auditTypesSelected={auditTypesSelected}
-            setAuditTypesSelected={setAuditTypesSelected}
             contract={contract}
             setContract={setContract}
             networkTypesSelected={networkTypesSelected}
@@ -168,8 +158,6 @@ type DropdownProps = {
   address: string;
   setAddress: React.Dispatch<React.SetStateAction<string>>;
   close?: () => void;
-  auditTypesSelected: DropdownOption[];
-  setAuditTypesSelected: React.Dispatch<React.SetStateAction<DropdownOption[]>>;
   contract: string;
   setContract: React.Dispatch<React.SetStateAction<string>>;
   networkTypesSelected: DropdownOption[];
@@ -180,8 +168,6 @@ type DropdownProps = {
 const AuditSearchDropdown: React.FC<DropdownProps> = ({
   address,
   setAddress,
-  auditTypesSelected,
-  setAuditTypesSelected,
   contract,
   setContract,
   networkTypesSelected,
@@ -205,14 +191,6 @@ const AuditSearchDropdown: React.FC<DropdownProps> = ({
         value={contract}
         onChange={(e) => setContract(e.currentTarget.value)}
       />
-      <div className="w-full">
-        <MultiSelect
-          title="audit type"
-          options={auditTypeOptions}
-          selectedOptions={auditTypesSelected}
-          setSelectedOptions={setAuditTypesSelected}
-        />
-      </div>
       <div className="w-full">
         <MultiSelect
           title="network"
@@ -242,8 +220,8 @@ const AuditSearchDropdown: React.FC<DropdownProps> = ({
 
 export const Content = ({ query }: { query?: { [key: string]: string } }): JSX.Element => {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["audit-data", query],
-    queryFn: () => certaikApiAction.getAudits(query || {}),
+    queryKey: ["audit-data", query ?? {}],
+    queryFn: () => bevorAction.getAudits(query || {}),
   });
 
   if (isError) {
@@ -267,13 +245,12 @@ export const Content = ({ query }: { query?: { [key: string]: string } }): JSX.E
       <div className="flex flex-col grow overflow-x-scroll w-full">
         <div
           className={cn(
-            "grid grid-cols-9 border-gray-800 min-w-[600px]",
+            "grid grid-cols-8 border-gray-800 min-w-[600px]",
             " *:text-center *:pb-2 *:text-sm md:*:text-base",
           )}
         >
           <div className="col-span-1">#</div>
           <div className="col-span-2">User</div>
-          <div className="col-span-1">Type</div>
           <div className="col-span-1">Method</div>
           <div className="col-span-2">Address</div>
           <div className="col-span-1">Network</div>
@@ -295,7 +272,7 @@ export const Table = ({ results }: { results: AuditTableReponseI["results"] }): 
         {results.map((audit) => (
           <Link
             key={audit.id}
-            href={`/analytics/audit/${audit.id}`}
+            href={`/audits/${audit.id}`}
             className={cn(
               "border-t border-gray-800 hover:bg-gray-900 cursor-pointer block outline-hidden",
               "appearance-none focus:bg-gray-900 focus-within:bg-gray-900",
@@ -303,16 +280,15 @@ export const Table = ({ results }: { results: AuditTableReponseI["results"] }): 
           >
             <div
               className={cn(
-                "w-full grid grid-cols-9 text-xs",
+                "w-full grid grid-cols-8 text-xs",
                 " *:p-2 *:text-center *:whitespace-nowrap",
               )}
             >
               <div className="col-span-1">{audit.n + 1}</div>
               <div className="col-span-2">{trimAddress(audit.user.address)}</div>
-              <div className="col-span-1">{audit.audit_type}</div>
-              <div className="col-span-1">{audit.contract.method}</div>
+              <div className="col-span-1">{audit.contract.source_type}</div>
               <div className="col-span-2">
-                {audit.contract.address ? trimAddress(audit.contract.address) : "N/A"}
+                {audit.contract.target ? trimAddress(audit.contract.target) : "N/A"}
               </div>
               <div className="col-span-1">{audit.contract.network || "N/A"}</div>
               <div className="col-span-1">{prettyDate(audit.created_at)}</div>
@@ -342,7 +318,6 @@ const Pagination = ({
 
   const handlePaginate = (type: "prev" | "next"): void => {
     const curQuery = constructSearchQuery({
-      audits: getInitialState(query || {}, "audit_type"),
       networks: getInitialState(query || {}, "network"),
       address: query?.address ?? "",
       contract: query?.contract_address ?? "",

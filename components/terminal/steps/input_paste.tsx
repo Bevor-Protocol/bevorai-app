@@ -1,4 +1,4 @@
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import { cn } from "@/lib/utils";
 import { Message, TerminalStep } from "@/utils/enums";
 import { MessageType } from "@/utils/types";
@@ -53,7 +53,7 @@ const PasteStep = ({
     const l = input[0].toLowerCase();
     switch (l) {
       case "y": {
-        certaikApiAction
+        bevorAction
           .contractUploadPaste(tempInput)
           .then((result) => {
             if (!result) {

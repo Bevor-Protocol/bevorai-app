@@ -2,19 +2,28 @@
 
 import { createTimeSeries } from "@/components/plot/timeseries";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef } from "react";
+import { TimeseriesResponseI } from "@/utils/types";
+import { useEffect, useRef, useState } from "react";
 
 interface TimeSeriesPlotProps {
-  data: { date: string; count: number }[];
+  data: TimeseriesResponseI;
   title: string;
 }
 
 const TimeSeriesPlot: React.FC<TimeSeriesPlotProps> = ({ data, title }) => {
+  const [curValue, setCurValue] = useState(data.count);
   const plotRef = useRef<HTMLDivElement>(null);
 
+  const resetCount = () => setCurValue(data.count);
+
   useEffect(() => {
-    if (plotRef.current && data.length > 0) {
-      createTimeSeries(data, plotRef.current);
+    if (plotRef.current && data.timeseries.length > 0) {
+      createTimeSeries({
+        datas: data.timeseries,
+        element: plotRef.current,
+        onHover: setCurValue,
+        onReset: resetCount,
+      });
     }
   }, [data]);
 
@@ -25,7 +34,10 @@ const TimeSeriesPlot: React.FC<TimeSeriesPlotProps> = ({ data, title }) => {
         "h-fit relative hidden md:block",
       )}
     >
-      <p>{title}</p>
+      <div>
+        <p className="text-gray-200 inline-block">{title}</p>
+        <p className="ml-4 inline-block">{curValue.toLocaleString()}</p>
+      </div>
       <div ref={plotRef} />
     </div>
   );

@@ -1,20 +1,70 @@
 "use client";
 
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MetricCard from "@/components/ui/metric-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { cn } from "@/lib/utils";
 import { UserInfoResponseI } from "@/utils/types";
-import { useMutation } from "@tanstack/react-query";
-import { AppWindowIcon, Check, Copy, DollarSign, Key, RefreshCcw } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { AppWindowIcon, BarChart3, Check, Copy, DollarSign, Key, RefreshCcw } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
+export const Dashboard = () => {
+  return (
+    <Tabs defaultValue="overview">
+      <TabsList>
+        <TabsTrigger value="overview"></TabsTrigger>
+        <TabsTrigger value="projects"></TabsTrigger>
+        <TabsTrigger value="management"></TabsTrigger>
+      </TabsList>
+      <TabsContent value="overview"></TabsContent>
+      <TabsContent value="projects"></TabsContent>
+      <TabsContent value="management"></TabsContent>
+    </Tabs>
+  );
+};
+
+const Overview = () => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["overview"],
+    queryFn: async () => bevorAction.getUserInfo(),
+  });
+
+  const { data: timeseries, isLoading: timeseriesLoading } = useQuery({
+    queryKey: ["timeseries"],
+    queryFn: async () => bevorAction.getUserTimeSeries(),
+  });
+
+  return (
+    <div
+      className={cn(
+        "grid gap-4 w-full auto-rows-auto overflow-y-scroll max-h-full",
+        "md:grid-cols-4 grid-cols-2 relative *:bg-black/90",
+      )}
+    >
+      <MetricCard title="Total Audits" Icon={BarChart3} stat={data.n_audits}>
+        <Link href={`/analytics/history?user_address=${data.address}`} className="text-sm">
+          View <ArrowUpRight size={16} className="inline-block align-baseline" color="gray" />
+        </Link>
+      </MetricCard>
+      {/* <MetricCard title="# Projects" Icon={BarChart3} stat={user.n_projects} /> */}
+      <MetricCard title="# Contracts" Icon={BarChart3} stat={data.n_versions} />
+      <CreditMetric credits={data.total_credits} />
+      <MetricCard title="Remaining Credits" Icon={DollarSign} stat={data.remaining_credits} />
+      <ApiKeyManagement userAuth={data.auth} />
+      <AppManagement userApp={data.app} />
+    </div>
+  );
+};
+
 export const CreditMetric = ({ credits }: { credits: number }): JSX.Element => {
   const { mutateAsync, isPending, isSuccess } = useMutation({
-    mutationFn: certaikApiAction.syncCredits,
+    mutationFn: bevorAction.syncCredits,
   });
 
   const handleSubmit = async (): Promise<void> => {
@@ -47,7 +97,7 @@ export const ApiKeyManagement: React.FC<{ userAuth: UserInfoResponseI["auth"] }>
 }) => {
   const { isCopied, copy } = useCopyToClipboard();
   const { mutateAsync, isPending, data, isSuccess } = useMutation({
-    mutationFn: certaikApiAction.generateApiKey,
+    mutationFn: bevorAction.generateApiKey,
   });
 
   const handleSubmit = async (): Promise<void> => {
@@ -120,13 +170,13 @@ export const AppManagement: React.FC<{ userApp: UserInfoResponseI["app"] }> = ({
     data,
     isSuccess,
   } = useMutation({
-    mutationFn: certaikApiAction.generateApiKey,
+    mutationFn: bevorAction.generateApiKey,
   });
   const { mutateAsync: generateApp } = useMutation({
-    mutationFn: certaikApiAction.generateApp,
+    mutationFn: bevorAction.generateApp,
   });
   const { mutateAsync: updateApp } = useMutation({
-    mutationFn: certaikApiAction.updateApp,
+    mutationFn: bevorAction.updateApp,
   });
 
   const handleUpsert = async (): Promise<void> => {

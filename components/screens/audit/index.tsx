@@ -1,14 +1,15 @@
 "use client";
 
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
+import ContractTree from "@/components/terminal/contract-tree";
 import { Button } from "@/components/ui/button";
+import { Loader } from "@/components/ui/loader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as Tooltip from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { cn } from "@/lib/utils";
-import { BlockExplorerMapper } from "@/utils/constants";
-import { trimAddress } from "@/utils/helpers";
 import { AuditResponseI } from "@/utils/types";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowUpRightFromSquareIcon,
   DownloadIcon,
@@ -19,32 +20,47 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 export const Content = ({
-  audit,
+  auditId,
   address,
 }: {
-  audit: AuditResponseI;
+  auditId: string;
   address: string | null;
 }): JSX.Element => {
-  const [view, setView] = useState<"contract" | "report" | "breakdown">("report");
   const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
 
-  const handleToggle = (type: "contract" | "report" | "breakdown"): void => {
-    setView(type);
-  };
+  const { data, isLoading } = useQuery({
+    queryKey: ["audit", auditId],
+    queryFn: async () => bevorAction.getAudit(auditId),
+  });
 
-  const getBlockExplorer = (network?: string, address?: string): string | undefined => {
-    if (!network || !address) return;
-    if (!(network in BlockExplorerMapper)) return;
-    const explorer = BlockExplorerMapper[network as keyof typeof BlockExplorerMapper];
-    return `${explorer}/address/${address}`;
-  };
+  return (
+    <Tabs defaultValue="findings">
+      <TabsList>
+        <TabsTrigger value="findings">findings</TabsTrigger>
+        <TabsTrigger value="markdown">markdown</TabsTrigger>
+        <TabsTrigger value="contract">contract</TabsTrigger>
+      </TabsList>
+      <TabsContent value="findings">
+        <FindingsView audit={data} isLoading={isLoading} userAddress={address} />
+      </TabsContent>
+      <TabsContent value="markdown">
+        <MarkdownView audit={data} isLoading={isLoading} />
+      </TabsContent>
+      <TabsContent value="contract">
+        <ContractView versionId={data?.version_id} />
+      </TabsContent>
+    </Tabs>
+  );
+};
 
+const MarkdownView = ({ audit, isLoading }: { audit?: AuditResponseI; isLoading: boolean }) => {
   const handleDownload = (): void => {
-    const blob = new Blob([audit.result], { type: "text/markdown" });
+    if (!audit) return;
+    const blob = new Blob([audit.markdown], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -55,126 +71,56 @@ export const Content = ({
     URL.revokeObjectURL(url);
   };
 
-  const explorerUrl = getBlockExplorer(audit.contract.network, audit.contract.address);
+  if (isLoading) {
+    return <Loader className="h-12 w-12" />;
+  }
+
+  if (!audit) {
+    return <p>Something went wrong</p>;
+  }
 
   return (
-    <div className="flex flex-col gap-0 w-full h-full">
-      <div className="flex flex-col gap-2 justify-between">
-        <div
-          className={cn(
-            "flex justify-between lg:justify-start",
-            "flex-row gap-4 border-b border-b-gray-600 pb-4",
-            "flex-wrap items-center",
-          )}
-        >
-          <div className="text-sm">
-            <div className="*:whitespace-nowrap">
-              <p>Audit Type: {audit.audit_type}</p>
-              <p>
-                Address:{" "}
-                {audit.contract.address ? trimAddress(audit.contract.address) : "Not Provided"}
-              </p>
-              <p>Network: {audit.contract.network ?? "Not Provided"}</p>
-            </div>
-          </div>
-          <div className="w-full *:w-1/2 ml-0 flex flex-row gap-2 lg:ml-auto lg:w-fit">
-            <Button onClick={handleDownload} variant="bright" className="w-full text-sm">
-              Download Report
-              <DownloadIcon size={24} className="ml-1" />
-            </Button>
-            <Link
-              href={explorerUrl ?? ""}
-              aria-disabled={!explorerUrl}
-              target="_blank"
-              referrerPolicy="no-referrer"
-              className={cn("text-sm relative", !explorerUrl && "pointer-events-none")}
-            >
-              <Button variant="bright" className="w-full text-sm" disabled={!explorerUrl}>
-                view onchain
-                <ArrowUpRightFromSquareIcon size={10} className="ml-2" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-        <div className={cn("flex flex-row items-center")}>
-          <div className={cn("flex flex-row gap-2 overflow-x-scroll pb-4")}>
-            <div
-              className={cn(
-                "cursor-pointer whitespace-nowrap flex justify-center items-center",
-                "border border-gray-500 rounded-2xl py-1 px-2 text-sm",
-                view !== "report" && "opacity-50 hover:opacity-70",
-              )}
-              onClick={() => handleToggle("report")}
-            >
-              Report
-            </div>
-            <div
-              className={cn(
-                "cursor-pointer whitespace-nowrap flex justify-center items-center",
-                "border border-gray-500 rounded-2xl py-1 px-2 text-sm",
-                view !== "breakdown" && "opacity-50 hover:opacity-70",
-              )}
-              onClick={() => handleToggle("breakdown")}
-            >
-              Breakdown
-            </div>
-            <div
-              className={cn(
-                "cursor-pointer whitespace-nowrap flex justify-center items-center",
-                "border border-gray-500 rounded-2xl py-1 px-2 text-sm",
-                view !== "contract" && "opacity-50 hover:opacity-70",
-              )}
-              onClick={() => handleToggle("contract")}
-            >
-              Contract Code
-            </div>
-          </div>
-        </div>
-      </div>
-      {view === "report" && (
-        <ReactMarkdown className="overflow-scroll no-scrollbar markdown grow">
-          {audit.result}
-        </ReactMarkdown>
-      )}
-      {view === "breakdown" && (
-        <Findings
-          findings={audit.findings}
-          selectedFinding={selectedFinding}
-          setSelectedFindings={setSelectedFinding}
-          isOwner={audit.user.address === address}
-        />
-      )}
-      {view === "contract" && (
-        <pre className="overflow-scroll no-scrollbar grow text-xs">{audit.contract.code}</pre>
-      )}
+    <div>
+      <Button onClick={handleDownload} variant="bright" className="w-full text-sm">
+        Download Report
+        <DownloadIcon size={24} className="ml-1" />
+      </Button>
+      <ReactMarkdown className="overflow-scroll no-scrollbar markdown grow">
+        {audit.markdown}
+      </ReactMarkdown>
     </div>
   );
 };
 
-// help retain state when click back and forth.
-type FindingsProps = {
-  findings: AuditResponseI["findings"];
-  selectedFinding: string | null;
-  setSelectedFindings: React.Dispatch<React.SetStateAction<string | null>>;
-  isOwner: boolean;
-};
-
-const Findings: React.FC<FindingsProps> = ({
-  findings,
-  selectedFinding,
-  setSelectedFindings,
-  isOwner,
+const FindingsView = ({
+  audit,
+  isLoading,
+  userAddress,
+}: {
+  audit?: AuditResponseI;
+  isLoading: boolean;
+  userAddress: string | null;
 }) => {
+  const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
   const router = useRouter();
   const selectedFindingDetails = useMemo(() => {
-    return findings.find((f) => f.id === selectedFinding);
-  }, [selectedFinding, findings]);
+    if (!audit) return null;
+    return audit.findings.find((f) => f.id === selectedFinding);
+  }, [selectedFinding, audit?.findings]);
 
   const [input, setInput] = useState("");
   const [attestation, setAttestation] = useState(0);
   const [isOpen, setIsOpen] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const isMobile = useIsMobile();
+
+  const isOwner = useMemo(() => audit?.user.address !== userAddress, [audit]);
+
+  const { data: functionChunk, isLoading: isFunctionChunkLoading } = useQuery({
+    queryKey: ["function", selectedFindingDetails?.function_id],
+    queryFn: async () => bevorAction.getFunctionChunk(selectedFindingDetails?.function_id || ""),
+    enabled: !!selectedFindingDetails,
+  });
 
   useEffect(() => {
     if (!selectedFindingDetails) return;
@@ -189,7 +135,7 @@ const Findings: React.FC<FindingsProps> = ({
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: (variables: { id: string; feedback?: string; verified?: boolean }) =>
-      certaikApiAction.submitFeedback(variables.id, variables.feedback, variables.verified),
+      bevorAction.submitFeedback(variables.id, variables.feedback, variables.verified),
     onSuccess: () => {
       setShowSuccess(true);
       router.refresh();
@@ -208,7 +154,8 @@ const Findings: React.FC<FindingsProps> = ({
   // Group findings by level
   const findingsByLevel = useMemo(() => {
     const levels = ["critical", "high", "medium", "low"];
-    return findings.reduce(
+    if (!audit) return {};
+    return audit.findings.reduce(
       (acc, finding) => {
         const level = finding.level;
         if (!acc[level]) {
@@ -217,9 +164,12 @@ const Findings: React.FC<FindingsProps> = ({
         acc[level].push(finding);
         return acc;
       },
-      Object.fromEntries(levels.map((level) => [level, []])) as Record<string, typeof findings>,
+      Object.fromEntries(levels.map((level) => [level, []])) as Record<
+        string,
+        typeof audit.findings
+      >,
     );
-  }, [findings]);
+  }, [audit?.findings]);
 
   const formatter = (text: string): JSX.Element => {
     // First split by multi-line code blocks
@@ -272,6 +222,14 @@ const Findings: React.FC<FindingsProps> = ({
     });
   };
 
+  if (isLoading) {
+    return <Loader className="h-12 w-12" />;
+  }
+
+  if (!audit) {
+    return <p>Something went wrong</p>;
+  }
+
   return (
     <div className="flex flex-row h-full overflow-hidden w-full grow relative">
       <div className="w-fit block my-2 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
@@ -304,12 +262,12 @@ const Findings: React.FC<FindingsProps> = ({
                   key={finding.id}
                   onClick={() => {
                     if (isMobile) setIsOpen(false);
-                    setSelectedFindings(finding.id);
+                    setSelectedFinding(finding.id);
                   }}
                   className={cn(
-                    "px-4 py-2 cursor-pointer hover:bg-gray-800/50",
+                    "px-4 py-2 cursor-pointer",
                     "whitespace-nowrap text-ellipsis overflow-x-hidden",
-                    selectedFinding === finding.id && "bg-gray-800",
+                    selectedFinding === finding.id ? "bg-gray-800" : "hover:bg-gray-800/80",
                   )}
                 >
                   {finding.name}
@@ -356,6 +314,14 @@ const Findings: React.FC<FindingsProps> = ({
                 <div className="text-sm break-words">
                   {formatter(selectedFindingDetails.reference)}
                 </div>
+              </div>
+            )}
+            {functionChunk && (
+              <div>
+                <h3 className="text-gray-400 mb-2">Source</h3>
+                <pre className="overflow-scroll no-scrollbar grow text-xs">
+                  {functionChunk.chunk}
+                </pre>
               </div>
             )}
 
@@ -433,6 +399,110 @@ const Findings: React.FC<FindingsProps> = ({
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+const ContractView = ({ versionId }: { versionId?: string }) => {
+  const [selectedSource, setSelectedSource] = useState("");
+
+  const { data: version, isLoading: isVersionLoading } = useQuery({
+    queryKey: ["contract-version", versionId],
+    queryFn: async () => bevorAction.getContractVersion(versionId!),
+    enabled: !!versionId,
+  });
+
+  const { data: tree, isLoading: isTreeLoading } = useQuery({
+    queryKey: ["contract-tree", versionId],
+    queryFn: async () => bevorAction.getContractTree(versionId!),
+    enabled: !!versionId,
+  });
+
+  const { data: sources, isLoading: isSourcesLoading } = useQuery({
+    queryKey: ["contract-source", versionId],
+    queryFn: async () => bevorAction.getContractSources(versionId!),
+    enabled: !!versionId,
+  });
+
+  if (isVersionLoading || isTreeLoading || isSourcesLoading) {
+    return <Loader className="h-12 w-12" />;
+  }
+
+  return (
+    <div>
+      <div
+        className={cn(
+          "flex justify-between lg:justify-start",
+          "flex-row gap-4 border-b border-b-gray-600 pb-4",
+          "flex-wrap items-center",
+        )}
+      >
+        <div className="text-sm">
+          <div className="*:whitespace-nowrap">
+            <p>Address: {version?.source_type === "scan" ? version.target : "Not Provided"}</p>
+            <p>Network: {version?.network ?? "Not Provided"}</p>
+            <p>Pragma Version: {version?.solc_version ?? "Not Determined"}</p>
+          </div>
+        </div>
+        <div className="w-full *:w-1/2 ml-0 flex flex-row gap-2 lg:ml-auto lg:w-fit">
+          <Link
+            href={version?.block_explorer_url ?? ""}
+            aria-disabled={!version?.block_explorer_url}
+            target="_blank"
+            referrerPolicy="no-referrer"
+            className={cn(
+              "text-sm relative",
+              !version?.block_explorer_url && "pointer-events-none",
+            )}
+          >
+            <Button
+              variant="bright"
+              className="w-full text-sm"
+              disabled={!version?.block_explorer_url}
+            >
+              view onchain
+              <ArrowUpRightFromSquareIcon size={10} className="ml-2" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+      <Tabs defaultValue="sources">
+        <TabsList>
+          <TabsTrigger value="sources">sources</TabsTrigger>
+          <TabsTrigger value="tree">tree</TabsTrigger>
+        </TabsList>
+        <TabsContent value="sources">
+          <div className="flex flex-row h-full overflow-hidden w-full grow relative">
+            <div
+              className={cn(
+                "w-full md:w-64 md:max-w-1/3",
+                "border-gray-800 overflow-y-auto md:pr-4 md:static md:inset-[unset]",
+                "inset-0 absolute bg-black z-20",
+              )}
+            >
+              {sources?.map((source) => (
+                <div
+                  key={source.id}
+                  onClick={() => {
+                    setSelectedSource(source.content);
+                  }}
+                  className={cn(
+                    "px-4 py-2 cursor-pointer hover:bg-gray-800/50",
+                    "whitespace-nowrap text-ellipsis overflow-x-hidden",
+                    selectedSource === source.id && "bg-gray-800",
+                  )}
+                >
+                  {source.path.split("/").slice(-1)[0]}
+                </div>
+              ))}
+            </div>
+            <div className="flex-1 p-4 overflow-y-auto">
+              <pre className="overflow-scroll no-scrollbar grow text-xs">{selectedSource}</pre>
+            </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="tree">{!!tree && <ContractTree tree={tree} />}</TabsContent>
+      </Tabs>
     </div>
   );
 };

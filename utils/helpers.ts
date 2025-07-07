@@ -54,23 +54,17 @@ export const sortWallets = (
 };
 
 export const constructSearchQuery = ({
-  audits,
   networks,
   address,
   contract,
   page,
 }: {
-  audits: DropdownOption[];
   networks: DropdownOption[];
   address: string;
   contract: string;
   page?: string;
 }): URLSearchParams => {
   const search = new URLSearchParams();
-  if (audits.length) {
-    const params = audits.map((audit) => audit.value);
-    search.append("audit_type", params.join(","));
-  }
   if (networks.length) {
     const params = networks.map((audit) => audit.value);
     search.append("network", params.join(","));

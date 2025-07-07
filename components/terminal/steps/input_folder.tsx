@@ -1,4 +1,4 @@
-import { certaikApiAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import ContractTree from "@/components/terminal/contract-tree";
 import FolderDropZone from "@/components/terminal/folder-drop-zone";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,7 @@ const FolderUploadStep = ({
 
   const handleUpload = (fileMap: Record<string, File>): void => {
     setIsLoading(true);
-    certaikApiAction
+    bevorAction
       .contractUploadFolder(fileMap)
       .then((result) => {
         if (!result) {

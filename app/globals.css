@@ -242,6 +242,10 @@
 @layer base {
   :root {
     --radius: 0.5rem;
+    --color-critical: #ef4444;
+    --color-high: #f97316;
+    --color-medium: #eab308;
+    --color-low: #22c55e;
   }
 
   h1 {
