@@ -14,7 +14,7 @@ const TimeSeriesPlot: React.FC<TimeSeriesPlotProps> = ({ data, title }) => {
   const [curValue, setCurValue] = useState(data.count);
   const plotRef = useRef<HTMLDivElement>(null);
 
-  const resetCount = () => setCurValue(data.count);
+  const resetCount = (): void => setCurValue(data.count);
 
   useEffect(() => {
     if (plotRef.current && data.timeseries.length > 0) {
@@ -25,6 +25,7 @@ const TimeSeriesPlot: React.FC<TimeSeriesPlotProps> = ({ data, title }) => {
         onReset: resetCount,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   return (

@@ -15,7 +15,7 @@ const MultiTimeSeriesPlot: React.FC<TimeSeriesPlotProps> = ({ data, title }) => 
   const [curValue, setCurValue] = useState(data.counts);
   const plotRef = useRef<HTMLDivElement>(null);
 
-  const resetCount = () => setCurValue(data.counts);
+  const resetCount = (): void => setCurValue(data.counts);
 
   useEffect(() => {
     if (plotRef.current && data.timeseries.length > 0) {
@@ -27,6 +27,7 @@ const MultiTimeSeriesPlot: React.FC<TimeSeriesPlotProps> = ({ data, title }) => 
         onReset: resetCount,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   return (
@@ -43,7 +44,10 @@ const MultiTimeSeriesPlot: React.FC<TimeSeriesPlotProps> = ({ data, title }) => 
         {Object.entries(curValue).map(([severity, value]) => (
           <div key={severity}>
             <p
-              className={`text-[${severityColorMap[severity as keyof typeof severityColorMap]}] text-sm my-2`}
+              className={cn(
+                `text-[${severityColorMap[severity as keyof typeof severityColorMap]}]`,
+                "text-sm my-2",
+              )}
             >
               {severity}
             </p>

@@ -64,7 +64,7 @@ const ResultsStep = ({ projectId, versionId, scopes }: TerminalProps): JSX.Eleme
         setProgress(newProgress);
       }, 100);
 
-      return () => clearInterval(interval);
+      return (): void => clearInterval(interval);
     }
 
     if (pollingData?.status === "success") {

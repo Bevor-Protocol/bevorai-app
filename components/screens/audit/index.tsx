@@ -30,8 +30,6 @@ export const Content = ({
   auditId: string;
   address: string | null;
 }): JSX.Element => {
-  const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
-
   const { data, isLoading } = useQuery({
     queryKey: ["audit", auditId],
     queryFn: async () => bevorAction.getAudit(auditId),
@@ -57,7 +55,13 @@ export const Content = ({
   );
 };
 
-const MarkdownView = ({ audit, isLoading }: { audit?: AuditResponseI; isLoading: boolean }) => {
+const MarkdownView = ({
+  audit,
+  isLoading,
+}: {
+  audit?: AuditResponseI;
+  isLoading: boolean;
+}): JSX.Element => {
   const handleDownload = (): void => {
     if (!audit) return;
     const blob = new Blob([audit.markdown], { type: "text/markdown" });
@@ -100,13 +104,13 @@ const FindingsView = ({
   audit?: AuditResponseI;
   isLoading: boolean;
   userAddress: string | null;
-}) => {
+}): JSX.Element => {
   const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
   const router = useRouter();
   const selectedFindingDetails = useMemo(() => {
     if (!audit) return null;
     return audit.findings.find((f) => f.id === selectedFinding);
-  }, [selectedFinding, audit?.findings]);
+  }, [selectedFinding, audit]);
 
   const [input, setInput] = useState("");
   const [attestation, setAttestation] = useState(0);
@@ -114,9 +118,9 @@ const FindingsView = ({
   const [showSuccess, setShowSuccess] = useState(false);
   const isMobile = useIsMobile();
 
-  const isOwner = useMemo(() => audit?.user.address !== userAddress, [audit]);
+  const isOwner = useMemo(() => audit?.user.address !== userAddress, [audit, userAddress]);
 
-  const { data: functionChunk, isLoading: isFunctionChunkLoading } = useQuery({
+  const { data: functionChunk } = useQuery({
     queryKey: ["function", selectedFindingDetails?.function_id],
     queryFn: async () => bevorAction.getFunctionChunk(selectedFindingDetails?.function_id || ""),
     enabled: !!selectedFindingDetails,
@@ -169,7 +173,7 @@ const FindingsView = ({
         typeof audit.findings
       >,
     );
-  }, [audit?.findings]);
+  }, [audit]);
 
   const formatter = (text: string): JSX.Element => {
     // First split by multi-line code blocks
@@ -316,15 +320,19 @@ const FindingsView = ({
                 </div>
               </div>
             )}
-            {functionChunk && (
+            {functionChunk ? (
               <div>
                 <h3 className="text-gray-400 mb-2">Source</h3>
                 <pre className="overflow-scroll no-scrollbar grow text-xs">
                   {functionChunk.chunk}
                 </pre>
               </div>
+            ) : (
+              <div>
+                <h3 className="text-gray-400 mb-2">Source</h3>
+                <pre className="overflow-scroll no-scrollbar grow text-xs">loading</pre>
+              </div>
             )}
-
             <div>
               <div className="flex gap-4 items-center">
                 <h3 className="text-gray-400 mb-2">User Feedback</h3>
@@ -403,7 +411,7 @@ const FindingsView = ({
   );
 };
 
-const ContractView = ({ versionId }: { versionId?: string }) => {
+const ContractView = ({ versionId }: { versionId?: string }): JSX.Element => {
   const [selectedSource, setSelectedSource] = useState("");
 
   const { data: version, isLoading: isVersionLoading } = useQuery({
