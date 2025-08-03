@@ -6,14 +6,18 @@ const BEVORAI_API_KEY = process.env.BEVORAI_API_KEY;
 const BEVORAI_API_URL = process.env.BEVORAI_API_URL;
 
 async function scanContract(solidityCode: string): Promise<string> {
-  const response = await axios.post(`${BEVORAI_API_URL}/contract`, {
-    code: solidityCode,
-    network: "eth",
-  }, {
-    headers: {
-      Authorization: `Bearer ${BEVORAI_API_KEY}`,
+  const response = await axios.post(
+    `${BEVORAI_API_URL}/contract`,
+    {
+      code: solidityCode,
+      network: "eth",
     },
-  });
+    {
+      headers: {
+        Authorization: `Bearer ${BEVORAI_API_KEY}`,
+      },
+    },
+  );
   const data = response.data;
 
   if ("id" in data) {
@@ -30,14 +34,18 @@ async function scanContract(solidityCode: string): Promise<string> {
 async function auditEval(solidityCode: string): Promise<any> {
   const contractId = await scanContract(solidityCode);
 
-  const response = await axios.post(`${BEVORAI_API_URL}/audit`, {
-    contract_id: contractId,
-    audit_type: "security",
-  }, {
-    headers: {
-      Authorization: `Bearer ${BEVORAI_API_KEY}`,
+  const response = await axios.post(
+    `${BEVORAI_API_URL}/audit`,
+    {
+      contract_id: contractId,
+      audit_type: "security",
     },
-  });
+    {
+      headers: {
+        Authorization: `Bearer ${BEVORAI_API_KEY}`,
+      },
+    },
+  );
 
   return response.data;
 }
@@ -96,11 +104,11 @@ const handler = createMcpHandler(
             ],
           };
         }
-      }
+      },
     );
   },
   {},
-  { basePath: "/api" }
+  { basePath: "/api" },
 );
 
 export { handler as DELETE, handler as GET, handler as POST };
