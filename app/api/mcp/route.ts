@@ -1,70 +1,120 @@
-import certaikApiService from "@/actions/certaik-api/certaik-api.service";
-import { createMcpHandler } from "@vercel/mcp-adapter";
-import { z } from "zod";
+import axios from 'axios';
+import { createMcpHandler } from 'mcp-handler';
+import { z } from 'zod';
+
+const BEVORAI_API_KEY = process.env.BEVORAI_API_KEY;
+const BEVORAI_API_URL = process.env.BEVORAI_API_URL;
+
+async function scanContract(solidityCode: string): Promise<string> {
+  const response = await axios.post(
+    `${BEVORAI_API_URL}/contract`,
+    {
+      code: solidityCode,
+      network: 'eth',
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${BEVORAI_API_KEY}`,
+      },
+    }
+  );
+  const data = response.data;
+
+  if ('id' in data) {
+    return data.id;
+  }
+
+  if (data.exists && data.contract?.id) {
+    return data.contract.id;
+  }
+
+  throw new Error('Could not find contract ID in response');
+}
+
+async function auditEval(solidityCode: string): Promise<any> {
+  const contractId = await scanContract(solidityCode);
+
+  const response = await axios.post(
+    `${BEVORAI_API_URL}/audit`,
+    {
+      contract_id: contractId,
+      audit_type: 'security',
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${BEVORAI_API_KEY}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+async function getAudit(auditId: string): Promise<any> {
+  const response = await axios.get(
+    `${BEVORAI_API_URL}/audit/${auditId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${BEVORAI_API_KEY}`,
+      },
+    }
+  );
+
+  return response.data;
+}
 
 const handler = createMcpHandler(
   (server) => {
-    server.tool("echo", "Echo a message", { message: z.string() }, async ({ message }) => ({
-      content: [{ type: "text", text: `Tool echo: ${message}` }],
-    }));
-
     server.tool(
-      "runAudit",
-      "Run an audit on the provided code",
-      { code: z.string() },
-      async ({ code }) => {
+      'audit_smart_contract',
+      'Audits the smart contract code with BevorAI',
+      { solidityCode: z.string() },
+      async ({ solidityCode }) => {
         try {
-          // Mock audit report
-          const codeLines = code.split("\n").slice(0, 3).join("\n");
-          const report = `BevorAI Audit Report\n\n${codeLines}`;
+          const auditResult = await auditEval(solidityCode);
+          const auditId = auditResult.id;
 
+          // Polling for audit status
+          let statusData;
+          do {
+            const statusResponse = await axios.get(
+              `${BEVORAI_API_URL}/audit/${auditId}/status`,
+              {
+                headers: {
+                  Authorization: `Bearer ${BEVORAI_API_KEY}`,
+                },
+              }
+            );
+            statusData = statusResponse.data;
+
+            if (statusData.status === 'success') {
+              const auditDetails = await getAudit(auditId);
+              return {
+                content: [
+                  { type: 'text', text: 'BevorAI Audit Report: ' },
+                  ...Object.entries(auditDetails).map(([key, value]) => ({
+                    type: 'text',
+                    text: `${key}: ${value}`,
+                  })),
+                ],
+              };
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          } while (statusData.status !== 'success');
+        } catch (error) {
           return {
-            content: [{ type: "text", text: report }],
-          };
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-          return {
-            content: [{ type: "text", text: `Error: ${errorMessage}` }],
+            content: [
+              { type: 'text', text: 'Error during audit: ' },
+              { type: 'text', text: error.message },
+            ],
           };
         }
-      },
-    );
-
-    server.tool("getAudits", "Retrieve all audits", {}, async () => {
-      try {
-        const audits = await certaikApiService.getAudits({});
-        return {
-          content: [{ type: "text", text: JSON.stringify(audits) }],
-        };
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-        return {
-          content: [{ type: "text", text: `Error: ${errorMessage}` }],
-        };
       }
-    });
+    );
   },
-  {
-    capabilities: {
-      tools: {
-        echo: {
-          description: "Echo a message",
-        },
-        runAudit: {
-          description: "Run an audit on the provided code",
-        },
-        getAudits: {
-          description: "Retrieve all audits",
-        },
-      },
-    },
-  },
-  {
-    redisUrl: process.env.REDIS_URL,
-    basePath: "",
-    verboseLogs: true,
-    maxDuration: 60,
-  },
+  {},
+  { basePath: '/api' }
 );
 
 export { handler as DELETE, handler as GET, handler as POST };
