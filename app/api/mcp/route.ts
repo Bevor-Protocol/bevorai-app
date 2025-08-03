@@ -66,7 +66,7 @@ const handler = createMcpHandler(
       "audit_smart_contract",
       "Audits the smart contract code with BevorAI",
       { solidityCode: z.string() },
-      async ({ solidityCode }) => {
+      async ({ solidityCode }: { solidityCode: string }) => {
         try {
           const auditResult: any = await auditEval(solidityCode);
           const auditId = auditResult.id;
@@ -85,9 +85,9 @@ const handler = createMcpHandler(
               const auditDetails: any = await getAudit(auditId);
               return {
                 content: [
-                  { type: "text", text: "BevorAI Audit Report: " },
+                  { type: "text" as const, text: "BevorAI Audit Report: " },
                   ...Object.entries(auditDetails).map(([key, value]) => ({
-                    type: "text",
+                    type: "text" as const,
                     text: `${key}: ${value}`,
                   })),
                 ],
@@ -96,11 +96,16 @@ const handler = createMcpHandler(
 
             await new Promise((resolve) => setTimeout(resolve, 1000));
           } while (statusData.status !== "success");
+
+          // Fallback if audit doesn't complete
+          return {
+            content: [{ type: "text" as const, text: "Audit timed out" }],
+          };
         } catch (error: unknown) {
           return {
             content: [
-              { type: "text", text: "Error during audit: " },
-              { type: "text", text: (error as Error).message },
+              { type: "text" as const, text: "Error during audit: " },
+              { type: "text" as const, text: (error as Error).message },
             ],
           };
         }
