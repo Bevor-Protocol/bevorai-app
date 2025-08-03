@@ -1,6 +1,6 @@
 import axios from "axios";
 import { createMcpHandler } from "mcp-handler";
-import { z, ZodType } from "zod";
+import { z } from "zod";
 
 const BEVORAI_API_KEY = process.env.BEVORAI_API_KEY;
 const BEVORAI_API_URL = process.env.BEVORAI_API_URL;
@@ -65,7 +65,7 @@ const handler = createMcpHandler(
     server.tool(
       "audit_smart_contract",
       "Audits the smart contract code with BevorAI",
-      { solidityCode: z.string() as ZodType<any, any, any> },
+      { solidityCode: z.string() },
       async ({ solidityCode }) => {
         try {
           const auditResult: any = await auditEval(solidityCode);
