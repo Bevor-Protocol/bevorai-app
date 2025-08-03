@@ -15,7 +15,7 @@ const handler = createMcpHandler(
       async ({ code }) => {
         try {
           // Mock audit report
-          const codeLines = code.split('\n').slice(0, 3).join('\n');
+          const codeLines = code.split("\n").slice(0, 3).join("\n");
           const report = `BevorAI Audit Report\n\n${codeLines}`;
 
           return {
