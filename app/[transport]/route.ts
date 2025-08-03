@@ -14,27 +14,12 @@ const handler = createMcpHandler(
       { code: z.string() },
       async ({ code }) => {
         try {
-          // Upload the source code
-          const uploadResponse = await certaikApiService.uploadSourceCode({
-            code,
-            userId: process.env.ADMIN_USER_ID || "",
-          });
-
-          if (!uploadResponse.contract || !uploadResponse.contract.id) {
-            throw new Error("Failed to upload source code");
-          }
-
-          const contractId = uploadResponse.contract.id;
-
-          // Run the evaluation
-          const evalResponse = await certaikApiService.runEval(
-            contractId,
-            "security",
-            process.env.ADMIN_USER_ID || "",
-          );
+          // Mock audit report
+          const codeLines = code.split('\n').slice(0, 3).join('\n');
+          const report = `BevorAI Audit Report\n\n${codeLines}`;
 
           return {
-            content: [{ type: "text", text: `Audit started with job ID: ${evalResponse.job_id}` }],
+            content: [{ type: "text", text: report }],
           };
         } catch (error: unknown) {
           const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
