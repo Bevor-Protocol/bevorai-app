@@ -1,6 +1,6 @@
-import axios from 'axios';
-import { createMcpHandler } from 'mcp-handler';
-import { z } from 'zod';
+import axios from "axios";
+import { createMcpHandler } from "mcp-handler";
+import { z } from "zod";
 
 const BEVORAI_API_KEY = process.env.BEVORAI_API_KEY;
 const BEVORAI_API_URL = process.env.BEVORAI_API_URL;
@@ -10,7 +10,7 @@ async function scanContract(solidityCode: string): Promise<string> {
     `${BEVORAI_API_URL}/contract`,
     {
       code: solidityCode,
-      network: 'eth',
+      network: "eth",
     },
     {
       headers: {
@@ -20,7 +20,7 @@ async function scanContract(solidityCode: string): Promise<string> {
   );
   const data = response.data;
 
-  if ('id' in data) {
+  if ("id" in data) {
     return data.id;
   }
 
@@ -28,17 +28,17 @@ async function scanContract(solidityCode: string): Promise<string> {
     return data.contract.id;
   }
 
-  throw new Error('Could not find contract ID in response');
+  throw new Error("Could not find contract ID in response");
 }
 
-async function auditEval(solidityCode: string): Promise<any> {
+async function auditEval(solidityCode: string): Promise<unknown> {
   const contractId = await scanContract(solidityCode);
 
   const response = await axios.post(
     `${BEVORAI_API_URL}/audit`,
     {
       contract_id: contractId,
-      audit_type: 'security',
+      audit_type: "security",
     },
     {
       headers: {
@@ -50,7 +50,7 @@ async function auditEval(solidityCode: string): Promise<any> {
   return response.data;
 }
 
-async function getAudit(auditId: string): Promise<any> {
+async function getAudit(auditId: string): Promise<unknown> {
   const response = await axios.get(
     `${BEVORAI_API_URL}/audit/${auditId}`,
     {
@@ -66,8 +66,8 @@ async function getAudit(auditId: string): Promise<any> {
 const handler = createMcpHandler(
   (server) => {
     server.tool(
-      'audit_smart_contract',
-      'Audits the smart contract code with BevorAI',
+      "audit_smart_contract",
+      "Audits the smart contract code with BevorAI",
       { solidityCode: z.string() },
       async ({ solidityCode }) => {
         try {
@@ -87,13 +87,13 @@ const handler = createMcpHandler(
             );
             statusData = statusResponse.data;
 
-            if (statusData.status === 'success') {
+            if (statusData.status === "success") {
               const auditDetails = await getAudit(auditId);
               return {
                 content: [
-                  { type: 'text', text: 'BevorAI Audit Report: ' },
+                  { type: "text", text: "BevorAI Audit Report: " },
                   ...Object.entries(auditDetails).map(([key, value]) => ({
-                    type: 'text',
+                    type: "text",
                     text: `${key}: ${value}`,
                   })),
                 ],
@@ -101,12 +101,12 @@ const handler = createMcpHandler(
             }
 
             await new Promise((resolve) => setTimeout(resolve, 1000));
-          } while (statusData.status !== 'success');
-        } catch (error) {
+          } while (statusData.status !== "success");
+        } catch (error: unknown) {
           return {
             content: [
-              { type: 'text', text: 'Error during audit: ' },
-              { type: 'text', text: error.message },
+              { type: "text", text: "Error during audit: " },
+              { type: "text", text: (error as Error).message },
             ],
           };
         }
@@ -114,7 +114,7 @@ const handler = createMcpHandler(
     );
   },
   {},
-  { basePath: '/api' }
+  { basePath: "/api" }
 );
 
 export { handler as DELETE, handler as GET, handler as POST };
