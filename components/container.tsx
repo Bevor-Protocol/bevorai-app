@@ -6,10 +6,6 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useMemo } from "react";
 
-type RouteActiveProps = HrefProps & {
-  pathname: string;
-};
-
 type NavItemProp = {
   name: string;
   href: (data: HrefProps) => string;

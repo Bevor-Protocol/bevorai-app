@@ -33,7 +33,7 @@ const UserDropdown: React.FC<Props> = ({ teams, close }) => {
       {/* Menu Items */}
       <div className="py-1">
         <Link
-          href={navigation.team.overview({ teamSlug: defaultTeam?.slug! })}
+          href={navigation.team.overview({ teamSlug: defaultTeam?.slug })}
           className="w-full"
           onClick={close}
         >

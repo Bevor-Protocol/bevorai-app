@@ -23,7 +23,7 @@ const EmailAccount: React.FC<AccountProps & { linkedAccounts: EmailWithMetadata[
   const { linkEmail, unlinkEmail } = usePrivy();
   const isLinked = linkedAccounts.length > 0;
 
-  const handleDisconnect = () => {
+  const handleDisconnect = (): void => {
     if (linkedAccounts.length > 0 && !!linkedAccounts[0].address) {
       unlinkEmail(linkedAccounts[0].address);
     }
@@ -86,7 +86,7 @@ const GoogleAccount: React.FC<AccountProps & { linkedAccounts: GoogleOAuthWithMe
   const { linkGoogle, unlinkGoogle } = usePrivy();
   const isLinked = linkedAccounts.length > 0;
 
-  const handleDisconnect = () => {
+  const handleDisconnect = (): void => {
     if (linkedAccounts.length > 0 && !!linkedAccounts[0].email) {
       unlinkGoogle(linkedAccounts[0].email);
     }
@@ -149,7 +149,7 @@ const WalletAccount: React.FC<AccountProps & { linkedAccounts: WalletWithMetadat
   const { linkWallet, unlinkWallet } = usePrivy();
   const isLinked = linkedAccounts.length > 0;
 
-  const handleDisconnect = (address: string) => {
+  const handleDisconnect = (address: string): void => {
     unlinkWallet(address);
   };
 
@@ -246,7 +246,7 @@ const LinkedAccountsClient: React.FC = () => {
 };
 
 export const CreditSync: React.FC<{ credits: number }> = ({ credits }) => {
-  const handleSyncCredits = () => {
+  const handleSyncCredits = (): void => {
     // TODO: Implement credit sync functionality
     console.log("Syncing credits...");
   };
