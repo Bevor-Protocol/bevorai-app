@@ -56,7 +56,8 @@ export const Content: React.FC<ContentProps> = ({
   return (
     <div
       className={cn(
-        "absolute z-999 text-xs",
+        "absolute z-999 text-xs bg-black shadow-sm rounded-lg cursor-default border border-neutral-400 px-2 py-1",
+        "transition-all animate-appear",
         side == "top" && "bottom-[calc(100%+5px)]",
         side == "left" && "right-[calc(100%+5px)]",
         side == "bottom" && "top-[calc(100%+5px)]",
@@ -71,7 +72,7 @@ export const Content: React.FC<ContentProps> = ({
       )}
       {...rest}
     >
-      <div className="transition-all animate-appear">{children}</div>
+      {children}
     </div>
   );
 };

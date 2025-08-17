@@ -164,7 +164,7 @@ export const createTimeSeries = ({
 
       // Adjust vertical position if tooltip would go outside container
       if (top + tooltipRect.height > element.clientHeight) {
-        top = mouseY + plotOffset - tooltipRect.height; // Position above mouse if not enough space below
+        top = mouseY + plotOffset - tooltipRect.height;
       } else if (top < plotOffset) {
         top = plotOffset + 5; // Small margin from top if still not enough space
       }

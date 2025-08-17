@@ -17,7 +17,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-const AdminPanel = (): JSX.Element => {
+const AdminPanel: React.FC = () => {
   const queryClient = useQueryClient();
   const [userSearch, setUserSearch] = useState("");
   const [appSearch, setAppSearch] = useState("");
@@ -153,7 +153,7 @@ const AdminPanel = (): JSX.Element => {
   }: {
     user?: UserSearchResponseI;
     app?: AppSearchResponseI;
-    prompt?: any;
+    prompt?: PromptResponseI;
   }): void => {
     if (app) {
       setSelectedUser(null);

@@ -1,21 +1,34 @@
-import Sidebar from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
+import { authAction, bevorAction } from "@/actions";
+import Container from "@/components/container";
+import Header from "@/components/header";
+import { AsyncComponent, CodeProjectSchema, TeamSchemaI } from "@/utils/types";
 
 type LayoutProps = {
   children: React.ReactNode;
+  teamSlug?: string;
 };
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: AsyncComponent<LayoutProps> = async ({ children }: LayoutProps) => {
+  const currentUser = await authAction.getCurrentUser();
+  let teams: TeamSchemaI[] = [];
+  let projects: CodeProjectSchema[] = [];
+
+  if (currentUser) {
+    teams = await bevorAction.getTeams();
+    projects = await bevorAction.getAllProjects();
+  }
+
+  const userObject = {
+    isAuthenticated: !!currentUser,
+    userId: currentUser?.userId,
+    teams,
+    projects,
+  };
+
   return (
-    <div className="background-container">
-      <Sidebar />
-      <div
-        className={cn(
-          "flex flex-col items-center justify-center size-full ml-14 md:ml-0 overflow-hidden",
-        )}
-      >
-        {children}
-      </div>
+    <div className="min-h-screen bg-black">
+      <Header userObject={userObject} />
+      <Container>{children}</Container>
     </div>
   );
 };

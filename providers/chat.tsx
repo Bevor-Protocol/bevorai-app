@@ -23,7 +23,7 @@ export const ChatContext = createContext<ChatContextType>({
   setCurrentAuditId: () => {},
 });
 
-export const ChatProvider = ({ children }: { children: ReactNode }): JSX.Element => {
+export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const pathname = usePathname();
 
   const [isOpen, setIsOpen] = useState<boolean>(false);

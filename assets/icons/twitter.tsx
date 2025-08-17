@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { SVGProps } from "react";
 
-const Twitter = (props: SVGProps<SVGSVGElement>): JSX.Element => {
+const Twitter: React.FC<SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg viewBox="0 0 24 24" width="24" height="24" stroke="white" {...props}>
       <g>

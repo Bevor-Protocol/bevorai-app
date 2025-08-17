@@ -1,35 +1,29 @@
 "use server";
 
-import authController from "./auth.controller";
+import { setSessionToken } from "@/actions/cookies";
+import authController from "./auth.service";
 
-const nonce = async (): Promise<string> => {
-  return authController.nonce();
-};
-
-const getCurrentUser = async (): Promise<{ address: string; user_id?: string } | null> => {
+const getCurrentUser = async (): Promise<{ teamId: string; userId: string } | null> => {
+  // authorized through our python api
   return authController.currentUser();
 };
 
-const verify = async (message: string, signature: string): Promise<void> => {
-  return authController.verify(message, signature);
+const login = async (privyUserId: string): Promise<void> => {
+  // can't redirect, as the cookie won't be set yet until this is returned.
+  // so it would just get caught up failing the middleware
+  const authedUser = await authController.currentUser();
+  if (authedUser) {
+    return;
+  }
+  const user = await authController.createUser(privyUserId);
+  const token = await authController.issueToken(user);
+
+  await setSessionToken(token.scoped_token, token.expires_at);
 };
 
-const logout = async (): Promise<boolean> => {
-  return authController.logout();
+const logout = async (): Promise<void> => {
+  // can't redirect since the cookie wouldn't be deleted yet.
+  await authController.revokeToken();
 };
 
-const getSecureSigning = async (): Promise<string> => {
-  // const secret = process.env.SHARED_SECRET!;
-
-  // const timestamp = Date.now().toString();
-  // const payload = `${timestamp}:/ws`;
-  // const signature = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-
-  // const url = `${process.env.API_URL}/ws?signature=${signature}&timestamp=${timestamp}`;
-
-  const url = `${process.env.API_URL}/ws`;
-
-  return url;
-};
-
-export { getCurrentUser, getSecureSigning, logout, nonce, verify };
+export { getCurrentUser, login, logout };

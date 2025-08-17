@@ -1,34 +1,37 @@
 "use client";
 
+import { authAction } from "@/actions";
+import Breadcrumbs from "@/components/breadcrumbs";
 import Networks from "@/components/Dropdown/networks";
-import { Profile } from "@/components/Dropdown/profile";
-import { Wallets } from "@/components/Modal/wallets";
+import UserDropdown from "@/components/Dropdown/user";
 import { Button } from "@/components/ui/button";
 import * as Dropdown from "@/components/ui/dropdown";
 import { Icon } from "@/components/ui/icon";
 import * as Tooltip from "@/components/ui/tooltip";
-import { useModal } from "@/hooks/useContexts";
 import { cn } from "@/lib/utils";
-import { getNetworkImage, trimAddress } from "@/utils/helpers";
+import { getNetworkImage } from "@/utils/helpers";
+import { InitialUserObject, TeamSchemaI } from "@/utils/types";
+import { useLogin, usePrivy, useWallets } from "@privy-io/react-auth";
 import { ChevronDown } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import React from "react";
-import { useAccount } from "wagmi";
 
-type Props = {
-  address: string | null;
-};
+export const Web3Network: React.FC = () => {
+  const { wallets, ready } = useWallets();
+  if (!ready || !wallets.length) {
+    return <></>;
+  }
 
-export const Web3Network = (): JSX.Element => {
-  const { chain } = useAccount();
-  const { supported, networkImg } = getNetworkImage(chain);
-
+  const wallet = wallets[0];
+  const { supported, networkImg } = getNetworkImage(wallet.chainId);
   return (
     <Dropdown.Main
       className="flex flex-row relative cursor-pointer rounded-lg focus-border"
       tabIndex={0}
     >
       <Dropdown.Trigger>
-        <Tooltip.Reference shouldShow={!chain}>
+        <Tooltip.Reference shouldShow={false}>
           <Tooltip.Trigger>
             <div
               className={cn(
@@ -62,7 +65,7 @@ export const Web3Network = (): JSX.Element => {
   );
 };
 
-export const Web3Profile = ({ address }: { address: string }): JSX.Element => {
+export const Profile: React.FC<{ teams: TeamSchemaI[]; userId?: string }> = ({ teams, userId }) => {
   return (
     <Dropdown.Main
       className="flex flex-row relative cursor-pointer rounded-lg focus-border"
@@ -75,40 +78,48 @@ export const Web3Profile = ({ address }: { address: string }): JSX.Element => {
             "hover:bg-slate-700/40 gap-2 text-sm px-2",
           )}
         >
-          <Icon size="md" seed={address} />
-          <span className="lg:inline-block hidden">{trimAddress(address)}</span>
+          <Icon size="md" seed={userId} />
         </div>
       </Dropdown.Trigger>
       <Dropdown.Content className="top-full right-0" hasCloseTrigger>
-        <Profile address={address} />
+        <UserDropdown teams={teams} />
       </Dropdown.Content>
     </Dropdown.Main>
   );
 };
 
-const Header: React.FC<Props> = ({ address }) => {
-  const { show } = useModal();
+const Header: React.FC<{ userObject: InitialUserObject }> = ({ userObject }) => {
+  const { authenticated, ready } = usePrivy();
+  const router = useRouter();
+  const { login } = useLogin({
+    onComplete: async (params) => {
+      await authAction.login(params.user.id);
+      router.refresh();
+    },
+  });
 
-  const handleWalletModal = (): void => {
-    show(<Wallets />);
-  };
-
+  const isAuthenticated = (userObject.isAuthenticated && !ready) || authenticated;
   return (
-    <header className="bg-black w-full text-white z-100 relative min-h-24 h-24 px-6">
-      <div className="w-full py-4 flex justify-end items-center h-full">
-        <div className="gap-2 items-center relative flex">
-          {!!address && (
-            <>
-              <Web3Network />
-              <Web3Profile address={address} />
-            </>
-          )}
-          {!address && (
-            <Button onClick={handleWalletModal} variant="bright">
-              connect
-            </Button>
-          )}
+    <header
+      className={cn(
+        "bg-neutral-950 sticky top-0 z-50 backdrop-blur-sm",
+        "px-6 flex items-center justify-between h-16",
+      )}
+    >
+      <div className="flex items-center gap-6">
+        <div className="aspect-423/564 relative h-[30px]">
+          <Image src="/logo-small.png" alt="BevorAI logo" fill priority />
         </div>
+        {isAuthenticated && <Breadcrumbs userObject={userObject} />}
+      </div>
+      <div className="gap-2 items-center relative flex">
+        {isAuthenticated ? (
+          <Profile teams={userObject.teams} userId={userObject.userId} />
+        ) : (
+          <Button onClick={login} variant="bright" disabled={!ready}>
+            sign in
+          </Button>
+        )}
       </div>
     </header>
   );

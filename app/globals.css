@@ -241,6 +241,7 @@
 
 @layer base {
   :root {
+    --remainder-height: calc(100svh - 6.25rem);
     --radius: 0.5rem;
     --color-critical: #ef4444;
     --color-high: #f97316;
@@ -272,5 +273,52 @@
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
+  }
+}
+
+@layer components {
+  .nav-item {
+    @apply relative flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors text-neutral-400;
+  }
+
+  .nav-item:hover {
+    @apply text-neutral-300 bg-neutral-800;
+  }
+
+  .nav-item[data-active="false"]:hover {
+    @apply bg-blue-500/10;
+  }
+
+  .nav-item[data-active="true"] {
+    @apply text-blue-400;
+  }
+
+  .nav-item[data-active="true"]::after {
+    content: "";
+    @apply absolute left-0 bottom-0 w-full h-0.5 bg-blue-400;
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+  }
+
+  .require-remaining-height {
+    min-height: var(--remainder-height);
+  }
+
+  .fill-remaining-height {
+    height: var(--remainder-height);
+  }
+
+  .breadcrumb-divider {
+    position: relative;
+  }
+
+  .breadcrumb-divider::before {
+    content: "/";
+    position: absolute;
+    color: gray;
+    font-size: 1rem;
+    left: -1rem;
+    top: 50%;
+    transform: translateY(-45%);
   }
 }

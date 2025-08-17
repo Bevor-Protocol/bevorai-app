@@ -2,7 +2,7 @@
 import Script from "next/script";
 import { SVGProps } from "react";
 
-const Coinbase = (props: SVGProps<SVGSVGElement>): JSX.Element => {
+const Coinbase: React.FC<SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { SVGProps } from "react";
 
-const Virtuals = (props: SVGProps<SVGSVGElement>): JSX.Element => {
+const Virtuals: React.FC<SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" {...props}>
       <rect width="24" height="24" rx="12" fill="white" fillOpacity="0.1" />

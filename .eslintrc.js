@@ -16,14 +16,14 @@ module.exports = {
   rules: {
     "@typescript-eslint/no-explicit-any": "warn",
     quotes: ["error", "double"],
-    "max-len": [
-      "error",
-      {
-        code: 100, // Change to your preferred max line length
-        ignoreUrls: true, // Ignore URLs in the line length check
-        ignoreComments: false, // Don’t ignore comments (optional)
-      },
-    ],
+    // "max-len": [
+    //   "error",
+    //   {
+    //     code: 100, // Change to your preferred max line length
+    //     ignoreUrls: true, // Ignore URLs in the line length check
+    //     ignoreComments: false, // Don’t ignore comments (optional)
+    //   },
+    // ],
 
     // TypeScript rules
     "@typescript-eslint/explicit-function-return-type": ["error"], // Enforce return types

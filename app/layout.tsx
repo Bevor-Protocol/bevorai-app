@@ -1,19 +1,12 @@
-import Header from "@/components/header";
 import Layout from "@/components/ui/layout";
-import sessionOptions from "@/lib/config/session";
-import walletConfig from "@/lib/config/wallet";
-import ChatProvider from "@/providers/chat";
 import ModalProvider from "@/providers/modal";
-import SiweProvider from "@/providers/siwe";
-import WalletProvider from "@/providers/wallet";
-import { SessionData } from "@/utils/types";
+import { PrivyWrapper } from "@/providers/privy";
+import QueryProvider from "@/providers/query";
+import { AsyncComponent } from "@/utils/types";
 import { Analytics } from "@vercel/analytics/react";
-import { getIronSession } from "iron-session";
 import type { Metadata } from "next";
 import { Figtree } from "next/font/google";
-import { cookies, headers } from "next/headers";
 import React from "react";
-import { cookieToInitialState } from "wagmi";
 import "./globals.css";
 
 const figtree = Figtree({ subsets: ["latin"] });
@@ -46,28 +39,20 @@ export const metadata: Metadata = {
   },
 };
 
-const RootLayout = async ({ children }: { children: React.ReactNode }): Promise<JSX.Element> => {
-  const headerList = await headers();
-  const cookieStore = await cookies();
-  const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
-  const address = session.siwe ? session.siwe.address : null;
-  const initialState = cookieToInitialState(walletConfig, headerList.get("cookie"));
+const RootLayout: AsyncComponent<{ children: React.ReactNode }> = async ({ children }) => {
   return (
     <html lang="en">
       <body className={`${figtree.className} antialiased`}>
-        <WalletProvider initialState={initialState}>
-          <SiweProvider>
-            <ChatProvider>
-              <ModalProvider>
-                <Layout>
-                  <Header address={address} />
-                  {children}
-                  <Analytics />
-                </Layout>
-              </ModalProvider>
-            </ChatProvider>
-          </SiweProvider>
-        </WalletProvider>
+        <QueryProvider>
+          <PrivyWrapper>
+            <ModalProvider>
+              <Layout>
+                {children}
+                <Analytics />
+              </Layout>
+            </ModalProvider>
+          </PrivyWrapper>
+        </QueryProvider>
       </body>
     </html>
   );

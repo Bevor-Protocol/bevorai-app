@@ -1,48 +1,74 @@
-import { getQueryClient } from "@/providers/wallet";
-import { QueryKey } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { QueryKey, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 
+/**
+ * Hook for SSR-friendly queries with initial data hydration.
+ *
+ * This hook prevents unnecessary refetching when you already have server-side data,
+ * while still supporting React Query's invalidation system.
+ *
+ * Usage:
+ * ```tsx
+ * const { data, isLoading, error } = useQueryWithHydration({
+ *   queryKey: ["teams"],
+ *   queryFct: () => fetchTeams(),
+ *   initialData: serverTeams,
+ *   staleTime: 5 * 60 * 1000, // 5 minutes
+ * });
+ * ```
+ *
+ * Alternative approach for more complex SSR scenarios:
+ * ```tsx
+ * // In your layout/page component
+ * const queryClient = getQueryClient();
+ *
+ * // Pre-populate the cache
+ * queryClient.setQueryData(["teams"], serverTeams);
+ *
+ * // In your component
+ * const { data } = useQuery({
+ *   queryKey: ["teams"],
+ *   queryFn: fetchTeams,
+ *   staleTime: 5 * 60 * 1000,
+ *   refetchOnMount: false,
+ * });
+ * ```
+ */
 export const useQueryWithHydration = <TData,>({
   initialData,
   queryKey,
   queryFct,
+  staleTime = 5 * 60 * 1000, // 5 minutes
 }: {
   queryKey: QueryKey;
   initialData: TData;
   queryFct: () => Promise<TData>;
+  staleTime?: number;
 }) => {
-  // with initialData, which we use as we hydrate the page with data from the server,
-  // useQuery defaults to the initialData while waiting for new data. This causes
-  // flashing of initial data which isLoading=true. This hook prevents that while still
-  // making use of client-side caching.
-  const [data, setData] = useState(initialData);
-  const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const queryClient = useQueryClient();
+  const isHydrated = useRef(false);
 
-  const queryClient = getQueryClient();
-
+  // Set initial data on first render
   useEffect(() => {
-    const getter = async () => {
-      await queryFct().then((res) => {
-        queryClient.setQueryData(queryKey, res);
-        setData(res);
-      });
-    };
-
-    if (!mounted) {
+    if (!isHydrated.current) {
       queryClient.setQueryData(queryKey, initialData);
-      setMounted(true);
-    } else {
-      setLoading(true);
-      const existingData = queryClient.getQueryData<TData>(queryKey);
-      if (existingData) {
-        setData(existingData);
-      } else {
-        getter();
-      }
-      setLoading(false);
+      isHydrated.current = true;
     }
-  }, [queryKey]);
+  }, [queryKey, initialData, queryClient]);
 
-  return { data, loading };
+  const result = useQuery({
+    queryKey,
+    queryFn: queryFct,
+    initialData,
+    staleTime,
+    // Only refetch if data is stale and we're not in SSR
+    refetchOnMount: isHydrated.current,
+    refetchOnWindowFocus: false,
+  });
+
+  // Since we always have initialData, data will never be undefined
+  return {
+    ...result,
+    data: result.data as TData, // Type assertion since we know data exists
+  };
 };

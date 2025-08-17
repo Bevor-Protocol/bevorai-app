@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Circle } from "lucide-react";
 
-const Roadmap = (): JSX.Element => {
+const Roadmap: React.FC = () => {
   return (
     <div
       className={cn(

@@ -1,4 +1,4 @@
-import authController from "@/actions/auth/auth.controller";
+import authController from "@/actions/auth/auth.service";
 import { streaming_api } from "@/lib/api";
 import { NextRequest } from "next/server";
 
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     const user = await authController.currentUser();
     const headers = {
       headers: {
-        "Bevor-User-Identifier": user?.user_id,
+        "Bevor-User-Identifier": user?.userId,
       },
     };
 

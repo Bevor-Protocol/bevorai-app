@@ -1,4 +1,3 @@
-import { type SiweMessage } from "siwe";
 import { AuditStatus, FindingLevel, Message } from "./enums";
 
 export type MessageType = {
@@ -35,12 +34,6 @@ export interface ChatContextType {
   setCurrentAuditId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-export interface SessionData {
-  siwe?: SiweMessage;
-  nonce?: string;
-  user_id?: string;
-}
-
 export interface DropdownOption {
   name: string;
   value: string;
@@ -72,24 +65,23 @@ export interface MultiTimeseriesResponseI {
   levels: string[];
 }
 
-interface AuditObservationI {
+export interface FindingSummaryI {
+  n_critical: number;
+  n_high: number;
+  n_medium: number;
+  n_low: number;
+}
+
+export interface AuditObservationI {
   n: number;
   id: string;
   created_at: string;
   status: string;
   logic_version: string;
   processing_time_seconds: number;
-  contract: {
-    id: string;
-    source_type: string;
-    target: string;
-    network?: string;
-    solc_version: string;
-  };
-  user: {
-    id: string;
-    address: string;
-  };
+  code_version_mapping_id: string;
+  version: CodeVersionSchema;
+  findings: FindingSummaryI;
 }
 
 export interface AuditTableReponseI {
@@ -118,43 +110,29 @@ export interface UserI {
   address: string;
 }
 
-export interface AuditResponseI {
+export interface AuditSchemaI {
   id: string;
   created_at: string;
-  project_id: string;
-  version_id: string;
   status: AuditStatus;
-  processing_time_seconds: number;
-  level: string;
   logic_version: string;
+  model_version: string;
   n_findings: number;
-  n_failures: number;
-  markdown: string;
+  is_public: boolean;
+  code_version_mapping_id: string;
+  code_version: CodeVersionSchema;
+}
+
+export interface AuditFindingsResponseI extends AuditSchemaI {
   findings: FindingI[];
-  user: UserI;
 }
 
 export interface UserInfoResponseI {
   id: string;
-  address: string;
   created_at: string;
   total_credits: number;
-  remaining_credits: number;
-  auth: {
-    exists: boolean;
-    is_active: boolean;
-    can_create: boolean;
-  };
-  app: {
-    exists: boolean;
-    name?: string;
-    can_create: boolean;
-    exists_auth: boolean;
-    can_create_auth: boolean;
-  };
-  n_audits: number;
-  n_projects: number;
-  n_versions: number;
+  used_credits: number;
+  available_credits: number;
+  teams: TeamSchemaI[];
 }
 
 export interface UserTimeseriesResponseI {
@@ -169,35 +147,52 @@ export interface ContractResponseI {
   version_id: string;
 }
 
-export interface ContractVersionI {
-  network?: string;
-  source_type: string;
-  target: string;
+export interface ContractVersionSourceTrimI {
+  id: string;
+  created_at: string;
+  path: string;
+  is_imported_dependency: boolean;
+}
+
+export interface ContractVersionSourceI {
+  id: string;
+  created_at: string;
+  content: string;
   solc_version: string;
-  block_explorer_url: string;
+}
+
+export interface FunctionScopeI {
+  id: string;
+  name: string;
+  is_inherited: boolean;
+  is_auditable: boolean;
+  is_entry_point: boolean;
+  is_override: boolean;
+  contract_name_defined: string;
+  is_within_scope: boolean;
+  src_start_pos: number;
+  src_end_pos: number;
+  source_defined_in_id: string;
+  source_consumed_in_id: string;
+}
+
+export interface ContractScopeI {
+  id: string;
+  name: string;
+  is_within_scope: boolean;
+  src_start_pos: number;
+  src_end_pos: number;
+  source_defined_in_id: string;
+  functions: FunctionScopeI[];
 }
 
 export interface TreeResponseI {
   id: string;
-  sources: {
-    id: string;
-    path: string;
-    is_imported: boolean;
-    is_known_target: boolean;
-    contracts: {
-      id: string;
-      name: string;
-      functions: {
-        id: string;
-        name: string;
-        is_inherited: boolean;
-        is_auditable: boolean;
-        is_entry_point: boolean;
-        is_override: boolean;
-        contract_name_defined: string;
-      }[];
-    }[];
-  }[];
+  path: string;
+  is_imported: boolean;
+  is_known_target: boolean;
+  is_within_scope: boolean;
+  contracts: ContractScopeI[];
 }
 
 export interface ContractSourceResponseI {
@@ -316,4 +311,137 @@ export interface ChatWithAuditResponseI extends ChatResponseI {
       is_available: boolean;
     };
   };
+}
+
+export interface TeamSchemaI {
+  id: string;
+  created_at: string;
+  name: string;
+  is_default: boolean;
+  created_by_user_id: string | null;
+  slug: string;
+  role: MemberRoleEnum;
+}
+
+export enum MemberRoleEnum {
+  OWNER = "owner",
+  MEMBER = "member",
+}
+
+export enum SourceTypeEnum {
+  SCAN = "scan",
+  PASTE = "paste",
+  UPLOAD_FILE = "upload_file",
+  UPLOAD_FOLDER = "upload_folder",
+  REPOSITORY = "repository",
+}
+
+export interface CreateTeamBody {
+  name: string;
+}
+
+export interface UpdateTeamBody {
+  name: string;
+}
+
+export interface InviteMemberBody {
+  members: {
+    identifier: string; // Can be email or wallet address
+    role: MemberRoleEnum;
+  }[];
+}
+
+export interface UpdateMemberBody {
+  role: MemberRoleEnum;
+}
+
+export interface CreateProjectBody {
+  name: string;
+  description?: string;
+  tags?: string[];
+}
+
+export interface MemberSchema {
+  id: string;
+  created_at: string;
+  team_id: string;
+  user_id: string;
+  role: MemberRoleEnum;
+  identifier: string;
+  can_remove: boolean;
+  can_update: boolean;
+}
+
+export interface CodeProjectSchema {
+  id: string;
+  created_at: string;
+  team_id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  tags: string[];
+  n_versions: number;
+  n_audits: number;
+}
+
+export interface InitialUserObject {
+  isAuthenticated: boolean;
+  userId?: string;
+  teams: TeamSchemaI[];
+  projects: CodeProjectSchema[];
+}
+
+export interface MemberInviteSchema {
+  id: string;
+  created_at: string;
+  team_id: string;
+  user_id?: string;
+  identifier: string;
+  role: MemberRoleEnum;
+}
+
+export interface CodeVersionSchema {
+  id: string;
+  created_at: string;
+  network?: string;
+  version_method: string;
+  version_identifier: string;
+  source_type: SourceTypeEnum;
+  source_url?: string;
+  solc_version?: string;
+  is_code_available: boolean;
+}
+
+type Permission = "all" | "read" | "write" | "none";
+
+export interface AuthPermissionSchema {
+  team: Permission;
+  project: Permission;
+  contract: Permission;
+  audit: Permission;
+  user: Permission;
+  chat: Permission;
+}
+
+export interface AuthSchema {
+  id: string;
+  created_at: string;
+  team_id: string;
+  name: string;
+  permissions: AuthPermissionSchema;
+}
+
+export type HrefProps = {
+  teamSlug?: string;
+  projectSlug?: string;
+  versionId?: string;
+  auditId?: string;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type AsyncComponent<P = {}> = AsyncFunctionComponent<P>;
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface AsyncFunctionComponent<P = {}> {
+  (props: P): Promise<JSX.Element>;
 }

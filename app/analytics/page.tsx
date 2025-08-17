@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { LoadWaifu } from "@/components/ui/loader";
 import MetricCard from "@/components/ui/metric-card";
 import { cn } from "@/lib/utils";
+import { AsyncComponent } from "@/utils/types";
 import { BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
-const Stats = async (): Promise<JSX.Element> => {
+const Stats: AsyncComponent = async () => {
   const data = await bevorAction.getStats();
   const auditsTs = await bevorAction.getTimeseriesAudits();
   const usersTs = await bevorAction.getTimeseriesUsers();

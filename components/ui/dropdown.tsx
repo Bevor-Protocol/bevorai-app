@@ -33,8 +33,22 @@ export const Main: React.FC<Props> = ({ children, className, ...rest }) => {
   );
 };
 
-export const Trigger: React.FC<Props> = ({ children, ...rest }) => {
-  return <div {...rest}>{children}</div>;
+export const Trigger: React.FC<Props & { isDisabled?: boolean }> = ({
+  children,
+  onClick,
+  isDisabled = false,
+  className,
+  ...rest
+}) => {
+  return (
+    <div
+      onClick={!isDisabled ? onClick : undefined}
+      className={cn(isDisabled && "cursor-not-allowed", className)}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
 };
 
 Trigger.displayName = "Dropdown.Trigger";

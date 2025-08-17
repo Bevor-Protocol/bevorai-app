@@ -1,61 +1,65 @@
 "use server";
 
-import authController from "@/actions/auth/auth.controller";
+import apiKeyService from "@/actions/bevor/api-key.service";
 import {
   AppSearchResponseI,
-  AuditResponseI,
+  AuditFindingsResponseI,
+  AuditSchemaI,
   AuditStatusResponseI,
   AuditTableReponseI,
   AuditWithChildrenResponseI,
+  AuthSchema,
   ChatMessagesResponseI,
   ChatResponseI,
   ChatWithAuditResponseI,
+  CodeProjectSchema,
+  CodeVersionSchema,
   ContractResponseI,
   ContractSourceResponseI,
-  ContractVersionI,
+  ContractVersionSourceI,
+  ContractVersionSourceTrimI,
+  CreateProjectBody,
+  CreateTeamBody,
   CreditSyncResponseI,
   FunctionChunkResponseI,
+  InviteMemberBody,
+  MemberInviteSchema,
+  MemberSchema,
   MultiTimeseriesResponseI,
   PromptResponseI,
   StatsResponseI,
+  TeamSchemaI,
   TimeseriesResponseI,
   TreeResponseI,
+  UpdateMemberBody,
+  UpdateTeamBody,
   UserInfoResponseI,
   UserSearchResponseI,
   UserTimeseriesResponseI,
 } from "@/utils/types";
-import bevorService from "./bevor.service";
+import adminService from "./admin.service";
+import auditService from "./audit.service";
+import chatService from "./chat.service";
+import projectService from "./project.service";
+import teamService from "./team.service";
+import userService from "./user.service";
+import versionService from "./version.service";
 
+// Admin Operations
 const isAdmin = async (): Promise<boolean> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    return Promise.resolve(false);
-  }
-  return bevorService.isAdmin(user.user_id);
+  return adminService.isAdmin();
 };
 
 const searchUsers = async (identifier: string): Promise<UserSearchResponseI[]> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.searchUsers(identifier, user.user_id);
+  return adminService.searchUsers(identifier);
 };
 
 const searchApps = async (identifier: string): Promise<AppSearchResponseI[]> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.searchApps(identifier, user.user_id);
+  return adminService.searchApps(identifier);
 };
 
 const getAuditWithChildren = async (id: string): Promise<AuditWithChildrenResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getAuditWithChildren(id, user.user_id);
+  return adminService.getAuditWithChildren(id);
 };
 
 const updateUserPermissions = async (data: {
@@ -63,11 +67,7 @@ const updateUserPermissions = async (data: {
   canCreateApp: boolean;
   canCreateApiKey: boolean;
 }): Promise<boolean> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.updateUserPermissions({ ...data, userId: user.user_id });
+  return adminService.updateUserPermissions(data);
 };
 
 const updateAppPermissions = async (data: {
@@ -75,254 +75,11 @@ const updateAppPermissions = async (data: {
   canCreateApp: boolean;
   canCreateApiKey: boolean;
 }): Promise<boolean> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.updateAppPermissions({ ...data, userId: user.user_id });
-};
-
-const initiateAudit = async (
-  projectId: string,
-  versionId: string,
-  scopes: { identifier: string; level: string }[],
-): Promise<{
-  id: string;
-  status: string;
-}> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.initiateAudit(projectId, versionId, scopes, user.user_id);
-};
-
-const getAudit = async (id: string): Promise<AuditResponseI> => {
-  // const user = await authController.currentUser();
-  // if (!user) {
-  //   throw new Error("user is not signed in with ethereum");
-  // }
-  return bevorService.getAudit(id);
-};
-
-const getAuditStatus = async (id: string): Promise<AuditStatusResponseI> => {
-  // const user = await authController.currentUser();
-  // if (!user) {
-  //   throw new Error("user is not signed in with ethereum");
-  // }
-  return bevorService.getAuditStatus(id);
-};
-
-const syncCredits = async (): Promise<CreditSyncResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.syncCredits(user.user_id);
-};
-
-const contractUploadFolder = async (fileMap: Record<string, File>): Promise<ContractResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.contractUploadFolder(fileMap, user.user_id);
-};
-
-const contractUploadFile = async (file: File): Promise<ContractResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.contractUploadFile(file, user.user_id);
-};
-
-const contractUploadScan = async (address: string): Promise<ContractResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.contractUploadScan(address, user.user_id);
-};
-
-const contractUploadPaste = async (code: string): Promise<ContractResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.contractUploadPaste(code, user.user_id);
-};
-
-const getContractVersion = async (versionId: string): Promise<ContractVersionI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getContractVersion(versionId, user.user_id);
-};
-
-const getContractTree = async (versionId: string): Promise<TreeResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getContractTree(versionId, user.user_id);
-};
-
-const getContractSources = async (versionId: string): Promise<ContractSourceResponseI[]> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getContractSources(versionId, user.user_id);
-};
-
-const getFunctionChunk = async (functionId: string): Promise<FunctionChunkResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getFunctionChunk(functionId, user.user_id);
-};
-
-const submitFeedback = async (
-  id: string,
-  feedback?: string,
-  verified?: boolean,
-): Promise<{ success: boolean }> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.submitFeedback(id, user.user_id, feedback, verified);
-};
-
-const getCurrentGas = async (): Promise<number> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getCurrentGas(user.user_id);
-};
-
-const getAudits = async (filters: { [key: string]: string }): Promise<AuditTableReponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getAudits(filters);
-};
-
-const getStats = async (): Promise<StatsResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getStats();
-};
-
-const getTimeseriesAudits = async (): Promise<TimeseriesResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getTimeseriesAudits();
-};
-
-const getTimeseriesContracts = async (): Promise<TimeseriesResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getTimeseriesContracts();
-};
-
-const getTimeseriesUsers = async (): Promise<TimeseriesResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getTimeseriesUsers();
-};
-
-const getTimeseriesFindings = async (type: string): Promise<MultiTimeseriesResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getTimeseriesFindings(type);
-};
-
-const getUserInfo = async (): Promise<UserInfoResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getUserInfo(user.user_id);
-};
-
-const getUserTimeSeries = async (): Promise<UserTimeseriesResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getUserTimeSeries(user.user_id);
-};
-
-const generateApiKey = async (type: "user" | "app"): Promise<string> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.generateApiKey(type, user.user_id);
-};
-
-const generateApp = async (name: string): Promise<string> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.generateApp(name, user.user_id);
-};
-
-const updateApp = async (name: string): Promise<string> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.updateApp(name, user.user_id);
+  return adminService.updateAppPermissions(data);
 };
 
 const getPrompts = async (): Promise<PromptResponseI[]> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getPrompts(user.user_id);
-};
-
-const initiateChat = async (auditId: string): Promise<ChatResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.initiateChat(user.user_id, auditId);
-};
-
-const getChats = async (): Promise<ChatWithAuditResponseI[]> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getChats(user.user_id);
-};
-
-const getChat = async (chatId: string): Promise<ChatMessagesResponseI> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.getChat(user.user_id, chatId);
+  return adminService.getPrompts();
 };
 
 const addPrompt = async (data: {
@@ -332,11 +89,7 @@ const addPrompt = async (data: {
   version: string;
   is_active?: boolean;
 }): Promise<string> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.addPrompt({ ...data, userId: user.user_id });
+  return adminService.addPrompt(data);
 };
 
 const updatePrompt = async (data: {
@@ -346,23 +99,265 @@ const updatePrompt = async (data: {
   version?: string;
   is_active?: boolean;
 }): Promise<boolean> => {
-  const user = await authController.currentUser();
-  if (!user) {
-    throw new Error("user is not signed in with ethereum");
-  }
-  return bevorService.updatePrompt({ ...data, userId: user.user_id });
+  return adminService.updatePrompt(data);
+};
+
+// Audit Operations
+const initiateAudit = async (
+  versionId: string,
+  scopes: { identifier: string; level: string }[],
+): Promise<{
+  id: string;
+  status: string;
+}> => {
+  return auditService.initiateAudit(versionId, scopes);
+};
+
+const getAudit = async (auditId: string): Promise<AuditSchemaI> => {
+  return auditService.getAudit(auditId);
+};
+
+const getAuditFindings = async (auditId: string): Promise<AuditFindingsResponseI> => {
+  return auditService.getAuditFindings(auditId);
+};
+
+const getAuditScope = async (auditId: string): Promise<TreeResponseI[]> => {
+  return auditService.getAuditScope(auditId);
+};
+
+const getAuditStatus = async (id: string): Promise<AuditStatusResponseI> => {
+  return auditService.getAuditStatus(id);
+};
+
+const submitFeedback = async (
+  id: string,
+  feedback?: string,
+  verified?: boolean,
+): Promise<{ success: boolean }> => {
+  return auditService.submitFeedback(id, feedback, verified);
+};
+
+const getAudits = async (filters: { [key: string]: string }): Promise<AuditTableReponseI> => {
+  return auditService.getAudits(filters);
+};
+
+// Contract Operations
+const contractUploadFolder = async (fileMap: Record<string, File>): Promise<ContractResponseI> => {
+  return versionService.contractUploadFolder(fileMap);
+};
+
+const contractUploadFile = async (file: File): Promise<ContractResponseI> => {
+  return versionService.contractUploadFile(file);
+};
+
+const contractUploadScan = async (
+  address: string,
+  projectId: string,
+): Promise<ContractResponseI> => {
+  return versionService.contractUploadScan({
+    address,
+    projectId,
+  });
+};
+
+const contractUploadPaste = async (code: string): Promise<ContractResponseI> => {
+  return versionService.contractUploadPaste(code);
+};
+
+const getContractVersion = async (versionId: string): Promise<CodeVersionSchema> => {
+  return versionService.getContractVersion(versionId);
+};
+
+const getContractVersionSources = async (
+  versionId: string,
+): Promise<ContractVersionSourceTrimI[]> => {
+  return versionService.getContractVersionSources(versionId);
+};
+
+const getContractVersionSource = async (
+  sourceId: string,
+  versionId: string,
+): Promise<ContractVersionSourceI> => {
+  return versionService.getContractVersionSource(sourceId, versionId);
+};
+
+const getContractTree = async (versionId: string): Promise<TreeResponseI[]> => {
+  return versionService.getContractTree(versionId);
+};
+
+const getContractSources = async (versionId: string): Promise<ContractSourceResponseI[]> => {
+  return versionService.getContractSources(versionId);
+};
+
+const getFunctionChunk = async (functionId: string): Promise<FunctionChunkResponseI> => {
+  return versionService.getFunctionChunk(functionId);
+};
+
+// Chat Operations
+const initiateChat = async (auditId: string): Promise<ChatResponseI> => {
+  return chatService.initiateChat(auditId);
+};
+
+const getChats = async (): Promise<ChatWithAuditResponseI[]> => {
+  return chatService.getChats();
+};
+
+const getChat = async (chatId: string): Promise<ChatMessagesResponseI> => {
+  return chatService.getChat(chatId);
+};
+
+// Team Operations
+const createTeam = async (data: CreateTeamBody): Promise<string> => {
+  return teamService.createTeam(data);
+};
+
+const getTeams = async (): Promise<TeamSchemaI[]> => {
+  return teamService.getTeams();
+};
+
+const getTeamBySlug = async (teamSlug: string): Promise<TeamSchemaI> => {
+  return teamService.getTeamBySlug(teamSlug);
+};
+
+const deleteTeam = async (): Promise<boolean> => {
+  return teamService.deleteTeam();
+};
+
+const updateTeam = async (data: UpdateTeamBody): Promise<TeamSchemaI> => {
+  return teamService.updateTeam(data);
+};
+
+const getInvites = async (): Promise<MemberInviteSchema[]> => {
+  return teamService.getInvites();
+};
+
+const inviteMembers = async (data: InviteMemberBody): Promise<boolean> => {
+  return teamService.inviteMembers(data);
+};
+
+const removeInvite = async (inviteId: string): Promise<boolean> => {
+  return teamService.removeInvite(inviteId);
+};
+
+const acceptInvite = async (inviteId: string): Promise<string> => {
+  return teamService.acceptInvite(inviteId);
+};
+
+const updateMember = async (memberId: string, data: UpdateMemberBody): Promise<boolean> => {
+  return teamService.updateMember(memberId, data);
+};
+
+const removeMember = async (memberId: string): Promise<boolean> => {
+  return teamService.removeMember(memberId);
+};
+
+const getMembers = async (): Promise<MemberSchema[]> => {
+  return teamService.getMembers();
+};
+
+const getCurrentMember = async (): Promise<MemberSchema> => {
+  return teamService.getCurrentMember();
+};
+
+// Project Operations
+const createProject = async (data: CreateProjectBody): Promise<string> => {
+  return projectService.createProject(data);
+};
+
+const getProjects = async (): Promise<CodeProjectSchema[]> => {
+  return projectService.getProjects();
+};
+
+const getProject = async (projectId: string): Promise<CodeProjectSchema> => {
+  return projectService.getProject(projectId);
+};
+
+const getProjectBySlug = async (projectSlug: string): Promise<CodeProjectSchema> => {
+  return projectService.getProjectBySlug(projectSlug);
+};
+
+const getAllProjects = async (): Promise<CodeProjectSchema[]> => {
+  return projectService.getAllProjects();
+};
+
+const deleteProject = async (projectId: string): Promise<boolean> => {
+  return projectService.deleteProject(projectId);
+};
+
+const getVersions = async (projectId: string): Promise<CodeVersionSchema[]> => {
+  return projectService.getVersions(projectId);
+};
+
+// User Operations
+const syncCredits = async (): Promise<CreditSyncResponseI> => {
+  return userService.syncCredits();
+};
+
+const getCurrentGas = async (): Promise<number> => {
+  return userService.getCurrentGas();
+};
+
+const getStats = async (): Promise<StatsResponseI> => {
+  return userService.getStats();
+};
+
+const getTimeseriesAudits = async (): Promise<TimeseriesResponseI> => {
+  return userService.getTimeseriesAudits();
+};
+
+const getTimeseriesContracts = async (): Promise<TimeseriesResponseI> => {
+  return userService.getTimeseriesContracts();
+};
+
+const getTimeseriesUsers = async (): Promise<TimeseriesResponseI> => {
+  return userService.getTimeseriesUsers();
+};
+
+const getTimeseriesFindings = async (type: string): Promise<MultiTimeseriesResponseI> => {
+  return userService.getTimeseriesFindings(type);
+};
+
+const getUserInfo = async (): Promise<UserInfoResponseI> => {
+  return userService.getUserInfo();
+};
+
+const getUserTimeSeries = async (): Promise<UserTimeseriesResponseI> => {
+  return userService.getUserTimeSeries();
+};
+
+const listKeys = async (): Promise<AuthSchema[]> => {
+  return apiKeyService.listKeys();
+};
+
+const createKey = async (name: string): Promise<{ api_key: string }> => {
+  return apiKeyService.createKey({ name });
+};
+
+const refreshKey = async (keyId: string): Promise<{ api_key: string }> => {
+  return apiKeyService.refreshKey(keyId);
+};
+
+const revokeKey = async (keyId: string): Promise<boolean> => {
+  return apiKeyService.revokeKey(keyId);
 };
 
 export {
+  acceptInvite,
   addPrompt,
   contractUploadFile,
   contractUploadFolder,
   contractUploadPaste,
   contractUploadScan,
-  generateApiKey,
-  generateApp,
+  createKey,
+  createProject,
+  createTeam,
+  deleteProject,
+  deleteTeam,
+  getAllProjects,
   getAudit,
+  getAuditFindings,
   getAudits,
+  getAuditScope,
   getAuditStatus,
   getAuditWithChildren,
   getChat,
@@ -370,25 +365,43 @@ export {
   getContractSources,
   getContractTree,
   getContractVersion,
+  getContractVersionSource,
+  getContractVersionSources,
   getCurrentGas,
+  getCurrentMember,
   getFunctionChunk,
+  getInvites,
+  getMembers,
+  getProject,
+  getProjectBySlug,
+  getProjects,
   getPrompts,
   getStats,
+  getTeamBySlug,
+  getTeams,
   getTimeseriesAudits,
   getTimeseriesContracts,
   getTimeseriesFindings,
   getTimeseriesUsers,
   getUserInfo,
   getUserTimeSeries,
+  getVersions,
   initiateAudit,
   initiateChat,
+  inviteMembers,
   isAdmin,
+  listKeys,
+  refreshKey,
+  removeInvite,
+  removeMember,
+  revokeKey,
   searchApps,
   searchUsers,
   submitFeedback,
   syncCredits,
-  updateApp,
   updateAppPermissions,
+  updateMember,
   updatePrompt,
+  updateTeam,
   updateUserPermissions,
 };

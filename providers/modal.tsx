@@ -10,7 +10,7 @@ export const ModalContext = createContext<ModalContextI>({
   setContent: () => {},
 });
 
-const ModalProvider = ({ children }: { children: React.ReactNode }): JSX.Element => {
+const ModalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [open, setOpen] = useState<"modal" | "none">("none");
   const [content, setContent] = useState<React.ReactNode>(null);
 

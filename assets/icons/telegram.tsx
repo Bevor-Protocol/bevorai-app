@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { SVGProps } from "react";
 
-const Telegram = (props: SVGProps<SVGSVGElement>): JSX.Element => {
+const Telegram: React.FC<SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
