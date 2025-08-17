@@ -6,7 +6,7 @@ import { AsyncComponent } from "@/utils/types";
 import { Suspense } from "react";
 import { CreditSync } from "./settings/linked-accounts-client";
 
-const Loading = () => {
+const Loading: React.FC = () => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <Skeleton className="rounded-lg h-14" />
