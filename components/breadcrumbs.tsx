@@ -13,12 +13,13 @@ import { CodeProjectSchema, HrefProps, InitialUserObject, TeamSchemaI } from "@/
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ChevronsUpDown, Code, Plus } from "lucide-react";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useSelectedLayoutSegments } from "next/navigation";
 import React, { useMemo, useReducer, useRef, useState } from "react";
 
 const genericToggleReducer = (s: boolean): boolean => !s;
 
 const Breadcrumbs: React.FC<{ userObject: InitialUserObject }> = ({ userObject }) => {
+  const isErrorPage = useSelectedLayoutSegments().includes("error");
   const params = useParams<HrefProps>();
   const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
@@ -77,7 +78,7 @@ const Breadcrumbs: React.FC<{ userObject: InitialUserObject }> = ({ userObject }
           </button>
         </div>
       )}
-      {params.teamSlug && (
+      {!isErrorPage && params.teamSlug && (
         <div className="flex flex-row gap-1 items-center text-sm">
           <Link
             href={navigation.team.overview(params)}
@@ -95,7 +96,7 @@ const Breadcrumbs: React.FC<{ userObject: InitialUserObject }> = ({ userObject }
           </button>
         </div>
       )}
-      {params.projectSlug && (
+      {!isErrorPage && params.projectSlug && (
         <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider">
           <Link href={navigation.project.overview(params)} className="flex flex-row gap-2">
             <span>{project?.name}</span>
@@ -108,7 +109,7 @@ const Breadcrumbs: React.FC<{ userObject: InitialUserObject }> = ({ userObject }
           </button>
         </div>
       )}
-      {params.versionId && (
+      {!isErrorPage && params.versionId && (
         <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider">
           <span className="w-2 h-2 bg-green-400 rounded-full" />
           <Link href={navigation.version.overview(params)} className="flex flex-row gap-2">
@@ -116,7 +117,7 @@ const Breadcrumbs: React.FC<{ userObject: InitialUserObject }> = ({ userObject }
           </Link>
         </div>
       )}
-      {params.auditId && (
+      {!isErrorPage && params.auditId && (
         <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider ml-2">
           <span className="w-2 h-2 bg-orange-400 rounded-full" />
           <Link href={navigation.audit.overview(params)} className="flex flex-row gap-2">

@@ -27,9 +27,11 @@ class ProjectService {
   }
 
   async getAllProjects(): Promise<CodeProjectSchema[]> {
-    return api.get("/projects/admin/all").then((response: any) => {
-      return response.data.results;
-    });
+    return api
+      .get("/projects/admin/all", { headers: { "skip-team": true } })
+      .then((response: any) => {
+        return response.data.results;
+      });
   }
 
   async deleteProject(projectId: string): Promise<boolean> {

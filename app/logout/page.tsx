@@ -1,22 +1,28 @@
 "use client";
 
-import { bevorAction } from "@/actions";
 import { Loader } from "@/components/ui/loader";
 import { useLogout, usePrivy } from "@privy-io/react-auth";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const LogoutPage: React.FC = () => {
-  const { ready } = usePrivy();
+  const router = useRouter();
+  const { ready, authenticated } = usePrivy();
   const { logout } = useLogout();
   useEffect(() => {
     if (!ready) return;
     const fullLogout = async (): Promise<void> => {
-      // swap these, the redirect is in the server action.
-      await bevorAction.logout();
-      await logout();
+      // assume that user-initiated logouts contain their own logic.
+      // middleware-determined logouts managed out session logic internally, and this is just a
+      // pass through to log out of privy.
+      if (authenticated) {
+        // will throw an error otherwise.
+        await logout();
+      }
+      router.push("/sign-in");
     };
     fullLogout();
-  }, [ready]);
+  }, [ready, logout]);
   return (
     <div className="flex justify-center items-center fill-remaining-height">
       <Loader className="w-10 h-10" />

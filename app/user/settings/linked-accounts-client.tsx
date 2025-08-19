@@ -9,6 +9,8 @@ import {
   WalletWithMetadata,
 } from "@privy-io/react-auth";
 import { Chrome, Mail, Plus, RefreshCcw, Unlink, Wallet } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface AccountProps {
   isLoading?: boolean;
@@ -219,7 +221,15 @@ const WalletAccount: React.FC<AccountProps & { linkedAccounts: WalletWithMetadat
 };
 
 const LinkedAccountsClient: React.FC = () => {
-  const { user, ready } = usePrivy();
+  const router = useRouter();
+  const { user, ready, authenticated } = usePrivy();
+  useEffect(() => {
+    if (!ready) return;
+    if (!authenticated) {
+      router.push("/sign-in?method=privy");
+    }
+  }, [ready, authenticated]);
+
   const linkedAccounts = user?.linkedAccounts ?? [];
   const canUnlink = linkedAccounts.length >= 2;
 

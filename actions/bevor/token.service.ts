@@ -11,21 +11,27 @@ class TokenService {
   }
 
   async issueToken(): Promise<TokenIssueResponse> {
+    // handshake between IDP and my server
     return idpApi.post("/token/issue").then((response) => {
       return response.data;
     });
   }
 
   async refreshToken(refreshToken: string): Promise<TokenIssueResponse> {
-    return idpApi.post("/token/refresh", { refresh_token: refreshToken }).then((response) => {
-      return response.data;
-    });
+    // does not require authorization. We'll look for session expiry and valid refresh tokens in the api.
+    return api
+      .post("/token/refresh", { refresh_token: refreshToken }, { headers: { "skip-auth": true } })
+      .then((response) => {
+        return response.data;
+      });
   }
 
-  async revokeToken(): Promise<boolean> {
-    return api.post("/token/revoke").then((response) => {
-      return response.data.success;
-    });
+  async revokeToken(refreshToken: string): Promise<boolean> {
+    return api
+      .post("/token/revoke", { refresh_token: refreshToken }, { headers: { "skip-auth": true } })
+      .then((response) => {
+        return response.data.success;
+      });
   }
 
   async revokeAllTokens(): Promise<boolean> {
@@ -34,7 +40,7 @@ class TokenService {
     });
   }
 
-  async setSessionToken(token: TokenIssueResponse) {
+  async setSessionToken(token: TokenIssueResponse): Promise<void> {
     const cookieStore = await cookies();
     const cookieMetadata: Partial<ResponseCookie> = {
       httpOnly: true,

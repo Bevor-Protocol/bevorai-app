@@ -1,4 +1,4 @@
-import Layout from "@/components/ui/layout";
+import Layout from "@/components/layout";
 import ModalProvider from "@/providers/modal";
 import { PrivyWrapper } from "@/providers/privy";
 import QueryProvider from "@/providers/query";

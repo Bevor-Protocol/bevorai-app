@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { cookies, headers } from "next/headers";
 
 const api = axios.create({
@@ -7,16 +7,28 @@ const api = axios.create({
 
 // Add request interceptor to inject session token
 api.interceptors.request.use(async (config) => {
+  if (config.headers.has("skip-auth")) {
+    return config;
+  }
   const cookieStore = await cookies();
   const headerStore = await headers();
   const sessionToken = cookieStore.get("bevor-token")?.value;
   const teamSlug = headerStore.get("bevor-team-slug");
   if (!sessionToken) {
-    // this COULD mean that it expired as well.
-    throw new Error("no_session_token");
+    // just mock an actual api response, so we can handle this, and api responses that are errors, the same.
+    throw new AxiosError("no session token", "ERR_BAD_REQUEST", undefined, null, {
+      status: 401,
+      statusText: "Unauthorized",
+      headers: {},
+      config: config, // your axios config if needed
+      data: {
+        code: "session_token_expired", // 👈 what you want to catch later
+        message: "Session token is missing or expired",
+      },
+    });
   }
   config.headers["Authorization"] = `Bearer ${sessionToken}`;
-  if (teamSlug) {
+  if (teamSlug && !config.headers.has("skip-team")) {
     config.headers["Bevor-Team-Slug"] = teamSlug;
   }
   return config;

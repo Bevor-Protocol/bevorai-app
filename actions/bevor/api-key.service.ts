@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import { AuthSchema } from "@/utils/types";
+import { AuthSchema, CreateKeyBody } from "@/utils/types";
 
 class ApiKeyService {
   async listKeys(): Promise<AuthSchema[]> {
@@ -8,7 +8,7 @@ class ApiKeyService {
     });
   }
 
-  async createKey(data: { name: string }): Promise<{ api_key: string }> {
+  async createKey(data: CreateKeyBody): Promise<{ api_key: string }> {
     return api.post("/auth", data).then((response: any) => {
       return response.data;
     });

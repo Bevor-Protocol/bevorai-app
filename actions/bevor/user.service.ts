@@ -1,4 +1,4 @@
-import api, { idpApi } from "@/lib/api";
+import api from "@/lib/api";
 import {
   CreditSyncResponseI,
   MultiTimeseriesResponseI,
@@ -10,15 +10,9 @@ import {
 } from "@/utils/types";
 
 class UserService {
-  async createUser(privyId: string): Promise<UserSchemaI> {
-    return idpApi.post("/user", { provider_id: privyId }).then((response) => {
-      return response.data;
-    });
-  }
-
   async getUser(): Promise<UserSchemaI | null> {
     return api
-      .get("/user")
+      .get("/user", { headers: { "skip-team": true } })
       .then((response) => {
         return response.data;
       })
@@ -26,19 +20,19 @@ class UserService {
   }
 
   async syncCredits(): Promise<CreditSyncResponseI> {
-    return api.post("/auth/sync/credits", {}).then((response) => {
+    return api.post("/auth/sync/credits", { headers: { "skip-team": true } }).then((response) => {
       return response.data;
     });
   }
 
   async getCurrentGas(): Promise<number> {
-    return api.post("/blockchain/gas", {}).then((response) => {
+    return api.post("/blockchain/gas", { headers: { "skip-team": true } }).then((response) => {
       return response.data;
     });
   }
 
   async getStats(): Promise<StatsResponseI> {
-    return api.get("/platform/stats").then((response) => {
+    return api.get("/platform/stats", { headers: { "skip-team": true } }).then((response) => {
       return response.data;
     });
   }

@@ -5,33 +5,25 @@ import ShowApiKeyModal from "@/components/Modal/show-api-key";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useModal } from "@/hooks/useContexts";
+import { CreateKeyBody } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Key, X } from "lucide-react";
 import React, { useState } from "react";
 
-interface CreateApiKeyData {
-  name: string;
-  scopes: {
-    project: "read" | "write" | "all" | "none";
-    contract: "read" | "write" | "all" | "none";
-    audit: "read" | "write" | "all" | "none";
-  };
-}
-
 const CreateApiKeyModal: React.FC = () => {
   const queryClient = useQueryClient();
   const { show, hide } = useModal();
-  const [createForm, setCreateForm] = useState<CreateApiKeyData>({
+  const [createForm, setCreateForm] = useState<CreateKeyBody>({
     name: "",
-    scopes: {
-      project: "read",
-      contract: "all",
-      audit: "all",
+    permissions: {
+      project: "write",
+      contract: "write",
+      audit: "write",
     },
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async (data: CreateApiKeyData) => bevorAction.createKey(data.name),
+    mutationFn: async (data: CreateKeyBody) => bevorAction.createKey(data),
     onSuccess: ({ api_key }) => {
       show(<ShowApiKeyModal apiKey={api_key} />);
       queryClient.invalidateQueries({ queryKey: ["team-api-keys"] });
@@ -46,8 +38,6 @@ const CreateApiKeyModal: React.FC = () => {
 
   const getScopeLabel = (scope: string): string => {
     switch (scope) {
-      case "all":
-        return "All";
       case "read":
         return "Read";
       case "write":
@@ -108,18 +98,18 @@ const CreateApiKeyModal: React.FC = () => {
                 Project Access
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {(["read", "write", "all", "none"] as const).map((scope) => (
+                {(["read", "write", "none"] as const).map((scope) => (
                   <button
                     key={scope}
                     type="button"
                     onClick={() =>
                       setCreateForm({
                         ...createForm,
-                        scopes: { ...createForm.scopes, project: scope },
+                        permissions: { ...createForm.permissions, project: scope },
                       })
                     }
                     className={`px-3 py-2 text-xs rounded border transition-colors ${
-                      createForm.scopes.project === scope
+                      createForm.permissions.project === scope
                         ? "border-blue-500 bg-blue-500/10 text-blue-400"
                         : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
                     }`}
@@ -135,18 +125,18 @@ const CreateApiKeyModal: React.FC = () => {
                 Contract Access
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {(["read", "write", "all", "none"] as const).map((scope) => (
+                {(["read", "write", "none"] as const).map((scope) => (
                   <button
                     key={scope}
                     type="button"
                     onClick={() =>
                       setCreateForm({
                         ...createForm,
-                        scopes: { ...createForm.scopes, contract: scope },
+                        permissions: { ...createForm.permissions, contract: scope },
                       })
                     }
                     className={`px-3 py-2 text-xs rounded border transition-colors ${
-                      createForm.scopes.contract === scope
+                      createForm.permissions.contract === scope
                         ? "border-blue-500 bg-blue-500/10 text-blue-400"
                         : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
                     }`}
@@ -162,18 +152,18 @@ const CreateApiKeyModal: React.FC = () => {
                 Audit Access
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {(["read", "write", "all", "none"] as const).map((scope) => (
+                {(["read", "write", "none"] as const).map((scope) => (
                   <button
                     key={scope}
                     type="button"
                     onClick={() =>
                       setCreateForm({
                         ...createForm,
-                        scopes: { ...createForm.scopes, audit: scope },
+                        permissions: { ...createForm.permissions, audit: scope },
                       })
                     }
                     className={`px-3 py-2 text-xs rounded border transition-colors ${
-                      createForm.scopes.audit === scope
+                      createForm.permissions.audit === scope
                         ? "border-blue-500 bg-blue-500/10 text-blue-400"
                         : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
                     }`}

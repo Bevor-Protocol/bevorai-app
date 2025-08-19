@@ -19,6 +19,7 @@ import {
   ContractSourceResponseI,
   ContractVersionSourceI,
   ContractVersionSourceTrimI,
+  CreateKeyBody,
   CreateProjectBody,
   CreateTeamBody,
   CreditSyncResponseI,
@@ -211,7 +212,7 @@ const getChat = async (chatId: string): Promise<ChatMessagesResponseI> => {
 };
 
 // Team Operations
-const createTeam = async (data: CreateTeamBody): Promise<string> => {
+const createTeam = async (data: CreateTeamBody): Promise<TeamSchemaI> => {
   return teamService.createTeam(data);
 };
 
@@ -336,8 +337,8 @@ const listKeys = async (): Promise<AuthSchema[]> => {
   return apiKeyService.listKeys();
 };
 
-const createKey = async (name: string): Promise<{ api_key: string }> => {
-  return apiKeyService.createKey({ name });
+const createKey = async (data: CreateKeyBody): Promise<{ api_key: string }> => {
+  return apiKeyService.createKey(data);
 };
 
 const refreshKey = async (keyId: string): Promise<{ api_key: string }> => {
@@ -348,23 +349,38 @@ const revokeKey = async (keyId: string): Promise<boolean> => {
   return apiKeyService.revokeKey(keyId);
 };
 
-const login = async (idpUserId: string): Promise<void> => {
-  // in response to some user action. Not accessible in middleware
+const login = async (): Promise<boolean> => {
+  // in response to some user action. Not accessible in middleware.
+  // try to make this atomic with IDP login.
   console.log("IS LOGGING USER IN");
-  await userService.createUser(idpUserId);
-  const token = await tokenService.issueToken();
-  await tokenService.setSessionToken(token);
-  // const teams = await teamService.getTeams();
-
-  // redirect here, instead of on the client. This ensures the cookie is available in the middleware
-  redirect("/teams");
+  let attempts = 0;
+  let success = false;
+  const maxAttempts = 2;
+  while (attempts < maxAttempts && !success) {
+    try {
+      const token = await tokenService.issueToken();
+      await tokenService.setSessionToken(token);
+      success = true;
+    } catch {
+      attempts++;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  if (success) {
+    // this raises an error, so don't use it in a try catch.
+    redirect("/teams");
+  }
+  return false;
 };
 
 const logout = async (): Promise<void> => {
   // in response to some user action. Not accessible in middleware
   console.log("logging user out");
   const cookieStore = await cookies();
-  await tokenService.revokeToken();
+  const refreshToken = cookieStore.get("bevor-refresh-token");
+  if (refreshToken) {
+    await tokenService.revokeToken(refreshToken.value);
+  }
   // called in conjunction with IDP, don't worry about delete their cookies
   cookieStore.delete("bevor-token");
   cookieStore.delete("bevor-refresh-token");

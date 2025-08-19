@@ -3,6 +3,7 @@
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { navigation } from "@/utils/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -17,28 +18,22 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ onClose }) => {
   const queryClient = useQueryClient();
   const [teamName, setTeamName] = useState("");
 
-  const {
-    mutate,
-    error,
-    isSuccess,
-    data: teamId,
-    isPending,
-  } = useMutation({
+  const { mutate, error, isSuccess, data, isPending } = useMutation({
     mutationFn: async (data: { name: string }) => bevorAction.createTeam(data),
   });
 
   useEffect(() => {
-    if (!isSuccess || !teamId) return;
+    if (!isSuccess || !data) return;
     queryClient.invalidateQueries({ queryKey: ["teams"] });
     const timeout = setTimeout(() => {
       // Refresh the page to get updated team list and redirect to the new team
-      router.push(`/teams/${teamId}`);
+      router.push(navigation.team.overview({ teamSlug: data.slug }));
       onClose();
     }, 1000);
 
     return (): void => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, teamId]);
+  }, [isSuccess, data]);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();

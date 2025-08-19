@@ -319,6 +319,15 @@ export enum SourceTypeEnum {
   REPOSITORY = "repository",
 }
 
+export interface CreateKeyBody {
+  name: string;
+  permissions: {
+    project: "read" | "write" | "none";
+    contract: "read" | "write" | "none";
+    audit: "read" | "write" | "none";
+  };
+}
+
 export interface CreateTeamBody {
   name: string;
 }

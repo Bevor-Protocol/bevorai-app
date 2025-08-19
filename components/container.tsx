@@ -9,6 +9,7 @@ import { useMemo } from "react";
 type NavItemProp = {
   name: string;
   href: (data: HrefProps) => string;
+  isActive?: (data: HrefProps, pathname: string) => boolean;
 };
 
 const navigationItemsUser: NavItemProp[] = [
@@ -30,6 +31,7 @@ const navigationItemsTeam: NavItemProp[] = [
   {
     name: "Settings",
     href: navigation.team.settings.overview,
+    isActive: (data, pathname) => pathname.startsWith(navigation.team.settings.overview(data)),
   },
   // {
   //   name: "Audits",
@@ -98,8 +100,10 @@ const Container: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const params = useParams<HrefProps>();
   const navigationItemsFiltered = useMemo(() => {
-    let items = navigationItemsUser;
-    if (params.auditId) {
+    let items: NavItemProp[] = [];
+    if (pathname.startsWith("/user")) {
+      items = navigationItemsUser;
+    } else if (params.auditId) {
       items = navigationItemsAudit;
     } else if (params.versionId) {
       items = navigationItemsVersion;
@@ -111,9 +115,10 @@ const Container: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return items.map((item) => ({
       name: item.name,
       href: item.href(params),
-      isActive: pathname === item.href(params),
+      isActive: item.isActive ? item.isActive(params, pathname) : pathname === item.href(params),
     }));
   }, [params, pathname]);
+
   return (
     <div className="bg-neutral-950 require-remaining-height">
       <div id="nav-items" className="w-full px-4 flex items-center border-b border-neutral-800 h-9">

@@ -2,16 +2,26 @@
 
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
-import { useLogin, usePrivy } from "@privy-io/react-auth";
+import { useLogin, useLogout, usePrivy } from "@privy-io/react-auth";
 import { Building2, Shield, Zap } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 
 const SignInPage: React.FC = () => {
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isError, setIsError] = useState(false);
   const { ready } = usePrivy();
+  const { logout } = useLogout();
   const { login } = useLogin({
-    onComplete: async (params) => {
-      console.log("ON COMPLETE REGISTED", params.user.id);
-      await bevorAction.login(params.user.id);
+    onComplete: async () => {
+      setIsLoggingIn(true);
+      setIsError(false);
+      const isSuccess = await bevorAction.login();
+      if (!isSuccess) {
+        console.log("bad, logging out.");
+        await logout();
+        setIsLoggingIn(false);
+        setIsError(true);
+      }
     },
   });
 
@@ -29,8 +39,13 @@ const SignInPage: React.FC = () => {
             <p className="text-sm text-gray-400 mb-6">
               Connect your wallet or sign in with email to continue
             </p>
-            <Button onClick={login} variant="bright" disabled={!ready}>
-              sign in
+            {isError && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm">
+                Authentication failed. Please try again.
+              </div>
+            )}
+            <Button onClick={login} variant="bright" disabled={!ready || isLoggingIn}>
+              {isLoggingIn ? "Signing in..." : "sign in"}
             </Button>
           </div>
 

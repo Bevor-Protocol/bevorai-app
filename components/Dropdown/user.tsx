@@ -4,7 +4,7 @@ import { bevorAction } from "@/actions";
 import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
 import { TeamSchemaI } from "@/utils/types";
-import { useLogout } from "@privy-io/react-auth";
+import { useLogout, usePrivy } from "@privy-io/react-auth";
 import { LayoutDashboardIcon, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,12 +14,15 @@ type Props = { teams: TeamSchemaI[]; close?: () => void };
 
 const UserDropdown: React.FC<Props> = ({ teams, close }) => {
   const defaultTeam = teams.find((team) => team.is_default);
+  const { authenticated } = usePrivy();
   const { logout } = useLogout();
 
   const handleLogout = async (): Promise<void> => {
-    // TODO: swap these, redirect happens in action.
+    if (authenticated) {
+      // throws otherwise.
+      await logout();
+    }
     await bevorAction.logout();
-    await logout();
   };
 
   return (

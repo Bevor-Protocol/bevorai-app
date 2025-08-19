@@ -10,7 +10,7 @@ import {
 } from "@/utils/types";
 
 class TeamService {
-  async createTeam(data: CreateTeamBody): Promise<string> {
+  async createTeam(data: CreateTeamBody): Promise<TeamSchemaI> {
     return api.post("/teams", data).then((response) => {
       return response.data.id;
     });
@@ -23,7 +23,7 @@ class TeamService {
   }
 
   async getTeams(): Promise<TeamSchemaI[]> {
-    return api.get("/teams/all").then((response) => {
+    return api.get("/teams/all", { headers: { "skip-team": true } }).then((response) => {
       return response.data.results;
     });
   }
