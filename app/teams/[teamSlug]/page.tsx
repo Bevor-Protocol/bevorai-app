@@ -1,7 +1,7 @@
-import { AsyncComponent } from "@/utils/types";
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/helpers";
+import { AsyncComponent } from "@/utils/types";
 import { FileText } from "lucide-react";
 import Link from "next/link";
 import React, { Suspense } from "react";
@@ -11,7 +11,7 @@ interface TeamPageProps {
 }
 
 const TeamData: AsyncComponent<{ teamSlug: string }> = async ({ teamSlug }) => {
-  const team = await bevorAction.getTeamBySlug(teamSlug);
+  const team = await bevorAction.getTeam();
 
   return (
     <div className="px-6 py-8 bg-neutral-950 min-h-screen">

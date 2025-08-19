@@ -21,36 +21,24 @@ class AuditService {
         scopes,
       })
       .then((response) => {
-        if (!response.data) {
-          throw new Error(response.statusText);
-        }
         return response.data;
       });
   }
 
   async getAudit(auditId: string): Promise<AuditSchemaI> {
     return api.get(`/audits/${auditId}`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
 
   async getAuditFindings(auditId: string): Promise<AuditFindingsResponseI> {
     return api.get(`/audits/${auditId}/findings`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
 
   async getAuditStatus(id: string): Promise<AuditStatusResponseI> {
     return api.get(`/audits/${id}/status`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
@@ -61,9 +49,6 @@ class AuditService {
     verified?: boolean,
   ): Promise<{ success: boolean }> {
     return api.post(`/audits/${id}/feedback`, { feedback, verified }).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
@@ -76,9 +61,6 @@ class AuditService {
     return api
       .get(`/audits/list?${searchParams.toString()}`)
       .then((response) => {
-        if (!response.data) {
-          throw new Error(response.statusText);
-        }
         return response.data;
       })
       .catch((err) => console.log(err));
@@ -86,9 +68,6 @@ class AuditService {
 
   async getAuditScope(auditId: string): Promise<TreeResponseI[]> {
     return api.get(`/audits/${auditId}/scope`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data.results;
     });
   }

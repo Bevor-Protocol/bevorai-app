@@ -1,13 +1,16 @@
 import { bevorAction } from "@/actions";
-import { getLastVisitedTeam } from "@/actions/cookies";
 import { AsyncComponent } from "@/utils/types";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 const TeamBasePage: AsyncComponent = async () => {
-  const lastVisitedTeamId = await getLastVisitedTeam();
+  // cannot SET cookies in this context. can only GET them.
+  const cookieStore = await cookies();
+  const recentTeamSlug = cookieStore.get("bevor-recent-team")?.value;
 
-  if (lastVisitedTeamId) {
-    redirect(`/teams/${lastVisitedTeamId}`);
+  if (recentTeamSlug) {
+    console.log("redirecting, recent team found", recentTeamSlug);
+    redirect(`/teams/${recentTeamSlug}`);
   }
 
   const teams = await bevorAction.getTeams();
@@ -16,7 +19,6 @@ const TeamBasePage: AsyncComponent = async () => {
   if (defaultTeam) {
     redirect(`/teams/${defaultTeam.slug}`);
   }
-
   redirect(`/teams/${teams[0].slug}`);
 };
 

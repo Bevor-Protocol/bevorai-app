@@ -5,15 +5,6 @@ export type MessageType = {
   content: string;
 };
 
-export type SiweStateI = {
-  isPending: boolean;
-  isSuccess: boolean;
-  login: () => void;
-  logout: () => void;
-  isAuthenticated: boolean;
-  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
-};
-
 export type ModalContextI = {
   setOpen: React.Dispatch<React.SetStateAction<"modal" | "none">>;
   setContent: React.Dispatch<React.SetStateAction<React.ReactNode>>;
@@ -105,14 +96,18 @@ export interface FindingI {
   function_id: string;
 }
 
-export interface UserI {
-  id: string;
-  address: string;
-}
-
-export interface AuditSchemaI {
+interface BaseSchema {
   id: string;
   created_at: string;
+}
+
+export interface UserSchemaI extends BaseSchema {
+  total_credits: number;
+  used_credits: number;
+  available_credits: number;
+}
+
+export interface AuditSchemaI extends BaseSchema {
   status: AuditStatus;
   logic_version: string;
   model_version: string;
@@ -126,9 +121,7 @@ export interface AuditFindingsResponseI extends AuditSchemaI {
   findings: FindingI[];
 }
 
-export interface UserInfoResponseI {
-  id: string;
-  created_at: string;
+export interface UserInfoResponseI extends BaseSchema {
   total_credits: number;
   used_credits: number;
   available_credits: number;
@@ -147,22 +140,17 @@ export interface ContractResponseI {
   version_id: string;
 }
 
-export interface ContractVersionSourceTrimI {
-  id: string;
-  created_at: string;
+export interface ContractVersionSourceTrimI extends BaseSchema {
   path: string;
   is_imported_dependency: boolean;
 }
 
-export interface ContractVersionSourceI {
-  id: string;
-  created_at: string;
+export interface ContractVersionSourceI extends BaseSchema {
   content: string;
   solc_version: string;
 }
 
-export interface FunctionScopeI {
-  id: string;
+export interface FunctionScopeI extends BaseSchema {
   name: string;
   is_inherited: boolean;
   is_auditable: boolean;
@@ -176,8 +164,7 @@ export interface FunctionScopeI {
   source_consumed_in_id: string;
 }
 
-export interface ContractScopeI {
-  id: string;
+export interface ContractScopeI extends BaseSchema {
   name: string;
   is_within_scope: boolean;
   src_start_pos: number;
@@ -186,8 +173,7 @@ export interface ContractScopeI {
   functions: FunctionScopeI[];
 }
 
-export interface TreeResponseI {
-  id: string;
+export interface TreeResponseI extends BaseSchema {
   path: string;
   is_imported: boolean;
   is_known_target: boolean;
@@ -195,8 +181,7 @@ export interface TreeResponseI {
   contracts: ContractScopeI[];
 }
 
-export interface ContractSourceResponseI {
-  id: string;
+export interface ContractSourceResponseI extends BaseSchema {
   is_known_target: boolean;
   is_imported_dependency: boolean;
   path: string;
@@ -313,9 +298,7 @@ export interface ChatWithAuditResponseI extends ChatResponseI {
   };
 }
 
-export interface TeamSchemaI {
-  id: string;
-  created_at: string;
+export interface TeamSchemaI extends BaseSchema {
   name: string;
   is_default: boolean;
   created_by_user_id: string | null;
@@ -361,9 +344,7 @@ export interface CreateProjectBody {
   tags?: string[];
 }
 
-export interface MemberSchema {
-  id: string;
-  created_at: string;
+export interface MemberSchema extends BaseSchema {
   team_id: string;
   user_id: string;
   role: MemberRoleEnum;
@@ -372,9 +353,7 @@ export interface MemberSchema {
   can_update: boolean;
 }
 
-export interface CodeProjectSchema {
-  id: string;
-  created_at: string;
+export interface CodeProjectSchema extends BaseSchema {
   team_id: string;
   name: string;
   slug: string;
@@ -391,18 +370,14 @@ export interface InitialUserObject {
   projects: CodeProjectSchema[];
 }
 
-export interface MemberInviteSchema {
-  id: string;
-  created_at: string;
+export interface MemberInviteSchema extends BaseSchema {
   team_id: string;
   user_id?: string;
   identifier: string;
   role: MemberRoleEnum;
 }
 
-export interface CodeVersionSchema {
-  id: string;
-  created_at: string;
+export interface CodeVersionSchema extends BaseSchema {
   network?: string;
   version_method: string;
   version_identifier: string;
@@ -412,7 +387,7 @@ export interface CodeVersionSchema {
   is_code_available: boolean;
 }
 
-type Permission = "all" | "read" | "write" | "none";
+type Permission = "read" | "write" | "none";
 
 export interface AuthPermissionSchema {
   team: Permission;
@@ -423,12 +398,19 @@ export interface AuthPermissionSchema {
   chat: Permission;
 }
 
-export interface AuthSchema {
-  id: string;
-  created_at: string;
+export interface AuthSchema extends BaseSchema {
   team_id: string;
   name: string;
+  prefix: string;
   permissions: AuthPermissionSchema;
+}
+
+export interface TokenIssueResponse {
+  user_id: string;
+  scoped_token: string;
+  expires_at: number;
+  refresh_token: string;
+  refresh_expires_at: number;
 }
 
 export type HrefProps = {

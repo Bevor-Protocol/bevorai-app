@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { HrefProps } from "@/utils/types";
 
 export const navigation = {
@@ -14,7 +16,7 @@ export const navigation = {
       invoices: (data: HrefProps) => `/teams/${data.teamSlug}/settings/invoices`,
       members: (data: HrefProps) => `/teams/${data.teamSlug}/settings/members`,
     },
-    audits: (data: HrefProps) => `/teams/${data.teamSlug}/audits`,
+    // audits: (data: HrefProps) => `/teams/${data.teamSlug}/audits`,
     analytics: (data: HrefProps) => `/teams/${data.teamSlug}/analytics`,
   },
   project: {

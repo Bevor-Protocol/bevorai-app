@@ -11,9 +11,6 @@ class AdminService {
     return api
       .get("/admin/status")
       .then((response) => {
-        if (!response.data) {
-          throw new Error(response.statusText);
-        }
         return response.data.success;
       })
       .catch((error) => {
@@ -24,27 +21,18 @@ class AdminService {
 
   async searchUsers(identifier: string): Promise<UserSearchResponseI[]> {
     return api.get(`/admin/search/user?identifier=${identifier}`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data.results;
     });
   }
 
   async searchApps(identifier: string): Promise<AppSearchResponseI[]> {
     return api.get(`/admin/search/app?identifier=${identifier}`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data.results;
     });
   }
 
   async getAuditWithChildren(id: string): Promise<AuditWithChildrenResponseI> {
     return api.get(`/admin/audit/${id}`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
@@ -64,9 +52,6 @@ class AdminService {
         can_create_api_key: canCreateApiKey,
       })
       .then((response) => {
-        if (!response.data) {
-          throw new Error(response.statusText);
-        }
         return response.data.status;
       });
   }
@@ -86,18 +71,12 @@ class AdminService {
         can_create_api_key: canCreateApiKey,
       })
       .then((response) => {
-        if (!response.data) {
-          throw new Error(response.statusText);
-        }
         return response.data.status;
       });
   }
 
   async getPrompts(): Promise<PromptResponseI[]> {
     return api.get("/admin/prompts").then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data.results;
     });
   }
@@ -116,9 +95,6 @@ class AdminService {
         ...rest,
       })
       .then((response) => {
-        if (!response.data) {
-          throw new Error(response.statusText);
-        }
         return response.data.success;
       });
   }
@@ -135,9 +111,6 @@ class AdminService {
         ...data,
       })
       .then((response) => {
-        if (!response.data) {
-          throw new Error(response.statusText);
-        }
         return response.data.id;
       });
   }

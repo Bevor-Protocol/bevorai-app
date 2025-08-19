@@ -1,20 +1,15 @@
 "use client";
 
-import { authAction } from "@/actions";
-import Breadcrumbs from "@/components/breadcrumbs";
 import Networks from "@/components/Dropdown/networks";
 import UserDropdown from "@/components/Dropdown/user";
-import { Button } from "@/components/ui/button";
 import * as Dropdown from "@/components/ui/dropdown";
 import { Icon } from "@/components/ui/icon";
 import * as Tooltip from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getNetworkImage } from "@/utils/helpers";
-import { InitialUserObject, TeamSchemaI } from "@/utils/types";
-import { useLogin, usePrivy, useWallets } from "@privy-io/react-auth";
+import { TeamSchemaI } from "@/utils/types";
+import { useWallets } from "@privy-io/react-auth";
 import { ChevronDown } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 import React from "react";
 
 export const Web3Network: React.FC = () => {
@@ -87,42 +82,3 @@ export const Profile: React.FC<{ teams: TeamSchemaI[]; userId?: string }> = ({ t
     </Dropdown.Main>
   );
 };
-
-const Header: React.FC<{ userObject: InitialUserObject }> = ({ userObject }) => {
-  const { authenticated, ready } = usePrivy();
-  const router = useRouter();
-  const { login } = useLogin({
-    onComplete: async (params) => {
-      await authAction.login(params.user.id);
-      router.refresh();
-    },
-  });
-
-  const isAuthenticated = (userObject.isAuthenticated && !ready) || authenticated;
-  return (
-    <header
-      className={cn(
-        "bg-neutral-950 sticky top-0 z-50 backdrop-blur-sm",
-        "px-6 flex items-center justify-between h-16",
-      )}
-    >
-      <div className="flex items-center gap-6">
-        <div className="aspect-423/564 relative h-[30px]">
-          <Image src="/logo-small.png" alt="BevorAI logo" fill priority />
-        </div>
-        {isAuthenticated && <Breadcrumbs userObject={userObject} />}
-      </div>
-      <div className="gap-2 items-center relative flex">
-        {isAuthenticated ? (
-          <Profile teams={userObject.teams} userId={userObject.userId} />
-        ) : (
-          <Button onClick={login} variant="bright" disabled={!ready}>
-            sign in
-          </Button>
-        )}
-      </div>
-    </header>
-  );
-};
-
-export default Header;

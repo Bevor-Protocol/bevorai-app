@@ -1,7 +1,6 @@
-import { AsyncComponent } from "@/utils/types";
 import { bevorAction } from "@/actions";
+import { AsyncComponent } from "@/utils/types";
 import Link from "next/link";
-import React from "react";
 import VersionCreationStep from "./version-creation-step";
 
 interface NewVersionPageProps {
@@ -11,7 +10,7 @@ interface NewVersionPageProps {
 const NewVersionPage: AsyncComponent<NewVersionPageProps> = async ({ params }) => {
   const { teamSlug, projectSlug } = await params;
 
-  const team = await bevorAction.getTeamBySlug(teamSlug);
+  const team = await bevorAction.getTeam();
   const project = await bevorAction.getProjectBySlug(projectSlug);
 
   return (

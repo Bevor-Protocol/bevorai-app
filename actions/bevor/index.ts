@@ -1,6 +1,7 @@
 "use server";
 
 import apiKeyService from "@/actions/bevor/api-key.service";
+import tokenService from "@/actions/bevor/token.service";
 import {
   AppSearchResponseI,
   AuditFindingsResponseI,
@@ -34,9 +35,12 @@ import {
   UpdateMemberBody,
   UpdateTeamBody,
   UserInfoResponseI,
+  UserSchemaI,
   UserSearchResponseI,
   UserTimeseriesResponseI,
 } from "@/utils/types";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import adminService from "./admin.service";
 import auditService from "./audit.service";
 import chatService from "./chat.service";
@@ -211,12 +215,12 @@ const createTeam = async (data: CreateTeamBody): Promise<string> => {
   return teamService.createTeam(data);
 };
 
-const getTeams = async (): Promise<TeamSchemaI[]> => {
-  return teamService.getTeams();
+const getTeam = async (): Promise<TeamSchemaI> => {
+  return teamService.getTeam();
 };
 
-const getTeamBySlug = async (teamSlug: string): Promise<TeamSchemaI> => {
-  return teamService.getTeamBySlug(teamSlug);
+const getTeams = async (): Promise<TeamSchemaI[]> => {
+  return teamService.getTeams();
 };
 
 const deleteTeam = async (): Promise<boolean> => {
@@ -289,6 +293,9 @@ const getVersions = async (projectId: string): Promise<CodeVersionSchema[]> => {
 };
 
 // User Operations
+const getUser = async (): Promise<UserSchemaI | null> => {
+  return userService.getUser();
+};
 const syncCredits = async (): Promise<CreditSyncResponseI> => {
   return userService.syncCredits();
 };
@@ -341,6 +348,31 @@ const revokeKey = async (keyId: string): Promise<boolean> => {
   return apiKeyService.revokeKey(keyId);
 };
 
+const login = async (idpUserId: string): Promise<void> => {
+  // in response to some user action. Not accessible in middleware
+  console.log("IS LOGGING USER IN");
+  await userService.createUser(idpUserId);
+  const token = await tokenService.issueToken();
+  await tokenService.setSessionToken(token);
+  // const teams = await teamService.getTeams();
+
+  // redirect here, instead of on the client. This ensures the cookie is available in the middleware
+  redirect("/teams");
+};
+
+const logout = async (): Promise<void> => {
+  // in response to some user action. Not accessible in middleware
+  console.log("logging user out");
+  const cookieStore = await cookies();
+  await tokenService.revokeToken();
+  // called in conjunction with IDP, don't worry about delete their cookies
+  cookieStore.delete("bevor-token");
+  cookieStore.delete("bevor-refresh-token");
+  cookieStore.delete("bevor-recent-team");
+
+  redirect("/sign-in");
+};
+
 export {
   acceptInvite,
   addPrompt,
@@ -377,12 +409,13 @@ export {
   getProjects,
   getPrompts,
   getStats,
-  getTeamBySlug,
+  getTeam,
   getTeams,
   getTimeseriesAudits,
   getTimeseriesContracts,
   getTimeseriesFindings,
   getTimeseriesUsers,
+  getUser,
   getUserInfo,
   getUserTimeSeries,
   getVersions,
@@ -391,6 +424,8 @@ export {
   inviteMembers,
   isAdmin,
   listKeys,
+  login,
+  logout,
   refreshKey,
   removeInvite,
   removeMember,

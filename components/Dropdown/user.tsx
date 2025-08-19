@@ -1,6 +1,6 @@
 "use client";
 
-import { authAction } from "@/actions";
+import { bevorAction } from "@/actions";
 import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
 import { TeamSchemaI } from "@/utils/types";
@@ -8,20 +8,18 @@ import { useLogout } from "@privy-io/react-auth";
 import { LayoutDashboardIcon, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React from "react";
 
 type Props = { teams: TeamSchemaI[]; close?: () => void };
 
 const UserDropdown: React.FC<Props> = ({ teams, close }) => {
   const defaultTeam = teams.find((team) => team.is_default);
-  const router = useRouter();
-  const { logout } = useLogout({
-    onSuccess: async () => {
-      await authAction.logout();
-      router.refresh();
-    },
-  });
+  const { logout } = useLogout();
+
+  const handleLogout = async () => {
+    await bevorAction.logout();
+    await logout();
+  };
 
   return (
     <div className="min-w-56 py-2 bg-black shadow-sm rounded-lg border border-white">
@@ -77,7 +75,7 @@ const UserDropdown: React.FC<Props> = ({ teams, close }) => {
         <div
           onClick={(): void => {
             close?.();
-            logout();
+            handleLogout();
           }}
           className={cn(
             "flex items-center px-3 py-2 w-full gap-3 text-sm text-neutral-300",

@@ -1,5 +1,5 @@
-import { AsyncComponent } from "@/utils/types";
 import { bevorAction } from "@/actions";
+import { AsyncComponent } from "@/utils/types";
 import MembersTabs from "./members-tabs";
 
 interface MembersPageProps {
@@ -10,7 +10,7 @@ const MembersPage: AsyncComponent<MembersPageProps> = async ({ params }) => {
   const { teamSlug } = await params;
 
   // don't care to stream this.
-  const team = await bevorAction.getTeamBySlug(teamSlug);
+  const team = await bevorAction.getTeam();
   const curMember = await bevorAction.getCurrentMember();
 
   return (

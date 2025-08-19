@@ -1,6 +1,5 @@
-import { AsyncComponent } from "@/utils/types";
 import { bevorAction } from "@/actions";
-import React from "react";
+import { AsyncComponent } from "@/utils/types";
 import BillingPageClient from "./billing-page-client";
 
 interface BillingPageProps {
@@ -10,7 +9,7 @@ interface BillingPageProps {
 const BillingPage: AsyncComponent<BillingPageProps> = async ({ params }) => {
   const { teamSlug } = await params;
 
-  const team = await bevorAction.getTeamBySlug(teamSlug);
+  const team = await bevorAction.getTeam();
 
   return <BillingPageClient team={team} />;
 };

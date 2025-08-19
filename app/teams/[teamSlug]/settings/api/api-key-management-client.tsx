@@ -14,7 +14,7 @@ const ApiKeyManagementClient: React.FC = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: apiKeys = [], isLoading } = useQuery<AuthSchema[]>({
+  const { data: apiKeys = [], isLoading } = useQuery({
     queryKey: ["team-api-keys"],
     queryFn: async () => {
       return await bevorAction.listKeys();
@@ -39,17 +39,16 @@ const ApiKeyManagementClient: React.FC = () => {
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
-      year: "numeric",
       month: "short",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      year: "numeric",
     });
   };
 
-  const handleDeleteApiKey = (apiKeyId: string): void => {
-    if (confirm("Are you sure you want to delete this API key? This action cannot be undone.")) {
-      deleteApiKeyMutation.mutate(apiKeyId);
+  const handleDeleteApiKey = (apiKey: AuthSchema): void => {
+    const confirmMessage = `Are you sure you want to delete the API key "${apiKey.name}" (${apiKey.prefix}...)? This action cannot be undone.`;
+    if (confirm(confirmMessage)) {
+      deleteApiKeyMutation.mutate(apiKey.id);
     }
   };
 
@@ -85,36 +84,44 @@ const ApiKeyManagementClient: React.FC = () => {
       ) : (
         <div className="border border-blue-500/50 rounded divide-blue-500/25 divide-y">
           {apiKeys.map((apiKey) => (
-            <div key={apiKey.id} className="p-3 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
-                  <Key className="w-4 h-4 text-blue-400" />
+            <div
+              key={apiKey.id}
+              className="p-4 flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
+                  <Key className="w-5 h-5 text-blue-400" />
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col space-y-1">
                   <div className="text-sm font-medium text-neutral-100">{apiKey.name}</div>
                   <div className="text-xs text-neutral-400">
                     Created {formatDate(apiKey.created_at)}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="dark"
-                  onClick={() => regenerateApiKeyMutation.mutate(apiKey.id)}
-                  disabled={regenerateApiKeyMutation.isPending}
-                  className="text-xs h-8 px-3"
-                >
-                  <RefreshCw className="w-4 h-4 mr-1" />
-                  Regenerate
-                </Button>
-                <Button
-                  variant="dark"
-                  onClick={() => handleDeleteApiKey(apiKey.id)}
-                  disabled={deleteApiKeyMutation.isPending}
-                  className="text-red-400 hover:bg-red-500/10 text-xs h-8 px-3"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
+                <code className="text-xs font-mono bg-neutral-900 text-green-400 px-3 py-1.5 rounded-md border border-neutral-700 tracking-wider whitespace-nowrap">
+                  sk_{apiKey.prefix}•••••••••••••••••••••••••••••
+                </code>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="dark"
+                    onClick={() => regenerateApiKeyMutation.mutate(apiKey.id)}
+                    disabled={regenerateApiKeyMutation.isPending}
+                    className="text-xs h-8 px-3"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-1" />
+                    Regenerate
+                  </Button>
+                  <Button
+                    variant="dark"
+                    onClick={() => handleDeleteApiKey(apiKey)}
+                    disabled={deleteApiKeyMutation.isPending}
+                    className="text-red-400 hover:bg-red-500/10 text-xs h-8 px-3"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}

@@ -17,9 +17,6 @@ class VersionService {
     });
 
     return api.post("/versions/create/folder", formData).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
@@ -29,9 +26,6 @@ class VersionService {
     formData.append("file", file);
 
     return api.post("/versions/create/file", formData).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
@@ -46,36 +40,24 @@ class VersionService {
     return api
       .post("/versions/create/scan", { address, project_id: projectId })
       .then((response) => {
-        if (!response.data) {
-          throw new Error(response.statusText);
-        }
         return response.data;
       });
   }
 
   async contractUploadPaste(code: string): Promise<ContractResponseI> {
     return api.post("/versions/create/paste", { code }).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
 
   async getContractVersion(versionId: string): Promise<CodeVersionSchema> {
     return api.get(`/versions/${versionId}`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
 
   async getContractVersionSources(versionId: string): Promise<ContractVersionSourceTrimI[]> {
     return api.get(`/versions/${versionId}/sources`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data.results;
     });
   }
@@ -85,36 +67,24 @@ class VersionService {
     versionId: string,
   ): Promise<ContractVersionSourceI> {
     return api.get(`/versions/${versionId}/sources/${sourceId}`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
 
   async getContractTree(versionId: string): Promise<TreeResponseI[]> {
     return api.get(`/versions/${versionId}/tree`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data.results;
     });
   }
 
   async getContractSources(versionId: string): Promise<ContractSourceResponseI[]> {
     return api.get(`/contract/version/${versionId}/sources`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }
 
   async getFunctionChunk(functionId: string): Promise<FunctionChunkResponseI> {
     return api.get(`/contract/function/${functionId}`).then((response) => {
-      if (!response.data) {
-        throw new Error(response.statusText);
-      }
       return response.data;
     });
   }

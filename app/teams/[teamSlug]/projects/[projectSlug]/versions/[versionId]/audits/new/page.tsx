@@ -8,7 +8,7 @@ type Props = {
 
 const AuditPage: AsyncComponent<Props> = async ({ params }) => {
   const { teamSlug, projectSlug, versionId } = await params;
-  const team = await bevorAction.getTeamBySlug(teamSlug);
+  const team = await bevorAction.getTeam();
   const project = await bevorAction.getProjectBySlug(projectSlug);
   const version = await bevorAction.getContractVersion(versionId);
   const tree = await bevorAction.getContractTree(versionId);

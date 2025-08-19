@@ -1,9 +1,20 @@
 "use client";
 
+import { bevorAction } from "@/actions";
+import { Button } from "@/components/ui/button";
+import { useLogin, usePrivy } from "@privy-io/react-auth";
 import { Building2, Shield, Zap } from "lucide-react";
 import React from "react";
 
 const SignInPage: React.FC = () => {
+  const { ready } = usePrivy();
+  const { login } = useLogin({
+    onComplete: async (params) => {
+      console.log("ON COMPLETE REGISTED", params.user.id);
+      await bevorAction.login(params.user.id);
+    },
+  });
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-md w-full space-y-8">
@@ -18,6 +29,9 @@ const SignInPage: React.FC = () => {
             <p className="text-sm text-gray-400 mb-6">
               Connect your wallet or sign in with email to continue
             </p>
+            <Button onClick={login} variant="bright" disabled={!ready}>
+              sign in
+            </Button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 pt-4">

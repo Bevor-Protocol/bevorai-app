@@ -1,6 +1,7 @@
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/helpers";
+import { navigation } from "@/utils/navigation";
 import { AsyncComponent } from "@/utils/types";
 import {
   Calendar,
@@ -26,7 +27,7 @@ const ProjectData: AsyncComponent<{
   teamSlug: string;
   projectSlug: string;
 }> = async ({ teamSlug, projectSlug }) => {
-  const team = await bevorAction.getTeamBySlug(teamSlug);
+  const team = await bevorAction.getTeam();
   const project = await bevorAction.getProjectBySlug(projectSlug);
 
   return (
@@ -260,7 +261,7 @@ const ProjectAuditsList: AsyncComponent<{
           className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all"
         >
           <Link
-            href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${audit.code_version_mapping_id}/audits/${audit.id}`}
+            href={navigation.audit.overview({ teamSlug, projectSlug, auditId: audit.id })}
             className="block"
           >
             <div className="flex items-center justify-between">

@@ -1,6 +1,5 @@
-import { AsyncComponent } from "@/utils/types";
 import { bevorAction } from "@/actions";
-import React from "react";
+import { AsyncComponent } from "@/utils/types";
 import SettingsPageClient from "./settings-page-client";
 
 interface SettingsPageProps {
@@ -11,7 +10,7 @@ interface SettingsPageProps {
 const SettingsPage: AsyncComponent<SettingsPageProps> = async ({ params, searchParams }) => {
   const { teamSlug } = await params;
   const { updated } = await searchParams;
-  const team = await bevorAction.getTeamBySlug(teamSlug);
+  const team = await bevorAction.getTeam();
 
   return <SettingsPageClient team={team} isUpdated={!!updated} />;
 };

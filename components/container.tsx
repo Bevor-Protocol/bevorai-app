@@ -31,10 +31,10 @@ const navigationItemsTeam: NavItemProp[] = [
     name: "Settings",
     href: navigation.team.settings.overview,
   },
-  {
-    name: "Audits",
-    href: navigation.team.audits,
-  },
+  // {
+  //   name: "Audits",
+  //   href: navigation.team.audits,
+  // },
   {
     name: "Analytics",
     href: navigation.team.analytics,

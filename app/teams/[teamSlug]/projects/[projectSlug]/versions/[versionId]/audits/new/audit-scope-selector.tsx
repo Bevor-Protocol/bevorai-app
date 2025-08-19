@@ -3,6 +3,7 @@
 import { bevorAction } from "@/actions";
 import ContractTree from "@/components/contract-tree";
 import { Button } from "@/components/ui/button";
+import { navigation } from "@/utils/navigation";
 import { CodeProjectSchema, CodeVersionSchema, TeamSchemaI, TreeResponseI } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Play, Settings } from "lucide-react";
@@ -55,7 +56,11 @@ const AuditScopeSelector: React.FC<AuditScopeSelectorProps> = ({
   useEffect(() => {
     if (pollingData?.status === "success" && evalData?.id) {
       router.push(
-        `/teams/${team.slug}/projects/${project.slug}/versions/${versionId}/audits/${evalData.id}`,
+        navigation.audit.overview({
+          teamSlug: team.slug,
+          projectSlug: project.slug,
+          auditId: evalData.id,
+        }),
       );
     }
   }, [pollingData?.status, evalData?.id]);
