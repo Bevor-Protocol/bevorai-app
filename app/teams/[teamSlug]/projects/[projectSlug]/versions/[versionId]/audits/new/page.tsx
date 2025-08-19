@@ -3,11 +3,11 @@ import { AsyncComponent } from "@/utils/types";
 import AuditScopeSelector from "./audit-scope-selector";
 
 type Props = {
-  params: Promise<{ teamSlug: string; projectSlug: string; versionId: string }>;
+  params: Promise<{ projectSlug: string; versionId: string }>;
 };
 
 const AuditPage: AsyncComponent<Props> = async ({ params }) => {
-  const { teamSlug, projectSlug, versionId } = await params;
+  const { projectSlug, versionId } = await params;
   const team = await bevorAction.getTeam();
   const project = await bevorAction.getProjectBySlug(projectSlug);
   const version = await bevorAction.getContractVersion(versionId);

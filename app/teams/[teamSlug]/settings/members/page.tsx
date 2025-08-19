@@ -2,13 +2,7 @@ import { bevorAction } from "@/actions";
 import { AsyncComponent } from "@/utils/types";
 import MembersTabs from "./members-tabs";
 
-interface MembersPageProps {
-  params: Promise<{ teamSlug: string }>;
-}
-
-const MembersPage: AsyncComponent<MembersPageProps> = async ({ params }) => {
-  const { teamSlug } = await params;
-
+const MembersPage: AsyncComponent = async () => {
   // don't care to stream this.
   const team = await bevorAction.getTeam();
   const curMember = await bevorAction.getCurrentMember();

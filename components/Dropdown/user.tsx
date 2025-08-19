@@ -16,7 +16,8 @@ const UserDropdown: React.FC<Props> = ({ teams, close }) => {
   const defaultTeam = teams.find((team) => team.is_default);
   const { logout } = useLogout();
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
+    // TODO: swap these, redirect happens in action.
     await bevorAction.logout();
     await logout();
   };

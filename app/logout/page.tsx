@@ -10,7 +10,7 @@ const LogoutPage: React.FC = () => {
   const { logout } = useLogout();
   useEffect(() => {
     if (!ready) return;
-    const fullLogout = async () => {
+    const fullLogout = async (): Promise<void> => {
       // swap these, the redirect is in the server action.
       await bevorAction.logout();
       await logout();
