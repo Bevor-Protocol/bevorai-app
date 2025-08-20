@@ -1,6 +1,7 @@
 import api from "@/lib/api";
 import {
   CreditSyncResponseI,
+  MemberInviteSchema,
   MultiTimeseriesResponseI,
   StatsResponseI,
   TimeseriesResponseI,
@@ -64,6 +65,12 @@ class UserService {
   async getUserInfo(): Promise<UserInfoResponseI> {
     return api.get("/user/info/summary").then((response) => {
       return response.data;
+    });
+  }
+
+  async getUserInvites(): Promise<MemberInviteSchema[]> {
+    return api.get("/user/invites").then((response) => {
+      return response.data.results;
     });
   }
 

@@ -1,9 +1,9 @@
 import { bevorAction } from "@/actions";
 import Breadcrumbs from "@/components/breadcrumbs";
 import Container from "@/components/container";
-import { Profile } from "@/components/header";
+import { Notifications, Profile } from "@/components/header";
 import { cn } from "@/lib/utils";
-import { AsyncComponent, CodeProjectSchema, TeamSchemaI } from "@/utils/types";
+import { AsyncComponent, CodeProjectSchema, MemberInviteSchema, TeamSchemaI } from "@/utils/types";
 import { cookies } from "next/headers";
 import Image from "next/image";
 
@@ -18,12 +18,14 @@ const Layout: AsyncComponent<LayoutProps> = async ({ children }: LayoutProps) =>
   let currentUser = null;
   let teams: TeamSchemaI[] = [];
   let projects: CodeProjectSchema[] = [];
+  let invites: MemberInviteSchema[] = [];
 
   if (sessionToken) {
     currentUser = await bevorAction.getUser();
     if (currentUser) {
       teams = await bevorAction.getTeams();
       projects = await bevorAction.getAllProjects();
+      invites = await bevorAction.getUserInvites();
     }
   }
 
@@ -32,6 +34,7 @@ const Layout: AsyncComponent<LayoutProps> = async ({ children }: LayoutProps) =>
     userId: currentUser?.id,
     teams,
     projects,
+    invites,
   };
 
   return (
@@ -46,12 +49,11 @@ const Layout: AsyncComponent<LayoutProps> = async ({ children }: LayoutProps) =>
           <div className="aspect-423/564 relative h-[30px]">
             <Image src="/logo-small.png" alt="BevorAI logo" fill priority />
           </div>
-          {userObject.isAuthenticated && <Breadcrumbs userObject={userObject} />}
+          {!!currentUser && <Breadcrumbs userObject={userObject} />}
         </div>
-        <div className="gap-2 items-center relative flex">
-          {userObject.isAuthenticated && (
-            <Profile teams={userObject.teams} userId={userObject.userId} />
-          )}
+        <div className="gap-4 items-center relative flex">
+          {!!currentUser && <Notifications invites={invites} />}
+          {!!currentUser && <Profile teams={teams} userId={currentUser.id} />}
         </div>
       </header>
       <Container>{children}</Container>

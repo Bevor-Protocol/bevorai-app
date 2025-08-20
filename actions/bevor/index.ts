@@ -329,6 +329,10 @@ const getUserInfo = async (): Promise<UserInfoResponseI> => {
   return userService.getUserInfo();
 };
 
+const getUserInvites = async (): Promise<MemberInviteSchema[]> => {
+  return userService.getUserInvites();
+};
+
 const getUserTimeSeries = async (): Promise<UserTimeseriesResponseI> => {
   return userService.getUserTimeSeries();
 };
@@ -433,6 +437,7 @@ export {
   getTimeseriesUsers,
   getUser,
   getUserInfo,
+  getUserInvites,
   getUserTimeSeries,
   getVersions,
   initiateAudit,

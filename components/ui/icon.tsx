@@ -12,6 +12,7 @@ interface IconI extends React.HTMLAttributes<HTMLElement> {
 
 interface SocialI extends React.HTMLAttributes<HTMLElement> {
   children: React.ReactNode;
+  size: string;
 }
 
 export const Icon: React.FC<IconI> = ({ size, image, seed, className, ...rest }) => {
@@ -38,14 +39,22 @@ export const Icon: React.FC<IconI> = ({ size, image, seed, className, ...rest })
   );
 };
 
-export const Social: React.FC<SocialI> = ({ children, className, ...rest }) => {
+export const Social: React.FC<SocialI> = ({ children, size, className, ...rest }) => {
+  const { desktop, mobile } = iconSizeMapper[size];
   return (
     <div
       className={cn(
-        "flex justify-center items-center rounded-full p-1",
-        "border border-transparent transition-colors",
+        "flex justify-center items-center p-1",
+        "border border-transparent",
+        "avatar",
         className,
       )}
+      style={
+        {
+          "--size-desktop": desktop,
+          "--size-mobile": mobile,
+        } as React.CSSProperties
+      }
       {...rest}
     >
       {children}

@@ -380,10 +380,10 @@ export interface InitialUserObject {
 }
 
 export interface MemberInviteSchema extends BaseSchema {
-  team_id: string;
   user_id?: string;
   identifier: string;
   role: MemberRoleEnum;
+  team: TeamSchemaI;
 }
 
 export interface CodeVersionSchema extends BaseSchema {
