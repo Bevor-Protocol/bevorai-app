@@ -34,7 +34,7 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
         });
 
         return response;
-      } catch (error) {
+      } catch {
         attempts++;
         if (attempts < maxAttempts) {
           await new Promise((resolve) => setTimeout(resolve, 500));

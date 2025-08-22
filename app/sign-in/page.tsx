@@ -21,7 +21,7 @@ const SignInPage: React.FC = () => {
           throw new Error("login failed");
         }
       } catch (error) {
-        console.log("bad, logging out.");
+        console.log("bad, logging out.", error);
         await logout();
         setIsLoggingIn(false);
         setIsError(true);
