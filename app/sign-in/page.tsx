@@ -1,6 +1,5 @@
 "use client";
 
-import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { useLogin, useLogout, usePrivy } from "@privy-io/react-auth";
 import { Building2, Shield, Zap } from "lucide-react";
@@ -15,8 +14,13 @@ const SignInPage: React.FC = () => {
     onComplete: async () => {
       setIsLoggingIn(true);
       setIsError(false);
-      const isSuccess = await bevorAction.login();
-      if (!isSuccess) {
+      try {
+        const response = await fetch("/api/token/issue", { method: "POST" });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error("login failed");
+        }
+      } catch (error) {
         console.log("bad, logging out.");
         await logout();
         setIsLoggingIn(false);

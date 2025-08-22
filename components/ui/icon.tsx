@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/loader";
 import { cn } from "@/lib/utils";
 import { iconSizeMapper } from "@/utils/constants";
 import { generateSlug } from "@/utils/helpers";
@@ -30,6 +31,23 @@ export const Icon: React.FC<IconI> = ({ size, image, seed, className, ...rest })
       style={
         {
           backgroundImage: urlUse,
+          "--size-desktop": desktop,
+          "--size-mobile": mobile,
+        } as React.CSSProperties
+      }
+      {...rest}
+    />
+  );
+};
+
+export const IconEmpty: React.FC<IconI> = ({ size, className, ...rest }) => {
+  const { desktop, mobile } = iconSizeMapper[size];
+
+  return (
+    <Skeleton
+      className={cn("avatar", className)}
+      style={
+        {
           "--size-desktop": desktop,
           "--size-mobile": mobile,
         } as React.CSSProperties

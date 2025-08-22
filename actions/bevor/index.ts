@@ -1,7 +1,6 @@
 "use server";
 
 import apiKeyService from "@/actions/bevor/api-key.service";
-import tokenService from "@/actions/bevor/token.service";
 import {
   AppSearchResponseI,
   AuditFindingsResponseI,
@@ -40,8 +39,6 @@ import {
   UserSearchResponseI,
   UserTimeseriesResponseI,
 } from "@/utils/types";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import adminService from "./admin.service";
 import auditService from "./audit.service";
 import chatService from "./chat.service";
@@ -353,46 +350,6 @@ const revokeKey = async (keyId: string): Promise<boolean> => {
   return apiKeyService.revokeKey(keyId);
 };
 
-const login = async (): Promise<boolean> => {
-  // in response to some user action. Not accessible in middleware.
-  // try to make this atomic with IDP login.
-  console.log("IS LOGGING USER IN");
-  let attempts = 0;
-  let success = false;
-  const maxAttempts = 2;
-  while (attempts < maxAttempts && !success) {
-    try {
-      const token = await tokenService.issueToken();
-      await tokenService.setSessionToken(token);
-      success = true;
-    } catch {
-      attempts++;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  if (success) {
-    // this raises an error, so don't use it in a try catch.
-    redirect("/teams");
-  }
-  return false;
-};
-
-const logout = async (): Promise<void> => {
-  // in response to some user action. Not accessible in middleware
-  console.log("logging user out");
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get("bevor-refresh-token");
-  if (refreshToken) {
-    await tokenService.revokeToken(refreshToken.value);
-  }
-  // called in conjunction with IDP, don't worry about delete their cookies
-  cookieStore.delete("bevor-token");
-  cookieStore.delete("bevor-refresh-token");
-  cookieStore.delete("bevor-recent-team");
-
-  redirect("/sign-in");
-};
-
 export {
   acceptInvite,
   addPrompt,
@@ -445,8 +402,6 @@ export {
   inviteMembers,
   isAdmin,
   listKeys,
-  login,
-  logout,
   refreshKey,
   removeInvite,
   removeMember,

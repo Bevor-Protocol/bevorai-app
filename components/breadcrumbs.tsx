@@ -9,7 +9,7 @@ import { useClickOutside } from "@/hooks/useClickOutside";
 import { useModal } from "@/hooks/useContexts";
 import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
-import { CodeProjectSchema, HrefProps, InitialUserObject, TeamSchemaI } from "@/utils/types";
+import { CodeProjectSchema, HrefProps, TeamSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ChevronsUpDown, Code, Plus } from "lucide-react";
 import Link from "next/link";
@@ -18,7 +18,7 @@ import React, { useMemo, useReducer, useRef, useState } from "react";
 
 const genericToggleReducer = (s: boolean): boolean => !s;
 
-const Breadcrumbs: React.FC<{ userObject: InitialUserObject }> = ({ userObject }) => {
+const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userId, teams }) => {
   const isErrorPage = useSelectedLayoutSegments().includes("error");
   const params = useParams<HrefProps>();
   const pathname = usePathname();
@@ -27,18 +27,9 @@ const Breadcrumbs: React.FC<{ userObject: InitialUserObject }> = ({ userObject }
 
   useClickOutside(ref, isShowing ? toggle : undefined);
 
-  const { data: teams, isLoading: isTeamsLoading } = useQuery({
-    queryKey: ["teams"],
-    queryFn: async () => bevorAction.getTeams(),
-    initialData: userObject.teams,
-    staleTime: Infinity,
-  });
-
   const { data: allProjects, isLoading: isProjectsLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => bevorAction.getAllProjects(),
-    initialData: userObject.projects,
-    staleTime: Infinity,
   });
 
   const team = useMemo(() => {
@@ -47,15 +38,15 @@ const Breadcrumbs: React.FC<{ userObject: InitialUserObject }> = ({ userObject }
   }, [teams, params.teamSlug]);
 
   const project = useMemo(() => {
-    if (!allProjects || !params.projectSlug) return;
+    if (!allProjects || !params.projectSlug || !teams?.length) return;
     const team = teams.find((team) => team.slug === params.teamSlug);
     if (!team) return;
     return allProjects.find(
       (project) => project.team_id === team.id && project.slug === params.projectSlug,
     );
-  }, [allProjects, params.projectSlug, params.teamSlug]);
+  }, [allProjects, params.projectSlug, params.teamSlug, teams]);
 
-  if (isTeamsLoading || isProjectsLoading) {
+  if (isProjectsLoading) {
     return <Skeleton className="h-[41px] w-36" />;
   }
 
@@ -67,7 +58,7 @@ const Breadcrumbs: React.FC<{ userObject: InitialUserObject }> = ({ userObject }
             href={navigation.user.overview(params)}
             className="flex flex-row gap-2 items-center"
           >
-            <Icon size="sm" seed={userObject.userId} className="w-5 h-5" />
+            <Icon size="sm" seed={userId} className="w-5 h-5" />
             <span>My Account</span>
           </Link>
           <button

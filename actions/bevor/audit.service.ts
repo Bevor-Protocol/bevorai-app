@@ -59,7 +59,7 @@ class AuditService {
     searchParams.set("page_size", "10");
 
     return api
-      .get(`/audits/list?${searchParams.toString()}`)
+      .get(`/audits?${searchParams.toString()}`)
       .then((response) => {
         return response.data;
       })

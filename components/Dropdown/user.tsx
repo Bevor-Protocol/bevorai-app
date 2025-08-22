@@ -1,6 +1,5 @@
 "use client";
 
-import { bevorAction } from "@/actions";
 import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
 import { TeamSchemaI } from "@/utils/types";
@@ -22,7 +21,7 @@ const UserDropdown: React.FC<Props> = ({ teams, close }) => {
       // throws otherwise.
       await logout();
     }
-    await bevorAction.logout();
+    await fetch("/api/token/revoke", { method: "POST" });
   };
 
   return (

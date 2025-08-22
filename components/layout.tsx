@@ -2,41 +2,61 @@ import { bevorAction } from "@/actions";
 import Breadcrumbs from "@/components/breadcrumbs";
 import Container from "@/components/container";
 import { Notifications, Profile } from "@/components/header";
+import { getQueryClient } from "@/lib/config/query";
 import { cn } from "@/lib/utils";
-import { AsyncComponent, CodeProjectSchema, MemberInviteSchema, TeamSchemaI } from "@/utils/types";
+import { AsyncComponent, TeamSchemaI } from "@/utils/types";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { cookies } from "next/headers";
 import Image from "next/image";
 
 type LayoutProps = {
   children: React.ReactNode;
-  teamSlug?: string;
 };
 
-const Layout: AsyncComponent<LayoutProps> = async ({ children }: LayoutProps) => {
+const BreadcrumbsHydration: AsyncComponent<{ userId: string; teams: TeamSchemaI[] }> = async ({
+  userId,
+  teams,
+}) => {
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: ["projects"],
+    queryFn: () => bevorAction.getAllProjects(),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Breadcrumbs userId={userId} teams={teams} />
+    </HydrationBoundary>
+  );
+};
+
+const NotificationHydration: AsyncComponent = async () => {
+  const queryClient = getQueryClient();
+  queryClient.prefetchQuery({
+    queryKey: ["user-invites"],
+    queryFn: () => bevorAction.getUserInvites(),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Notifications />
+    </HydrationBoundary>
+  );
+};
+
+const Layout: AsyncComponent<LayoutProps> = async ({ children }) => {
+  const queryClient = new QueryClient();
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("bevor-token")?.value;
   let currentUser = null;
   let teams: TeamSchemaI[] = [];
-  let projects: CodeProjectSchema[] = [];
-  let invites: MemberInviteSchema[] = [];
-
   if (sessionToken) {
     currentUser = await bevorAction.getUser();
-    if (currentUser) {
-      teams = await bevorAction.getTeams();
-      projects = await bevorAction.getAllProjects();
-      invites = await bevorAction.getUserInvites();
-    }
+    teams = await queryClient.fetchQuery({
+      queryKey: ["teams"],
+      queryFn: () => bevorAction.getTeams(),
+    });
   }
-
-  const userObject = {
-    isAuthenticated: !!currentUser,
-    userId: currentUser?.id,
-    teams,
-    projects,
-    invites,
-  };
-
   return (
     <div className="min-h-screen bg-black">
       <header
@@ -49,12 +69,16 @@ const Layout: AsyncComponent<LayoutProps> = async ({ children }: LayoutProps) =>
           <div className="aspect-423/564 relative h-[30px]">
             <Image src="/logo-small.png" alt="BevorAI logo" fill priority />
           </div>
-          {!!currentUser && <Breadcrumbs userObject={userObject} />}
+          {!!currentUser && <BreadcrumbsHydration userId={currentUser.id} teams={teams} />}
         </div>
-        <div className="gap-4 items-center relative flex">
-          {!!currentUser && <Notifications invites={invites} />}
-          {!!currentUser && <Profile teams={teams} userId={currentUser.id} />}
-        </div>
+        {!!currentUser && (
+          <div className="gap-4 items-center relative flex">
+            <NotificationHydration />
+            <HydrationBoundary state={dehydrate(queryClient)}>
+              <Profile userId={currentUser.id} teams={teams} />
+            </HydrationBoundary>
+          </div>
+        )}
       </header>
       <Container>{children}</Container>
     </div>

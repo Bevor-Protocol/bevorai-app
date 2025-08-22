@@ -1,5 +1,6 @@
 "use client";
 
+import { bevorAction } from "@/actions";
 import Networks from "@/components/Dropdown/networks";
 import UserDropdown from "@/components/Dropdown/user";
 import ViewInviteModal from "@/components/Modal/view-invite";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { getNetworkImage } from "@/utils/helpers";
 import { MemberInviteSchema, TeamSchemaI } from "@/utils/types";
 import { useWallets } from "@privy-io/react-auth";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Bell, ChevronDown } from "lucide-react";
 import React from "react";
 
@@ -62,9 +64,15 @@ export const Web3Network: React.FC = () => {
   );
 };
 
-export const Notifications: React.FC<{ invites: MemberInviteSchema[] }> = ({ invites }) => {
+export const Notifications: React.FC = () => {
   const { show, hide } = useModal();
-  const hasInvites = invites.length > 0;
+
+  const { data: invites } = useSuspenseQuery({
+    queryKey: ["user-invites"],
+    queryFn: async () => bevorAction.getUserInvites(),
+  });
+
+  const hasInvites = (invites?.length ?? 0) > 0;
 
   const handleView = (invite: MemberInviteSchema): void => {
     show(<ViewInviteModal invite={invite} onClose={hide} />);
@@ -93,7 +101,7 @@ export const Notifications: React.FC<{ invites: MemberInviteSchema[] }> = ({ inv
         <div className="w-[400px] bg-black shadow-sm rounded-lg border border-neutral-400 overflow-hidden">
           {hasInvites ? (
             <div className="space-y-1 divide-y divide-neutral-800">
-              {invites.map((invite) => (
+              {invites?.map((invite) => (
                 <div
                   key={invite.id}
                   onClick={() => handleView(invite)}
@@ -125,7 +133,7 @@ export const Notifications: React.FC<{ invites: MemberInviteSchema[] }> = ({ inv
   );
 };
 
-export const Profile: React.FC<{ teams: TeamSchemaI[]; userId?: string }> = ({ teams, userId }) => {
+export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userId, teams }) => {
   return (
     <Dropdown.Main
       className="flex flex-row relative cursor-pointer rounded-lg focus-border"
