@@ -12,7 +12,7 @@ import {
 class TeamService {
   async createTeam(data: CreateTeamBody): Promise<TeamSchemaI> {
     return api.post("/teams", data).then((response) => {
-      return response.data.id;
+      return response.data;
     });
   }
 

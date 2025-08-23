@@ -95,16 +95,16 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
           <span>No icon = Not in scope</span>
         </div>
       </div>
-      <div className="grow bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden flex flex-col">
+      <div className="grow border border-neutral-800 rounded-lg overflow-hidden flex flex-col">
         <div
           className="grid flex-1 h-full"
           style={{ gridTemplateColumns: "250px 1fr", gridTemplateRows: "auto 1fr" }}
         >
-          <div className="flex items-center space-x-2 p-3 border-b border-neutral-800 bg-neutral-900">
+          <div className="flex items-center space-x-2 p-3 border-b border-r border-neutral-800">
             <span className="text-sm font-medium text-neutral-100">Sources</span>
             <span className="text-xs text-neutral-500">({scope.length})</span>
           </div>
-          <div className="flex items-center justify-between p-3 border-b border-neutral-800 bg-neutral-900">
+          <div className="flex items-center justify-between p-3 border-b border-neutral-800">
             <div className="flex items-center space-x-2">
               <FileText className="w-4 h-4 text-neutral-400" />
               <span className="text-sm font-medium text-neutral-100">
@@ -126,7 +126,7 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
               </button>
             </div>
           </div>
-          <div className="border-r border-neutral-800 overflow-y-auto bg-neutral-900 min-h-0">
+          <div className="border-r border-neutral-800 overflow-y-auto min-h-0">
             {scope.map((source) => (
               <TreeSource
                 key={source.id}
@@ -148,7 +148,7 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
               </TreeSource>
             ))}
           </div>
-          <div className="flex-1 bg-neutral-900 min-w-0 min-h-0 overflow-hidden">
+          <div className="flex-1min-w-0 min-h-0 overflow-hidden">
             {scopeHandler.selectedSource ? (
               scopeHandler.sourceResponse.isLoading ? (
                 <div className="flex items-center justify-center py-12">

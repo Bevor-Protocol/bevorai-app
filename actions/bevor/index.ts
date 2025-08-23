@@ -262,7 +262,7 @@ const getCurrentMember = async (): Promise<MemberSchema> => {
 };
 
 // Project Operations
-const createProject = async (data: CreateProjectBody): Promise<string> => {
+const createProject = async (data: CreateProjectBody): Promise<CodeProjectSchema> => {
   return projectService.createProject(data);
 };
 

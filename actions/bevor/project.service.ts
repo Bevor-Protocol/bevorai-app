@@ -2,9 +2,9 @@ import api from "@/lib/api";
 import { CodeProjectSchema, CodeVersionSchema, CreateProjectBody } from "@/utils/types";
 
 class ProjectService {
-  async createProject(data: CreateProjectBody): Promise<string> {
+  async createProject(data: CreateProjectBody): Promise<CodeProjectSchema> {
     return api.post("/projects", data).then((response: any) => {
-      return response.data.id;
+      return response.data;
     });
   }
 

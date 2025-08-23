@@ -40,11 +40,10 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
   const [overlayRect, setOverlayRect] = useState<PositionType | null>(null);
 
   const getSegmentContainer = useCallback((scope: FunctionScopeI): PositionType | null => {
-    if (!viewRef.current || !containerRef.current) {
+    if (!viewRef.current) {
       return null;
     }
     const view = viewRef.current;
-    const container = containerRef.current;
     const startCoords = view.coordsAtPos(scope.src_start_pos);
     const endCoords = view.coordsAtPos(scope.src_end_pos);
 
@@ -52,11 +51,16 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
       return null;
     }
 
-    const containerRect = container.getBoundingClientRect();
-    const scrollTop = container.scrollTop;
-    const scrollBottom = scrollTop + containerRect.height;
+    // Get the scroller for proper coordinate calculation
+    const scroller = view.dom.querySelector(".cm-scroller") as HTMLElement;
+    if (!scroller) return null;
 
-    const top = startCoords.top - containerRect.top + container.scrollTop;
+    const scrollerRect = scroller.getBoundingClientRect();
+    const scrollTop = scroller.scrollTop;
+    const scrollBottom = scrollTop + scroller.clientHeight;
+
+    // Calculate position relative to the scroller
+    const top = startCoords.top - scrollerRect.top + scroller.scrollTop;
     const height = endCoords.bottom - startCoords.top;
     const bottom = top + height;
 
@@ -73,7 +77,7 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
   }, []);
 
   const getOverlayRect = useCallback(
-    (view: EditorView, scope: FunctionScopeI, container: HTMLDivElement): PositionType | null => {
+    (view: EditorView, scope: FunctionScopeI): PositionType | null => {
       const paddingX = 10; // horizontal padding
       const paddingY = 5; // horizontal padding
 
@@ -102,18 +106,30 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
 
       if (minLeft === Infinity || maxRight === -Infinity) return null;
 
-      const containerRect = container.getBoundingClientRect();
+      // Get both scroller and content for coordinate calculation
+      const scroller = view.dom.querySelector(".cm-scroller") as HTMLElement;
+      const content = view.dom.querySelector(".cm-content") as HTMLElement;
+      if (!scroller || !content) return null;
+
+      const scrollerRect = scroller.getBoundingClientRect();
+      const contentRect = content.getBoundingClientRect();
+
+      // Convert viewport coordinates to scroller-relative coordinates
+      const scrollerLeft = minLeft - scrollerRect.left;
+      const scrollerRight = maxRight - scrollerRect.left;
+
+      // segmentContainer.top is already relative to the scroller, so just subtract padding
+      const viewportTop = segmentContainer.top - paddingY;
 
       return {
-        top: segmentContainer.top - paddingY,
+        top: Math.max(0, viewportTop),
         height: segmentContainer.height + paddingY * 2,
-        left: Math.max(0, minLeft - containerRect.left - paddingX),
-        width: maxRight - minLeft + paddingX * 2,
+        left: Math.max(0, scrollerLeft - paddingX),
+        width: Math.max(0, scrollerRight - scrollerLeft + paddingX * 2),
       };
     },
     [getSegmentContainer],
   );
-  // ... existing code ...
 
   // Initialize CodeMirror
   useEffect(() => {
@@ -166,12 +182,15 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
   }, [sourceContent.content]);
 
   useEffect(() => {
-    if (!viewRef.current || !selectedScope || !containerRef.current) {
-      setOverlayRect(null);
+    if (!viewRef.current || !selectedScope) {
+      // Remove existing overlay if any
+      const existingOverlay = viewRef.current?.dom.querySelector("#overlay");
+      if (existingOverlay) {
+        existingOverlay.remove();
+      }
       return;
     }
-    // I'm mixing up scroll containers, but I need access to the
-    // overlay as an absolutely positioned div, WITHIN the scrolling container
+
     const view = viewRef.current;
 
     const segmentContainer = getSegmentContainer(selectedScope);
@@ -180,7 +199,6 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
       const startLine = view.state.doc.lineAt(selectedScope.src_start_pos);
       const endLine = view.state.doc.lineAt(selectedScope.src_end_pos);
 
-      // it seems this struggles with floating point positions, randomly. Round to be safe.
       view.dispatch({
         effects: EditorView.scrollIntoView(
           Math.round(startLine.from + (endLine.to - startLine.from) / 2),
@@ -190,46 +208,69 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
         ),
       });
     }
-
-    // Wait for CodeMirror layout to update
+    // Wait for the next frame after scroll
     requestAnimationFrame(() => {
-      if (!containerRef.current) return;
-      const rect = getOverlayRect(view, selectedScope, containerRef.current!);
-      setOverlayRect(rect);
+      if (!viewRef.current) return;
+
+      // Remove existing overlay from any location
+      const existingOverlay = viewRef.current.dom.querySelector("#overlay");
+      if (existingOverlay) {
+        existingOverlay.remove();
+      }
+
+      if (!overlayEnabled) return;
+
+      const rect = getOverlayRect(view, selectedScope);
+      if (!rect) return;
+
+      // Create overlay as child of the CodeMirror scroller
+      const overlay = document.createElement("div");
+      overlay.id = "overlay";
+      overlay.style.cssText = `
+        position: absolute;
+        pointer-events: none;
+        background-color: rgba(56, 139, 253, 0.35);
+        box-shadow: 0 0 4px rgba(56, 139, 253, 0.8), 0 0 12px rgba(56, 139, 253, 0.5);
+        outline: 1px solid rgba(56, 139, 253, 0.8);
+        outline-offset: -1px;
+        border-radius: 3px;
+        transition: all 0.2s ease;
+        transform: scale(1.02);
+        z-index: 9999;
+        top: ${rect.top}px;
+        left: ${rect.left}px;
+        width: ${rect.width}px;
+        height: ${rect.height}px;
+      `;
+
+      // Append to the CodeMirror scroller
+      const scroller = viewRef.current.dom.querySelector(".cm-scroller") as HTMLElement;
+      if (scroller) {
+        try {
+          scroller.appendChild(overlay);
+        } catch (error) {
+          console.error("Error appending overlay to scroller:", error);
+        }
+      }
     });
-  }, [selectedScope, getOverlayRect, getSegmentContainer]);
+  }, [selectedScope, getOverlayRect, getSegmentContainer, overlayEnabled]);
 
   return (
     <>
       <div
         ref={containerRef}
-        className="h-full relative overflow-auto"
+        className="h-full relative overflow-hidden"
         role="region"
         aria-label="Solidity code viewer"
-      >
-        {overlayRect && overlayEnabled && (
-          <div
-            id="overlay"
-            style={{
-              position: "absolute",
-              pointerEvents: "none", // so clicks pass through
-              backgroundColor: "rgba(56, 139, 253, 0.35)", // subtle blue fill
-              boxShadow: "0 0 4px rgba(56, 139, 253, 0.8), 0 0 12px rgba(56, 139, 253, 0.5)", // glowing border
-              outline: "1px solid rgba(56, 139, 253, 0.8)",
-              outlineOffset: "-1px",
-              borderRadius: "3px",
-              transition: "all 0.2s ease",
-              transform: "scale(1.02)",
-              zIndex: 10,
-              ...overlayRect,
-            }}
-          />
-        )}
-      </div>
+      />
       <style>{`
       .cm-activeLine,.cm-activeLineGutter { background-color: transparent !important; }
-      .cm-gutters {background-color: rgb(13, 17, 23) !important;}
+      .cm-gutters {background-color: black !important;}
+      .cm-gutter {background-color: black !important;}
       .cm-gutterElement {color: #8b949e !important;}
+      .cm-editor { height: 100% !important; }
+      .cm-scroller { overflow: auto !important; }
+      .cm-content { background: black !important; }
       `}</style>
     </>
   );

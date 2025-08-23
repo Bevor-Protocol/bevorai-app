@@ -4,6 +4,7 @@ import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { navigation } from "@/utils/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Code, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -22,22 +23,19 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, target
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
 
-  const {
-    mutate,
-    error,
-    isSuccess,
-    data: projectId,
-    isPending,
-  } = useMutation({
+  const { mutate, error, isSuccess, data, isPending } = useMutation({
     mutationFn: async (data: { name: string; description?: string; tags?: string[] }) =>
       bevorAction.createProject(data),
   });
 
   useEffect(() => {
-    if (!isSuccess || !projectId) return;
+    if (!isSuccess || !data) return;
     queryClient.invalidateQueries({ queryKey: ["projects"] });
     const timeout = setTimeout(() => {
       // Redirect to the new project
+      router.push(
+        navigation.project.overview({ teamSlug: targetTeamSlug, projectSlug: data.slug }),
+      );
       if (teamSlug !== targetTeamSlug) {
         router.push(`/teams/${targetTeamSlug}`);
       }
@@ -46,7 +44,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, target
 
     return (): void => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, projectId, router, onClose]);
+  }, [isSuccess, data, router, onClose]);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();

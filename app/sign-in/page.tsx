@@ -14,14 +14,10 @@ const SignInPage: React.FC = () => {
     onComplete: async () => {
       setIsLoggingIn(true);
       setIsError(false);
-      try {
-        const response = await fetch("/api/token/issue", { method: "POST" });
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error("login failed");
-        }
-      } catch (error) {
-        console.log("bad, logging out.", error);
+      const response = await fetch("/api/token/issue", { method: "POST" });
+      const data = await response.json();
+      if (!data.success) {
+        console.log("bad, logging out.");
         await logout();
         setIsLoggingIn(false);
         setIsError(true);

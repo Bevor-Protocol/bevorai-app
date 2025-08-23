@@ -9,10 +9,9 @@ const publicRoutes = ["/shared", "/sign-in", "/logout", "/not-found", "/404", "/
 const forceLogout = async (request: NextRequest): Promise<NextResponse> => {
   const refreshToken = request.cookies.get("bevor-refresh-token");
   if (refreshToken) {
-    console.log("revoking token");
     await tokenService.revokeToken(refreshToken.value);
   }
-  console.log("redirecting to logout");
+
   const logoutRedirect = NextResponse.redirect(new URL("/logout", request.url));
   logoutRedirect.cookies.delete("bevor-token");
   logoutRedirect.cookies.delete("bevor-refresh-token");
@@ -30,9 +29,8 @@ const attemptRefresh = async (
     if (!refreshToken) {
       throw new Error("no_refresh_token");
     }
-    console.log("OLD REFRESH", refreshToken);
     const token = await tokenService.refreshToken(refreshToken);
-    console.log("NEW REFRESH", token.refresh_token);
+
     response.cookies.set("bevor-token", token.scoped_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -58,14 +56,12 @@ const attemptRefresh = async (
         return NextResponse.redirect(new URL("/teams", request.url));
       }
     }
-    console.log("refresh:", response.url);
+
     return response;
   } catch {
     if (isSignIn) {
-      console.log("refresh: sign in");
       return response;
     }
-    console.log("refresh: forcing logout");
     return forceLogout(request);
   }
 };
@@ -108,14 +104,11 @@ const middleware = async (request: NextRequest): Promise<NextResponse> => {
       await tokenService.validateToken();
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        console.log("IS AXIOS ERROR");
         if (err.response?.data) {
-          console.log("AXIOS ERROR:", err.response.data.code);
           switch (err.response.data.code) {
             case "invalid_team_membership": {
               // either attempting access to a team they don't belong to, or the slug was changed
               // and they weren't aware. In either instance, route to /teams and let that logic decide what to do.
-              console.log("redirecting to teams");
               const teamsRedirect = NextResponse.redirect(new URL("/teams", request.url));
               teamsRedirect.cookies.delete("bevor-recent-team");
               return teamsRedirect;
