@@ -6,7 +6,7 @@ import { EditorView } from "@codemirror/view";
 import { solidity } from "@replit/codemirror-lang-solidity";
 import { githubDark } from "@uiw/codemirror-theme-github";
 import { basicSetup } from "codemirror";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 interface SolidityViewerProps {
   sourceContent: ContractVersionSourceI;
@@ -37,7 +37,6 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
-  const [overlayRect, setOverlayRect] = useState<PositionType | null>(null);
 
   const getSegmentContainer = useCallback((scope: FunctionScopeI): PositionType | null => {
     if (!viewRef.current) {
@@ -112,7 +111,6 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
       if (!scroller || !content) return null;
 
       const scrollerRect = scroller.getBoundingClientRect();
-      const contentRect = content.getBoundingClientRect();
 
       // Convert viewport coordinates to scroller-relative coordinates
       const scrollerLeft = minLeft - scrollerRect.left;
@@ -156,14 +154,20 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
             if (pos === null) {
               // toggle
               onSelectScope([]);
-              setOverlayRect(null);
+              const existingOverlay = view.dom.querySelector("#overlay");
+              if (existingOverlay) {
+                existingOverlay.remove();
+              }
               return;
             }
 
             const allScopes = getAllScopesAtPos(pos);
             if (!allScopes.length) {
               onSelectScope([]);
-              setOverlayRect(null);
+              const existingOverlay = view.dom.querySelector("#overlay");
+              if (existingOverlay) {
+                existingOverlay.remove();
+              }
               return;
             }
 
