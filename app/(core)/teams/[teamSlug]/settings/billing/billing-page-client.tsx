@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { bevorAction } from "@/actions";
@@ -202,10 +203,10 @@ const CurrentSubscription: React.FC<{
     }
   };
 
-  const getPeriodInfo = () => {
+  const getPeriodInfo = (): { start: Date; end?: Date | null; label: string } | null => {
     if (isTrial) {
       return {
-        start: new Date(team.created_at),
+        start: subscription.current_period_start,
         end: null,
         label: "Trial Period",
       };
@@ -222,7 +223,7 @@ const CurrentSubscription: React.FC<{
     return null;
   };
 
-  const getLimitCopy = (limit: StripeSubscriptionLimit) => {
+  const getLimitCopy = (limit: StripeSubscriptionLimit): string => {
     if (limit.limit === 0) {
       if (isTrial) {
         return "subscription required";
@@ -257,7 +258,7 @@ const CurrentSubscription: React.FC<{
               Your subscription is set to cancel at the end of the current billing period.
             </p>
             <p className="text-sm text-orange-400">
-              You'll lose access to premium features on{" "}
+              You&apos;ll lose access to premium features on{" "}
               {periodInfo?.end ? formatDate(periodInfo.end) : "the end of your billing period"}.
             </p>
           </div>
@@ -354,10 +355,6 @@ const AddonRow: React.FC<{
     }).format(amount);
   };
 
-  const handleAddAddon = () => {
-    checkoutMutation.mutate();
-  };
-
   return (
     <div className="border border-neutral-800 rounded-lg p-6 mb-4">
       <div className="flex items-center justify-between">
@@ -396,7 +393,7 @@ const AddonRow: React.FC<{
           ) : (
             <Button
               variant="bright"
-              onClick={handleAddAddon}
+              onClick={() => checkoutMutation.mutate()}
               disabled={checkoutMutation.isPending}
               className="text-sm px-3 py-1"
             >

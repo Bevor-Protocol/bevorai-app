@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { bevorAction } from "@/actions";
@@ -175,7 +176,7 @@ const AddonRow: React.FC<{
     }).format(amount);
   };
 
-  const handleToggleAddon = (lookupKey: string) => {
+  const handleToggleAddon = (lookupKey: string): void => {
     if (!checkoutMutation.isPending && addon.is_eligible) {
       checkoutMutation.mutate(lookupKey);
     }
@@ -258,7 +259,7 @@ const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   );
 };
 
-const AddonsSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
+const AddonsSection: React.FC = () => {
   const { data: addons, isLoading: addonsLoading } = useQuery({
     queryKey: ["addons"],
     queryFn: () => bevorAction.getAddons(),
@@ -321,7 +322,7 @@ const PlansPageClient: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
         </div>
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-neutral-100 mb-6">Optional Add-ons</h2>
-          <AddonsSection team={team} />
+          <AddonsSection />
         </div>
       </div>
     </div>
