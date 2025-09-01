@@ -1,0 +1,331 @@
+"use client";
+
+import { bevorAction } from "@/actions";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import * as Tooltip from "@/components/ui/tooltip";
+import { MemberRoleEnum, StripeAddonI, StripePlanI, TeamSchemaI } from "@/utils/types";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Check, Info, Lock } from "lucide-react";
+import React from "react";
+
+const getFeatureName = (feature: string): string => {
+  switch (feature) {
+    case "audit":
+      return "Smart Contract Audits";
+    case "chat":
+      return "AI Chat Support";
+    case "contract_heavy":
+      return "Heavy Contract Analysis";
+    case "contract_light":
+      return "Light Contract Analysis";
+    case "contract_private_repo":
+      return "Private Repository Support";
+    default:
+      return feature;
+  }
+};
+
+const PlanCard: React.FC<{
+  plan: StripePlanI;
+  team: TeamSchemaI;
+}> = ({ plan, team }) => {
+  const checkoutMutation = useMutation({
+    mutationFn: () =>
+      bevorAction.createCheckoutSession({
+        success_url: `${window.location.origin}/teams/${team.slug}/settings/plans?success=true`,
+        cancel_url: `${window.location.origin}/teams/${team.slug}/settings/plans?canceled=true`,
+      }),
+    onSuccess: (data) => {
+      window.location.href = data.url;
+    },
+  });
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
+
+  const currentPrice = plan.base_price / 100;
+  const additionalSeatPrice =
+    (plan.seat_pricing.tiers.find((tier: any) => tier.up_to === null)?.unit_amount ?? 0) / 100;
+
+  return (
+    <div className="border border-neutral-800 rounded-lg p-6">
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            {plan.image && (
+              <img
+                src={plan.image || ""}
+                alt={plan.name}
+                className="w-12 h-12 object-contain rounded-lg"
+              />
+            )}
+            <h3 className="text-xl font-semibold text-neutral-100">{plan.name}</h3>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-lg font-semibold text-neutral-100">
+              {formatCurrency(currentPrice)}
+            </span>
+            <span className="text-neutral-400">/{plan.billing_interval}</span>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-neutral-400 text-sm mb-3">{plan.description}</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-neutral-400">
+                  {plan.included_seats} seats included
+                </span>
+                <Tooltip.Reference>
+                  <Tooltip.Trigger>
+                    <Info className="w-4 h-4 text-neutral-500 cursor-help" />
+                  </Tooltip.Trigger>
+                  <Tooltip.Content side="top" align="end" className="min-w-44">
+                    <div className="max-w-xs">
+                      <p className="text-xs">First {plan.included_seats} seats included</p>
+                      <p className="text-xs">
+                        Additional seats: {formatCurrency(additionalSeatPrice)} / seat /
+                        {plan.billing_interval}
+                      </p>
+                    </div>
+                  </Tooltip.Content>
+                </Tooltip.Reference>
+              </div>
+              {plan.usage?.audits && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-neutral-400">
+                    {plan.usage.audits.included} audits included
+                  </span>
+                  <Tooltip.Reference>
+                    <Tooltip.Trigger>
+                      <Info className="w-4 h-4 text-neutral-500 cursor-help" />
+                    </Tooltip.Trigger>
+                    <Tooltip.Content side="top" align="end" className="min-w-44">
+                      <div className="max-w-xs">
+                        <p className="text-xs">
+                          {plan.usage.audits.included} audits included per month
+                        </p>
+                        <p className="text-xs">
+                          Additional audits: {formatCurrency(plan.usage.audits.unit_amount / 100)}/
+                          audit
+                        </p>
+                      </div>
+                    </Tooltip.Content>
+                  </Tooltip.Reference>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="text-sm text-neutral-400">Features:</span>
+              <div className="flex flex-wrap items-center gap-3">
+                {plan.features.slice(0, 3).map((feature: string, index: number) => (
+                  <div key={index} className="flex items-center space-x-1">
+                    <Check className="w-3 h-3 text-green-400" />
+                    <span className="text-xs text-neutral-300">
+                      {getFeatureName(feature.toLowerCase())}
+                    </span>
+                  </div>
+                ))}
+                {plan.features.length > 3 && (
+                  <span className="text-xs text-neutral-400">+{plan.features.length - 3} more</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex-shrink-0 sm:ml-6">
+            {plan.is_active ? (
+              <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full">
+                Current
+              </span>
+            ) : (
+              <Button
+                variant="bright"
+                className="w-full sm:w-auto text-sm px-4 py-2"
+                onClick={() => checkoutMutation.mutate()}
+                disabled={checkoutMutation.isPending}
+              >
+                {checkoutMutation.isPending ? "Processing..." : "Subscribe"}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AddonRow: React.FC<{
+  addon: StripeAddonI;
+}> = ({ addon }) => {
+  const currentPrice = addon.price / 100;
+
+  const checkoutMutation = useMutation({
+    mutationFn: (lookupKey: string) => bevorAction.modifySubscription(lookupKey),
+  });
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
+
+  const handleToggleAddon = (lookupKey: string) => {
+    if (!checkoutMutation.isPending && addon.is_eligible) {
+      checkoutMutation.mutate(lookupKey);
+    }
+  };
+
+  return (
+    <div className="border border-neutral-800 rounded-lg p-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center space-x-4 flex-1">
+          {addon.image && addon.image !== null && (
+            <img
+              src={addon.image}
+              alt={addon.name}
+              className="w-12 h-12 object-contain rounded-lg"
+            />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-3 mb-2">
+              <h4 className="text-lg font-semibold text-neutral-100 truncate">{addon.name}</h4>
+              {addon.is_active && (
+                <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded flex-shrink-0">
+                  Active
+                </span>
+              )}
+            </div>
+            <p className="text-neutral-400 text-sm mb-1">{addon.description}</p>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-neutral-100">
+                {formatCurrency(currentPrice)}
+              </span>
+              <span className="text-neutral-400 text-sm">/{addon.billing_interval}</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3 flex-shrink-0">
+          {checkoutMutation.isPending && (
+            <div className="w-4 h-4 border-2 border-neutral-600 border-t-blue-500 rounded-full animate-spin"></div>
+          )}
+          <Switch
+            checked={addon.is_active}
+            onCheckedChange={() => handleToggleAddon(addon.lookup_key)}
+            disabled={checkoutMutation.isPending || !addon.is_eligible}
+            className="flex-shrink-0"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
+  const { data: plans, isLoading: plansLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => bevorAction.getProducts(),
+  });
+
+  if (plansLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="border border-neutral-800 rounded-lg p-6 animate-pulse">
+            <div className="h-6 bg-neutral-800 rounded mb-4"></div>
+            <div className="h-4 bg-neutral-800 rounded mb-2"></div>
+            <div className="h-4 bg-neutral-800 rounded mb-4"></div>
+            <div className="h-8 bg-neutral-800 rounded"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {plans
+        ?.sort((a: StripePlanI, b: StripePlanI) => a.base_price - b.base_price)
+        .map((plan: StripePlanI) => (
+          <PlanCard key={plan.id} plan={plan} team={team} />
+        ))}
+    </div>
+  );
+};
+
+const AddonsSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
+  const { data: addons, isLoading: addonsLoading } = useQuery({
+    queryKey: ["addons"],
+    queryFn: () => bevorAction.getAddons(),
+  });
+
+  if (addonsLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="border border-neutral-800 rounded-lg p-6 animate-pulse">
+            <div className="h-6 bg-neutral-800 rounded mb-4"></div>
+            <div className="h-4 bg-neutral-800 rounded mb-2"></div>
+            <div className="h-4 bg-neutral-800 rounded mb-4"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!addons || addons.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-4">
+      {addons.map((addon: StripeAddonI) => (
+        <AddonRow key={addon.id} addon={addon} />
+      ))}
+    </div>
+  );
+};
+
+const AccessRestricted: React.FC = () => (
+  <div className="px-6 py-8 bg-neutral-950 min-h-screen">
+    <div className="max-w-7xl mx-auto">
+      <div className="text-center py-12">
+        <Lock className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-neutral-100 mb-2">Access Restricted</h3>
+        <p className="text-neutral-400 mb-6 max-w-md mx-auto">
+          Only team owners can manage billing and subscription settings.
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+const PlansPageClient: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
+  const isOwner = team?.role === MemberRoleEnum.OWNER;
+
+  if (!isOwner) {
+    return <AccessRestricted />;
+  }
+
+  return (
+    <div className="px-6 pb-8 bg-neutral-950 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-12">
+          <h2 className="text-xl font-semibold text-neutral-100 mb-6">Available Plans</h2>
+          <PlansSection team={team} />
+        </div>
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-neutral-100 mb-6">Optional Add-ons</h2>
+          <AddonsSection team={team} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PlansPageClient;

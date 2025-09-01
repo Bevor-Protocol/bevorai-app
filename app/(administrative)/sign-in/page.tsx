@@ -2,7 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { useLogin, useLogout, usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import { Building2, Shield, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 import React, { useState } from "react";
 
 const SignInPage: React.FC = () => {
@@ -10,13 +13,22 @@ const SignInPage: React.FC = () => {
   const [isError, setIsError] = useState(false);
   const { ready } = usePrivy();
   const { logout } = useLogout();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
   const { login } = useLogin({
     onComplete: async () => {
       setIsLoggingIn(true);
       setIsError(false);
-      const response = await fetch("/api/token/issue", { method: "POST" });
-      const data = await response.json();
-      if (!data.success) {
+      try {
+        const response = await fetch("/api/token/issue", { method: "POST" });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error("bad");
+        }
+        await queryClient.invalidateQueries();
+        router.push("/teams");
+      } catch {
         console.log("bad, logging out.");
         await logout();
         setIsLoggingIn(false);

@@ -1,4 +1,3 @@
-import Layout from "@/components/layout";
 import ModalProvider from "@/providers/modal";
 import { PrivyWrapper } from "@/providers/privy";
 import QueryProvider from "@/providers/query";
@@ -46,10 +45,8 @@ const RootLayout: AsyncComponent<{ children: React.ReactNode }> = async ({ child
         <QueryProvider>
           <PrivyWrapper>
             <ModalProvider>
-              <Layout>
-                {children}
-                <Analytics />
-              </Layout>
+              {children}
+              <Analytics />
             </ModalProvider>
           </PrivyWrapper>
         </QueryProvider>

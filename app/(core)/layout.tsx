@@ -9,10 +9,6 @@ import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query
 import { cookies } from "next/headers";
 import Image from "next/image";
 
-type LayoutProps = {
-  children: React.ReactNode;
-};
-
 const BreadcrumbsHydration: AsyncComponent<{ userId: string; teams: TeamSchemaI[] }> = async ({
   userId,
   teams,
@@ -44,7 +40,7 @@ const NotificationHydration: AsyncComponent = async () => {
   );
 };
 
-const Layout: AsyncComponent<LayoutProps> = async ({ children }) => {
+const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children }) => {
   const queryClient = new QueryClient();
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("bevor-token")?.value;
@@ -57,6 +53,7 @@ const Layout: AsyncComponent<LayoutProps> = async ({ children }) => {
       queryFn: () => bevorAction.getTeams(),
     });
   }
+
   return (
     <div className="min-h-screen bg-black">
       <header

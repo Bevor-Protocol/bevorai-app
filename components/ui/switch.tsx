@@ -26,8 +26,8 @@ const Switch = React.forwardRef<HTMLDivElement, SwitchProps>(
         className={cn(
           "relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center",
           "rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2",
-          "focus-visible:ring-blue-500 focus-visible:ring-offset-2",
-          checked ? "bg-blue-600" : "bg-gray-700",
+          "focus-visible:ring-green-500 focus-visible:ring-offset-2",
+          checked ? "bg-green-600" : "bg-gray-700",
           disabled && "cursor-not-allowed opacity-50",
           className,
         )}

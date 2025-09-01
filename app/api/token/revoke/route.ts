@@ -7,7 +7,7 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
 
     const refreshToken = request.cookies.get("bevor-refresh-token");
     // don't redirect to sign-in. We need to logout of the IDP on the client first.
-    const response = NextResponse.redirect(new URL("/logout", request.url), 302);
+    const response = NextResponse.json({ success: true }, { status: 202 });
 
     if (!refreshToken) {
       return response;
@@ -17,7 +17,7 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
 
     response.cookies.delete("bevor-token");
     response.cookies.delete("bevor-refresh-token");
-    response.cookies.delete("bevor-recent-team");
+    response.cookies.delete("bevor-team-slug");
 
     return response;
   } catch (error) {

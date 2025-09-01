@@ -25,6 +25,11 @@ const navigationItems: NavItemProp[] = [
     include: ({ teamSlug, projectSlug }) => !projectSlug,
   },
   {
+    name: "Plans",
+    href: ({ teamSlug, projectSlug }) => `/teams/${teamSlug}/settings/plans`,
+    include: ({ teamSlug, projectSlug }) => !projectSlug,
+  },
+  {
     name: "Invoices",
     href: ({ teamSlug, projectSlug }) => `/teams/${teamSlug}/settings/invoices`,
     include: ({ teamSlug, projectSlug }) => !projectSlug,

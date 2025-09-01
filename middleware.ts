@@ -88,8 +88,8 @@ const middleware = async (request: NextRequest): Promise<NextResponse> => {
   if (pathname.startsWith("/teams")) {
     const segments = pathname.split("/").filter(Boolean);
     if (segments.length > 1) {
-      // TODO: might need to put this in a cookie.
       response.headers.set("bevor-team-slug", segments[1]);
+      response.cookies.set("bevor-team-slug", segments[1]);
     }
   }
 

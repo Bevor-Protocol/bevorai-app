@@ -19,6 +19,7 @@ const LogoutPage: React.FC = () => {
         // will throw an error otherwise.
         await logout();
       }
+      await fetch("/api/token/revoke", { method: "POST" });
       router.push("/sign-in");
     };
     fullLogout();

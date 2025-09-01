@@ -29,10 +29,15 @@ import {
   MultiTimeseriesResponseI,
   PromptResponseI,
   StatsResponseI,
+  StripeAddonI,
+  StripeCustomerI,
+  StripePlanI,
+  StripeSubscriptionI,
   TeamSchemaI,
   TimeseriesResponseI,
   TreeResponseI,
   UpdateMemberBody,
+  UpdateSubscriptionRequest,
   UpdateTeamBody,
   UserInfoResponseI,
   UserSchemaI,
@@ -41,6 +46,7 @@ import {
 } from "@/utils/types";
 import adminService from "./admin.service";
 import auditService from "./audit.service";
+import billingService from "./billing.service";
 import chatService from "./chat.service";
 import projectService from "./project.service";
 import teamService from "./team.service";
@@ -334,6 +340,52 @@ const getUserTimeSeries = async (): Promise<UserTimeseriesResponseI> => {
   return userService.getUserTimeSeries();
 };
 
+const getProducts = async (): Promise<StripePlanI[]> => {
+  return billingService.getProducts();
+};
+
+const getAddons = async (): Promise<StripeAddonI[]> => {
+  return billingService.getAddons();
+};
+
+const getSubscription = async (): Promise<StripeSubscriptionI> => {
+  return billingService.getSubscription();
+};
+
+const modifySubscription = async (lookupKey: string): Promise<StripeSubscriptionI> => {
+  return billingService.modifySubscription(lookupKey);
+};
+
+const getCustomer = async (): Promise<StripeCustomerI> => {
+  return billingService.getCustomer();
+};
+
+const updateCustomer = async (data: {
+  name?: string;
+  email?: string;
+}): Promise<StripeCustomerI> => {
+  return billingService.updateCustomer(data);
+};
+
+const createCheckoutSession = async (data: {
+  success_url: string;
+  cancel_url: string;
+}): Promise<{ session_id: string; url: string }> => {
+  return billingService.createCheckoutSession(data);
+};
+
+const updateSubscription = async (data: UpdateSubscriptionRequest): Promise<boolean> => {
+  return billingService.updateSubscription(data);
+};
+
+const cancelSubscription = async (): Promise<boolean> => {
+  return billingService.cancelSubscription();
+};
+
+const reactivateSubscription = async (): Promise<boolean> => {
+  return billingService.reactivateSubscription();
+};
+
 const listKeys = async (): Promise<AuthSchema[]> => {
   return apiKeyService.listKeys();
 };
@@ -353,15 +405,18 @@ const revokeKey = async (keyId: string): Promise<boolean> => {
 export {
   acceptInvite,
   addPrompt,
+  cancelSubscription,
   contractUploadFile,
   contractUploadFolder,
   contractUploadPaste,
   contractUploadScan,
+  createCheckoutSession,
   createKey,
   createProject,
   createTeam,
   deleteProject,
   deleteTeam,
+  getAddons,
   getAllProjects,
   getAudit,
   getAuditFindings,
@@ -378,14 +433,17 @@ export {
   getContractVersionSources,
   getCurrentGas,
   getCurrentMember,
+  getCustomer,
   getFunctionChunk,
   getInvites,
   getMembers,
+  getProducts,
   getProject,
   getProjectBySlug,
   getProjects,
   getPrompts,
   getStats,
+  getSubscription,
   getTeam,
   getTeams,
   getTimeseriesAudits,
@@ -402,6 +460,8 @@ export {
   inviteMembers,
   isAdmin,
   listKeys,
+  modifySubscription,
+  reactivateSubscription,
   refreshKey,
   removeInvite,
   removeMember,
@@ -411,8 +471,10 @@ export {
   submitFeedback,
   syncCredits,
   updateAppPermissions,
+  updateCustomer,
   updateMember,
   updatePrompt,
+  updateSubscription,
   updateTeam,
   updateUserPermissions,
 };

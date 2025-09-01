@@ -3,26 +3,17 @@
 import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
 import { TeamSchemaI } from "@/utils/types";
-import { useLogout, usePrivy } from "@privy-io/react-auth";
 import { LayoutDashboardIcon, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 type Props = { teams: TeamSchemaI[]; close?: () => void };
 
 const UserDropdown: React.FC<Props> = ({ teams, close }) => {
   const defaultTeam = teams.find((team) => team.is_default);
-  const { authenticated } = usePrivy();
-  const { logout } = useLogout();
-
-  const handleLogout = async (): Promise<void> => {
-    if (authenticated) {
-      // throws otherwise.
-      await logout();
-    }
-    await fetch("/api/token/revoke", { method: "POST" });
-  };
+  const router = useRouter();
 
   return (
     <div className="min-w-56 py-2 bg-black shadow-sm rounded-lg border border-white">
@@ -78,7 +69,7 @@ const UserDropdown: React.FC<Props> = ({ teams, close }) => {
         <div
           onClick={(): void => {
             close?.();
-            handleLogout();
+            router.push("/logout");
           }}
           className={cn(
             "flex items-center px-3 py-2 w-full gap-3 text-sm text-neutral-300",

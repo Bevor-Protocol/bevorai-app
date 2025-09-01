@@ -1,5 +1,5 @@
 import { bevorAction } from "@/actions";
-import TeamDisplay from "@/app/user/team-component";
+import TeamDisplay from "@/app/(core)/user/team-component";
 import { Skeleton } from "@/components/ui/loader";
 import { formatDate } from "@/utils/helpers";
 import { AsyncComponent } from "@/utils/types";
