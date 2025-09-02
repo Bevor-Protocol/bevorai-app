@@ -2,6 +2,7 @@
 "use client";
 
 import { bevorAction } from "@/actions";
+import { AddonRow } from "@/components/billing/addon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlanStatusEnum } from "@/utils/enums";
@@ -71,7 +72,12 @@ const InvoiceNameSection: React.FC = () => {
         </div>
 
         <div className="pt-4 border-t border-neutral-800">
-          <Button type="submit" variant="bright" disabled={updateNameMutation.isPending}>
+          <Button
+            type="submit"
+            variant="bright"
+            disabled={updateNameMutation.isPending}
+            className="text-sm"
+          >
             {updateNameMutation.isPending ? "Updating..." : "Update Invoice Name"}
           </Button>
         </div>
@@ -147,11 +153,127 @@ const BillingEmailSection: React.FC = () => {
         </div>
 
         <div className="pt-4 border-t border-neutral-800">
-          <Button type="submit" variant="bright" disabled={updateEmailMutation.isPending}>
+          <Button
+            type="submit"
+            variant="bright"
+            disabled={updateEmailMutation.isPending}
+            className="text-sm"
+          >
             {updateEmailMutation.isPending ? "Updating..." : "Update Billing Email"}
           </Button>
         </div>
       </form>
+    </div>
+  );
+};
+
+const PaymentMethodSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
+  const { data: paymentMethod, isLoading: paymentMethodLoading } = useQuery({
+    queryKey: ["payment-method"],
+    queryFn: () => bevorAction.getPaymentMethod(),
+  });
+
+  console.log(paymentMethod);
+
+  const checkoutMutation = useMutation({
+    mutationFn: () =>
+      bevorAction.updatePaymentMethod({
+        success_url: `${window.location.origin}/teams/${team.slug}/settings/billing?success=true`,
+        cancel_url: `${window.location.origin}/teams/${team.slug}/settings/billing?canceled=true`,
+      }),
+    onSuccess: (data) => {
+      window.location.href = data.url;
+    },
+  });
+
+  const formatCardBrand = (brand: string): string => {
+    return brand.charAt(0).toUpperCase() + brand.slice(1);
+  };
+
+  const formatExpiryDate = (month: number, year: number): string => {
+    return `${month.toString().padStart(2, "0")}/${year.toString().slice(-2)}`;
+  };
+
+  const getCardDisplayText = (brand: string): string => {
+    switch (brand.toLowerCase()) {
+      case "visa":
+        return "VISA";
+      case "mastercard":
+        return "MC";
+      case "amex":
+        return "AMEX";
+      case "discover":
+        return "DISC";
+      default:
+        return brand.toUpperCase().slice(0, 4);
+    }
+  };
+
+  if (paymentMethodLoading) {
+    return (
+      <div className="border border-neutral-800 rounded-lg p-6 mb-8">
+        <h3 className="text-lg font-semibold text-neutral-100 mb-4">Payment Method</h3>
+        <div className="animate-pulse">
+          <div className="h-4 bg-neutral-800 rounded mb-2"></div>
+          <div className="h-4 bg-neutral-800 rounded mb-4"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!paymentMethod || !Object.keys(paymentMethod).length) {
+    return <></>;
+  }
+
+  // Type guard to ensure we have a valid payment method with card details
+  if (!paymentMethod.card || paymentMethod.type !== "card") {
+    return (
+      <div className="border border-neutral-800 rounded-lg p-6 mb-8">
+        <h3 className="text-lg font-semibold text-neutral-100 mb-4">Payment Method</h3>
+        <p className="text-sm text-neutral-400 mb-4">
+          Unsupported payment method type. Please contact support.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-neutral-800 rounded-lg p-6 mb-8">
+      <h3 className="text-lg font-semibold text-neutral-100 mb-4">Payment Method</h3>
+      <div className="space-y-4">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-8 bg-neutral-800 rounded flex items-center justify-center">
+            <span className="text-xs text-neutral-400 font-mono">
+              {getCardDisplayText(paymentMethod.card.brand)}
+            </span>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center space-x-2 mb-1">
+              <span className="text-sm font-medium text-neutral-100">
+                {formatCardBrand(paymentMethod.card.brand)} •••• {paymentMethod.card.last4}
+              </span>
+              <span className="text-xs text-neutral-400">
+                Expires{" "}
+                {formatExpiryDate(paymentMethod.card.exp_month, paymentMethod.card.exp_year)}
+              </span>
+            </div>
+            {paymentMethod.billing_details.name && (
+              <p className="text-sm text-neutral-400">{paymentMethod.billing_details.name}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-neutral-800">
+          <Button
+            variant="bright"
+            className="text-sm px-4 py-2"
+            onClick={() => checkoutMutation.mutate()}
+            disabled={checkoutMutation.isPending}
+          >
+            Update Payment Method
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -228,7 +350,7 @@ const CurrentSubscription: React.FC<{
       if (isTrial) {
         return "subscription required";
       }
-      return "unlock add-on";
+      return "add-on required";
     }
     if (limit.limit === undefined || limit.limit === null) {
       return `${limit.current} used`;
@@ -272,6 +394,15 @@ const CurrentSubscription: React.FC<{
             </p>
           </div>
         )}
+
+        <div className="mb-4">
+          <p className="text-sm text-neutral-400 mb-2">
+            Team Seats: {subscription.n_seats}
+            {subscription.plan_status === PlanStatusEnum.TRIALING && (
+              <span className="text-orange-400 ml-2">(3 seat limit during trial)</span>
+            )}
+          </p>
+        </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-neutral-800">
           {isTrial ? (
@@ -331,81 +462,6 @@ const CurrentSubscription: React.FC<{
   );
 };
 
-// Addon Row Component
-const AddonRow: React.FC<{
-  addon: StripeAddonI;
-}> = ({ addon }) => {
-  const currentPrice = addon.price / 100;
-
-  const checkoutMutation = useMutation({
-    mutationFn: () =>
-      bevorAction.createCheckoutSession({
-        success_url: `${window.location.origin}/teams/${window.location.pathname.split("/")[2]}/settings/billing?success=true`,
-        cancel_url: `${window.location.origin}/teams/${window.location.pathname.split("/")[2]}/settings/billing?canceled=true`,
-      }),
-    onSuccess: (data) => {
-      window.location.href = data.url;
-    },
-  });
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
-
-  return (
-    <div className="border border-neutral-800 rounded-lg p-6 mb-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          {addon.image && addon.image !== null && (
-            <img
-              src={addon.image}
-              alt={addon.name}
-              className="w-12 h-12 object-contain rounded-lg"
-            />
-          )}
-          <div className="flex-1">
-            <div className="flex items-center space-x-3 mb-2">
-              <h4 className="text-lg font-semibold text-neutral-100">{addon.name}</h4>
-              {addon.is_active && (
-                <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded">
-                  Active
-                </span>
-              )}
-            </div>
-            <p className="text-neutral-400 text-sm mb-2">{addon.description}</p>
-            <div className="flex items-center space-x-2">
-              <span className="text-lg font-semibold text-neutral-100">
-                {formatCurrency(currentPrice)}
-              </span>
-              <span className="text-neutral-400">/{addon.billing_interval}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          {addon.is_active ? (
-            <Button variant="dark" className="text-sm px-3 py-1">
-              Manage
-            </Button>
-          ) : (
-            <Button
-              variant="bright"
-              onClick={() => checkoutMutation.mutate()}
-              disabled={checkoutMutation.isPending}
-              className="text-sm px-3 py-1"
-            >
-              {checkoutMutation.isPending ? "Processing..." : "Add Addon"}
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const AddonsSection: React.FC = () => {
   const { data: addons, isLoading: addonsLoading } = useQuery({
     queryKey: ["addons"],
@@ -445,6 +501,45 @@ const AddonsSection: React.FC = () => {
   );
 };
 
+const NoSubscription: React.FC<{ team: TeamSchemaI; subscription?: StripeSubscriptionI }> = ({
+  team,
+  subscription,
+}) => {
+  return (
+    <div className="border border-neutral-800 rounded-lg p-6 mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-neutral-100">No Active Subscription</h3>
+        <span className="bg-neutral-500/20 text-neutral-400 text-xs px-2 py-1 rounded">
+          {subscription ? subscription.plan_status : "Inactive"}
+        </span>
+      </div>
+
+      <p className="text-sm text-neutral-400 mb-4">
+        You don&apos;t have an active subscription. Upgrade to a plan to access premium features and
+        manage your billing.
+      </p>
+
+      <div className="flex items-center justify-between pt-4 border-t border-neutral-800">
+        <Link href={`/teams/${team.slug}/settings/plans`}>
+          <Button variant="bright" className="text-sm px-4 py-2">
+            View Plans
+          </Button>
+        </Link>
+        <div className="flex items-center space-x-3">
+          <a
+            href="https://bevor.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-neutral-400 hover:text-neutral-300 transition-colors"
+          >
+            Contact Sales
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AccessRestricted: React.FC = () => (
   <div className="px-6 py-8 bg-neutral-950 min-h-screen">
     <div className="max-w-7xl mx-auto">
@@ -468,8 +563,6 @@ const BillingPageClient: React.FC<BillingPageClientProps> = ({ team }) => {
     enabled: isOwner,
   });
 
-  console.log(subscription);
-
   const hasActiveSubscription =
     subscription &&
     ([PlanStatusEnum.ACTIVE, PlanStatusEnum.PAST_DUE, PlanStatusEnum.TRIALING].includes(
@@ -484,15 +577,21 @@ const BillingPageClient: React.FC<BillingPageClientProps> = ({ team }) => {
   return (
     <div className="px-6 pb-8 bg-neutral-950 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {hasActiveSubscription && <CurrentSubscription subscription={subscription} team={team} />}
-
-        {hasActiveSubscription &&
-          (subscription?.plan_status === PlanStatusEnum.ACTIVE ||
-            subscription?.subscription?.cancel_at_period_end) && <AddonsSection />}
+        {hasActiveSubscription ? (
+          <>
+            <CurrentSubscription subscription={subscription} team={team} />
+            {(subscription?.plan_status === PlanStatusEnum.ACTIVE ||
+              subscription?.subscription?.cancel_at_period_end) && <AddonsSection />}
+          </>
+        ) : (
+          <NoSubscription team={team} subscription={subscription} />
+        )}
 
         <InvoiceNameSection />
 
         <BillingEmailSection />
+
+        <PaymentMethodSection team={team} />
       </div>
     </div>
   );

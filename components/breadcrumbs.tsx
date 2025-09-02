@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
 import { CodeProjectSchema, HrefProps, TeamSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ChevronsUpDown, Code, Plus } from "lucide-react";
+import { ChevronRight, ChevronsUpDown, Code, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useSelectedLayoutSegments } from "next/navigation";
 import React, { useMemo, useReducer, useRef, useState } from "react";
@@ -166,7 +166,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
   return (
     <div
       className={cn(
-        "bg-neutral-900 border border-neutral-800 rounded-lg",
+        "border border-neutral-800 rounded-lg bg-black",
         "shadow-2xl flex overflow-hidden",
         "absolute z-999 cursor-default transition-all animate-appear top-full",
       )}
@@ -217,7 +217,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
             setHoveredTeam(undefined);
           }}
         >
-          <Plus className="w-4 h-4" />
+          <PlusCircle className="w-4 h-4 text-blue-400" />
           <span className="font-medium">Create Team</span>
         </button>
       </div>
@@ -269,7 +269,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
               "rounded-md transition-colors cursor-pointer",
             )}
           >
-            <Plus className="w-4 h-4" />
+            <PlusCircle className="w-4 h-4 text-blue-400" />
             <span className="font-medium">Create Project</span>
           </button>
         </div>

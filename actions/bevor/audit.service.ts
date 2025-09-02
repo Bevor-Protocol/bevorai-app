@@ -56,7 +56,7 @@ class AuditService {
   async getAudits(filters: { [key: string]: string }): Promise<AuditTableReponseI> {
     const searchParams = new URLSearchParams(filters);
     searchParams.set("status", "success");
-    searchParams.set("page_size", "10");
+    searchParams.set("page_size", filters.page_size ?? "9");
 
     return api
       .get(`/audits?${searchParams.toString()}`)

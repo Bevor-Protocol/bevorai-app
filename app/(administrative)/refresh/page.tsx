@@ -3,12 +3,13 @@
 import { Loader } from "@/components/ui/loader";
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 
-const RefreshPage: React.FC = () => {
+const RefreshPageContent: React.FC = () => {
   const { getAccessToken } = usePrivy();
   const router = useRouter();
   const searchParams = useSearchParams();
+
   useEffect(() => {
     if (!router) return;
     const waitToken = async (): Promise<void> => {
@@ -27,10 +28,25 @@ const RefreshPage: React.FC = () => {
     };
     waitToken();
   }, [getAccessToken, router, searchParams]);
+
   return (
     <div className="flex justify-center items-center fill-remaining-height">
       <Loader className="w-10 h-10" />
     </div>
+  );
+};
+
+const RefreshPage: React.FC = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center fill-remaining-height">
+          <Loader className="w-10 h-10" />
+        </div>
+      }
+    >
+      <RefreshPageContent />
+    </Suspense>
   );
 };
 

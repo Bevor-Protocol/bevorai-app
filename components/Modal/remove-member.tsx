@@ -19,6 +19,7 @@ const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ onClose, teamName
     mutationFn: async () => bevorAction.removeMember(memberId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
     },
   });
 

@@ -89,7 +89,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               disabled={!isOwner}
-              className="w-full h-10 px-3 bg-neutral-900 border border-neutral-700 text-neutral-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-10 px-3 border border-neutral-700 text-neutral-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Enter team name"
             />
           </div>

@@ -1,6 +1,5 @@
 import { bevorAction } from "@/actions";
 import { AsyncComponent } from "@/utils/types";
-import Link from "next/link";
 import VersionCreationStep from "./version-creation-step";
 
 interface NewVersionPageProps {
@@ -15,15 +14,6 @@ const NewVersionPage: AsyncComponent<NewVersionPageProps> = async ({ params }) =
 
   return (
     <div className="px-6 py-8 bg-neutral-950 min-h-screen">
-      <div className="mb-8">
-        <Link
-          href={`/teams/${teamSlug}/projects/${projectSlug}`}
-          className="text-blue-400 hover:text-blue-300"
-        >
-          ← Back to {project.name}
-        </Link>
-      </div>
-
       <VersionCreationStep
         projectId={project.id}
         teamId={team.id}

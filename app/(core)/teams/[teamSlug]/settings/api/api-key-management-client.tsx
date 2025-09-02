@@ -100,7 +100,7 @@ const ApiKeyManagementClient: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
-                <code className="text-xs font-mono bg-neutral-900 text-green-400 px-3 py-1.5 rounded-md border border-neutral-700 tracking-wider whitespace-nowrap">
+                <code className="text-xs font-mono text-green-400 px-3 py-1.5 rounded-md border border-neutral-700 tracking-wider whitespace-nowrap">
                   sk_{apiKey.prefix}•••••••••••••••••••••••••••••
                 </code>
                 <div className="flex items-center space-x-2">

@@ -17,7 +17,7 @@ const AuditLayout: AsyncComponent<LayoutProps> = async ({ params, children }) =>
   return (
     <div>
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4 text-sm">
+        <div className="flex items-center space-x-4 text-sm my-4">
           <Link
             href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${audit.code_version_mapping_id}`}
             className="flex items-center space-x-2 text-neutral-400 hover:text-neutral-100 transition-colors"

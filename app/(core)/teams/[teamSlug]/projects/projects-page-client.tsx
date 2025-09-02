@@ -72,7 +72,7 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team, projects 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={cn(
-                  "pl-10 pr-4 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100",
+                  "pl-10 pr-4 py-2 border border-neutral-700 text-neutral-100",
                   "placeholder-neutral-500 rounded-md focus:outline-none",
                   "focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80",
                 )}
@@ -82,7 +82,7 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team, projects 
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as "all" | "active" | "archived")}
               className={cn(
-                "px-3 py-2 bg-neutral-900 border border-neutral-700 text-neutral-100",
+                "px-3 py-2 border border-neutral-700 text-neutral-100",
                 "rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
               )}
             >
@@ -108,7 +108,7 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team, projects 
           {filteredProjects.map((project) => (
             <Card.Main
               key={project.id}
-              className="bg-neutral-900 border border-neutral-800 hover:border-neutral-700 transition-all"
+              className="border border-neutral-800 hover:border-neutral-700 transition-all"
             >
               <Card.Content className="p-6">
                 <div className="flex items-start justify-between mb-4">

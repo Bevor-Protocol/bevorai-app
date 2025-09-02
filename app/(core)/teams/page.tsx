@@ -9,7 +9,6 @@ const TeamBasePage: AsyncComponent = async () => {
   const recentTeamSlug = cookieStore.get("bevor-recent-team")?.value;
 
   if (recentTeamSlug) {
-    console.log("redirecting, recent team found", recentTeamSlug);
     redirect(`/teams/${recentTeamSlug}`);
   }
 

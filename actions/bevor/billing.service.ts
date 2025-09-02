@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import {
   StripeAddonI,
   StripeCustomerI,
+  StripePaymentMethodI,
   StripePlanI,
   StripeSubscriptionI,
   UpdateSubscriptionRequest,
@@ -58,7 +59,7 @@ class BillingService {
       .patch("/billing/subscription", {
         price_id: data.price_id,
       })
-      .then((response: any) => {
+      .then((response) => {
         return response.data.success;
       });
   }
@@ -72,6 +73,21 @@ class BillingService {
   async reactivateSubscription(): Promise<boolean> {
     return api.patch("/billing/reactivate").then((response: any) => {
       return response.data.success;
+    });
+  }
+
+  async getPaymentMethod(): Promise<StripePaymentMethodI | null> {
+    return api.get("/billing/payment-method").then((response: any) => {
+      return response.data;
+    });
+  }
+
+  async updatePaymentMethod(data: {
+    success_url: string;
+    cancel_url: string;
+  }): Promise<{ session_id: string; url: string }> {
+    return api.post("/billing/payment-method", data).then((response: any) => {
+      return response.data;
     });
   }
 }

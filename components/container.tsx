@@ -28,11 +28,6 @@ const navigationItemsTeam: NavItemProp[] = [
     name: "Overview",
     href: navigation.team.overview,
   },
-  {
-    name: "Settings",
-    href: navigation.team.settings.overview,
-    isActive: (data, pathname) => pathname.startsWith(navigation.team.settings.overview(data)),
-  },
   // {
   //   name: "Audits",
   //   href: navigation.team.audits,
@@ -40,6 +35,11 @@ const navigationItemsTeam: NavItemProp[] = [
   {
     name: "Analytics",
     href: navigation.team.analytics,
+  },
+  {
+    name: "Settings",
+    href: navigation.team.settings.overview,
+    isActive: (data, pathname) => pathname.startsWith(navigation.team.settings.overview(data)),
   },
 ];
 
@@ -49,16 +49,16 @@ const navigationItemsProject: NavItemProp[] = [
     href: navigation.project.overview,
   },
   {
-    name: "Settings",
-    href: navigation.project.settings,
-  },
-  {
     name: "Audits",
     href: navigation.project.audits,
   },
   {
     name: "Analytics",
     href: navigation.project.analytics,
+  },
+  {
+    name: "Settings",
+    href: navigation.project.settings,
   },
 ];
 

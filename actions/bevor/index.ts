@@ -31,6 +31,7 @@ import {
   StatsResponseI,
   StripeAddonI,
   StripeCustomerI,
+  StripePaymentMethodI,
   StripePlanI,
   StripeSubscriptionI,
   TeamSchemaI,
@@ -386,6 +387,17 @@ const reactivateSubscription = async (): Promise<boolean> => {
   return billingService.reactivateSubscription();
 };
 
+const getPaymentMethod = async (): Promise<StripePaymentMethodI | null> => {
+  return billingService.getPaymentMethod();
+};
+
+const updatePaymentMethod = async (data: {
+  success_url: string;
+  cancel_url: string;
+}): Promise<{ session_id: string; url: string }> => {
+  return billingService.updatePaymentMethod(data);
+};
+
 const listKeys = async (): Promise<AuthSchema[]> => {
   return apiKeyService.listKeys();
 };
@@ -437,6 +449,7 @@ export {
   getFunctionChunk,
   getInvites,
   getMembers,
+  getPaymentMethod,
   getProducts,
   getProject,
   getProjectBySlug,
@@ -473,6 +486,7 @@ export {
   updateAppPermissions,
   updateCustomer,
   updateMember,
+  updatePaymentMethod,
   updatePrompt,
   updateSubscription,
   updateTeam,

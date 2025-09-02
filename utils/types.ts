@@ -470,6 +470,7 @@ export interface StripeAddonI {
   image: string | null;
   is_active: boolean;
   is_eligible: boolean;
+  is_pending_removal: boolean;
   lookup_key: string;
 }
 
@@ -492,6 +493,7 @@ export interface StripeSubscriptionI {
     plan_ids: string[];
   } | null;
   limits: StripeSubscriptionLimit[];
+  n_seats: number;
   current_period_start: Date;
   current_period_end?: Date;
 }
@@ -522,6 +524,52 @@ export interface CreateCheckoutSessionRequest {
 
 export interface CreateCheckoutSessionResponse {
   checkout_url: string;
+}
+
+export interface StripePaymentMethodI {
+  id: string;
+  object: "payment_method";
+  billing_details: {
+    address: {
+      city: string | null;
+      country: string | null;
+      line1: string | null;
+      line2: string | null;
+      postal_code: string | null;
+      state: string | null;
+    };
+    email: string | null;
+    name: string | null;
+    phone: string | null;
+  };
+  card: {
+    brand: string;
+    checks: {
+      address_line1_check: string | null;
+      address_postal_code_check: string | null;
+      cvc_check: string | null;
+    };
+    country: string | null;
+    exp_month: number;
+    exp_year: number;
+    fingerprint: string | null;
+    funding: string;
+    generated_from: string | null;
+    last4: string;
+    networks: {
+      available: string[];
+      preferred: string | null;
+    };
+    three_d_secure_usage: {
+      supported: boolean;
+    };
+    wallet: string | null;
+  };
+  created: number;
+  customer: string | null;
+  livemode: boolean;
+  metadata: Record<string, any>;
+  type: string;
 }
 
 export interface UpdateSubscriptionRequest {

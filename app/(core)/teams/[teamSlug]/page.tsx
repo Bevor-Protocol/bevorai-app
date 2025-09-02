@@ -39,13 +39,10 @@ const ProjectsGrid: AsyncComponent<{ teamSlug: string }> = async ({ teamSlug }) 
         <Link
           key={project.id}
           href={`/teams/${teamSlug}/projects/${project.slug}`}
-          className="block bg-neutral-900 border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all hover:bg-neutral-900/80"
+          className="block border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all"
         >
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center flex-shrink-0">
-                <FileText className="w-5 h-5 text-blue-400" />
-              </div>
               <div className="min-w-0 flex-1">
                 <h3 className="text-lg font-semibold text-neutral-100 truncate">{project.name}</h3>
                 <p className="text-sm text-neutral-400">Created {formatDate(project.created_at)}</p>
@@ -108,7 +105,7 @@ const ProjectsGrid: AsyncComponent<{ teamSlug: string }> = async ({ teamSlug }) 
 const ProjectsLoading: React.FC = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
     {Array.from({ length: 4 }).map((_, index) => (
-      <div key={index} className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+      <div key={index} className="border border-neutral-800 rounded-lg p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
@@ -142,9 +139,7 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   const { teamSlug } = await params;
 
   return (
-    <Suspense
-      fallback={<div className="px-6 py-8 bg-neutral-950 min-h-screen">Loading team...</div>}
-    >
+    <Suspense>
       <TeamData teamSlug={teamSlug} />
     </Suspense>
   );

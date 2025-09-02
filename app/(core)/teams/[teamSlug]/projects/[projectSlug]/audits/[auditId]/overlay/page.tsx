@@ -44,7 +44,7 @@ const AuditOverlayData: AsyncComponent<{ auditId: string }> = async ({ auditId }
     }));
 
   return (
-    <div className="px-6 py-4 bg-neutral-950 fill-remaining-height">
+    <div className="px-6 py-4 bg-neutral-950 fill-remaining-height-arrow">
       <ScopeOverlayClient scope={sortedScope} audit={audit} />
     </div>
   );
@@ -52,7 +52,7 @@ const AuditOverlayData: AsyncComponent<{ auditId: string }> = async ({ auditId }
 
 // Loading component
 const OverlayLoading: React.FC = () => (
-  <div className="px-6 py-4 bg-neutral-950 fill-remaining-height">
+  <div className="px-6 py-4 bg-neutral-950 fill-remaining-height-arrow">
     <div className="animate-pulse">
       <div className="space-y-8">
         {Array.from({ length: 3 }).map((_, index) => (

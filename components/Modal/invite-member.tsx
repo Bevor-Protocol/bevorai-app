@@ -31,6 +31,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ onClose, teamName
     mutationFn: async (params: InviteMemberBody) => bevorAction.inviteMembers(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invites"] });
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
     },
   });
 

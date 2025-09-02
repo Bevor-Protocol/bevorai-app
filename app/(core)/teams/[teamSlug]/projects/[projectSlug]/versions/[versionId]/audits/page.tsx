@@ -2,7 +2,7 @@ import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/helpers";
 import { AsyncComponent, AuditObservationI } from "@/utils/types";
-import { ChevronLeft, ChevronRight, Clock, Plus, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Shield } from "lucide-react";
 import Link from "next/link";
 import React, { Suspense } from "react";
 
@@ -51,7 +51,6 @@ const VersionAuditsPage: AsyncComponent<VersionAuditsPageProps> = async ({
   );
 };
 
-// Server component for version audits data
 const VersionAuditsData: AsyncComponent<{
   teamSlug: string;
   versionId: string;
@@ -63,16 +62,6 @@ const VersionAuditsData: AsyncComponent<{
   return (
     <div className="px-6 py-8 bg-neutral-950 mx-auto">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="w-fit ml-auto">
-          <Link
-            href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${versionId}/audits/new`}
-          >
-            <Button variant="bright" className="flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>New Audit</span>
-            </Button>
-          </Link>
-        </div>
         <Pagination
           currentPage={parseInt(page)}
           totalPages={audits.total_pages || 1}
@@ -96,7 +85,6 @@ const VersionAuditsData: AsyncComponent<{
   );
 };
 
-// Component for audits list
 const AuditsList: React.FC<{
   audits: AuditObservationI[];
   teamSlug: string;
@@ -105,7 +93,7 @@ const AuditsList: React.FC<{
 }> = ({ audits, teamSlug, projectSlug, versionId }) => {
   if (audits.length === 0) {
     return (
-      <div className="text-center py-12 bg-neutral-900 border border-neutral-800 rounded-lg">
+      <div className="text-center py-12 border border-neutral-800 rounded-lg">
         <Shield className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-neutral-300 mb-2">No audits yet</h3>
         <p className="text-sm text-neutral-500 mb-6">
@@ -130,7 +118,7 @@ const AuditsList: React.FC<{
         return (
           <div
             key={audit.id}
-            className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all"
+            className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all"
           >
             <Link
               href={`/teams/${teamSlug}/projects/${projectSlug}/audits/${audit.id}`}
@@ -191,11 +179,10 @@ const AuditsList: React.FC<{
   );
 };
 
-// Loading component for audits
 const AuditsLoading: React.FC = () => (
   <div className="space-y-3">
     {Array.from({ length: 5 }).map((_, index) => (
-      <div key={index} className="bg-neutral-900 border border-neutral-800 rounded-lg p-4">
+      <div key={index} className="border border-neutral-800 rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center">

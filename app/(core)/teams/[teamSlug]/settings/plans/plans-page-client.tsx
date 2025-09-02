@@ -2,8 +2,8 @@
 "use client";
 
 import { bevorAction } from "@/actions";
+import { AddonRow } from "@/components/billing/addon";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import * as Tooltip from "@/components/ui/tooltip";
 import { MemberRoleEnum, StripeAddonI, StripePlanI, TeamSchemaI } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -34,7 +34,7 @@ const PlanCard: React.FC<{
   const checkoutMutation = useMutation({
     mutationFn: () =>
       bevorAction.createCheckoutSession({
-        success_url: `${window.location.origin}/teams/${team.slug}/settings/plans?success=true`,
+        success_url: `${window.location.origin}/teams/${team.slug}/settings/billing?success=true`,
         cancel_url: `${window.location.origin}/teams/${team.slug}/settings/plans?canceled=true`,
       }),
     onSuccess: (data) => {
@@ -154,73 +154,6 @@ const PlanCard: React.FC<{
               </Button>
             )}
           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const AddonRow: React.FC<{
-  addon: StripeAddonI;
-}> = ({ addon }) => {
-  const currentPrice = addon.price / 100;
-
-  const checkoutMutation = useMutation({
-    mutationFn: (lookupKey: string) => bevorAction.modifySubscription(lookupKey),
-  });
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
-
-  const handleToggleAddon = (lookupKey: string): void => {
-    if (!checkoutMutation.isPending && addon.is_eligible) {
-      checkoutMutation.mutate(lookupKey);
-    }
-  };
-
-  return (
-    <div className="border border-neutral-800 rounded-lg p-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center space-x-4 flex-1">
-          {addon.image && addon.image !== null && (
-            <img
-              src={addon.image}
-              alt={addon.name}
-              className="w-12 h-12 object-contain rounded-lg"
-            />
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-3 mb-2">
-              <h4 className="text-lg font-semibold text-neutral-100 truncate">{addon.name}</h4>
-              {addon.is_active && (
-                <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded flex-shrink-0">
-                  Active
-                </span>
-              )}
-            </div>
-            <p className="text-neutral-400 text-sm mb-1">{addon.description}</p>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-neutral-100">
-                {formatCurrency(currentPrice)}
-              </span>
-              <span className="text-neutral-400 text-sm">/{addon.billing_interval}</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3 flex-shrink-0">
-          {checkoutMutation.isPending && (
-            <div className="w-4 h-4 border-2 border-neutral-600 border-t-blue-500 rounded-full animate-spin"></div>
-          )}
-          <Switch
-            checked={addon.is_active}
-            onCheckedChange={() => handleToggleAddon(addon.lookup_key)}
-            disabled={checkoutMutation.isPending || !addon.is_eligible}
-            className="flex-shrink-0"
-          />
         </div>
       </div>
     </div>

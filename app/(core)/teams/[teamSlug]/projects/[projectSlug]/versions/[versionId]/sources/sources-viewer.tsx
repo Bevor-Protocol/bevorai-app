@@ -43,7 +43,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ version, sources }) => {
   if (sources.length === 0) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <div className="border border-neutral-800 rounded-lg p-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-neutral-100 mb-2">Version Sources</h1>
             <p className="text-neutral-400">No source files found for this version.</p>
@@ -55,7 +55,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ version, sources }) => {
 
   return (
     <div className="flex flex-col gap-4 h-full">
-      <div className="grow bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden flex flex-col">
+      <div className="grow border border-neutral-800 rounded-lg overflow-hidden flex flex-col">
         <div
           className="grid flex-1 h-full"
           style={{ gridTemplateColumns: "250px 1fr", gridTemplateRows: "auto 1fr" }}
@@ -71,7 +71,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ version, sources }) => {
             </span>
             <span className="text-xs text-neutral-500">{selectedSource?.path}</span>
           </div>
-          <div className="border-r border-neutral-800 overflow-y-auto bg-neutral-900 min-h-0">
+          <div className="border-r border-neutral-800 overflow-y-auto min-h-0">
             {sources.map((source) => (
               <div
                 key={source.id}
@@ -98,7 +98,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ version, sources }) => {
               </div>
             ))}
           </div>
-          <div className="bg-neutral-900 flex flex-col min-w-0 min-h-0 overflow-hidden">
+          <div className="flex flex-col min-w-0 min-h-0 overflow-hidden">
             {sourceContent ? (
               <div className="flex-1 overflow-auto">
                 <SolidityViewer sourceContent={sourceContent} />

@@ -308,6 +308,10 @@
     height: var(--remainder-height);
   }
 
+  .fill-remaining-height-arrow {
+    height: calc(var(--remainder-height) - 52px);
+  }
+
   .breadcrumb-divider {
     position: relative;
   }

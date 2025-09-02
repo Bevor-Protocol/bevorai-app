@@ -113,7 +113,7 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="0x1234..."
-            className="w-full p-4 bg-neutral-900 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono"
+            className="w-full p-4 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono"
             disabled={isPending}
           />
           {error && (
@@ -205,7 +205,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
-          className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
+          className="border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
           onClick={() => handleMethodSelect("upload")}
         >
           <div className="flex items-center space-x-3 mb-4">
@@ -223,7 +223,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
         </div>
 
         <div
-          className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
+          className="border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
           onClick={() => handleMethodSelect("paste")}
         >
           <div className="flex items-center space-x-3 mb-4">
@@ -241,7 +241,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
         </div>
 
         <div
-          className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
+          className="border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
           onClick={() => handleMethodSelect("address")}
         >
           <div className="flex items-center space-x-3 mb-4">
@@ -258,7 +258,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           </Button>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
+        <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-orange-400">
               <FolderOpen className="w-6 h-6" />
@@ -278,7 +278,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           </Button>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
+        <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-orange-400">
               <Code className="w-6 h-6" />
@@ -298,7 +298,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           </Button>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
+        <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-orange-400">
               <GitBranch className="w-6 h-6" />

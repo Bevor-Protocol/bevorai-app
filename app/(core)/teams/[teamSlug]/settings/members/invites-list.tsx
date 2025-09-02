@@ -20,6 +20,7 @@ const InvitesList: React.FC<InvitesListProps> = ({ curMember, invites, isLoading
     mutationFn: async (inviteId: string) => bevorAction.removeInvite(inviteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invites"] });
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
     },
   });
 

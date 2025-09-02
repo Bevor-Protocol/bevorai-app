@@ -48,7 +48,7 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
   if (scope.length === 0) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <div className="border border-neutral-800 rounded-lg p-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-neutral-100 mb-2">Audit Scope Overlay</h1>
             <p className="text-neutral-400">No source files found for this version.</p>

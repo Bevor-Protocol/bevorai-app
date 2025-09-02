@@ -45,7 +45,7 @@ const SignInPage: React.FC = () => {
           <p className="mt-2 text-gray-400">AI Agent Smart Contract Auditor</p>
         </div>
 
-        <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-8">
+        <div className="rounded-lg border border-neutral-800 p-8">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-4">Sign In</h2>
             <p className="text-sm text-gray-400 mb-6">
