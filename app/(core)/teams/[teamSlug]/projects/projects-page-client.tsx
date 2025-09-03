@@ -35,7 +35,7 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
       setDebouncedSearchQuery(searchQuery);
     }, 500);
 
-    return () => {
+    return (): void => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
