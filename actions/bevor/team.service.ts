@@ -29,7 +29,6 @@ class TeamService {
   }
 
   async deleteTeam(): Promise<boolean> {
-    // TODO: come back to this, we'll need to reissue a token or something.
     return api.delete("/teams").then((response) => {
       return response.data.success;
     });

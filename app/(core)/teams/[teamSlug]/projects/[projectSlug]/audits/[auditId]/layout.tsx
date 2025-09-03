@@ -1,4 +1,5 @@
 import { bevorAction } from "@/actions";
+import Shareable from "@/app/(core)/teams/[teamSlug]/projects/[projectSlug]/audits/[auditId]/shareable";
 import { AsyncComponent } from "@/utils/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -26,6 +27,7 @@ const AuditLayout: AsyncComponent<LayoutProps> = async ({ params, children }) =>
             <span>Back to Code Version</span>
           </Link>
         </div>
+        <Shareable audit={audit} />
       </div>
       {children}
     </div>

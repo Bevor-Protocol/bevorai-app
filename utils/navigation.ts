@@ -9,6 +9,9 @@ export const navigation = {
   },
   team: {
     overview: (data: HrefProps) => `/teams/${data.teamSlug}`,
+    projects: (data: HrefProps) => `/teams/${data.teamSlug}/projects`,
+    audits: (data: HrefProps) => `/teams/${data.teamSlug}/audits`,
+    versions: (data: HrefProps) => `/teams/${data.teamSlug}/versions`,
     settings: {
       overview: (data: HrefProps) => `/teams/${data.teamSlug}/settings`,
       billing: (data: HrefProps) => `/teams/${data.teamSlug}/settings/billing`,
@@ -21,8 +24,9 @@ export const navigation = {
   },
   project: {
     overview: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}`,
-    settings: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/settings`,
     audits: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/audits`,
+    versions: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions`,
+    settings: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/settings`,
     analytics: (data: HrefProps) =>
       `/teams/${data.teamSlug}/projects/${data.projectSlug}/analytics`,
   },
@@ -47,5 +51,10 @@ export const navigation = {
       `/teams/${data.teamSlug}/projects/${data.projectSlug}/audits/${data.auditId}/scope`,
     overlay: (data: HrefProps) =>
       `/teams/${data.teamSlug}/projects/${data.projectSlug}/audits/${data.auditId}/overlay`,
+  },
+  shared: {
+    overview: (data: HrefProps) => `/shared/audits/${data.auditId}`,
+    scope: (data: HrefProps) => `/shared/audits/${data.auditId}/scope`,
+    overlay: (data: HrefProps) => `/shared/audits/${data.auditId}/overlay`,
   },
 };

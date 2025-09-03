@@ -4,7 +4,7 @@ import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { TeamSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Save, User } from "lucide-react";
+import { Calendar, Save, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
@@ -19,13 +19,28 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
   const [teamName, setTeamName] = useState(team.name);
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(isUpdated);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
 
-  const { mutate, isError, isPending, isSuccess } = useMutation({
+  const updateTeamMutation = useMutation({
     mutationFn: async (name: string) => bevorAction.updateTeam({ name }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       router.push(`/teams/${data.slug}/settings?updated=true`);
+    },
+  });
+
+  const deleteTeamMutation = useMutation({
+    mutationFn: async () => bevorAction.deleteTeam(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      router.push("/teams");
+    },
+    onError: () => {
+      setDeleteError(true);
+      setTimeout(() => setDeleteError(false), 3000);
     },
   });
 
@@ -37,17 +52,17 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
   const handleSave = (e: React.FormEvent): void => {
     e.preventDefault();
     if (team.name === teamName) return;
-    mutate(teamName);
+    updateTeamMutation.mutate(teamName);
   };
 
   useEffect(() => {
-    if (!isError) return;
+    if (!updateTeamMutation.isError) return;
     setShowError(true);
     const timeout = setTimeout(() => {
       setShowError(false);
     }, 1500);
     return (): void => clearTimeout(timeout);
-  }, [isError]);
+  }, [updateTeamMutation.isError]);
 
   useEffect(() => {
     if (!isUpdated) return;
@@ -58,6 +73,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
   }, [isUpdated]);
 
   const isOwner = team.role === "owner";
+  const canDelete = isOwner && !team.is_default;
 
   return (
     <div className="flex flex-col gap-8">
@@ -79,7 +95,18 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
             <span className="capitalize">{team.role}</span>
           </div>
         </div>
+        {team.is_default && (
+          <div className="flex flex-row gap-8 items-center">
+            <p className="block text-sm font-medium text-neutral-300 w-16">Type</p>
+            <div className="flex items-center space-x-2 text-sm text-neutral-400">
+              <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded text-xs">
+                Default Team
+              </span>
+            </div>
+          </div>
+        )}
       </div>
+
       <form className="flex flex-col gap-4" onSubmit={handleSave}>
         <div className="flex flex-row flex-wrap items-end gap-x-4 gap-y-2">
           <div className="grow min-w-52 max-w-80">
@@ -97,11 +124,11 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
             <Button
               variant="bright"
               type="submit"
-              disabled={isPending || isSuccess}
+              disabled={updateTeamMutation.isPending || updateTeamMutation.isSuccess}
               className="h-10 px-4"
             >
               <Save className="w-4 h-4 mr-2" />
-              {isPending ? "Saving..." : "Save Changes"}
+              {updateTeamMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           )}
         </div>
@@ -115,6 +142,57 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
           {showSuccess && <p className="text-xs text-green-400">Team name updated successfully!</p>}
         </div>
       </form>
+
+      {canDelete && (
+        <div className="border-t border-neutral-800 pt-8">
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <h3 className="text-lg font-medium text-neutral-100">Delete Team</h3>
+            </div>
+            <div className="bg-neutral-800/30 border border-neutral-700 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <Trash2 className="w-4 h-4 text-neutral-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-neutral-300 mb-4">
+                    This will permanently delete the team and all associated projects, audits, and
+                    data.
+                  </p>
+                  {!showDeleteConfirm ? (
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="flex items-center cursor-pointer gap-2 px-4 py-2 text-red-400 hover:text-red-300"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete Team
+                    </button>
+                  ) : (
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm text-neutral-300 font-medium">Are you sure?</span>
+                      <button
+                        onClick={() => deleteTeamMutation.mutate()}
+                        disabled={deleteTeamMutation.isPending}
+                        className="text-red-400 hover:text-red-300 cursor-pointer flex gap-2 items-center"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {deleteTeamMutation.isPending ? "Deleting..." : "Yes, Delete Team"}
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="text-neutral-400 hover:text-neutral-300 cursor-pointer flex gap-2 items-center"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            {deleteError && (
+              <p className="text-xs text-red-400 mt-2">Failed to delete team. Please try again.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,147 +1,112 @@
 import { bevorAction } from "@/actions";
-import { Button } from "@/components/ui/button";
-import { formatDate } from "@/utils/helpers";
-import { AsyncComponent } from "@/utils/types";
-import { FileText } from "lucide-react";
-import Link from "next/link";
-import React, { Suspense } from "react";
+import { AuditElement } from "@/components/audits/element";
+import { ProjectElement } from "@/components/projects/element";
+import { ProjectEmpty } from "@/components/projects/empty";
+import { TeamHeader } from "@/components/team/header";
+import { CodeVersionElement } from "@/components/versions/element";
+import { VersionEmpty } from "@/components/versions/empty";
+import { AsyncComponent, AuditTableResponseI, CodeVersionsResponseI } from "@/utils/types";
+import { Shield } from "lucide-react";
+import { Suspense } from "react";
 
 interface TeamPageProps {
   params: Promise<{ teamSlug: string }>;
 }
 
 const TeamData: AsyncComponent<{ teamSlug: string }> = async ({ teamSlug }) => {
+  /* we'll effectively follow a waterfall approach.
+    if there are no projects, that means there are no versions or audits.
+    if there are no versions, that means there are no audits.
+    Follow this logic to waterfall render the overview, as we should only ever show 1 "empty" state.
+  */
   const team = await bevorAction.getTeam();
+  const projects = await bevorAction.getProjects({ page_size: "3" });
+
+  let versions;
+  let audits;
+  if (projects.results.length) {
+    versions = await bevorAction.getVersions({ page_size: "3" });
+  }
+
+  if (versions && versions.results.length) {
+    audits = await bevorAction.getAudits({ page_size: "3" });
+  }
 
   return (
-    <div className="px-6 py-8 bg-neutral-950 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-neutral-100 mb-2">{team.name}</h1>
-          <p className="text-neutral-400">
-            Manage your team&apos;s projects and security analysis.
-          </p>
-        </div>
-        <Suspense fallback={<ProjectsLoading />}>
-          <ProjectsGrid teamSlug={teamSlug} />
-        </Suspense>
+    <div className="max-w-7xl mx-auto">
+      <div className="my-4 grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+        {projects.results.map((project) => (
+          <ProjectElement key={project.id} project={project} teamSlug={teamSlug} />
+        ))}
+      </div>
+      {projects.results.length === 0 && <ProjectEmpty team={team} includeCta={true} />}
+      <div className="space-y-4">
+        {versions && (
+          <div>
+            <h3 className="mb-2">Recent Versions</h3>
+            <VersionsGrid teamSlug={teamSlug} versions={versions} />
+          </div>
+        )}
+        {audits && (
+          <div>
+            <h3 className="mb-2">Recent Audits</h3>
+            <AuditsList teamSlug={teamSlug} audits={audits} />
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-const ProjectsGrid: AsyncComponent<{ teamSlug: string }> = async ({ teamSlug }) => {
-  const projects = await bevorAction.getProjects();
-
+const VersionsGrid: AsyncComponent<{ teamSlug: string; versions: CodeVersionsResponseI }> = async ({
+  teamSlug,
+  versions,
+}) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {projects.map((project) => (
-        <Link
-          key={project.id}
-          href={`/teams/${teamSlug}/projects/${project.slug}`}
-          className="block border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all"
-        >
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="min-w-0 flex-1">
-                <h3 className="text-lg font-semibold text-neutral-100 truncate">{project.name}</h3>
-                <p className="text-sm text-neutral-400">Created {formatDate(project.created_at)}</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <div className="px-2 py-1 rounded text-xs font-medium bg-blue-500/10 text-blue-400 flex-shrink-0">
-                {project.n_versions || 0} versions
-              </div>
-              <div className="px-2 py-1 rounded text-xs font-medium bg-green-500/10 text-green-400 flex-shrink-0">
-                {project.n_audits || 0} audits
-              </div>
-            </div>
-          </div>
-          {project.description && (
-            <p className="text-sm text-neutral-300 mb-4 line-clamp-2 leading-relaxed">
-              {project.description}
-            </p>
-          )}
-          <div className="flex items-center justify-between pt-3 border-t border-neutral-800">
-            <div className="text-xs text-neutral-500">
-              Last updated {formatDate(project.created_at)}
-            </div>
-            {project.tags && project.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {project.tags.slice(0, 3).map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 rounded text-xs font-medium bg-neutral-800/50 text-neutral-300 border border-neutral-700"
-                  >
-                    {tag}
-                  </span>
-                ))}
-                {project.tags.length > 3 && (
-                  <span className="px-2 py-1 rounded text-xs font-medium bg-neutral-800/50 text-neutral-400 border border-neutral-700">
-                    +{project.tags.length - 3} more
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </Link>
+    <div className="space-y-3">
+      {versions.results.map((version) => (
+        <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} />
       ))}
-      {projects.length === 0 && (
-        <div className="text-center py-12">
-          <FileText className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-neutral-300 mb-2">No projects yet</h3>
-          <p className="text-sm text-neutral-500 mb-6">
-            Get started by creating your first security audit project.
-          </p>
-          <Link href="/terminal">
-            <Button variant="bright">Start New Project</Button>
-          </Link>
-        </div>
-      )}
+      {versions.results.length === 0 && <VersionEmpty />}
     </div>
   );
 };
 
-const ProjectsLoading: React.FC = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {Array.from({ length: 4 }).map((_, index) => (
-      <div key={index} className="border border-neutral-800 rounded-lg p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center flex-shrink-0">
-              <FileText className="w-5 h-5 text-blue-400" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="h-6 bg-neutral-800 rounded w-32 mb-2"></div>
-              <div className="h-4 bg-neutral-800 rounded w-24"></div>
-            </div>
-          </div>
-          <div className="h-6 bg-neutral-800 rounded w-16 flex-shrink-0"></div>
-        </div>
-        <div className="h-4 bg-neutral-800 rounded w-full mb-2"></div>
-        <div className="h-4 bg-neutral-800 rounded w-3/4 mb-4"></div>
-        <div className="flex gap-1.5 mb-4">
-          <div className="h-6 bg-neutral-800 rounded w-12"></div>
-          <div className="h-6 bg-neutral-800 rounded w-16"></div>
-          <div className="h-6 bg-neutral-800 rounded w-14"></div>
-        </div>
-        <div className="flex items-center justify-between pt-3 border-t border-neutral-800">
-          <div className="h-3 bg-neutral-800 rounded w-24"></div>
-          <div className="h-8 bg-neutral-800 rounded w-24"></div>
-        </div>
+const AuditsList: AsyncComponent<{
+  teamSlug: string;
+  audits: AuditTableResponseI;
+}> = async ({ teamSlug, audits }) => {
+  if (audits.results?.length === 0) {
+    return (
+      <div className="text-center py-8 border border-neutral-800 rounded-lg">
+        <Shield className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-neutral-300 mb-2">No audits yet</h3>
+        <p className="text-sm text-neutral-500">
+          Start by creating a version and running your first audit.
+        </p>
       </div>
-    ))}
-  </div>
-);
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {audits.results.map((audit) => (
+        <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
+      ))}
+    </div>
+  );
+};
 
 const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   const { teamSlug } = await params;
 
   return (
-    <Suspense>
-      <TeamData teamSlug={teamSlug} />
-    </Suspense>
+    <div className="px-6 py-8 min-h-screen">
+      <TeamHeader title="Overview" subTitle="projects, versions, and security analyses" />
+      <Suspense>
+        <TeamData teamSlug={teamSlug} />
+      </Suspense>
+    </div>
   );
 };
 

@@ -28,10 +28,18 @@ const navigationItemsTeam: NavItemProp[] = [
     name: "Overview",
     href: navigation.team.overview,
   },
-  // {
-  //   name: "Audits",
-  //   href: navigation.team.audits,
-  // },
+  {
+    name: "Projects",
+    href: navigation.team.projects,
+  },
+  {
+    name: "Audits",
+    href: navigation.team.audits,
+  },
+  {
+    name: "Versions",
+    href: navigation.team.versions,
+  },
   {
     name: "Analytics",
     href: navigation.team.analytics,
@@ -53,6 +61,10 @@ const navigationItemsProject: NavItemProp[] = [
     href: navigation.project.audits,
   },
   {
+    name: "Versions",
+    href: navigation.project.versions,
+  },
+  {
     name: "Analytics",
     href: navigation.project.analytics,
   },
@@ -68,12 +80,12 @@ const navigationItemsVersion: NavItemProp[] = [
     href: navigation.version.overview,
   },
   {
-    name: "Code",
-    href: navigation.version.sources,
-  },
-  {
     name: "Audits",
     href: navigation.version.audits.overview,
+  },
+  {
+    name: "Code",
+    href: navigation.version.sources,
   },
   {
     name: "Analytics",
@@ -96,6 +108,21 @@ const navigationItemsAudit: NavItemProp[] = [
   },
 ];
 
+const navigationItemsShared: NavItemProp[] = [
+  {
+    name: "Overview",
+    href: navigation.shared.overview,
+  },
+  {
+    name: "Scope",
+    href: navigation.shared.scope,
+  },
+  {
+    name: "Overlay",
+    href: navigation.shared.overlay,
+  },
+];
+
 const Container: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const params = useParams<HrefProps>();
@@ -103,6 +130,8 @@ const Container: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     let items: NavItemProp[] = [];
     if (pathname.startsWith("/user")) {
       items = navigationItemsUser;
+    } else if (pathname.startsWith("/shared")) {
+      items = navigationItemsShared;
     } else if (params.auditId) {
       items = navigationItemsAudit;
     } else if (params.versionId) {

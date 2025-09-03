@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import { CodeProjectSchema, CodeVersionSchema, CreateProjectBody } from "@/utils/types";
+import { CodeProjectSchema, CodeProjectsResponse, CreateProjectBody } from "@/utils/types";
 
 class ProjectService {
   async createProject(data: CreateProjectBody): Promise<CodeProjectSchema> {
@@ -8,9 +8,12 @@ class ProjectService {
     });
   }
 
-  async getProjects(): Promise<CodeProjectSchema[]> {
-    return api.get("/projects").then((response: any) => {
-      return response.data.results;
+  async getProjects(filters: { [key: string]: string }): Promise<CodeProjectsResponse> {
+    const searchParams = new URLSearchParams(filters);
+    searchParams.set("page_size", filters.page_size ?? "9");
+
+    return api.get(`/projects?${searchParams.toString()}`).then((response: any) => {
+      return response.data;
     });
   }
 
@@ -37,12 +40,6 @@ class ProjectService {
   async deleteProject(projectId: string): Promise<boolean> {
     return api.delete(`/projects/${projectId}`).then((response: any) => {
       return response.data.success;
-    });
-  }
-
-  async getVersions(projectId: string): Promise<CodeVersionSchema[]> {
-    return api.get(`/projects/${projectId}/versions`).then((response: any) => {
-      return response.data.results;
     });
   }
 }

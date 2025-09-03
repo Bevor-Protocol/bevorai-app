@@ -3,7 +3,7 @@ import {
   AuditFindingsResponseI,
   AuditSchemaI,
   AuditStatusResponseI,
-  AuditTableReponseI,
+  AuditTableResponseI,
   TreeResponseI,
 } from "@/utils/types";
 
@@ -53,7 +53,7 @@ class AuditService {
     });
   }
 
-  async getAudits(filters: { [key: string]: string }): Promise<AuditTableReponseI> {
+  async getAudits(filters: { [key: string]: string }): Promise<AuditTableResponseI> {
     const searchParams = new URLSearchParams(filters);
     searchParams.set("status", "success");
     searchParams.set("page_size", filters.page_size ?? "9");
@@ -69,6 +69,12 @@ class AuditService {
   async getAuditScope(auditId: string): Promise<TreeResponseI[]> {
     return api.get(`/audits/${auditId}/scope`).then((response) => {
       return response.data.results;
+    });
+  }
+
+  async toggleAuditVisibility(auditId: string): Promise<boolean> {
+    return api.patch(`/audits/${auditId}/visibility`, {}).then((response) => {
+      return response.data.success;
     });
   }
 }

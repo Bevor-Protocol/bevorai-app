@@ -1,15 +1,10 @@
 "use client";
 
-import { AuditFindingsResponseI, CodeVersionSchema } from "@/utils/types";
+import { AuditFindingsResponseI } from "@/utils/types";
 import { AlertTriangle, Info, Shield, XCircle } from "lucide-react";
 import { useState } from "react";
 
-interface AuditResultsProps {
-  audit: AuditFindingsResponseI;
-  version: CodeVersionSchema;
-}
-
-const AuditResults: React.FC<AuditResultsProps> = ({ audit, version }) => {
+const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) => {
   const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
 
   const getSeverityIcon = (level: string): React.ReactElement => {
@@ -57,6 +52,7 @@ const AuditResults: React.FC<AuditResultsProps> = ({ audit, version }) => {
     }
   };
 
+  // Group findings by level
   const findingsByLevel =
     audit.findings?.reduce(
       (acc, finding) => {
@@ -75,20 +71,8 @@ const AuditResults: React.FC<AuditResultsProps> = ({ audit, version }) => {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-6 text-sm text-neutral-400">
-          <div className="flex items-center space-x-2">
-            <span>Version: {version.version_identifier}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span>Method: {version.version_method}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-100 mb-2">Audit Results</h1>
-          <p className="text-neutral-400 text-lg">Security analysis of your smart contract code</p>
+          <h1 className="text-3xl font-bold text-neutral-100 mb-2">Shared Audit Results</h1>
         </div>
       </div>
 

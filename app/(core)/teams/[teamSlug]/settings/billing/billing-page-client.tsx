@@ -173,8 +173,6 @@ const PaymentMethodSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
     queryFn: () => bevorAction.getPaymentMethod(),
   });
 
-  console.log(paymentMethod);
-
   const checkoutMutation = useMutation({
     mutationFn: () =>
       bevorAction.updatePaymentMethod({

@@ -24,7 +24,7 @@ const Switch = React.forwardRef<HTMLDivElement, SwitchProps>(
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
         className={cn(
-          "relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center",
+          "relative py-0.5 h-5 w-10 shrink-0 cursor-pointer items-center",
           "rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2",
           "focus-visible:ring-green-500 focus-visible:ring-offset-2",
           checked ? "bg-green-600" : "bg-gray-700",

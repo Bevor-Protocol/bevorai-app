@@ -71,11 +71,13 @@ export interface AuditObservationI {
   logic_version: string;
   processing_time_seconds: number;
   code_version_mapping_id: string;
+  is_public: boolean;
+  project_slug: string;
   version: CodeVersionSchema;
   findings: FindingSummaryI;
 }
 
-export interface AuditTableReponseI {
+export interface AuditTableResponseI {
   more: boolean;
   total_pages: number;
   results: AuditObservationI[];
@@ -363,6 +365,7 @@ export interface MemberSchema extends BaseSchema {
 }
 
 export interface CodeProjectSchema extends BaseSchema {
+  n: number;
   team_id: string;
   name: string;
   slug: string;
@@ -370,6 +373,12 @@ export interface CodeProjectSchema extends BaseSchema {
   tags: string[];
   n_versions: number;
   n_audits: number;
+}
+
+export interface CodeProjectsResponse {
+  more: boolean;
+  total_pages: number;
+  results: CodeProjectSchema[];
 }
 
 export interface InitialUserObject {
@@ -387,6 +396,7 @@ export interface MemberInviteSchema extends BaseSchema {
 }
 
 export interface CodeVersionSchema extends BaseSchema {
+  n: number;
   network?: string;
   version_method: string;
   version_identifier: string;
@@ -394,6 +404,13 @@ export interface CodeVersionSchema extends BaseSchema {
   source_url?: string;
   solc_version?: string;
   is_code_available: boolean;
+  project_slug: string;
+}
+
+export interface CodeVersionsResponseI {
+  more: boolean;
+  total_pages: number;
+  results: CodeVersionSchema[];
 }
 
 type Permission = "read" | "write" | "none";

@@ -1,6 +1,7 @@
 import api from "@/lib/api";
 import {
   CodeVersionSchema,
+  CodeVersionsResponseI,
   ContractResponseI,
   ContractSourceResponseI,
   ContractVersionSourceI,
@@ -85,6 +86,15 @@ class VersionService {
 
   async getFunctionChunk(functionId: string): Promise<FunctionChunkResponseI> {
     return api.get(`/contract/function/${functionId}`).then((response) => {
+      return response.data;
+    });
+  }
+
+  async getVersions(filters: { [key: string]: string }): Promise<CodeVersionsResponseI> {
+    const searchParams = new URLSearchParams(filters);
+    searchParams.set("page_size", filters.page_size ?? "9");
+
+    return api.get(`/versions?${searchParams.toString()}`).then((response) => {
       return response.data;
     });
   }

@@ -6,14 +6,16 @@ import {
   AuditFindingsResponseI,
   AuditSchemaI,
   AuditStatusResponseI,
-  AuditTableReponseI,
+  AuditTableResponseI,
   AuditWithChildrenResponseI,
   AuthSchema,
   ChatMessagesResponseI,
   ChatResponseI,
   ChatWithAuditResponseI,
   CodeProjectSchema,
+  CodeProjectsResponse,
   CodeVersionSchema,
+  CodeVersionsResponseI,
   ContractResponseI,
   ContractSourceResponseI,
   ContractVersionSourceI,
@@ -45,6 +47,7 @@ import {
   UserSearchResponseI,
   UserTimeseriesResponseI,
 } from "@/utils/types";
+import { cookies } from "next/headers";
 import adminService from "./admin.service";
 import auditService from "./audit.service";
 import billingService from "./billing.service";
@@ -134,6 +137,10 @@ const getAuditScope = async (auditId: string): Promise<TreeResponseI[]> => {
   return auditService.getAuditScope(auditId);
 };
 
+const toggleAuditVisibility = async (auditId: string): Promise<boolean> => {
+  return auditService.toggleAuditVisibility(auditId);
+};
+
 const getAuditStatus = async (id: string): Promise<AuditStatusResponseI> => {
   return auditService.getAuditStatus(id);
 };
@@ -146,7 +153,7 @@ const submitFeedback = async (
   return auditService.submitFeedback(id, feedback, verified);
 };
 
-const getAudits = async (filters: { [key: string]: string }): Promise<AuditTableReponseI> => {
+const getAudits = async (filters: { [key: string]: string }): Promise<AuditTableResponseI> => {
   return auditService.getAudits(filters);
 };
 
@@ -229,7 +236,11 @@ const getTeams = async (): Promise<TeamSchemaI[]> => {
 };
 
 const deleteTeam = async (): Promise<boolean> => {
-  return teamService.deleteTeam();
+  const response = await teamService.deleteTeam();
+  const cookieStore = await cookies();
+  cookieStore.delete("bevor-team-slug");
+
+  return response;
 };
 
 const updateTeam = async (data: UpdateTeamBody): Promise<TeamSchemaI> => {
@@ -273,8 +284,8 @@ const createProject = async (data: CreateProjectBody): Promise<CodeProjectSchema
   return projectService.createProject(data);
 };
 
-const getProjects = async (): Promise<CodeProjectSchema[]> => {
-  return projectService.getProjects();
+const getProjects = async (filters: { [key: string]: string }): Promise<CodeProjectsResponse> => {
+  return projectService.getProjects(filters);
 };
 
 const getProject = async (projectId: string): Promise<CodeProjectSchema> => {
@@ -293,8 +304,8 @@ const deleteProject = async (projectId: string): Promise<boolean> => {
   return projectService.deleteProject(projectId);
 };
 
-const getVersions = async (projectId: string): Promise<CodeVersionSchema[]> => {
-  return projectService.getVersions(projectId);
+const getVersions = async (filters: { [key: string]: string }): Promise<CodeVersionsResponseI> => {
+  return versionService.getVersions(filters);
 };
 
 // User Operations
@@ -483,6 +494,7 @@ export {
   searchUsers,
   submitFeedback,
   syncCredits,
+  toggleAuditVisibility,
   updateAppPermissions,
   updateCustomer,
   updateMember,
