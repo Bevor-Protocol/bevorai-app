@@ -42,7 +42,7 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
     };
   }, [searchQuery]);
 
-  const { data: projects, isLoading } = useQuery({
+  const { data: projects } = useQuery({
     queryKey: ["projects", team.id, debouncedSearchQuery],
     queryFn: () => bevorAction.getProjects(debouncedSearchQuery),
   });
