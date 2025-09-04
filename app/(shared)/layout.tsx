@@ -1,7 +1,6 @@
 import { bevorAction } from "@/actions";
 import Container from "@/components/container";
 import { Notifications, Profile } from "@/components/header";
-import { getQueryClient } from "@/lib/config/query";
 import { cn } from "@/lib/utils";
 import { AsyncComponent, TeamSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
@@ -9,8 +8,8 @@ import { cookies } from "next/headers";
 import Image from "next/image";
 
 const NotificationHydration: AsyncComponent = async () => {
-  const queryClient = getQueryClient();
-  queryClient.prefetchQuery({
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
     queryKey: ["user-invites"],
     queryFn: () => bevorAction.getUserInvites(),
   });

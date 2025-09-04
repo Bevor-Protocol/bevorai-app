@@ -72,12 +72,7 @@ const InvoiceNameSection: React.FC = () => {
         </div>
 
         <div className="pt-4 border-t border-neutral-800">
-          <Button
-            type="submit"
-            variant="bright"
-            disabled={updateNameMutation.isPending}
-            className="text-sm"
-          >
+          <Button type="submit" disabled={updateNameMutation.isPending} className="text-sm">
             {updateNameMutation.isPending ? "Updating..." : "Update Invoice Name"}
           </Button>
         </div>
@@ -153,12 +148,7 @@ const BillingEmailSection: React.FC = () => {
         </div>
 
         <div className="pt-4 border-t border-neutral-800">
-          <Button
-            type="submit"
-            variant="bright"
-            disabled={updateEmailMutation.isPending}
-            className="text-sm"
-          >
+          <Button type="submit" disabled={updateEmailMutation.isPending} className="text-sm">
             {updateEmailMutation.isPending ? "Updating..." : "Update Billing Email"}
           </Button>
         </div>
@@ -263,7 +253,6 @@ const PaymentMethodSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
 
         <div className="pt-4 border-t border-neutral-800">
           <Button
-            variant="bright"
             className="text-sm px-4 py-2"
             onClick={() => checkoutMutation.mutate()}
             disabled={checkoutMutation.isPending}
@@ -405,14 +394,11 @@ const CurrentSubscription: React.FC<{
         <div className="flex items-center justify-between pt-4 border-t border-neutral-800">
           {isTrial ? (
             <Link href={`/teams/${team.slug}/settings/plans`}>
-              <Button variant="bright" className="text-sm px-4 py-2">
-                Upgrade Plan
-              </Button>
+              <Button className="text-sm px-4 py-2">Upgrade Plan</Button>
             </Link>
           ) : isCancelling ? (
             <div className="flex items-center space-x-3">
               <Button
-                variant="bright"
                 className="text-sm px-4 py-2"
                 onClick={() => reactivateMutation.mutate()}
                 disabled={reactivateMutation.isPending}
@@ -422,7 +408,7 @@ const CurrentSubscription: React.FC<{
             </div>
           ) : (
             <Button
-              variant="transparent"
+              variant="outline"
               className="text-sm px-4 py-2"
               onClick={() => unsubscribeMutation.mutate()}
               disabled={unsubscribeMutation.isPending}
@@ -519,9 +505,7 @@ const NoSubscription: React.FC<{ team: TeamSchemaI; subscription?: StripeSubscri
 
       <div className="flex items-center justify-between pt-4 border-t border-neutral-800">
         <Link href={`/teams/${team.slug}/settings/plans`}>
-          <Button variant="bright" className="text-sm px-4 py-2">
-            View Plans
-          </Button>
+          <Button className="text-sm px-4 py-2">View Plans</Button>
         </Link>
         <div className="flex items-center space-x-3">
           <a

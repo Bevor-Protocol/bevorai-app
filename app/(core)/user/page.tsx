@@ -1,6 +1,6 @@
 import { bevorAction } from "@/actions";
 import TeamDisplay from "@/app/(core)/user/team-component";
-import { Skeleton } from "@/components/ui/loader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/utils/helpers";
 import { AsyncComponent } from "@/utils/types";
 import { Suspense } from "react";

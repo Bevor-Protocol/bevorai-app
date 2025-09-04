@@ -43,10 +43,10 @@
 //         that you own this account.
 //       </p>
 //       <div className="flex flex-row gap-2">
-//         <Button disabled={isPending || isAuthenticated} onClick={login} variant="dark">
+//         <Button disabled={isPending || isAuthenticated} onClick={login} variant="outline">
 //           Sign In
 //         </Button>
-//         <Button disabled={isPending || isAuthenticated} onClick={logout} variant="dark">
+//         <Button disabled={isPending || isAuthenticated} onClick={logout} variant="outline">
 //           Disconnect
 //         </Button>
 //       </div>

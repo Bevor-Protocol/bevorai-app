@@ -21,7 +21,7 @@ const VersionsGrid: AsyncComponent<{ teamSlug: string; projectSlug: string }> = 
       {versions.results.map((version) => (
         <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} />
       ))}
-      {versions.results.length === 0 && <VersionEmpty />}
+      {versions.results.length === 0 && <VersionEmpty centered />}
     </div>
   );
 };

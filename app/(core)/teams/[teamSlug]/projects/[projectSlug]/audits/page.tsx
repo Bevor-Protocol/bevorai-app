@@ -2,10 +2,8 @@ import { bevorAction } from "@/actions";
 import { ProjectHeader } from "@/app/(core)/teams/[teamSlug]/projects/[projectSlug]/header";
 import { AuditElement, AuditElementLoader } from "@/components/audits/element";
 import { AuditEmpty } from "@/components/audits/empty";
-import { Button } from "@/components/ui/button";
+import { AuditPagination } from "@/components/audits/pagination";
 import { AsyncComponent, AuditObservationI } from "@/utils/types";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import Link from "next/link";
 import React, { Suspense } from "react";
 
 interface ProjectAuditsPageProps {
@@ -62,12 +60,9 @@ const ProjectAuditsData: AsyncComponent<{
   return (
     <div className="px-6 py-8 bg-neutral-950 mx-auto">
       <div className="max-w-7xl mx-auto space-y-6">
-        <Pagination
-          currentPage={parseInt(page)}
-          totalPages={audits.total_pages || 1}
-          hasMore={audits.more || false}
-          teamSlug={teamSlug}
-          projectSlug={projectSlug}
+        <AuditPagination
+          page={page}
+          basePath={`/teams/${teamSlug}/projects/${projectSlug}/audits`}
         />
         <div>
           <Suspense fallback={<AuditsLoading />}>
@@ -84,7 +79,7 @@ const AuditsList: React.FC<{
   teamSlug: string;
 }> = ({ audits, teamSlug }) => {
   if (audits.length === 0) {
-    return <AuditEmpty />;
+    return <AuditEmpty centered />;
   }
 
   return (
@@ -103,42 +98,5 @@ const AuditsLoading: React.FC = () => (
     ))}
   </div>
 );
-
-const Pagination: React.FC<{
-  currentPage: number;
-  totalPages: number;
-  hasMore: boolean;
-  teamSlug: string;
-  projectSlug: string;
-}> = ({ currentPage, totalPages, hasMore, teamSlug, projectSlug }) => {
-  const prevPage = currentPage > 0 ? currentPage - 1 : 0;
-  const nextPage = currentPage + 1;
-
-  return (
-    <div className="flex items-center justify-center">
-      <div className="flex items-center gap-4">
-        <Link href={`/teams/${teamSlug}/projects/${projectSlug}/audits?page=${prevPage}`}>
-          <Button
-            disabled={currentPage === 0}
-            variant="transparent"
-            className="flex items-center space-x-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Previous</span>
-          </Button>
-        </Link>
-        <span className="text-sm text-neutral-400">
-          Page {currentPage + 1} of {totalPages}
-        </span>
-        <Link href={`/teams/${teamSlug}/projects/${projectSlug}/audits?page=${nextPage}`}>
-          <Button disabled={!hasMore} variant="transparent" className="flex items-center space-x-2">
-            <span>Next</span>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
-};
 
 export default ProjectAuditsPage;

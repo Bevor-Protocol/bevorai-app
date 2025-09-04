@@ -7,9 +7,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
-export const AuditPagination: React.FC<{ page: string; teamSlug: string }> = ({
+export const AuditPagination: React.FC<{ page: string; basePath: string }> = ({
   page,
-  teamSlug,
+  basePath,
 }) => {
   const currentPage = parseInt(page);
   const prevPage = currentPage > 0 ? currentPage - 1 : 0;
@@ -26,29 +26,35 @@ export const AuditPagination: React.FC<{ page: string; teamSlug: string }> = ({
   return (
     <div className="flex items-center justify-center">
       <div className="flex items-center gap-4">
-        <Link href={`/teams/${teamSlug}/audits?page=${prevPage}`}>
-          <Button
-            disabled={currentPage === 0 || isLoading}
-            variant="transparent"
-            className="flex items-center space-x-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
+        {currentPage === 0 || isLoading ? (
+          <Button variant="outline" disabled>
+            <ChevronLeft className="size-4" />
             <span>Previous</span>
           </Button>
-        </Link>
+        ) : (
+          <Button variant="outline" asChild>
+            <Link href={`${basePath}?page=${prevPage}`}>
+              <ChevronLeft className="size-4" />
+              <span>Previous</span>
+            </Link>
+          </Button>
+        )}
         <span className="text-sm text-neutral-400">
           Page {currentPage + 1} of {totalPages}
         </span>
-        <Link href={`/teams/${teamSlug}/audits?page=${nextPage}`}>
-          <Button
-            disabled={!hasMore || isLoading}
-            variant="transparent"
-            className="flex items-center space-x-2"
-          >
+        {!hasMore || isLoading ? (
+          <Button variant="outline" disabled>
             <span>Next</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="size-4" />
           </Button>
-        </Link>
+        ) : (
+          <Button variant="outline" asChild>
+            <Link href={`${basePath}?page=${nextPage}`}>
+              <span>Next</span>
+              <ChevronRight className="size-4" />
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );

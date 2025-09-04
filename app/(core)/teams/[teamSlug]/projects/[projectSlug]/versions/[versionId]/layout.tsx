@@ -1,9 +1,8 @@
-import { AsyncComponent } from "@/utils/types";
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/utils/helpers";
+import { formatDate, truncateVersion } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
-import { SourceTypeEnum } from "@/utils/types";
+import { AsyncComponent, SourceTypeEnum } from "@/utils/types";
 import { Calendar, ExternalLink, Network, Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -36,7 +35,11 @@ const VersionLayout: AsyncComponent<LayoutProps> = async ({ params, children }) 
       <div className="px-6 py-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-neutral-100 mb-2">
-            {getSourceCopy(version.source_type)}: {version.version_identifier}
+            {getSourceCopy(version.source_type)}:{" "}
+            {truncateVersion({
+              versionMethod: version.version_identifier,
+              versionIdentifier: version.version_identifier,
+            })}
           </h1>
           <div className="flex items-center space-x-4 text-sm text-neutral-400">
             <div className="flex items-center space-x-1">
@@ -71,7 +74,7 @@ const VersionLayout: AsyncComponent<LayoutProps> = async ({ params, children }) 
           </div>
         </div>
         <Link href={navigation.version.audits.new(slugs)}>
-          <Button variant="bright" className="flex items-center space-x-2">
+          <Button className="flex items-center space-x-2">
             <Plus className="w-4 h-4" />
             <span>New Audit</span>
           </Button>

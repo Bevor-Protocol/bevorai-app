@@ -136,7 +136,7 @@
 //         <>
 //           {allowance.data === 0 || allowance.isLoading ? (
 //             <Button
-//               variant="bright"
+//
 //               onClick={handleApprove}
 //               disabled={allowance.isLoading || signState === "sign" || signState === "loading"}
 //               className={cn(
@@ -201,7 +201,7 @@
 //                 </div>
 //                 <div className="flex justify-between w-full">
 //                   <Button
-//                     variant="bright"
+//
 //                     disabled={
 //                       signState === "loading" ||
 //                       signState === "sign" ||
@@ -226,7 +226,7 @@
 //                     </span>
 //                   </Button>
 //                   <Button
-//                     variant="bright"
+//
 //                     disabled={
 //                       signState === "loading" ||
 //                       signState === "sign" ||

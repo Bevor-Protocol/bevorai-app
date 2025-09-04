@@ -24,7 +24,3 @@ export const LoadWaifu: React.FC = () => {
     </div>
   );
 };
-
-export const Skeleton: React.FC<{ className: string }> = ({ className }) => {
-  return <div className={cn("bg-gray-800/50 animate-pulse rounded-md", className)} />;
-};

@@ -130,14 +130,10 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, target
         {isSuccess && <p className="text-sm text-green-400">Project successfully created</p>}
       </div>
       <div className="flex justify-between pt-4 border-t border-neutral-800">
-        <Button type="button" variant="dark" onClick={onClose} disabled={isPending}>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          variant="bright"
-          disabled={isPending || !projectName.trim() || isSuccess}
-        >
+        <Button type="submit" disabled={isPending || !projectName.trim() || isSuccess}>
           {isPending ? "Creating..." : "Create Project"}
         </Button>
       </div>

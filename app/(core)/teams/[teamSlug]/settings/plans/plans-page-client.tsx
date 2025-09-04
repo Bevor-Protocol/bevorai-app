@@ -145,7 +145,6 @@ const PlanCard: React.FC<{
               </span>
             ) : (
               <Button
-                variant="bright"
                 className="w-full sm:w-auto text-sm px-4 py-2"
                 onClick={() => checkoutMutation.mutate()}
                 disabled={checkoutMutation.isPending}

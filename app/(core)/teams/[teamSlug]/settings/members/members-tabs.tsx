@@ -99,7 +99,7 @@ const MembersTabs: React.FC<MembersTabsProps> = ({ team, curMember }) => {
           </button>
         </div>
         {curMember.role === "owner" && (
-          <Button variant="bright" onClick={handleInvite} disabled={isTrial && totalSeats >= 3}>
+          <Button onClick={handleInvite} disabled={isTrial && totalSeats >= 3}>
             <Plus className="w-4 h-4 mr-2" />
             Invite Member
           </Button>

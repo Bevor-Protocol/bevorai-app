@@ -3,11 +3,10 @@
 import { bevorAction } from "@/actions";
 import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { SearchInput } from "@/components/ui/input";
 import { TeamSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ProjectsPageClientProps {
@@ -59,50 +58,18 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search
-              className={cn(
-                "w-4 h-4 absolute left-3 top-1/2",
-                "transform -translate-y-1/2 text-neutral-500",
-              )}
-            />
-            <input
-              type="text"
-              placeholder="Search projects..."
-              value={searchQuery.name}
-              onChange={(e) => handleSearch(e.target.value)}
-              className={cn(
-                "pl-10 pr-4 py-2 border border-neutral-700 text-neutral-100",
-                "placeholder-neutral-500 rounded-md focus:outline-none",
-                "focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-80",
-              )}
-            />
-          </div>
-          <div className="relative">
-            <Search
-              className={cn(
-                "w-4 h-4 absolute left-3 top-1/2",
-                "transform -translate-y-1/2 text-neutral-500",
-              )}
-            />
-            <input
-              type="text"
-              placeholder="Search by tag..."
-              value={searchQuery.tag}
-              onChange={(e) => handleTag(e.target.value)}
-              className={cn(
-                "pl-10 pr-4 py-2 border border-neutral-700 text-neutral-100",
-                "placeholder-neutral-500 rounded-md focus:outline-none",
-                "focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-80",
-              )}
-            />
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="bright">
-            <Plus className="w-4 h-4 mr-2" />
-            New Project
-          </Button>
+          <SearchInput
+            type="text"
+            placeholder="Search projects..."
+            value={searchQuery.name}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+          <SearchInput
+            type="text"
+            placeholder="Search by tag..."
+            value={searchQuery.tag}
+            onChange={(e) => handleTag(e.target.value)}
+          />
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,7 +90,7 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
       {projects &&
         projects.results.length === 0 &&
         !debouncedSearchQuery.name &&
-        !debouncedSearchQuery.tag && <ProjectEmpty />}
+        !debouncedSearchQuery.tag && <ProjectEmpty centered />}
     </div>
   );
 };

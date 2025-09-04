@@ -3,8 +3,12 @@
 import RoleUpdateDropdown from "@/components/Dropdown/role";
 import RemoveMemberModal from "@/components/Modal/remove-member";
 import { Button } from "@/components/ui/button";
-import * as Dropdown from "@/components/ui/dropdown";
-import { Skeleton } from "@/components/ui/loader";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useModal } from "@/hooks/useContexts";
 import { cn } from "@/lib/utils";
 import { trimAddress } from "@/utils/helpers";
@@ -76,30 +80,22 @@ const MembersList: React.FC<MembersListProps> = ({ team, curMember, members, isL
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Dropdown.Main
-              className="flex flex-row relative cursor-pointer rounded-lg focus-border"
-              tabIndex={0}
-            >
-              <Dropdown.Trigger isDisabled={!member.can_update}>
-                <Button
-                  variant="dark"
-                  disabled={!member.can_update}
-                  className="relative text-xs h-8 px-3"
-                >
+            <DropdownMenu>
+              <DropdownMenuTrigger disabled={!member.can_update}>
+                <Button disabled={!member.can_update} className="relative text-xs h-8 px-3">
                   {member.role}
                   <ChevronDown className="w-3 h-3 text-neutral-400 absolute right-1" />
                 </Button>
-              </Dropdown.Trigger>
-              <Dropdown.Content className="top-full right-0" hasCloseTrigger>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="top-full right-0">
                 <RoleUpdateDropdown
                   fromRole={member.role}
                   memberId={member.id}
                   memberIdentifier={member.identifier}
                 />
-              </Dropdown.Content>
-            </Dropdown.Main>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
-              variant="dark"
               onClick={() => handleRemove({ member })}
               disabled={!member.can_remove}
               className={cn(

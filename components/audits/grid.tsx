@@ -23,7 +23,7 @@ export const AuditGrid: React.FC<{ page: string; teamSlug: string }> = ({ page, 
   }
 
   if (audits.results.length === 0) {
-    return <AuditEmpty />;
+    return <AuditEmpty centered />;
   }
 
   return (

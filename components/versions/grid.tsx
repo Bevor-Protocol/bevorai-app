@@ -26,7 +26,7 @@ export const VersionGrid: React.FC<{ teamSlug: string; pageSize: string }> = ({
   }
 
   if (versions.results.length === 0) {
-    return <VersionEmpty />;
+    return <VersionEmpty centered />;
   }
 
   return (
@@ -34,7 +34,6 @@ export const VersionGrid: React.FC<{ teamSlug: string; pageSize: string }> = ({
       {versions.results.map((version, ind) => (
         <CodeVersionElement key={version.id + String(ind)} version={version} teamSlug={teamSlug} />
       ))}
-      {versions.results.length === 0 && <VersionEmpty />}
     </div>
   );
 };

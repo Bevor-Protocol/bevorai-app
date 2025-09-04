@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/loader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/utils/helpers";
 import { AuditObservationI } from "@/utils/types";
 import { Clock, Lock, Shield, Unlock } from "lucide-react";
@@ -8,6 +8,7 @@ import React from "react";
 type AuditElementProps = {
   audit: AuditObservationI;
   teamSlug: string;
+  isPreview?: boolean;
 };
 
 export const AuditElementLoader: React.FC = () => {
@@ -25,7 +26,7 @@ export const AuditElementLoader: React.FC = () => {
               </div>
             </div>
           </div>
-          <Skeleton className="w-4 h-4" />
+          <Skeleton className="size-4" />
         </div>
 
         <div className="flex items-center justify-between">
@@ -56,57 +57,45 @@ export const AuditElement: React.FC<AuditElementProps> = ({ audit, teamSlug }) =
         className="block"
       >
         <div className="space-y-3">
-          {/* Top row: Audit info, date, and visibility */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <Shield className="w-3 h-3 text-purple-400" />
-              </div>
+              <Shield className="size-4 text-purple-400" />
               <div className="flex items-center space-x-3">
                 <h3 className="text-sm font-medium text-neutral-100">
                   Audit #{audit.id.slice(-8)}
                 </h3>
                 <div className="flex items-center space-x-1 text-xs text-neutral-500">
-                  <Clock className="w-3 h-3" />
+                  <Clock className="size-3" />
                   <span>{formatDate(audit.created_at)}</span>
                 </div>
               </div>
             </div>
-            {/* Visibility icon */}
-            <div className="w-4 h-4">
+            <div className="size-4">
               {audit.is_public ? (
-                <Unlock className="w-4 h-4 text-green-500" />
+                <Unlock className="size-3 text-green-500" />
               ) : (
-                <Lock className="w-4 h-4 text-purple-400" />
+                <Lock className="size-3 text-purple-400" />
               )}
             </div>
           </div>
-          <div className="flex items-center justify-between pl-9">
+          <div className="flex items-center justify-between pl-7">
             <div className="flex items-center space-x-3">
-              {audit.findings.n_critical > 0 && (
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                  <span className="text-xs text-red-400">{audit.findings.n_critical}</span>
-                </div>
-              )}
-              {audit.findings.n_high > 0 && (
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                  <span className="text-xs text-orange-400">{audit.findings.n_high}</span>
-                </div>
-              )}
-              {audit.findings.n_medium > 0 && (
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                  <span className="text-xs text-yellow-400">{audit.findings.n_medium}</span>
-                </div>
-              )}
-              {audit.findings.n_low > 0 && (
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                  <span className="text-xs text-blue-400">{audit.findings.n_low}</span>
-                </div>
-              )}
+              <div className="flex items-center space-x-1">
+                <div className="size-2 rounded-full bg-red-500/60"></div>
+                <span className="text-xs text-red-400">{audit.findings.n_critical}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="size-2 rounded-full bg-orange-500/60"></div>
+                <span className="text-xs text-orange-400">{audit.findings.n_high}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="size-2 rounded-full bg-yellow-500/60"></div>
+                <span className="text-xs text-yellow-400">{audit.findings.n_medium}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="size-2 rounded-full bg-blue-500/60"></div>
+                <span className="text-xs text-blue-400">{audit.findings.n_low}</span>
+              </div>
             </div>
             <div className="text-xs text-neutral-400">{totalFindings} total findings</div>
           </div>

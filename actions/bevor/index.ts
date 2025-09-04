@@ -304,6 +304,13 @@ const deleteProject = async (projectId: string): Promise<boolean> => {
   return projectService.deleteProject(projectId);
 };
 
+const updateProject = async (
+  projectId: string,
+  data: { name?: string; description?: string; tags?: string },
+): Promise<CodeProjectSchema> => {
+  return projectService.updateProject(projectId, data);
+};
+
 const getVersions = async (filters: { [key: string]: string }): Promise<CodeVersionsResponseI> => {
   return versionService.getVersions(filters);
 };
@@ -499,6 +506,7 @@ export {
   updateCustomer,
   updateMember,
   updatePaymentMethod,
+  updateProject,
   updatePrompt,
   updateSubscription,
   updateTeam,

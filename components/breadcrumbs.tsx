@@ -3,18 +3,20 @@
 import { bevorAction } from "@/actions";
 import CreateProjectModal from "@/components/Modal/create-project";
 import CreateTeamModal from "@/components/Modal/create-team";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { Skeleton } from "@/components/ui/loader";
+import { SearchInput } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useModal } from "@/hooks/useContexts";
 import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
 import { CodeProjectSchema, HrefProps, TeamSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ChevronsUpDown, Code, PlusCircle } from "lucide-react";
+import { Check, ChevronsUpDown, Code, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useSelectedLayoutSegments } from "next/navigation";
-import React, { useMemo, useReducer, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 const genericToggleReducer = (s: boolean): boolean => !s;
 
@@ -50,6 +52,18 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
     return <Skeleton className="h-[41px] w-36" />;
   }
 
+  const teamHref = params.versionId
+    ? navigation.team.versions(params)
+    : params.auditId
+      ? navigation.team.audits(params)
+      : navigation.team.overview(params);
+
+  const projectHref = params.versionId
+    ? navigation.project.versions(params)
+    : params.auditId
+      ? navigation.project.audits(params)
+      : navigation.project.overview(params);
+
   return (
     <div className="flex flex-row items-center relative gap-4" ref={ref}>
       {pathname.startsWith("/user") && (
@@ -58,59 +72,46 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
             href={navigation.user.overview(params)}
             className="flex flex-row gap-2 items-center"
           >
-            <Icon size="sm" seed={userId} className="w-5 h-5" />
+            <Icon size="sm" seed={userId} className="size-6" />
             <span>My Account</span>
           </Link>
-          <button
-            onClick={toggle}
-            className="py-2 px-1 rounded cursor-pointer hover:bg-neutral-600"
-          >
-            <ChevronsUpDown className="w-4 h-4 text-neutral-400" />
-          </button>
+          <Button variant="ghost" onClick={toggle}>
+            <ChevronsUpDown className="size-4 text-neutral-400" />
+          </Button>
         </div>
       )}
       {!isErrorPage && params.teamSlug && (
         <div className="flex flex-row gap-1 items-center text-sm">
-          <Link
-            href={navigation.team.overview(params)}
-            className="flex flex-row gap-2 items-center"
-          >
-            <Icon size="sm" seed={team?.id} className="w-5 h-5" />
+          <Link href={teamHref} className="flex flex-row gap-2 items-center">
+            <Icon size="sm" seed={team?.id} className="size-5" />
             <span>{team?.name}</span>
           </Link>
-
-          <button
-            onClick={toggle}
-            className="py-2 px-1 rounded cursor-pointer hover:bg-neutral-600"
-          >
-            <ChevronsUpDown className="w-4 h-4 text-neutral-400" />
-          </button>
+          <Button variant="ghost" size="narrow" onClick={toggle}>
+            <ChevronsUpDown className="size-4 text-neutral-400" />
+          </Button>
         </div>
       )}
       {!isErrorPage && params.projectSlug && (
         <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider">
-          <Link href={navigation.project.overview(params)} className="flex flex-row gap-2">
+          <Link href={projectHref} className="flex flex-row gap-2">
             <span>{project?.name}</span>
           </Link>
-          <button
-            onClick={toggle}
-            className="py-2 px-1 rounded cursor-pointer hover:bg-neutral-600"
-          >
-            <ChevronsUpDown className="w-4 h-4 text-neutral-400" />
-          </button>
+          <Button variant="ghost" size="narrow" onClick={toggle}>
+            <ChevronsUpDown className="size-4 text-neutral-400" />
+          </Button>
         </div>
       )}
       {!isErrorPage && params.versionId && (
         <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider">
-          <span className="w-2 h-2 bg-green-400 rounded-full" />
+          <span className="size-2 bg-green-400 rounded-full" />
           <Link href={navigation.version.overview(params)} className="flex flex-row gap-2">
             <span>Version {params.versionId.substring(0, 12)}</span>
           </Link>
         </div>
       )}
       {!isErrorPage && params.auditId && (
-        <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider ml-2">
-          <span className="w-2 h-2 bg-orange-400 rounded-full" />
+        <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider">
+          <span className="size-2 bg-orange-400 rounded-full" />
           <Link href={navigation.audit.overview(params)} className="flex flex-row gap-2">
             <span>Audit {params.auditId.substring(0, 12)}</span>
           </Link>
@@ -145,133 +146,207 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
   close,
 }) => {
   const { show, hide } = useModal();
-  const [showProjects, setShowProjects] = useState(true);
+  const pathname = usePathname();
+
+  const [teamsShow, setTeamsShow] = useState(teams);
+  const [projectsShow, setProjectsShow] = useState(projects);
+  const [teamFilter, setTeamFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
   const [hoveredTeam, setHoveredTeam] = useState<TeamSchemaI | undefined>(team);
-  const [hoveredProject, setHoveredProject] = useState<CodeProjectSchema | undefined>(project);
 
-  const hoveredProjects = useMemo(() => {
-    if (!teams || !hoveredTeam) return [];
-    return projects.filter((project) => project.team_id == hoveredTeam.id);
-  }, [teams, hoveredTeam, projects]);
+  useEffect(() => {
+    if (!teamFilter) {
+      setTeamsShow(teams);
+      return;
+    }
+    const filteredTeams = teams.filter((team) =>
+      team.name.toLowerCase().includes(teamFilter.toLowerCase()),
+    );
+    setTeamsShow(filteredTeams);
+    if (!filteredTeams.length) {
+      setHoveredTeam(undefined);
+      return;
+    }
+    const teamIds = filteredTeams.map((t) => t.id);
+    if (hoveredTeam && !teamIds.includes(hoveredTeam.id)) {
+      setHoveredTeam(filteredTeams[0]);
+      return;
+    }
+    if (!hoveredTeam) {
+      setHoveredTeam(filteredTeams[0]);
+    }
+  }, [teams, teamFilter]);
 
-  const handleProjectDisplay = (team: TeamSchemaI): void => {
-    setHoveredTeam(team);
-    setShowProjects(true);
-  };
+  useEffect(() => {
+    if (!teams || !hoveredTeam) {
+      setProjectsShow([]);
+      return;
+    }
+    const withinTeam = projects.filter((project) => project.team_id == hoveredTeam.id);
+    if (!projectFilter) {
+      setProjectsShow(withinTeam);
+      return;
+    }
+    const withinFilter = withinTeam.filter((project) =>
+      project.name.toLowerCase().includes(projectFilter.toLowerCase()),
+    );
+    setProjectsShow(withinFilter);
+  }, [teams, hoveredTeam, projects, projectFilter]);
 
-  const handleProject = (project: CodeProjectSchema): void => {
-    setHoveredProject(project);
-  };
+  const buildEquivalentRoute = useCallback(
+    (newProjectSlug?: string): string => {
+      if (!hoveredTeam) return "";
+
+      const projectPattern = /\/teams\/[^/]+\/projects\/[^/]+(\/.*)?/;
+      const projectMatch = pathname.match(projectPattern);
+
+      if (projectMatch) {
+        const remainingPath = projectMatch[1] || "";
+        const trailingPath = remainingPath.split("/").slice(0, 2).join("/");
+        return `/teams/${hoveredTeam.slug}/projects/${newProjectSlug}${trailingPath}`;
+      }
+
+      const teamRoutePattern = /\/teams\/[^/]+\/([^/]+)(\/.*)?/;
+      const teamRouteMatch = pathname.match(teamRoutePattern);
+
+      if (teamRouteMatch) {
+        const routeSegment = teamRouteMatch[1];
+        const remainingPath = teamRouteMatch[2] || "";
+
+        if (newProjectSlug) {
+          return `/teams/${hoveredTeam.slug}/projects/${newProjectSlug}`;
+        } else {
+          return `/teams/${hoveredTeam.slug}/${routeSegment}${remainingPath}`;
+        }
+      }
+
+      // Fallback - just the team route
+      return `/teams/${hoveredTeam.slug}`;
+    },
+    [hoveredTeam, pathname],
+  );
 
   return (
     <div
       className={cn(
         "border border-neutral-800 rounded-lg bg-black",
-        "shadow-2xl flex overflow-hidden",
+        "shadow-2xl flex overflow-hidden divide-x divide-neutral-800",
         "absolute z-999 cursor-default transition-all animate-appear top-full",
       )}
     >
-      <div className="p-2 min-w-64">
-        <div
-          className={cn("px-3 py-2 text-xs font-semibold text-neutral-500 uppercase tracking-wide")}
-        >
-          Teams
-        </div>
-        {teams.map((teamItem) => (
-          <div key={teamItem.id} onMouseEnter={() => handleProjectDisplay(teamItem)}>
-            <Link
-              href={`/teams/${teamItem.slug}`}
-              onClick={close}
-              className={cn(
-                "flex items-center justify-between px-3 py-2 text-sm rounded-md",
-                "transition-colors",
-                teamItem.id === hoveredTeam?.id
-                  ? " text-neutral-100 bg-neutral-800"
-                  : "text-neutral-300 hover:text-neutral-100",
-              )}
-            >
-              <div className="flex items-center space-x-3">
-                <Icon size="sm" seed={teamItem.id} className="w-4 h-4" />
-                <span className="font-medium">{teamItem.name}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="text-xs text-neutral-500 capitalize">{teamItem.role}</div>
-                <ChevronRight className="w-3 h-3 text-neutral-500" />
-              </div>
-            </Link>
-          </div>
-        ))}
-        <div className="border-t border-neutral-800 my-2" />
-        <button
-          onClick={() => {
-            if (close) close();
-            show(<CreateTeamModal onClose={hide} />);
-          }}
-          className={cn(
-            "flex items-center space-x-2 w-full px-3 py-2 text-sm",
-            "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
-            "rounded-md transition-colors cursor-pointer",
-          )}
-          onMouseEnter={() => {
-            setShowProjects(false);
-            setHoveredTeam(undefined);
-          }}
-        >
-          <PlusCircle className="w-4 h-4 text-blue-400" />
-          <span className="font-medium">Create Team</span>
-        </button>
-      </div>
-      {showProjects && (
-        <div
-          className={cn(
-            "border-l border-neutral-800 p-2 min-w-56",
-            "transition-opacity duration-200",
-            "bg-neutral-950/50",
-            hoveredTeam ? "opacity-100" : "opacity-75",
-          )}
-        >
+      <div>
+        <SearchInput
+          placeholder="Find Team..."
+          value={teamFilter}
+          onChange={(e) => setTeamFilter(e.currentTarget.value)}
+          className="text-sm border-t-0 border-r-0 border-l-0 rounded-none focus-visible:border-input focus-visible:ring-transparent focus-visible:ring-0"
+        />
+        <div className="p-2 w-56">
           <div
             className={cn(
               "px-3 py-2 text-xs font-semibold text-neutral-500 uppercase tracking-wide",
             )}
           >
-            projects
+            teams
           </div>
-          {hoveredProjects.map((projectItem) => (
-            <div key={projectItem.id} onMouseEnter={() => handleProject(projectItem)}>
-              <Link
-                onClick={close}
-                href={`/teams/${hoveredTeam?.slug}/projects/${hoveredProject?.slug}`}
+          <div className="max-h-36 overflow-scroll">
+            {teamsShow.map((teamItem) => (
+              <div key={teamItem.id} onMouseEnter={() => setHoveredTeam(teamItem)}>
+                <Link
+                  href={navigation.team.overview({ teamSlug: teamItem.slug })}
+                  onClick={close}
+                  className={cn(
+                    "flex items-center px-3 py-2 text-sm rounded-md",
+                    "transition-colors text-neutral-100 hover:bg-neutral-800",
+                  )}
+                >
+                  <Icon size="xs" seed={teamItem.id} className="size-4 flex-shrink-0" />
+                  <span className="truncate text-ellipsis mx-3 flex-1">{teamItem.name}</span>
+                  <div className="flex-shrink-0">
+                    {team?.id === teamItem.id && <Check className="size-3" />}
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+          {!teamFilter && (
+            <button
+              onClick={() => {
+                if (close) close();
+                show(<CreateTeamModal onClose={hide} />);
+              }}
+              className={cn(
+                "flex items-center space-x-2 w-full px-3 py-2 text-sm",
+                "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
+                "rounded-md transition-colors cursor-pointer",
+              )}
+              onMouseEnter={() => {
+                setHoveredTeam(undefined);
+              }}
+            >
+              <PlusCircle className="size-4 text-blue-400" />
+              <span className="font-medium">Create Team</span>
+            </button>
+          )}
+        </div>
+      </div>
+      {hoveredTeam && (
+        <div>
+          <SearchInput
+            placeholder="Find Project..."
+            value={projectFilter}
+            onChange={(e) => setProjectFilter(e.currentTarget.value)}
+            className="text-sm border-t-0 border-r-0 border-l-0 rounded-none focus-visible:border-input focus-visible:ring-transparent focus-visible:ring-0"
+          />
+          <div className="p-2 w-56">
+            <div
+              className={cn(
+                "px-3 py-2 text-xs font-semibold text-neutral-500 uppercase tracking-wide",
+              )}
+            >
+              projects
+            </div>
+            <div className="max-h-36 overflow-scroll">
+              {projectsShow.map((projectItem) => (
+                <div key={projectItem.id}>
+                  <Link
+                    onClick={close}
+                    // href={navigation.project.overview({
+                    //   teamSlug: hoveredTeam.slug,
+                    //   projectSlug: projectItem.slug,
+                    // })}
+                    href={buildEquivalentRoute(projectItem.slug)}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-2 text-sm rounded-md",
+                      "transition-colors text-neutral-100 hover:bg-neutral-800",
+                    )}
+                  >
+                    <div className="flex items-center space-x-3 w-full">
+                      <Code className="size-4 text-neutral-500" />
+                      <span className="truncate text-ellipsis">{projectItem.name}</span>
+                    </div>
+                    {projectItem?.id === project?.id && <Check className="size-3" />}
+                  </Link>
+                </div>
+              ))}
+            </div>
+            {!projectFilter && (
+              <button
+                onClick={() => {
+                  if (close) close();
+                  show(<CreateProjectModal onClose={hide} targetTeamSlug={hoveredTeam!.slug} />);
+                }}
                 className={cn(
-                  "flex items-center justify-between px-3 py-2 text-sm rounded-md",
-                  "transition-colors",
-                  projectItem.id === hoveredProject?.id
-                    ? " text-neutral-100 bg-neutral-800"
-                    : "text-neutral-300 hover:text-neutral-100",
+                  "flex items-center space-x-2 w-full px-3 py-2 text-sm",
+                  "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
+                  "rounded-md transition-colors cursor-pointer",
                 )}
               >
-                <div className="flex items-center space-x-3">
-                  <Code className="w-4 h-4 text-neutral-500" />
-                  <span className="font-medium">{projectItem.name}</span>
-                </div>
-              </Link>
-            </div>
-          ))}
-          <div className="border-t border-neutral-800 my-2" />
-          <button
-            onClick={() => {
-              if (close) close();
-              show(<CreateProjectModal onClose={hide} targetTeamSlug={hoveredTeam!.slug} />);
-            }}
-            className={cn(
-              "flex items-center space-x-2 w-full px-3 py-2 text-sm",
-              "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
-              "rounded-md transition-colors cursor-pointer",
+                <PlusCircle className="size-4 text-blue-400" />
+                <span className="font-medium">Create Project</span>
+              </button>
             )}
-          >
-            <PlusCircle className="w-4 h-4 text-blue-400" />
-            <span className="font-medium">Create Project</span>
-          </button>
+          </div>
         </div>
       )}
     </div>

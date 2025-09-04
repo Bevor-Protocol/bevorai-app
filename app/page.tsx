@@ -44,7 +44,7 @@ const MainPage: React.FC = () => {
               <span className="text-sm text-gray-600">
                 Welcome, {user?.email?.address || "User"}
               </span>
-              <Button variant="dark">Sign Out</Button>
+              <Button variant="outline">Sign Out</Button>
             </div>
           </div>
         </div>

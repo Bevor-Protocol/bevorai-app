@@ -31,6 +31,7 @@ api.interceptors.request.use(async (config) => {
   if (teamSlug && !config.headers.has("skip-team")) {
     config.headers["Bevor-Team-Slug"] = teamSlug;
   }
+
   return config;
 });
 

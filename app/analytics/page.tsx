@@ -38,9 +38,7 @@ const Stats: AsyncComponent = async () => {
         <TimeSeriesPlot data={usersTs} title="# users" />
         <div className="col-span-full h-fit">
           <Link href="/analytics/history">
-            <Button variant="bright" className="w-full">
-              See All Audits
-            </Button>
+            <Button className="w-full">See All Audits</Button>
           </Link>
         </div>
       </div>

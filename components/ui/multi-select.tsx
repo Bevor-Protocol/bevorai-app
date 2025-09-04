@@ -3,11 +3,16 @@
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Pill } from "@/components/ui/pill";
 import { cn } from "@/lib/utils";
 import { DropdownOption } from "@/utils/types";
 import { ChevronDown, X } from "lucide-react";
-import * as Dropdown from "./dropdown";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
@@ -38,38 +43,27 @@ export const MultiSelect: React.FC<Props> = ({
 
   return (
     <div className="w-full">
-      <Dropdown.Main>
-        <Dropdown.Trigger>
-          <Button
-            variant="transparent"
-            className={cn("flex justify-between w-full py-1", className)}
-          >
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className={cn("flex justify-between w-full py-1", className)}>
             {title}
             <ChevronDown height="14px" />
           </Button>
-        </Dropdown.Trigger>
-        <Dropdown.Content className="top-full w-full">
-          <div
-            className={cn(
-              "h-40 max-h-40 bg-black w-full border border-gray-800 px-2 py-1",
-              "overflow-y-scroll",
-            )}
-          >
-            {options.map((option) => (
-              <div
-                key={option.name}
-                onClick={() => toggleOption(option)}
-                className={cn(
-                  "cursor-pointer p-1 hover:bg-gray-700/50 rounded-sm",
-                  selectedOptions.some((item) => item.value === option.value) && "bg-gray-700/50",
-                )}
-              >
-                {option.name}
-              </div>
-            ))}
-          </div>
-        </Dropdown.Content>
-      </Dropdown.Main>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-full max-h-40 overflow-y-auto">
+          {options.map((option) => (
+            <DropdownMenuItem
+              key={option.name}
+              onClick={() => toggleOption(option)}
+              className={cn(
+                selectedOptions.some((item) => item.value === option.value) && "bg-accent",
+              )}
+            >
+              {option.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
       {selectedOptions.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2 cursor-pointer w-full text-xs">
           {selectedOptions.map((option) => (

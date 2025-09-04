@@ -73,3 +73,26 @@ export const formatDate = (dateString: string): string => {
   if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString();
 };
+
+export const formatNumer = (n: number): string => {
+  if (n < 100) {
+    return n.toString();
+  }
+  if (n <= 1000) {
+    return "100+";
+  }
+  return "1,000+";
+};
+
+export const truncateVersion = ({
+  versionMethod,
+  versionIdentifier,
+}: {
+  versionMethod: string;
+  versionIdentifier: string;
+}): string => {
+  if (versionMethod === "tag") {
+    return versionIdentifier;
+  }
+  return versionIdentifier.slice(0, 5) + "..." + versionIdentifier.slice(-5);
+};

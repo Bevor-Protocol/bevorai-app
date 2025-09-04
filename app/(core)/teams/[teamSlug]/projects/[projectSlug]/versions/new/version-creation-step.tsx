@@ -104,7 +104,7 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="address" className="text-sm font-medium text-neutral-300">
+          <label htmlFor="address" className="text-sm font-medium text-neutral-300 hidden">
             Contract Address
           </label>
           <input
@@ -127,19 +127,14 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
         <div className="flex space-x-4">
           <Button
             type="button"
-            variant="transparent"
+            variant="outline"
             onClick={onBack}
             disabled={isPending}
             className="flex-1"
           >
             Back
           </Button>
-          <Button
-            type="submit"
-            variant="bright"
-            disabled={isPending || !address.trim()}
-            className="flex-1"
-          >
+          <Button type="submit" disabled={isPending || !address.trim()} className="flex-1">
             {isPending ? (
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -217,9 +212,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           <p className="text-sm text-neutral-400 mb-4">
             Drag and drop your .sol contract files for analysis
           </p>
-          <Button variant="bright" className="w-full">
-            Choose Files
-          </Button>
+          <Button className="w-full">Choose Files</Button>
         </div>
 
         <div
@@ -235,9 +228,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           <p className="text-sm text-neutral-400 mb-4">
             Copy and paste your smart contract code directly
           </p>
-          <Button variant="bright" className="w-full">
-            Paste Code
-          </Button>
+          <Button className="w-full">Paste Code</Button>
         </div>
 
         <div
@@ -253,9 +244,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           <p className="text-sm text-neutral-400 mb-4">
             Enter a deployed contract address to analyze
           </p>
-          <Button variant="bright" className="w-full">
-            Enter Address
-          </Button>
+          <Button className="w-full">Enter Address</Button>
         </div>
 
         <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
@@ -273,7 +262,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           <p className="text-sm text-neutral-400 mb-4">
             Upload an entire folder of contract files at once
           </p>
-          <Button variant="dark" className="w-full" disabled>
+          <Button variant="outline" className="w-full" disabled>
             Coming Soon
           </Button>
         </div>
@@ -293,7 +282,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           <p className="text-sm text-neutral-400 mb-4">
             Integrate directly with your IDE for seamless development
           </p>
-          <Button variant="dark" className="w-full" disabled>
+          <Button variant="outline" className="w-full" disabled>
             Coming Soon
           </Button>
         </div>
@@ -313,7 +302,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           <p className="text-sm text-neutral-400 mb-4">
             Automatically scan and analyze your Git repositories
           </p>
-          <Button variant="dark" className="w-full" disabled>
+          <Button variant="outline" className="w-full" disabled>
             Coming Soon
           </Button>
         </div>

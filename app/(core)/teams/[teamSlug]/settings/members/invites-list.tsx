@@ -2,7 +2,7 @@
 
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/loader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trimAddress } from "@/utils/helpers";
 import { MemberInviteSchema, MemberSchema } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -79,16 +79,11 @@ const InvitesList: React.FC<InvitesListProps> = ({ curMember, invites, isLoading
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Button
-              variant="dark"
-              disabled
-              className="opacity-50 cursor-not-allowed text-xs h-8 px-3"
-            >
+            <Button disabled className="opacity-50 cursor-not-allowed text-xs h-8 px-3">
               {invite.role}
             </Button>
             {curMember.role === "owner" && (
               <Button
-                variant="dark"
                 onClick={() => handleRemoveInvite(invite.id)}
                 disabled={isPending}
                 className="text-red-400 hover:text-red-300 text-xs h-8 px-3"

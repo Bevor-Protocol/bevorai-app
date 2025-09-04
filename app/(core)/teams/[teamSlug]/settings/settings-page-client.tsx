@@ -122,7 +122,6 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
           </div>
           {isOwner && (
             <Button
-              variant="bright"
               type="submit"
               disabled={updateTeamMutation.isPending || updateTeamMutation.isSuccess}
               className="h-10 px-4"

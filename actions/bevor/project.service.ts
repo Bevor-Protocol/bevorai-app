@@ -42,6 +42,15 @@ class ProjectService {
       return response.data.success;
     });
   }
+
+  async updateProject(
+    projectId: string,
+    data: { name?: string; description?: string; tags?: string },
+  ): Promise<CodeProjectSchema> {
+    return api.patch(`/projects/${projectId}`, data).then((response: any) => {
+      return response.data;
+    });
+  }
 }
 
 const projectService = new ProjectService();

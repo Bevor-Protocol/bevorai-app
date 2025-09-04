@@ -56,7 +56,7 @@ const SignInPage: React.FC = () => {
                 Authentication failed. Please try again.
               </div>
             )}
-            <Button onClick={login} variant="bright" disabled={!ready || isLoggingIn}>
+            <Button onClick={login} disabled={!ready || isLoggingIn}>
               {isLoggingIn ? "Signing in..." : "sign in"}
             </Button>
           </div>

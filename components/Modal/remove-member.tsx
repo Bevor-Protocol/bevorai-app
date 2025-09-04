@@ -86,12 +86,11 @@ const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ onClose, teamName
       </div>
 
       <div className="flex justify-between pt-4 border-t border-neutral-800">
-        <Button type="button" variant="dark" onClick={onClose} disabled={isPending}>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
           Cancel
         </Button>
         <Button
           type="button"
-          variant="bright"
           className="bg-orange-600 hover:bg-orange-700"
           disabled={isPending || isSuccess}
           onClick={() => mutate()}

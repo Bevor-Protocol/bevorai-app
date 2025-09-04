@@ -126,10 +126,10 @@ const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
       </div>
 
       <div className="flex justify-between pt-4 border-t border-neutral-800">
-        <Button type="button" variant="dark" onClick={onClose} disabled={isPending}>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
           Cancel
         </Button>
-        <Button type="submit" variant="bright" disabled={isPending || isSuccess}>
+        <Button type="submit" disabled={isPending || isSuccess}>
           {isPending ? "Updating..." : "Update Role"}
         </Button>
       </div>

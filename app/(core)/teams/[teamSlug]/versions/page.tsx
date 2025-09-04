@@ -1,9 +1,8 @@
 import { bevorAction } from "@/actions";
 import { TeamHeader } from "@/components/team/header";
 import { VersionGrid } from "@/components/versions/grid";
-import { getQueryClient } from "@/lib/config/query";
 import { AsyncComponent } from "@/utils/types";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 
 interface TeamVersionPageProps {
   params: Promise<{ teamSlug: string }>;
@@ -12,8 +11,8 @@ interface TeamVersionPageProps {
 const TeamVersionsPage: AsyncComponent<TeamVersionPageProps> = async ({ params }) => {
   const { teamSlug } = await params;
 
-  const queryClient = getQueryClient();
-  queryClient.prefetchQuery({
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
     queryKey: ["versions"],
     queryFn: () => bevorAction.getVersions({ page_size: "9" }),
   });

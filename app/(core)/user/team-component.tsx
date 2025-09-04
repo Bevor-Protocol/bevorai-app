@@ -1,6 +1,10 @@
 "use client";
 
-import * as Dropdown from "@/components/ui/dropdown";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/helpers";
@@ -34,16 +38,13 @@ const TeamDisplay: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
         >
           {team.role}
         </span>
-        <Dropdown.Main
-          tabIndex={0}
-          className="flex flex-row relative cursor-pointer rounded-lg hover:bg-neutral-800 transition-all"
-        >
-          <Dropdown.Trigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger>
             <div className="p-3 text-neutral-400">
               <Ellipsis />
             </div>
-          </Dropdown.Trigger>
-          <Dropdown.Content className="top-full right-0">
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="top-full right-0">
             <div className="p-2 bg-black shadow-sm rounded-lg border border-neutral-800">
               <Link
                 href={navigation.team.overview({ teamSlug: team.slug })}
@@ -58,8 +59,8 @@ const TeamDisplay: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
                 Manage
               </Link>
             </div>
-          </Dropdown.Content>
-        </Dropdown.Main>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

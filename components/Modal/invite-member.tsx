@@ -3,6 +3,13 @@
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { InviteMemberBody, MemberRoleEnum } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Users, X } from "lucide-react";
@@ -115,15 +122,19 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ onClose, teamName
                 />
               </div>
               <div className="flex-shrink-0">
-                <select
-                  className="px-3 py-2 bg-gray-900 border border-neutral-700 text-neutral-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <Select
                   value={invitee.role}
-                  onChange={(e) => updateInvitee(index, "role", e.target.value as MemberRoleEnum)}
+                  onValueChange={(value) => updateInvitee(index, "role", value as MemberRoleEnum)}
                   disabled={isPending}
                 >
-                  <option value={MemberRoleEnum.MEMBER}>Member</option>
-                  <option value={MemberRoleEnum.OWNER}>Owner</option>
-                </select>
+                  <SelectTrigger className="w-32 bg-gray-900 border-neutral-700 text-neutral-100">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-neutral-700">
+                    <SelectItem value={MemberRoleEnum.MEMBER}>Member</SelectItem>
+                    <SelectItem value={MemberRoleEnum.OWNER}>Owner</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               {invitees.length > 1 && (
                 <button
@@ -140,7 +151,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ onClose, teamName
 
         <Button
           type="button"
-          variant="dark"
+          variant="outline"
           onClick={addInvitee}
           disabled={isPending}
           className="w-full"
@@ -163,10 +174,10 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ onClose, teamName
       </div>
 
       <div className="flex justify-between pt-4 border-t border-neutral-800">
-        <Button type="button" variant="dark" onClick={onClose} disabled={isPending}>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
           Cancel
         </Button>
-        <Button type="submit" variant="bright" disabled={isPending || !isValid || isSuccess}>
+        <Button type="submit" disabled={isPending || !isValid || isSuccess}>
           {isPending
             ? "Sending..."
             : `Send ${invitees.filter((i) => i.identifier.trim()).length} Invitation${invitees.filter((i) => i.identifier.trim()).length !== 1 ? "s" : ""}`}

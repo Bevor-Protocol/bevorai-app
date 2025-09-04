@@ -33,7 +33,7 @@ const Shareable: React.FC<{ audit: AuditSchemaI }> = ({ audit }) => {
       {audit.is_public && (
         <Tooltip.Reference>
           <Tooltip.Trigger>
-            <Button variant="transparent" onClick={handleCopy} className="p-2">
+            <Button variant="outline" onClick={handleCopy} className="p-2">
               {isCopied ? (
                 <Check className="w-3 h-3 text-green-500" />
               ) : (
@@ -51,7 +51,7 @@ const Shareable: React.FC<{ audit: AuditSchemaI }> = ({ audit }) => {
       <Tooltip.Reference>
         <Tooltip.Trigger>
           <Button
-            variant="transparent"
+            variant="outline"
             onClick={() => visibilityMutation.mutate()}
             disabled={visibilityMutation.isPending}
             className="p-2"

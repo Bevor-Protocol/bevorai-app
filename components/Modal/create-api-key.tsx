@@ -182,14 +182,15 @@ const CreateApiKeyModal: React.FC = () => {
       </div>
 
       <div className="flex justify-between pt-4 border-t border-neutral-800">
-        <Button type="button" variant="dark" onClick={hide} disabled={createKeyMutation.isPending}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={hide}
+          disabled={createKeyMutation.isPending}
+        >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          variant="bright"
-          disabled={createKeyMutation.isPending || !createForm.name.trim()}
-        >
+        <Button type="submit" disabled={createKeyMutation.isPending || !createForm.name.trim()}>
           {createKeyMutation.isPending ? "Creating..." : "Create API Key"}
         </Button>
       </div>

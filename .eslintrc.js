@@ -44,4 +44,12 @@ module.exports = {
       },
     },
   },
+  overrides: [
+    {
+      files: ["components/ui/**/*.tsx"],
+      rules: {
+        "@typescript-eslint/explicit-function-return-type": "off",
+      },
+    },
+  ],
 };

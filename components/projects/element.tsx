@@ -1,5 +1,6 @@
-import { Skeleton } from "@/components/ui/loader";
-import { formatDate } from "@/utils/helpers";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate, formatNumer } from "@/utils/helpers";
 import { CodeProjectSchema } from "@/utils/types";
 import Link from "next/link";
 import React from "react";
@@ -43,7 +44,7 @@ export const ProjectElement: React.FC<{
     <Link
       key={project.id}
       href={`/teams/${teamSlug}/projects/${project.slug}`}
-      className="block border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all"
+      className="block border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all"
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
@@ -52,13 +53,9 @@ export const ProjectElement: React.FC<{
             <p className="text-sm text-neutral-400">Created {formatDate(project.created_at)}</p>
           </div>
         </div>
-        <div className="flex flex-col gap-1">
-          <div className="px-2 py-1 rounded text-xs font-medium bg-blue-500/10 text-blue-400 flex-shrink-0">
-            {project.n_versions || 0} versions
-          </div>
-          <div className="px-2 py-1 rounded text-xs font-medium bg-green-500/10 text-green-400 flex-shrink-0">
-            {project.n_audits || 0} audits
-          </div>
+        <div className="flex flex-col gap-1 items-end">
+          <Badge variant="blue">{formatNumer(project.n_versions)} versions</Badge>
+          <Badge variant="green">{formatNumer(project.n_audits)} audits</Badge>
         </div>
       </div>
       {project.description && (
@@ -73,17 +70,12 @@ export const ProjectElement: React.FC<{
         {project.tags && project.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {project.tags.slice(0, 3).map((tag, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 rounded-4xl text-xs font-medium bg-neutral-800/50 text-neutral-300 border border-neutral-700"
-              >
+              <Badge key={index} variant="outline">
                 {tag}
-              </span>
+              </Badge>
             ))}
             {project.tags.length > 3 && (
-              <span className="px-2 py-1 rounded text-xs font-medium bg-neutral-800/50 text-neutral-400 border border-neutral-700">
-                +{project.tags.length - 3} more
-              </span>
+              <Badge variant="outline">+{project.tags.length - 3} more</Badge>
             )}
           </div>
         )}

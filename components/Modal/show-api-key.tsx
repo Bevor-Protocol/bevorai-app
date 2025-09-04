@@ -48,7 +48,7 @@ const ShowApiKeyModal: React.FC<ShowApiKeyModalProps> = ({ apiKey }) => {
       </div>
 
       <div className="flex items-center justify-end mt-6">
-        <Button variant="bright" onClick={hide} className="text-white">
+        <Button onClick={hide} className="text-white">
           Done
         </Button>
       </div>

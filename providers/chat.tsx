@@ -224,7 +224,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       {!isOpen && (
         <Button
           onClick={openChat}
-          variant="bright"
           className={cn(
             "fixed bottom-4 right-4 p-3 w-fit h-fit min-w-fit",
             "z-50 rounded-full shadow-lg",
@@ -243,11 +242,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         >
           <div className="flex justify-between items-center p-3 border-b border-gray-500/50">
             <div className="flex flex-row gap-4">
-              {!!currentAuditId && (
-                <Button onClick={initiateChat} variant="bright">
-                  new chat
-                </Button>
-              )}
+              {!!currentAuditId && <Button onClick={initiateChat}>new chat</Button>}
 
               {!!currentChat && (
                 <Link
@@ -442,7 +437,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               disabled={isLoading || showChatHistory || !currentChat}
             />
             <Button
-              variant="bright"
               disabled={isLoading || !inputValue.trim() || showChatHistory || !currentChat}
               className={cn("p-3 w-fit h-fit min-w-fit", "rounded-lg shadow-lg")}
               onClick={handleSubmit}

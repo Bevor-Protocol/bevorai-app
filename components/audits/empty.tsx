@@ -1,12 +1,26 @@
 import { Shield } from "lucide-react";
 import React from "react";
 
-export const AuditEmpty: React.FC = () => {
+export const AuditEmpty: React.FC<{ centered?: boolean }> = ({ centered = false }) => {
+  if (!centered) {
+    return (
+      <div className="flex flex-col py-6 gap-2">
+        <div className="flex flex-row gap-2 items-center">
+          <Shield className="size-6 text-neutral-600" />
+          <h4 className="text-base font-medium text-neutral-300">No audits yet</h4>
+        </div>
+        <p className="text-sm text-neutral-500 pl-8">
+          Start by creating a version and running your first audit.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col py-12 justify-center items-center">
-      <Shield className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-neutral-300 mb-2">No audits yet</h3>
-      <p className="text-sm text-neutral-500">
+    <div className="flex flex-col py-6 justify-center items-center gap-2">
+      <Shield className="size-8 text-neutral-600 mx-auto" />
+      <h4 className="text-base font-medium text-neutral-300">No audits yet</h4>
+      <p className="text-sm text-neutral-500 text-center">
         Start by creating a version and running your first audit.
       </p>
     </div>

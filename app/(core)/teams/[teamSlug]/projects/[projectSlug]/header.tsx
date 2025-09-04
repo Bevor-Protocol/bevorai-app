@@ -20,15 +20,15 @@ export const ProjectHeader: AsyncComponent<{
             <h1 className="text-3xl font-bold text-neutral-100 mb-2">{project.name}</h1>
             <div className="flex items-center space-x-4 text-sm text-neutral-400">
               <div className="flex items-center space-x-1">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="size-4" />
                 <span>Created {formatDate(project.created_at)}</span>
               </div>
               <div className="flex items-center space-x-1">
-                <GitBranch className="w-4 h-4" />
+                <GitBranch className="size-4" />
                 <span>{project.n_versions} versions</span>
               </div>
               <div className="flex items-center space-x-1">
-                <File className="w-4 h-4" />
+                <File className="size-4" />
                 <span>{project.n_audits} audits</span>
               </div>
               <div className="flex items-center space-x-1">
@@ -47,8 +47,8 @@ export const ProjectHeader: AsyncComponent<{
         </div>
         <div className="flex space-x-3">
           <Link href={`/teams/${teamSlug}/projects/${projectSlug}/versions/new`}>
-            <Button variant="bright" className="flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
+            <Button className="flex items-center">
+              <Plus className="size-4" />
               <span>New Version</span>
             </Button>
           </Link>

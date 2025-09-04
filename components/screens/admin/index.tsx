@@ -3,7 +3,13 @@
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -290,12 +296,23 @@ const AdminPanel: React.FC = () => {
           <div className="flex justify-between items-center mb-4">
             <div className="flex gap-2">
               <Select
-                className="w-40"
-                options={promptTypes}
-                placeholder="type"
-                current={selectedPromptType}
-                handleCurrent={(option) => setSelectedPromptType(option)}
-              />
+                value={selectedPromptType?.value || ""}
+                onValueChange={(value) => {
+                  const option = promptTypes.find((opt) => opt.value === value);
+                  setSelectedPromptType(option || null);
+                }}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {promptTypes.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <div className="flex items-center ml-4">
                 <input
                   type="checkbox"
@@ -309,7 +326,7 @@ const AdminPanel: React.FC = () => {
                 </label>
               </div>
             </div>
-            <Button variant="transparent" onClick={() => setIsAddingPrompt(true)}>
+            <Button variant="outline" onClick={() => setIsAddingPrompt(true)}>
               <PlusIcon className="h-4 w-4 mr-2" />
               Add Prompt
             </Button>
@@ -370,11 +387,11 @@ const AdminPanel: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <Button variant="transparent" onClick={() => setIsEditingPrompt(true)}>
+                      <Button variant="outline" onClick={() => setIsEditingPrompt(true)}>
                         Edit
                       </Button>
                       <Button
-                        variant="transparent"
+                        variant="outline"
                         onClick={() =>
                           updatePrompt({
                             promptId: selectedPrompt.id,
@@ -572,12 +589,7 @@ const UserPermission = ({
           )}
         </div>
         {!!user.permissions && (
-          <Button
-            variant="bright"
-            className="w-full mt-4"
-            onClick={handleSave}
-            disabled={isLoading}
-          >
+          <Button className="w-full mt-4" onClick={handleSave} disabled={isLoading}>
             Save Permissions
           </Button>
         )}
@@ -673,12 +685,7 @@ const AppPermission = ({
           )}
         </div>
         {!!app.permissions && (
-          <Button
-            variant="bright"
-            className="w-full mt-4"
-            onClick={handleSave}
-            disabled={isLoading}
-          >
+          <Button className="w-full mt-4" onClick={handleSave} disabled={isLoading}>
             Save Permissions
           </Button>
         )}
@@ -838,10 +845,10 @@ const PromptEditor = ({
           />
         </div>
         <div className="flex space-x-3 pt-4">
-          <Button variant="bright" className="flex-1" onClick={handleSave} disabled={isLoading}>
+          <Button className="flex-1" onClick={handleSave} disabled={isLoading}>
             {isNewPrompt ? "Create Prompt" : "Save Changes"}
           </Button>
-          <Button variant="transparent" className="flex-1" onClick={handleClose}>
+          <Button variant="outline" className="flex-1" onClick={handleClose}>
             Cancel
           </Button>
         </div>

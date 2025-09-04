@@ -110,7 +110,7 @@ const ViewInviteModal: React.FC<ViewInviteModalProps> = ({ onClose, invite }) =>
       <div className="flex justify-between pt-4 border-t border-neutral-800">
         <Button
           type="button"
-          variant="dark"
+          variant="outline"
           onClick={() => rejectInviteMutation.mutate()}
           disabled={isPending || isSuccess}
         >
@@ -118,7 +118,6 @@ const ViewInviteModal: React.FC<ViewInviteModalProps> = ({ onClose, invite }) =>
         </Button>
         <Button
           type="button"
-          variant="bright"
           className="bg-blue-600 hover:bg-blue-700"
           disabled={isPending || isSuccess}
           onClick={() => acceptInviteMutation.mutate()}

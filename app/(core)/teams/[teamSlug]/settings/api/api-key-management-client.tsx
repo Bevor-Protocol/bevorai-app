@@ -61,7 +61,7 @@ const ApiKeyManagementClient: React.FC = () => {
       <div className="space-y-4">
         <div className="flex flex-row mb-8 justify-between">
           <h3 className="text-xl font-semibold text-neutral-100">API Keys</h3>
-          <Button variant="bright" onClick={handleModal} className="text-white">
+          <Button onClick={handleModal} className="text-white">
             <Plus className="w-4 h-4 mr-2" />
             Create API Key
           </Button>
@@ -105,7 +105,7 @@ const ApiKeyManagementClient: React.FC = () => {
                 </code>
                 <div className="flex items-center space-x-2">
                   <Button
-                    variant="dark"
+                    variant="outline"
                     onClick={() => regenerateApiKeyMutation.mutate(apiKey.id)}
                     disabled={regenerateApiKeyMutation.isPending}
                     className="text-xs h-8 px-3"
@@ -114,7 +114,7 @@ const ApiKeyManagementClient: React.FC = () => {
                     Regenerate
                   </Button>
                   <Button
-                    variant="dark"
+                    variant="outline"
                     onClick={() => handleDeleteApiKey(apiKey)}
                     disabled={deleteApiKeyMutation.isPending}
                     className="text-red-400 hover:bg-red-500/10 text-xs h-8 px-3"

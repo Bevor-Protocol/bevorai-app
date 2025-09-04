@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/loader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { iconSizeMapper } from "@/utils/constants";
 import { generateSlug } from "@/utils/helpers";

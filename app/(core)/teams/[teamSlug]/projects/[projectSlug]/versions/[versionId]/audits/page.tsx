@@ -1,4 +1,5 @@
 import { bevorAction } from "@/actions";
+import { AuditEmpty } from "@/components/audits/empty";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/helpers";
 import { AsyncComponent, AuditObservationI } from "@/utils/types";
@@ -76,7 +77,6 @@ const VersionAuditsData: AsyncComponent<{
               audits={audits.results || []}
               teamSlug={teamSlug}
               projectSlug={projectSlug}
-              versionId={versionId}
             />
           </Suspense>
         </div>
@@ -89,21 +89,9 @@ const AuditsList: React.FC<{
   audits: AuditObservationI[];
   teamSlug: string;
   projectSlug: string;
-  versionId: string;
-}> = ({ audits, teamSlug, projectSlug, versionId }) => {
+}> = ({ audits, teamSlug, projectSlug }) => {
   if (audits.length === 0) {
-    return (
-      <div className="text-center py-12 border border-neutral-800 rounded-lg">
-        <Shield className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-neutral-300 mb-2">No audits yet</h3>
-        <p className="text-sm text-neutral-500 mb-6">
-          Start your first security audit for this version.
-        </p>
-        <Link href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${versionId}/audits/new`}>
-          <Button variant="bright">Start First Audit</Button>
-        </Link>
-      </div>
-    );
+    return <AuditEmpty centered />;
   }
 
   return (
@@ -222,7 +210,7 @@ const Pagination: React.FC<{
         >
           <Button
             disabled={currentPage === 0}
-            variant="transparent"
+            variant="outline"
             className="flex items-center space-x-2"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -235,7 +223,7 @@ const Pagination: React.FC<{
         <Link
           href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${versionId}/audits?page=${nextPage}`}
         >
-          <Button disabled={!hasMore} variant="transparent" className="flex items-center space-x-2">
+          <Button disabled={!hasMore} variant="outline" className="flex items-center space-x-2">
             <span>Next</span>
             <ChevronRight className="w-4 h-4" />
           </Button>

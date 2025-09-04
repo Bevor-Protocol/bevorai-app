@@ -154,7 +154,7 @@ const AuditScopeSelector: React.FC<AuditScopeSelectorProps> = ({
         <div className="flex items-center space-x-3">
           {selectedScopes.length > 0 && (
             <Button
-              variant="transparent"
+              variant="outline"
               className="flex items-center space-x-2"
               onClick={() => setSelectedScopes([])}
             >
@@ -162,7 +162,6 @@ const AuditScopeSelector: React.FC<AuditScopeSelectorProps> = ({
             </Button>
           )}
           <Button
-            variant="bright"
             className="flex items-center space-x-2"
             onClick={() => initiateAudit()}
             disabled={isPending}

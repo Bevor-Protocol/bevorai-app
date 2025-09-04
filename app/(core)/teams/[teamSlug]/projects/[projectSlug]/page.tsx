@@ -2,11 +2,9 @@ import { bevorAction } from "@/actions";
 import { ProjectHeader } from "@/app/(core)/teams/[teamSlug]/projects/[projectSlug]/header";
 import { AuditElement } from "@/components/audits/element";
 import { AuditEmpty } from "@/components/audits/empty";
-import { Button } from "@/components/ui/button";
 import { CodeVersionElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { AsyncComponent, AuditTableResponseI, CodeVersionsResponseI } from "@/utils/types";
-import Link from "next/link";
 import { Suspense } from "react";
 
 interface ProjectPageProps {
@@ -20,68 +18,81 @@ const ProjectData: AsyncComponent<{
   const team = await bevorAction.getTeam();
   const project = await bevorAction.getProjectBySlug(projectSlug);
 
-  const versions = await bevorAction.getVersions({ project_id: project.id });
-  let audits;
-  if (versions.results.length) {
-    audits = await bevorAction.getAudits({ project_id: project.id, page_size: "6" });
-  }
+  const versions = await bevorAction.getVersions({ project_id: project.id, page_size: "6" });
+  const audits = await bevorAction.getAudits({ project_id: project.id, page_size: "6" });
 
   return (
     <div className="min-h-screen">
       <div className="px-6 py-8 max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-neutral-100">Versions</h2>
-          <VersionsList teamSlug={teamSlug} teamId={team.id} versions={versions} />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          <VersionsSection teamSlug={teamSlug} teamId={team.id} versions={versions} />
+          <AuditsSection teamSlug={teamSlug} projectSlug={projectSlug} audits={audits} />
         </div>
-        {audits && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-neutral-100">Recent Audits</h2>
-              <Link href={`/teams/${teamSlug}/projects/${projectSlug}/audits`}>
-                <Button variant="transparent" className="flex items-center space-x-2">
-                  <span>View All Audits</span>
-                </Button>
-              </Link>
-            </div>
-            <ProjectAuditsList teamSlug={teamSlug} audits={audits} />
-          </div>
-        )}
       </div>
     </div>
   );
 };
 
-const VersionsList: AsyncComponent<{
+const VersionsSection: AsyncComponent<{
   teamId: string;
   teamSlug: string;
   versions: CodeVersionsResponseI;
 }> = async ({ teamSlug, versions }) => {
-  if (versions.results.length === 0) {
-    return <VersionEmpty />;
-  }
-
   return (
-    <div className="space-y-3">
-      {versions.results.map((version) => (
-        <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} />
-      ))}
+    <div>
+      <div className="mb-4">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold text-neutral-100">Versions</h2>
+          <a
+            href={`/teams/${teamSlug}/versions`}
+            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            View all →
+          </a>
+        </div>
+      </div>
+
+      {versions.results.length > 0 ? (
+        <div className="space-y-3">
+          {versions.results.slice(0, 3).map((version) => (
+            <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} isPreview />
+          ))}
+        </div>
+      ) : (
+        <VersionEmpty />
+      )}
     </div>
   );
 };
 
-const ProjectAuditsList: AsyncComponent<{
+const AuditsSection: AsyncComponent<{
   teamSlug: string;
+  projectSlug: string;
   audits: AuditTableResponseI;
-}> = async ({ teamSlug, audits }) => {
-  if (audits.results?.length === 0) {
-    return <AuditEmpty />;
-  }
-
+}> = async ({ teamSlug, projectSlug, audits }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {audits.results.map((audit) => (
-        <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
-      ))}
+    <div>
+      <div className="mb-4">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold text-neutral-100">Recent Audits</h2>
+          <a
+            href={`/teams/${teamSlug}/projects/${projectSlug}/audits`}
+            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            View all →
+          </a>
+        </div>
+      </div>
+
+      {audits.results.length > 0 ? (
+        <div className="space-y-3">
+          {audits.results.slice(0, 3).map((audit) => (
+            <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
+          ))}
+        </div>
+      ) : (
+        <AuditEmpty />
+      )}
     </div>
   );
 };

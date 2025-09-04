@@ -7,11 +7,34 @@ import { TeamSchemaI } from "@/utils/types";
 import { FileText } from "lucide-react";
 import React from "react";
 
-export const ProjectEmpty: React.FC<{ team?: TeamSchemaI; includeCta?: boolean }> = ({
-  team,
-  includeCta = false,
-}) => {
+export const ProjectEmpty: React.FC<{
+  team?: TeamSchemaI;
+  includeCta?: boolean;
+  centered?: boolean;
+}> = ({ team, includeCta = false, centered = false }) => {
   const { show, hide } = useModal();
+
+  if (!centered) {
+    <div className="flex flex-col py-6 gap-2">
+      <div className="flex flex-row gap-2 items-center">
+        <FileText className="size-6 text-neutral-600" />
+        <h4 className="text-base font-medium text-neutral-300">No projects yet</h4>
+      </div>
+      <p className="text-sm text-neutral-500 pl-8">
+        Get started by creating your first security audit project.
+      </p>
+      {includeCta && team && (
+        <Button
+          onClick={() => {
+            if (close) close();
+            show(<CreateProjectModal onClose={hide} targetTeamSlug={team.slug} />);
+          }}
+        >
+          Start New Project
+        </Button>
+      )}
+    </div>;
+  }
 
   return (
     <div className="flex flex-col py-12 justify-center items-center">
@@ -22,7 +45,6 @@ export const ProjectEmpty: React.FC<{ team?: TeamSchemaI; includeCta?: boolean }
       </p>
       {includeCta && team && (
         <Button
-          variant="bright"
           onClick={() => {
             if (close) close();
             show(<CreateProjectModal onClose={hide} targetTeamSlug={team.slug} />);

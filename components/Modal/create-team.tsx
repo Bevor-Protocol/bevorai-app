@@ -81,14 +81,10 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ onClose }) => {
         </div>
       </div>
       <div className="flex justify-between pt-4 border-t border-neutral-800">
-        <Button type="button" variant="dark" onClick={onClose} disabled={isPending}>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          variant="bright"
-          disabled={isPending || !teamName.trim() || isSuccess}
-        >
+        <Button type="submit" disabled={isPending || !teamName.trim() || isSuccess}>
           {isPending ? "Creating..." : "Create Team"}
         </Button>
       </div>

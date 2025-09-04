@@ -1,6 +1,9 @@
 import { bevorAction } from "@/actions";
+import { AuditElementLoader } from "@/components/audits/element";
+import { AuditEmpty } from "@/components/audits/empty";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/helpers";
+import { navigation } from "@/utils/navigation";
 import { AsyncComponent, AuditObservationI } from "@/utils/types";
 import { Clock, Code, FileText, Shield } from "lucide-react";
 import Link from "next/link";
@@ -29,7 +32,7 @@ const VersionData: AsyncComponent<{
     <div className="px-6 py-8 bg-neutral-950 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${versionId}/sources`}>
+          <Link href={navigation.version.sources({ teamSlug, projectSlug, versionId })}>
             <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -42,9 +45,7 @@ const VersionData: AsyncComponent<{
               </div>
             </div>
           </Link>
-          <Link
-            href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${versionId}/audits/new`}
-          >
+          <Link href={navigation.version.audits.new({ teamSlug, projectSlug, versionId })}>
             <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -57,7 +58,7 @@ const VersionData: AsyncComponent<{
               </div>
             </div>
           </Link>
-          <Link href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${versionId}/audits`}>
+          <Link href={navigation.version.audits.overview({ teamSlug, projectSlug, versionId })}>
             <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
@@ -74,8 +75,8 @@ const VersionData: AsyncComponent<{
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-neutral-100">Recent Audits</h2>
-            <Link href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${versionId}/audits`}>
-              <Button variant="transparent" className="text-sm">
+            <Link href={navigation.version.audits.overview({ teamSlug, projectSlug, versionId })}>
+              <Button variant="outline" className="text-sm">
                 View All
               </Button>
             </Link>
@@ -86,7 +87,6 @@ const VersionData: AsyncComponent<{
               audits={audits.results || []}
               teamSlug={teamSlug}
               projectSlug={projectSlug}
-              versionId={versionId}
             />
           </Suspense>
         </div>
@@ -100,21 +100,9 @@ const RecentAuditsList: React.FC<{
   audits: AuditObservationI[];
   teamSlug: string;
   projectSlug: string;
-  versionId: string;
-}> = ({ audits, teamSlug, projectSlug, versionId }) => {
+}> = ({ audits, teamSlug, projectSlug }) => {
   if (audits.length === 0) {
-    return (
-      <div className="text-center py-8 border border-neutral-800 rounded-lg">
-        <Shield className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-neutral-300 mb-2">No audits yet</h3>
-        <p className="text-sm text-neutral-500 mb-4">
-          Start your first security audit for this version.
-        </p>
-        <Link href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${versionId}/audits/new`}>
-          <Button variant="bright">Start First Audit</Button>
-        </Link>
-      </div>
-    );
+    return <AuditEmpty centered />;
   }
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -131,7 +119,7 @@ const RecentAuditsList: React.FC<{
             className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all"
           >
             <Link
-              href={`/teams/${teamSlug}/projects/${projectSlug}/audits/${audit.id}`}
+              href={navigation.audit.overview({ teamSlug, projectSlug, auditId: audit.id })}
               className="block"
             >
               <div className="space-y-3">
@@ -193,23 +181,7 @@ const RecentAuditsList: React.FC<{
 const AuditsLoading: React.FC = () => (
   <div className="space-y-3">
     {Array.from({ length: 3 }).map((_, index) => (
-      <div key={index} className="border border-neutral-800 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-neutral-600" />
-            </div>
-            <div>
-              <div className="h-4 bg-neutral-800 rounded w-32 mb-2"></div>
-              <div className="flex space-x-4">
-                <div className="h-3 bg-neutral-800 rounded w-20"></div>
-                <div className="h-3 bg-neutral-800 rounded w-16"></div>
-              </div>
-            </div>
-          </div>
-          <div className="h-3 bg-neutral-800 rounded w-12"></div>
-        </div>
-      </div>
+      <AuditElementLoader key={index} />
     ))}
   </div>
 );
