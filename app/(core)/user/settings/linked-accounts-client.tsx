@@ -1,6 +1,6 @@
 "use client";
 
-import * as Tooltip from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { trimAddress } from "@/utils/helpers";
 import {
   EmailWithMetadata,
@@ -266,8 +266,8 @@ export const CreditSync: React.FC<{ credits: number }> = ({ credits }) => {
       <div className="text-2xl font-bold text-neutral-100 mb-1">{credits}</div>
       <div className="text-sm text-neutral-400">Credits</div>
 
-      <Tooltip.Reference className="absolute top-2 right-2">
-        <Tooltip.Trigger>
+      <Tooltip>
+        <TooltipTrigger>
           <button
             onClick={handleSyncCredits}
             className="p-1 text-neutral-400 hover:text-blue-400 transition-colors cursor-pointer"
@@ -275,11 +275,11 @@ export const CreditSync: React.FC<{ credits: number }> = ({ credits }) => {
           >
             <RefreshCcw className="w-4 h-4" />
           </button>
-        </Tooltip.Trigger>
-        <Tooltip.Content side="top" align="end" className="min-w-32">
+        </TooltipTrigger>
+        <TooltipContent side="top" align="end" className="min-w-32">
           Sync credits from your account
-        </Tooltip.Content>
-      </Tooltip.Reference>
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 };

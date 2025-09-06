@@ -4,6 +4,7 @@ import { bevorAction } from "@/actions";
 import Networks from "@/components/Dropdown/networks";
 import ViewInviteModal from "@/components/Modal/view-invite";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +15,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
-import * as Tooltip from "@/components/ui/tooltip";
-import { useModal } from "@/hooks/useContexts";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getNetworkImage } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
 import { MemberInviteSchema, TeamSchemaI } from "@/utils/types";
 import { useWallets } from "@privy-io/react-auth";
+import { DialogTrigger } from "@radix-ui/react-dialog";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Bell,
@@ -32,7 +33,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 
 export const Web3Network: React.FC = () => {
   const { wallets, ready } = useWallets();
@@ -45,8 +46,8 @@ export const Web3Network: React.FC = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <Tooltip.Reference shouldShow={false}>
-          <Tooltip.Trigger>
+        <Tooltip>
+          <TooltipTrigger>
             <div
               className={cn(
                 "flex justify-center items-center gap-2 px-2",
@@ -64,13 +65,13 @@ export const Web3Network: React.FC = () => {
               />
               <ChevronDown />
             </div>
-          </Tooltip.Trigger>
-          <Tooltip.Content side="left" align="start">
+          </TooltipTrigger>
+          <TooltipContent side="left" align="start">
             <div className="bg-black shadow-sm rounded-lg cursor-default min-w-40">
               <div className="px-2 py-1">This is an unsupported network</div>
             </div>
-          </Tooltip.Content>
-        </Tooltip.Reference>
+          </TooltipContent>
+        </Tooltip>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="top-full right-0">
         <Networks />
@@ -80,7 +81,7 @@ export const Web3Network: React.FC = () => {
 };
 
 export const Notifications: React.FC = () => {
-  const { show, hide } = useModal();
+  const [inviteUse, setInviteUse] = useState<MemberInviteSchema | null>(null);
 
   const { data: invites } = useSuspenseQuery({
     queryKey: ["user-invites"],
@@ -89,41 +90,46 @@ export const Notifications: React.FC = () => {
 
   const hasInvites = (invites?.length ?? 0) > 0;
 
-  const handleView = (invite: MemberInviteSchema): void => {
-    show(<ViewInviteModal invite={invite} onClose={hide} />);
-  };
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Bell className="h-4" />
-          {hasInvites && (
-            <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full flex items-center justify-center" />
+    <Dialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon">
+            <Bell className="h-4" />
+            {hasInvites && (
+              <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full flex items-center justify-center" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          {invites?.map((invite) => (
+            <DialogTrigger key={invite.id} asChild>
+              <DropdownMenuItem onClick={() => setInviteUse(invite)}>
+                <Icon size="sm" seed={invite.team.id} className="text-blue-400 mt-1" />
+                <div className="flex-1">
+                  <p className="text-sm text-neutral-100">
+                    You&apos;ve been added to a team: {invite.team.name}
+                  </p>
+                  <p className="text-xs text-neutral-400">
+                    {new Date(invite.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </DropdownMenuItem>
+            </DialogTrigger>
+          ))}
+          {invites.length === 0 && (
+            <DropdownMenuItem disabled className="text-sm text-neutral-400 justify-center">
+              No team invites
+            </DropdownMenuItem>
           )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        {invites?.map((invite) => (
-          <DropdownMenuItem key={invite.id} onClick={() => handleView(invite)}>
-            <Icon size="sm" seed={invite.team.id} className="text-blue-400 mt-1" />
-            <div className="flex-1">
-              <p className="text-sm text-neutral-100">
-                You&apos;ve been added to a team: {invite.team.name}
-              </p>
-              <p className="text-xs text-neutral-400">
-                {new Date(invite.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          </DropdownMenuItem>
-        ))}
-        {invites.length === 0 && (
-          <DropdownMenuItem disabled className="text-sm text-neutral-400 justify-center">
-            No team invites
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {!!inviteUse && (
+        <DialogContent>
+          <ViewInviteModal invite={inviteUse} />
+        </DialogContent>
+      )}
+    </Dialog>
   );
 };
 

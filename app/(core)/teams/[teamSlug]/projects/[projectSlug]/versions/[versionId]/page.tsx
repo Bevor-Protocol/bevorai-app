@@ -29,67 +29,65 @@ const VersionData: AsyncComponent<{
   });
 
   return (
-    <div className="px-6 py-8 bg-neutral-950 min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href={navigation.version.sources({ teamSlug, projectSlug, versionId })}>
-            <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <Code className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-neutral-100">View Sources</h3>
-                  <p className="text-xs text-neutral-400">Browse contract source code</p>
-                </div>
+    <div className="max-w-7xl mx-auto space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Link href={navigation.version.sources({ teamSlug, projectSlug, versionId })}>
+          <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <Code className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-neutral-100">View Sources</h3>
+                <p className="text-xs text-neutral-400">Browse contract source code</p>
               </div>
             </div>
-          </Link>
-          <Link href={navigation.version.audits.new({ teamSlug, projectSlug, versionId })}>
-            <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-neutral-100">New Audit</h3>
-                  <p className="text-xs text-neutral-400">Start security analysis</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-          <Link href={navigation.version.audits.overview({ teamSlug, projectSlug, versionId })}>
-            <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-neutral-100">View Audits</h3>
-                  <p className="text-xs text-neutral-400">See audit history</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-neutral-100">Recent Audits</h2>
-            <Link href={navigation.version.audits.overview({ teamSlug, projectSlug, versionId })}>
-              <Button variant="outline" className="text-sm">
-                View All
-              </Button>
-            </Link>
           </div>
-
-          <Suspense fallback={<AuditsLoading />}>
-            <RecentAuditsList
-              audits={audits.results || []}
-              teamSlug={teamSlug}
-              projectSlug={projectSlug}
-            />
-          </Suspense>
+        </Link>
+        <Link href={navigation.version.audits.new({ teamSlug, projectSlug, versionId })}>
+          <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-neutral-100">New Audit</h3>
+                <p className="text-xs text-neutral-400">Start security analysis</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+        <Link href={navigation.version.audits.overview({ teamSlug, projectSlug, versionId })}>
+          <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-neutral-100">View Audits</h3>
+                <p className="text-xs text-neutral-400">See audit history</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-neutral-100">Recent Audits</h2>
+          <Link href={navigation.version.audits.overview({ teamSlug, projectSlug, versionId })}>
+            <Button variant="outline" className="text-sm">
+              View All
+            </Button>
+          </Link>
         </div>
+
+        <Suspense fallback={<AuditsLoading />}>
+          <RecentAuditsList
+            audits={audits.results || []}
+            teamSlug={teamSlug}
+            projectSlug={projectSlug}
+          />
+        </Suspense>
       </div>
     </div>
   );
@@ -116,7 +114,7 @@ const RecentAuditsList: React.FC<{
         return (
           <div
             key={audit.id}
-            className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all"
+            className="border rounded-lg p-4 hover:border-neutral-700 transition-all"
           >
             <Link
               href={navigation.audit.overview({ teamSlug, projectSlug, auditId: audit.id })}

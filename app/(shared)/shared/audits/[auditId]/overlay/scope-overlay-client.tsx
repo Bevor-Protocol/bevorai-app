@@ -1,7 +1,7 @@
 "use client";
 
 import SolidityViewer from "@/components/code-viewer";
-import * as Tooltip from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScopeHookResponse, useScopeHandler } from "@/hooks/useScopeHandler";
 import { cn } from "@/lib/utils";
 import { AuditSchemaI, ContractScopeI, FunctionScopeI, TreeResponseI } from "@/utils/types";
@@ -292,17 +292,17 @@ const TreeFunction = ({
         {func.is_within_scope && <Eye className="w-3 h-3 text-green-400 flex-shrink-0" />}
         {func.is_override && <Replace className="w-3 h-3 text-red-400 flex-shrink-0" />}
         {func.is_inherited && (
-          <Tooltip.Reference>
-            <Tooltip.Trigger>
+          <Tooltip>
+            <TooltipTrigger>
               <ArrowUpRight className="w-3 h-3 text-purple-400 flex-shrink-0" />
-            </Tooltip.Trigger>
-            <Tooltip.Content align="start">
+            </TooltipTrigger>
+            <TooltipContent align="start">
               <div className="whitespace-nowrap">
                 Inherited from <br />
                 {func.contract_name_defined}
               </div>
-            </Tooltip.Content>
-          </Tooltip.Reference>
+            </TooltipContent>
+          </Tooltip>
         )}
         <span className="text-sm truncate">{func.name}</span>
       </button>

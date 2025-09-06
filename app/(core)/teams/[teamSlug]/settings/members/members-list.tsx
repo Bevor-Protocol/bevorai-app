@@ -1,19 +1,23 @@
 "use client";
 
-import RoleUpdateDropdown from "@/components/Dropdown/role";
+import { bevorAction } from "@/actions";
 import RemoveMemberModal from "@/components/Modal/remove-member";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useModal } from "@/hooks/useContexts";
-import { cn } from "@/lib/utils";
+import { toTitleCase } from "@/lib/utils";
 import { trimAddress } from "@/utils/helpers";
-import { MemberSchema, TeamSchemaI } from "@/utils/types";
-import { ChevronDown, User } from "lucide-react";
+import { MemberRoleEnum, MemberSchema, TeamSchemaI } from "@/utils/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { User } from "lucide-react";
 import React from "react";
 
 interface MembersListProps {
@@ -23,19 +27,53 @@ interface MembersListProps {
   isLoading: boolean;
 }
 
+const MemberDescriptionItem: React.FC<{
+  targetRole: MemberRoleEnum;
+  currrentRole: MemberRoleEnum;
+  handleUpdate: () => void;
+}> = ({ targetRole, currrentRole, handleUpdate }) => {
+  const getRoleDescription = (role: MemberRoleEnum): string => {
+    switch (role) {
+      case MemberRoleEnum.OWNER:
+        return "Can manage team settings, billing, and members";
+      case MemberRoleEnum.MEMBER:
+        return "Can view and contribute to team projects";
+      default:
+        return "Can view and contribute to team projects";
+    }
+  };
+
+  return (
+    <SelectItem value={targetRole} disabled={currrentRole === targetRole} onClick={handleUpdate}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center space-x-2">
+          <span className="text-xs font-bold">{toTitleCase(targetRole)}</span>
+          {currrentRole === targetRole && (
+            <span className="text-xs text-neutral-500">(current)</span>
+          )}
+        </div>
+        <p className="text-xs text-neutral-500 mt-0.5">{getRoleDescription(targetRole)}</p>
+      </div>
+    </SelectItem>
+  );
+};
+
 const MembersList: React.FC<MembersListProps> = ({ team, curMember, members, isLoading }) => {
-  const { hide, show } = useModal();
+  const queryClient = useQueryClient();
+
+  const updateMemberMutation = useMutation({
+    mutationFn: async (data: { memberId: string; toRole: MemberRoleEnum }) =>
+      bevorAction.updateMember(data.memberId, { role: data.toRole }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
 
   const getDisplayIdentifier = (identifier: string): string => {
     if (identifier.includes("@")) {
       return identifier;
     }
     return trimAddress(identifier);
-  };
-
-  const handleRemove = ({ member }: { member: MemberSchema }): void => {
-    if (!member.can_remove) return;
-    show(<RemoveMemberModal onClose={hide} memberId={member.id} teamName={team.name} />);
   };
 
   if (isLoading) {
@@ -80,32 +118,45 @@ const MembersList: React.FC<MembersListProps> = ({ team, curMember, members, isL
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger disabled={!member.can_update}>
-                <Button disabled={!member.can_update} className="relative text-xs h-8 px-3">
-                  {member.role}
-                  <ChevronDown className="w-3 h-3 text-neutral-400 absolute right-1" />
+            <Select defaultValue={member.role} disabled={!member.can_update}>
+              <SelectTrigger className="text-xs font-bold h-8!">
+                <SelectValue>{toTitleCase(member.role)}</SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectGroup>
+                  <MemberDescriptionItem
+                    currrentRole={member.role}
+                    targetRole={MemberRoleEnum.OWNER}
+                    handleUpdate={() =>
+                      updateMemberMutation.mutate({
+                        memberId: member.id,
+                        toRole: MemberRoleEnum.OWNER,
+                      })
+                    }
+                  />
+                  <MemberDescriptionItem
+                    currrentRole={member.role}
+                    targetRole={MemberRoleEnum.MEMBER}
+                    handleUpdate={() =>
+                      updateMemberMutation.mutate({
+                        memberId: member.id,
+                        toRole: MemberRoleEnum.MEMBER,
+                      })
+                    }
+                  />
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button disabled={!member.can_remove} size="sm" variant="destructive">
+                  {curMember.id === member.id ? "Leave" : "Remove"}
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="top-full right-0">
-                <RoleUpdateDropdown
-                  fromRole={member.role}
-                  memberId={member.id}
-                  memberIdentifier={member.identifier}
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              onClick={() => handleRemove({ member })}
-              disabled={!member.can_remove}
-              className={cn(
-                "text-red-400 text-xs h-8 px-3",
-                !member.can_remove && "opacity-50 cursor-not-allowed",
-                member.can_remove && "hover:text-red-300",
-              )}
-            >
-              {curMember.id === member.id ? "Leave" : "Remove"}
-            </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <RemoveMemberModal teamName={team.name} memberId={member.id} />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       ))}

@@ -241,7 +241,7 @@
 
 @layer base {
   :root {
-    --remainder-height: calc(100svh - 6.25rem);
+    --remainder-height: calc(100svh - 4rem);
     --radius: 0.5rem;
     --color-critical: #ef4444;
     --color-high: #f97316;

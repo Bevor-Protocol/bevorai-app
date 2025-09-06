@@ -2,31 +2,37 @@
 
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
+import {
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { InviteMemberBody, MemberRoleEnum } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Users, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
-
-interface InviteMemberModalProps {
-  onClose: () => void;
-  teamName: string;
-}
+import { Plus, Trash2, Users } from "lucide-react";
+import React, { useRef, useState } from "react";
 
 interface Invitee {
   identifier: string;
   role: MemberRoleEnum;
 }
 
-const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ onClose, teamName }) => {
+const InviteMemberModal: React.FC<{ teamName: string }> = ({ teamName }) => {
   const queryClient = useQueryClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const [invitees, setInvitees] = useState<Invitee[]>([
     {
       identifier: "",
@@ -34,7 +40,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ onClose, teamName
     },
   ]);
 
-  const { mutate, error, isSuccess, isPending } = useMutation({
+  const inviteMembersMutation = useMutation({
     mutationFn: async (params: InviteMemberBody) => bevorAction.inviteMembers(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invites"] });
@@ -42,17 +48,13 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ onClose, teamName
     },
   });
 
-  useEffect(() => {
-    if (!isSuccess) return;
-    const timeout = setTimeout(() => {
-      onClose();
-    }, 1000);
-
-    return (): void => clearTimeout(timeout);
-  }, [isSuccess, onClose]);
-
   const addInvitee = (): void => {
     setInvitees([...invitees, { identifier: "", role: MemberRoleEnum.MEMBER }]);
+    setTimeout(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    }, 0);
   };
 
   const removeInvitee = (index: number): void => {
@@ -78,112 +80,105 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ onClose, teamName
       role: invitee.role,
     }));
 
-    mutate({ members });
+    inviteMembersMutation.mutate({ members });
   };
 
   const isValid = invitees.some((invitee) => invitee.identifier.trim());
 
   return (
-    <form onSubmit={handleSubmit} className="justify-center flex flex-col gap-2">
-      <div className="flex items-center justify-between pb-4 border-b border-neutral-800 w-full">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-            <Users className="w-5 h-5 text-blue-400" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-neutral-100">Invite Team Members</h2>
-            <p className="text-sm text-neutral-400">
-              Send invitations to collaborate on {teamName}
-            </p>
-          </div>
+    <div>
+      <DialogHeader>
+        <div className="inline-flex gap-2 items-center">
+          <Users className="size-5 text-blue-400" />
+          <DialogTitle>Invite Team Member(s)</DialogTitle>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isPending}
-          className="p-2 text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="py-4 space-y-4">
-        <div className="space-y-3">
-          {invitees.map((invitee, index) => (
-            <div key={index} className="flex items-center space-x-3 bg-neutral-900/50 rounded-lg">
-              <div className="flex-1 space-y-2">
+        <DialogDescription>Send invitations to collaborate on {teamName}</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="justify-center flex flex-col gap-2">
+        <div className="py-4 space-y-4">
+          <ScrollArea className="space-y-3 h-[calc(44px*5)]" viewportRef={scrollRef} type="auto">
+            {invitees.map((invitee, index) => (
+              <div key={index} className="flex items-center gap-3 py-1 pr-4 pl-1">
                 <Input
                   type="text"
-                  className="bg-gray-900 rounded px-3 py-2 text-sm w-full"
+                  className="grow"
                   value={invitee.identifier}
                   onChange={(e) => updateInvitee(index, "identifier", e.target.value)}
-                  disabled={isPending}
+                  disabled={inviteMembersMutation.isPending}
                   placeholder="Enter email address or wallet address"
                 />
-              </div>
-              <div className="flex-shrink-0">
                 <Select
                   value={invitee.role}
+                  disabled={inviteMembersMutation.isPending}
                   onValueChange={(value) => updateInvitee(index, "role", value as MemberRoleEnum)}
-                  disabled={isPending}
                 >
-                  <SelectTrigger className="w-32 bg-gray-900 border-neutral-700 text-neutral-100">
+                  <SelectTrigger className="mr-0 min-w-32">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-neutral-700">
-                    <SelectItem value={MemberRoleEnum.MEMBER}>Member</SelectItem>
-                    <SelectItem value={MemberRoleEnum.OWNER}>Owner</SelectItem>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value={MemberRoleEnum.MEMBER}>Member</SelectItem>
+                      <SelectItem value={MemberRoleEnum.OWNER}>Owner</SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
+                {invitees.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeInvitee(index)}
+                    className="p-1 text-neutral-400 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
               </div>
-              {invitees.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeInvitee(index)}
-                  className="p-1 text-neutral-400 hover:text-red-400 transition-colors"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-          ))}
+            ))}
+          </ScrollArea>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addInvitee}
+            disabled={inviteMembersMutation.isPending}
+            className="w-full"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Another Person
+          </Button>
+
+          <ul className="text-xs text-neutral-500 list-disc list-inside space-y-1">
+            <li>
+              <strong>Owner:</strong> Can manage team settings, billing, and members
+            </li>
+            <li>
+              <strong>Member:</strong> Can view and contribute to team projects
+            </li>
+          </ul>
+          {inviteMembersMutation.error && (
+            <p className="text-sm text-red-400">{inviteMembersMutation.error.message}</p>
+          )}
+          {inviteMembersMutation.isSuccess && (
+            <p className="text-sm text-green-400">Invitations sent successfully</p>
+          )}
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={addInvitee}
-          disabled={isPending}
-          className="w-full"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Another Person
-        </Button>
-
-        <div className="text-xs text-neutral-500 space-y-1">
-          <p>
-            • <strong>Owner:</strong> Can manage team settings, billing, and members
-          </p>
-          <p>
-            • <strong>Member:</strong> Can view and contribute to team projects
-          </p>
-        </div>
-
-        {error && <p className="text-sm text-red-400">{error.message}</p>}
-        {isSuccess && <p className="text-sm text-green-400">Invitations sent successfully</p>}
-      </div>
-
-      <div className="flex justify-between pt-4 border-t border-neutral-800">
-        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isPending || !isValid || isSuccess}>
-          {isPending
-            ? "Sending..."
-            : `Send ${invitees.filter((i) => i.identifier.trim()).length} Invitation${invitees.filter((i) => i.identifier.trim()).length !== 1 ? "s" : ""}`}
-        </Button>
-      </div>
-    </form>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline" disabled={inviteMembersMutation.isPending}>
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            type="submit"
+            disabled={
+              inviteMembersMutation.isPending || !isValid || inviteMembersMutation.isSuccess
+            }
+          >
+            {inviteMembersMutation.isPending ? "Submitting..." : "Submit"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </div>
   );
 };
 

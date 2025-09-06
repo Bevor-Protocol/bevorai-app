@@ -2,7 +2,7 @@
 
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
-import * as Tooltip from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { navigation } from "@/utils/navigation";
 import { AuditSchemaI } from "@/utils/types";
@@ -31,8 +31,8 @@ const Shareable: React.FC<{ audit: AuditSchemaI }> = ({ audit }) => {
   return (
     <div className="flex items-center space-x-3">
       {audit.is_public && (
-        <Tooltip.Reference>
-          <Tooltip.Trigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Button variant="outline" onClick={handleCopy} className="p-2">
               {isCopied ? (
                 <Check className="w-3 h-3 text-green-500" />
@@ -40,16 +40,16 @@ const Shareable: React.FC<{ audit: AuditSchemaI }> = ({ audit }) => {
                 <Copy className="w-3 h-3" />
               )}
             </Button>
-          </Tooltip.Trigger>
-          <Tooltip.Content side="bottom" align="end">
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="end">
             <div className="whitespace-nowrap">
               {isCopied ? "Link copied!" : "Copy public link"}
             </div>
-          </Tooltip.Content>
-        </Tooltip.Reference>
+          </TooltipContent>
+        </Tooltip>
       )}
-      <Tooltip.Reference>
-        <Tooltip.Trigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
           <Button
             variant="outline"
             onClick={() => visibilityMutation.mutate()}
@@ -62,13 +62,13 @@ const Shareable: React.FC<{ audit: AuditSchemaI }> = ({ audit }) => {
               <Lock className="w-3 h-3 text-purple-400" />
             )}
           </Button>
-        </Tooltip.Trigger>
-        <Tooltip.Content side="bottom" align="end">
+        </TooltipTrigger>
+        <TooltipContent side="bottom" align="end">
           <div className="whitespace-nowrap">
             {audit.is_public ? "Make audit private" : "Make audit public"}
           </div>
-        </Tooltip.Content>
-      </Tooltip.Reference>
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 };

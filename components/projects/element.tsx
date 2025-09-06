@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatNumer } from "@/utils/helpers";
 import { CodeProjectSchema } from "@/utils/types";
+import { Clock } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
@@ -50,7 +51,6 @@ export const ProjectElement: React.FC<{
         <div className="flex items-center space-x-3">
           <div className="min-w-0 flex-1">
             <h3 className="text-lg font-semibold text-neutral-100 truncate">{project.name}</h3>
-            <p className="text-sm text-neutral-400">Created {formatDate(project.created_at)}</p>
           </div>
         </div>
         <div className="flex flex-col gap-1 items-end">
@@ -64,8 +64,9 @@ export const ProjectElement: React.FC<{
         </p>
       )}
       <div className="flex items-center justify-between pt-3 border-t border-neutral-800">
-        <div className="text-xs text-neutral-500">
-          Last updated {formatDate(project.created_at)}
+        <div className="flex items-center space-x-1 text-xs text-neutral-500">
+          <Clock className="size-3" />
+          <span>{formatDate(project.created_at)}</span>
         </div>
         {project.tags && project.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

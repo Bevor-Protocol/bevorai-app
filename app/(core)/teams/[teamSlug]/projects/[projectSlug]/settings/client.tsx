@@ -2,6 +2,7 @@
 
 import { bevorAction } from "@/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -124,15 +125,12 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
         {project.tags.length > 0 && (
           <div className="flex flex-row gap-8 items-center">
             <p className="block text-sm font-medium text-neutral-300 w-16">Tags</p>
-            <div className="flex items-center space-x-2 text-sm text-neutral-400">
+            <div className="flex items-center gap-2">
               {project.tags.map((tag, index) => (
-                <div
-                  key={index}
-                  className="px-2 py-1 rounded-full text-xs font-medium bg-neutral-800 text-neutral-300 border border-neutral-700 flex items-center space-x-1"
-                >
+                <Badge key={index} variant="outline">
                   <Tag className="w-2 h-2" />
                   <span>{tag}</span>
-                </div>
+                </Badge>
               ))}
             </div>
           </div>

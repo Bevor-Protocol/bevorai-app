@@ -22,3 +22,8 @@ export const roundToDecimals = (value: number, decimals: number = 4): number => 
 export const prettyDate = (date: string | Date): string => {
   return new Date(date).toISOString().split("T")[0];
 };
+
+export const toTitleCase = (str: string): string => {
+  // Convert the entire string to lowercase first to handle existing capitalization
+  return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};

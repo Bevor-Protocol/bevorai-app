@@ -1,80 +1,57 @@
 "use client";
 
-import { cn, filterChildren } from "@/lib/utils";
-import React, { useState } from "react";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import * as React from "react";
 
-interface ReferenceProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  className?: string;
-  shouldShow?: boolean;
-  position?: string;
+import { cn } from "@/lib/utils";
+
+function TooltipProvider({
+  delayDuration = 0,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+  return (
+    <TooltipPrimitive.Provider
+      data-slot="tooltip-provider"
+      delayDuration={delayDuration}
+      {...props}
+    />
+  );
 }
 
-interface ContentProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  className?: string;
-  side?: "top" | "left" | "bottom" | "right";
-  align?: "start" | "end" | "center";
+function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+  return (
+    <TooltipProvider>
+      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+    </TooltipProvider>
+  );
 }
 
-export const Reference: React.FC<ReferenceProps> = ({
-  children,
+function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
+}
+
+function TooltipContent({
   className,
-  shouldShow = true,
-  ...rest
-}) => {
-  const [show, setShow] = useState(false);
-  const childContent = filterChildren(children, "Tooltip.Content");
-  const childTrigger = filterChildren(children, "Tooltip.Trigger");
-
-  return (
-    <div
-      className={cn("relative", className)}
-      onMouseOver={() => setShow(shouldShow)}
-      onMouseOut={() => setShow(false)}
-      {...rest}
-    >
-      {childTrigger}
-      {show && childContent}
-    </div>
-  );
-};
-
-export const Trigger: React.FC<ReferenceProps> = ({ children }) => {
-  return children;
-};
-
-Trigger.displayName = "Tooltip.Trigger";
-
-export const Content: React.FC<ContentProps> = ({
+  sideOffset = 0,
   children,
-  className,
-  side = "top",
-  align = "center",
-  ...rest
-}) => {
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
   return (
-    <div
-      className={cn(
-        "absolute z-999 text-xs bg-black shadow-sm rounded-lg cursor-default border border-neutral-400 px-2 py-1",
-        "transition-all animate-appear",
-        side == "top" && "bottom-[calc(100%+5px)]",
-        side == "left" && "right-[calc(100%+5px)]",
-        side == "bottom" && "top-[calc(100%+5px)]",
-        side == "right" && "left-[calc(100%+5px)]",
-        (side == "top" || side == "bottom") && align == "center" && "right-1/2 translate-x-1/2",
-        (side == "top" || side == "bottom") && align == "start" && "left-0",
-        (side == "top" || side == "bottom") && align == "end" && "right-0",
-        (side == "left" || side == "right") && align == "center" && "bottom-1/2 translate-y-1/2",
-        (side == "left" || side == "right") && align == "start" && "top-0",
-        (side == "left" || side == "right") && align == "end" && "bottom-0",
-        className,
-      )}
-      {...rest}
-    >
-      {children}
-    </div>
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Content
+        data-slot="tooltip-content"
+        sideOffset={sideOffset}
+        className={cn(
+          "bg-background text-foreground border-border border animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        <TooltipPrimitive.Arrow className="bg-background fill-background border-b border-r border-border z-50 size-2.5 translate-y-[calc(-50%_-_0.5px)] rotate-45 rounded-[2px]" />
+      </TooltipPrimitive.Content>
+    </TooltipPrimitive.Portal>
   );
-};
+}
 
-Content.displayName = "Tooltip.Content";
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

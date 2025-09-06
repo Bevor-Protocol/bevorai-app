@@ -62,7 +62,7 @@ const navigationItemsProject: NavItemProp[] = [
   },
   {
     name: "Versions",
-    href: navigation.project.versions,
+    href: navigation.project.versions.overview,
   },
   {
     name: "Analytics",
@@ -149,15 +149,18 @@ const Container: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [params, pathname]);
 
   return (
-    <div className="bg-neutral-950 require-remaining-height">
-      <div id="nav-items" className="w-full px-4 flex items-center border-b border-neutral-800 h-9">
+    <div className="require-remaining-height flex flex-col">
+      <div
+        id="nav-items"
+        className="w-full px-4 flex items-center border-b border-neutral-800 h-9 overflow-auto overflow-y-hidden"
+      >
         {navigationItemsFiltered.map((item) => (
           <Link key={item.name} href={item.href} data-active={item.isActive} className="nav-item">
             <span>{item.name}</span>
           </Link>
         ))}
       </div>
-      <div className="px-4">{children}</div>
+      <div className="px-10 py-6 grow">{children}</div>
     </div>
   );
 };

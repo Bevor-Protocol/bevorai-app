@@ -17,21 +17,23 @@ const ProjectAuditsPage: AsyncComponent<ProjectAuditsPageProps> = async ({
   const { teamSlug } = await params;
   const { page = "0" } = await searchParams;
 
+  const query = { page };
+
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery({
-    queryKey: ["audits", { page }],
-    queryFn: () => bevorAction.getAudits({ page }),
+    queryKey: ["audits", query],
+    queryFn: () => bevorAction.getAudits(query),
   });
 
   return (
-    <div className="px-6 py-8 fill-remaining-height">
+    <div className="max-w-6xl m-auto">
       <TeamHeader title="Audits" subTitle="security analyses" />
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
         <HydrationBoundary state={dehydrate(queryClient)}>
           <AuditPagination basePath={`/teams/${teamSlug}/audits`} page={page} />
         </HydrationBoundary>
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <AuditGrid teamSlug={teamSlug} page={page} />
+          <AuditGrid teamSlug={teamSlug} query={query} />
         </HydrationBoundary>
       </div>
     </div>

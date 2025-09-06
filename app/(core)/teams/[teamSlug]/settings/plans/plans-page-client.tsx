@@ -4,7 +4,7 @@
 import { bevorAction } from "@/actions";
 import { AddonRow } from "@/components/billing/addon";
 import { Button } from "@/components/ui/button";
-import * as Tooltip from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MemberRoleEnum, StripeAddonI, StripePlanI, TeamSchemaI } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Info, Lock } from "lucide-react";
@@ -82,11 +82,11 @@ const PlanCard: React.FC<{
                 <span className="text-sm text-neutral-400">
                   {plan.included_seats} seats included
                 </span>
-                <Tooltip.Reference>
-                  <Tooltip.Trigger>
+                <Tooltip>
+                  <TooltipTrigger>
                     <Info className="w-4 h-4 text-neutral-500 cursor-help" />
-                  </Tooltip.Trigger>
-                  <Tooltip.Content side="top" align="end" className="min-w-44">
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="center">
                     <div className="max-w-xs">
                       <p className="text-xs">First {plan.included_seats} seats included</p>
                       <p className="text-xs">
@@ -94,19 +94,19 @@ const PlanCard: React.FC<{
                         {plan.billing_interval}
                       </p>
                     </div>
-                  </Tooltip.Content>
-                </Tooltip.Reference>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               {plan.usage?.audits && (
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-neutral-400">
                     {plan.usage.audits.included} audits included
                   </span>
-                  <Tooltip.Reference>
-                    <Tooltip.Trigger>
+                  <Tooltip>
+                    <TooltipTrigger>
                       <Info className="w-4 h-4 text-neutral-500 cursor-help" />
-                    </Tooltip.Trigger>
-                    <Tooltip.Content side="top" align="end" className="min-w-44">
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center">
                       <div className="max-w-xs">
                         <p className="text-xs">
                           {plan.usage.audits.included} audits included per month
@@ -116,13 +116,13 @@ const PlanCard: React.FC<{
                           audit
                         </p>
                       </div>
-                    </Tooltip.Content>
-                  </Tooltip.Reference>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <span className="text-sm text-neutral-400">Features:</span>
+              <span className="text-xs text-neutral-400">Features:</span>
               <div className="flex flex-wrap items-center gap-3">
                 {plan.features.slice(0, 3).map((feature: string, index: number) => (
                   <div key={index} className="flex items-center space-x-1">
@@ -196,6 +196,8 @@ const AddonsSection: React.FC = () => {
     queryKey: ["addons"],
     queryFn: () => bevorAction.getAddons(),
   });
+
+  console.log(addons);
 
   if (addonsLoading) {
     return (

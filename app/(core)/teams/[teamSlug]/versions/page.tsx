@@ -11,17 +11,19 @@ interface TeamVersionPageProps {
 const TeamVersionsPage: AsyncComponent<TeamVersionPageProps> = async ({ params }) => {
   const { teamSlug } = await params;
 
+  const query = { page_size: "9" };
+
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery({
-    queryKey: ["versions"],
-    queryFn: () => bevorAction.getVersions({ page_size: "9" }),
+    queryKey: ["versions", query],
+    queryFn: () => bevorAction.getVersions(query),
   });
 
   return (
-    <div className="px-6 py-8 fill-remaining-height">
+    <div className="max-w-6xl m-auto">
       <TeamHeader title="Versions" subTitle="code versions" />
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <VersionGrid teamSlug={teamSlug} pageSize="9" />
+        <VersionGrid teamSlug={teamSlug} query={query} />
       </HydrationBoundary>
     </div>
   );

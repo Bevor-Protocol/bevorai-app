@@ -3,7 +3,7 @@
 import { bevorAction } from "@/actions";
 import InviteMemberModal from "@/components/Modal/invite-member";
 import { Button } from "@/components/ui/button";
-import { useModal } from "@/hooks/useContexts";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { PlanStatusEnum } from "@/utils/enums";
 import { MemberSchema, TeamSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +18,6 @@ interface MembersTabsProps {
 }
 
 const MembersTabs: React.FC<MembersTabsProps> = ({ team, curMember }) => {
-  const { hide, show } = useModal();
   const [activeTab, setActiveTab] = React.useState<"members" | "invites">("members");
 
   const { data: members, isLoading: isLoadingMembers } = useQuery({
@@ -36,12 +35,9 @@ const MembersTabs: React.FC<MembersTabsProps> = ({ team, curMember }) => {
     queryFn: () => bevorAction.getSubscription(),
   });
 
-  const handleInvite = (): void => {
-    show(<InviteMemberModal teamName={team.name} onClose={hide} />);
-  };
-
   const totalSeats = (members?.length ?? 0) + (invites?.length ?? 0);
   const isTrial = subscription?.plan_status === PlanStatusEnum.TRIALING;
+  const isLoading = isLoadingInvites || isLoadingMembers;
 
   return (
     <>
@@ -99,10 +95,17 @@ const MembersTabs: React.FC<MembersTabsProps> = ({ team, curMember }) => {
           </button>
         </div>
         {curMember.role === "owner" && (
-          <Button onClick={handleInvite} disabled={isTrial && totalSeats >= 3}>
-            <Plus className="w-4 h-4 mr-2" />
-            Invite Member
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild disabled={(isTrial && totalSeats >= 3) || isLoading}>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Invite Member
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <InviteMemberModal teamName={team.name} />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 

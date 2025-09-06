@@ -6,10 +6,10 @@ export const TeamHeader: React.FC<{
   children?: React.ReactNode;
 }> = ({ title, subTitle, children }) => {
   return (
-    <div className="flex flex-row justify-between mb-8">
+    <div className="flex flex-row justify-between mb-8 border-b border-b-neutral-800 py-4">
       <div>
-        <h1 className="text-2xl font-semibold text-neutral-100 mb-2">Team - {title}</h1>
-        <p className="text-neutral-400">Manage your team&apos;s {subTitle}</p>
+        <h1>Team - {title}</h1>
+        <p className="text-neutral-400 mt-2">Manage your team&apos;s {subTitle}</p>
       </div>
       {children && <div>{children}</div>}
     </div>

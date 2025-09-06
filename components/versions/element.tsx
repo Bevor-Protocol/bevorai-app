@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, truncateVersion } from "@/utils/helpers";
+import { navigation } from "@/utils/navigation";
 import { CodeVersionSchema } from "@/utils/types";
 import { Clock, Code, ExternalLink, Network, Shield } from "lucide-react";
 import Link from "next/link";
@@ -88,10 +89,14 @@ export const CodeVersionElement: React.FC<{
           {version.source_url && <ExternalLink className="w-4 h-4 text-neutral-500" />}
           <div className="relative">
             <Link
-              href={`/teams/${teamSlug}/projects/${version.project_slug}/versions/${version.id}/audits/new`}
+              href={navigation.version.audits.new({
+                teamSlug,
+                projectSlug: version.project_slug,
+                versionId: version.id,
+              })}
               className="inline-block"
             >
-              <Button size="sm">
+              <Button size="sm" variant="secondary">
                 <Shield className="size-3 text-sm" />
                 <span className="text-xs">Audit</span>
               </Button>

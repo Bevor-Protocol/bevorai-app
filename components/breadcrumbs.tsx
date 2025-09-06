@@ -4,11 +4,11 @@ import { bevorAction } from "@/actions";
 import CreateProjectModal from "@/components/Modal/create-project";
 import CreateTeamModal from "@/components/Modal/create-team";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
 import { SearchInput } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClickOutside } from "@/hooks/useClickOutside";
-import { useModal } from "@/hooks/useContexts";
 import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
 import { CodeProjectSchema, HrefProps, TeamSchemaI } from "@/utils/types";
@@ -59,7 +59,7 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
       : navigation.team.overview(params);
 
   const projectHref = params.versionId
-    ? navigation.project.versions(params)
+    ? navigation.project.versions.overview(params)
     : params.auditId
       ? navigation.project.audits(params)
       : navigation.project.overview(params);
@@ -145,7 +145,6 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
   project,
   close,
 }) => {
-  const { show, hide } = useModal();
   const pathname = usePathname();
 
   const [teamsShow, setTeamsShow] = useState(teams);
@@ -270,23 +269,26 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
             ))}
           </div>
           {!teamFilter && (
-            <button
-              onClick={() => {
-                if (close) close();
-                show(<CreateTeamModal onClose={hide} />);
-              }}
-              className={cn(
-                "flex items-center space-x-2 w-full px-3 py-2 text-sm",
-                "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
-                "rounded-md transition-colors cursor-pointer",
-              )}
-              onMouseEnter={() => {
-                setHoveredTeam(undefined);
-              }}
-            >
-              <PlusCircle className="size-4 text-blue-400" />
-              <span className="font-medium">Create Team</span>
-            </button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  className={cn(
+                    "flex items-center space-x-2 w-full px-3 py-2 text-sm",
+                    "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
+                    "rounded-md transition-colors cursor-pointer",
+                  )}
+                  onMouseEnter={() => {
+                    setHoveredTeam(undefined);
+                  }}
+                >
+                  <PlusCircle className="size-4 text-blue-400" />
+                  <span className="font-medium">Create Team</span>
+                </button>
+              </DialogTrigger>
+              <DialogDescription>
+                <CreateTeamModal />
+              </DialogDescription>
+            </Dialog>
           )}
         </div>
       </div>
@@ -331,20 +333,23 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
               ))}
             </div>
             {!projectFilter && (
-              <button
-                onClick={() => {
-                  if (close) close();
-                  show(<CreateProjectModal onClose={hide} targetTeamSlug={hoveredTeam!.slug} />);
-                }}
-                className={cn(
-                  "flex items-center space-x-2 w-full px-3 py-2 text-sm",
-                  "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
-                  "rounded-md transition-colors cursor-pointer",
-                )}
-              >
-                <PlusCircle className="size-4 text-blue-400" />
-                <span className="font-medium">Create Project</span>
-              </button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button
+                    className={cn(
+                      "flex items-center space-x-2 w-full px-3 py-2 text-sm",
+                      "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
+                      "rounded-md transition-colors cursor-pointer",
+                    )}
+                  >
+                    <PlusCircle className="size-4 text-blue-400" />
+                    <span className="font-medium">Create Project</span>
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <CreateProjectModal targetTeamSlug={hoveredTeam.slug} />
+                </DialogContent>
+              </Dialog>
             )}
           </div>
         </div>

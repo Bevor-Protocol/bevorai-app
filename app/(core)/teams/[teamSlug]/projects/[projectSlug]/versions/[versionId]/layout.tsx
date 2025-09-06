@@ -31,17 +31,17 @@ const VersionLayout: AsyncComponent<LayoutProps> = async ({ params, children }) 
 
   const version = await bevorAction.getContractVersion(slugs.versionId);
   return (
-    <div>
-      <div className="px-6 py-8 flex items-center justify-between">
+    <div className="max-w-6xl m-auto">
+      <div className="flex flex-row justify-between mb-8 border-b border-b-neutral-800 py-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-100 mb-2">
-            {getSourceCopy(version.source_type)}:{" "}
+          <h1>
+            Version{" - "}
             {truncateVersion({
               versionMethod: version.version_identifier,
               versionIdentifier: version.version_identifier,
             })}
           </h1>
-          <div className="flex items-center space-x-4 text-sm text-neutral-400">
+          <div className="flex items-center space-x-4 text-sm text-neutral-400 mt-2">
             <div className="flex items-center space-x-1">
               <Calendar className="w-4 h-4" />
               <span>Created {formatDate(version.created_at)}</span>

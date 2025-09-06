@@ -4,15 +4,15 @@ import { bevorAction } from "@/actions";
 import CreateApiKeyModal from "@/components/Modal/create-api-key";
 import ShowApiKeyModal from "@/components/Modal/show-api-key";
 import { Button } from "@/components/ui/button";
-import { useModal } from "@/hooks/useContexts";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { AuthSchema } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Key, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 const ApiKeyManagementClient: React.FC = () => {
-  const { show } = useModal();
-
   const queryClient = useQueryClient();
+  const [showKey, setShowKey] = useState(false);
 
   const { data: apiKeys = [], isLoading } = useQuery({
     queryKey: ["team-api-keys"],
@@ -23,8 +23,8 @@ const ApiKeyManagementClient: React.FC = () => {
 
   const regenerateApiKeyMutation = useMutation({
     mutationFn: async (apiKeyId: string) => bevorAction.refreshKey(apiKeyId),
-    onSuccess: ({ api_key }) => {
-      show(<ShowApiKeyModal apiKey={api_key} />);
+    onSuccess: () => {
+      setShowKey(true);
       queryClient.invalidateQueries({ queryKey: ["team-api-keys"] });
     },
   });
@@ -52,24 +52,32 @@ const ApiKeyManagementClient: React.FC = () => {
     }
   };
 
-  const handleModal = (): void => {
-    show(<CreateApiKeyModal />);
-  };
-
   return (
     <div className="flex flex-col gap-8">
       <div className="space-y-4">
         <div className="flex flex-row mb-8 justify-between">
           <h3 className="text-xl font-semibold text-neutral-100">API Keys</h3>
-          <Button onClick={handleModal} className="text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Create API Key
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                Create API Key
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <CreateApiKeyModal />
+            </DialogContent>
+          </Dialog>
         </div>
         <p className="text-neutral-400">
           API keys allow you to integrate with our API for MCP, CI/CD, and other automation.
         </p>
       </div>
+      <Dialog open={showKey} onOpenChange={setShowKey}>
+        <DialogContent>
+          <ShowApiKeyModal apiKey={regenerateApiKeyMutation.data?.api_key ?? ""} />
+        </DialogContent>
+      </Dialog>
 
       {isLoading ? (
         <div className="text-center py-12">

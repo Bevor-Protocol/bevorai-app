@@ -2,17 +2,17 @@
 
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
+import { DialogClose, DialogDescription, DialogHeader } from "@/components/ui/dialog";
+import { DialogTitle } from "@radix-ui/react-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, X } from "lucide-react";
-import { useEffect } from "react";
+import { LogOut } from "lucide-react";
 
 interface RemoveMemberModalProps {
-  onClose: () => void;
   teamName: string;
   memberId: string;
 }
 
-const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ onClose, teamName, memberId }) => {
+const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ teamName, memberId }) => {
   const queryClient = useQueryClient();
 
   const { mutate, error, isSuccess, isPending } = useMutation({
@@ -23,37 +23,15 @@ const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ onClose, teamName
     },
   });
 
-  useEffect(() => {
-    if (!isSuccess) return;
-    const timeout = setTimeout(() => {
-      onClose();
-    }, 1000);
-
-    return (): void => clearTimeout(timeout);
-  }, [isSuccess, onClose]);
-
   return (
-    <div className="justify-center flex flex-col gap-2">
-      <div className="flex items-center justify-between pb-4 border-b border-neutral-800 w-full">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-            <LogOut className="w-5 h-5 text-orange-400" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-neutral-100">Leave Team</h2>
-            <p className="text-sm text-neutral-400">Leave this team permanently</p>
-          </div>
+    <div>
+      <DialogHeader>
+        <div className="inline-flex gap-2 items-center">
+          <LogOut className="size-5 text-orange-400" />
+          <DialogTitle>Leave Team</DialogTitle>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isPending}
-          className="p-2 text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
+        <DialogDescription>Leave this team permanently</DialogDescription>
+      </DialogHeader>
       <div className="py-4 space-y-4">
         <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
           <div className="flex items-start space-x-3">
@@ -86,9 +64,11 @@ const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ onClose, teamName
       </div>
 
       <div className="flex justify-between pt-4 border-t border-neutral-800">
-        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-          Cancel
-        </Button>
+        <DialogClose asChild disabled={isPending}>
+          <Button type="button" variant="outline">
+            Cancel
+          </Button>
+        </DialogClose>
         <Button
           type="button"
           className="bg-orange-600 hover:bg-orange-700"

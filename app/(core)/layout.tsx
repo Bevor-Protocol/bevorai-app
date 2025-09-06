@@ -57,11 +57,11 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
     <div className="min-h-screen bg-black">
       <header
         className={cn(
-          "bg-neutral-950 sticky top-0 z-50 backdrop-blur-sm",
+          "sticky top-0 z-50 backdrop-blur-sm",
           "px-6 flex items-center justify-between h-16",
         )}
       >
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 h-">
           <div className="aspect-423/564 relative h-[30px]">
             <Image src="/logo-small.png" alt="BevorAI logo" fill priority />
           </div>

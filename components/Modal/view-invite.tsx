@@ -2,20 +2,16 @@
 
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
+import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
 import { navigation } from "@/utils/navigation";
 import { MemberInviteSchema } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, X } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-interface ViewInviteModalProps {
-  onClose: () => void;
-  invite: MemberInviteSchema;
-}
-
-const ViewInviteModal: React.FC<ViewInviteModalProps> = ({ onClose, invite }) => {
+const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -40,47 +36,32 @@ const ViewInviteModal: React.FC<ViewInviteModalProps> = ({ onClose, invite }) =>
     if (!acceptInviteMutation.isSuccess) return;
     const timeout = setTimeout(() => {
       router.push(navigation.team.overview({ teamSlug: invite.team.slug }));
-      onClose();
     }, 1000);
 
     return (): void => clearTimeout(timeout);
-  }, [acceptInviteMutation.isSuccess, onClose]);
+  }, [acceptInviteMutation.isSuccess]);
 
   useEffect(() => {
     if (!rejectInviteMutation.isSuccess) return;
     const timeout = setTimeout(() => {
       router.push(navigation.team.overview({ teamSlug: invite.team.slug }));
-      onClose();
     }, 1000);
 
     return (): void => clearTimeout(timeout);
-  }, [rejectInviteMutation.isSuccess, onClose]);
+  }, [rejectInviteMutation.isSuccess]);
 
   const isPending = acceptInviteMutation.isPending || rejectInviteMutation.isPending;
   const isSuccess = acceptInviteMutation.isSuccess || rejectInviteMutation.isSuccess;
 
   return (
-    <div className="justify-center flex flex-col gap-2">
-      <div className="flex items-center justify-between pb-4 border-b border-neutral-800 w-full">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-            <Bell className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-neutral-100">Team Invite</h2>
-            <p className="text-sm text-neutral-400">Want to join this team?</p>
-          </div>
+    <div>
+      <DialogHeader>
+        <div className="inline-flex gap-2 items-center">
+          <Bell className="w-5 h-5" />
+          <DialogTitle>Team Invite</DialogTitle>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isPending}
-          className="p-2 text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
+        <DialogDescription>Want to join this team?</DialogDescription>
+      </DialogHeader>
       <div className="py-4 space-y-4">
         <div className="space-y-2">
           <div className="flex flex-row gap-2 items-center">

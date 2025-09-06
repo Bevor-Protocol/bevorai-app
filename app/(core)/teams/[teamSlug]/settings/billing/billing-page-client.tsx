@@ -50,7 +50,7 @@ const InvoiceNameSection: React.FC = () => {
   };
 
   return (
-    <div className="border border-neutral-800 rounded-lg p-6 mb-8">
+    <div className="border border-neutral-800 rounded-lg p-6">
       <h3 className="text-lg font-semibold text-neutral-100 mb-4">Invoice Name</h3>
       <p className="text-sm text-neutral-400 my-4">
         Your team name is shown on your invoice by default. If you want, you can have it show a
@@ -125,7 +125,7 @@ const BillingEmailSection: React.FC = () => {
   };
 
   return (
-    <div className="border border-neutral-800 rounded-lg p-6 mb-8">
+    <div className="border border-neutral-800 rounded-lg p-6">
       <h3 className="text-lg font-semibold text-neutral-100 mb-4">Billing Email</h3>
       <p className="text-sm text-neutral-400 my-4">
         By default, your invoices will go to the email of the user who created the team. If you
@@ -557,8 +557,8 @@ const BillingPageClient: React.FC<BillingPageClientProps> = ({ team }) => {
   }
 
   return (
-    <div className="px-6 pb-8 bg-neutral-950 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <div className="px-6 pb-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {hasActiveSubscription ? (
           <>
             <CurrentSubscription subscription={subscription} team={team} />
@@ -568,10 +568,10 @@ const BillingPageClient: React.FC<BillingPageClientProps> = ({ team }) => {
         ) : (
           <NoSubscription team={team} subscription={subscription} />
         )}
-
-        <InvoiceNameSection />
-
-        <BillingEmailSection />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InvoiceNameSection />
+          <BillingEmailSection />
+        </div>
 
         <PaymentMethodSection team={team} />
       </div>

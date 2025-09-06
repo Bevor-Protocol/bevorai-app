@@ -25,7 +25,11 @@ export const navigation = {
   project: {
     overview: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}`,
     audits: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/audits`,
-    versions: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions`,
+    versions: {
+      overview: (data: HrefProps) =>
+        `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions`,
+      new: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new`,
+    },
     settings: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/settings`,
     analytics: (data: HrefProps) =>
       `/teams/${data.teamSlug}/projects/${data.projectSlug}/analytics`,

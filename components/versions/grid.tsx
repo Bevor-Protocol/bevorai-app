@@ -6,13 +6,13 @@ import { VersionEmpty } from "@/components/versions/empty";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 
-export const VersionGrid: React.FC<{ teamSlug: string; pageSize: string }> = ({
+export const VersionGrid: React.FC<{ teamSlug: string; query: Record<string, string> }> = ({
   teamSlug,
-  pageSize,
+  query,
 }) => {
   const { data: versions, isLoading } = useQuery({
-    queryKey: ["versions", { page_size: pageSize }],
-    queryFn: () => bevorAction.getVersions({ page_size: pageSize }),
+    queryKey: ["versions", query],
+    queryFn: () => bevorAction.getVersions(query),
   });
 
   if (!versions || isLoading) {
@@ -25,15 +25,12 @@ export const VersionGrid: React.FC<{ teamSlug: string; pageSize: string }> = ({
     );
   }
 
-  if (versions.results.length === 0) {
-    return <VersionEmpty centered />;
-  }
-
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {versions.results.map((version, ind) => (
         <CodeVersionElement key={version.id + String(ind)} version={version} teamSlug={teamSlug} />
       ))}
+      {versions.results.length === 0 && <VersionEmpty centered />}
     </div>
   );
 };

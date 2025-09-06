@@ -2,7 +2,7 @@
 
 import CreateProjectModal from "@/components/Modal/create-project";
 import { Button } from "@/components/ui/button";
-import { useModal } from "@/hooks/useContexts";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { TeamSchemaI } from "@/utils/types";
 import { FileText } from "lucide-react";
 import React from "react";
@@ -12,8 +12,6 @@ export const ProjectEmpty: React.FC<{
   includeCta?: boolean;
   centered?: boolean;
 }> = ({ team, includeCta = false, centered = false }) => {
-  const { show, hide } = useModal();
-
   if (!centered) {
     <div className="flex flex-col py-6 gap-2">
       <div className="flex flex-row gap-2 items-center">
@@ -24,14 +22,14 @@ export const ProjectEmpty: React.FC<{
         Get started by creating your first security audit project.
       </p>
       {includeCta && team && (
-        <Button
-          onClick={() => {
-            if (close) close();
-            show(<CreateProjectModal onClose={hide} targetTeamSlug={team.slug} />);
-          }}
-        >
-          Start New Project
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>Start New Project</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <CreateProjectModal targetTeamSlug={team.slug} />
+          </DialogContent>
+        </Dialog>
       )}
     </div>;
   }
@@ -44,14 +42,14 @@ export const ProjectEmpty: React.FC<{
         Get started by creating your first security audit project.
       </p>
       {includeCta && team && (
-        <Button
-          onClick={() => {
-            if (close) close();
-            show(<CreateProjectModal onClose={hide} targetTeamSlug={team.slug} />);
-          }}
-        >
-          Start New Project
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>Start New Project</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <CreateProjectModal targetTeamSlug={team.slug} />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

@@ -7,126 +7,63 @@ import { TeamHeader } from "@/components/team/header";
 import { CodeVersionElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { navigation } from "@/utils/navigation";
-import { AsyncComponent, AuditTableResponseI, CodeVersionsResponseI } from "@/utils/types";
+import { AsyncComponent } from "@/utils/types";
 import { Suspense } from "react";
 
 interface TeamPageProps {
   params: Promise<{ teamSlug: string }>;
 }
 
-const TeamData: AsyncComponent<{ teamSlug: string }> = async ({ teamSlug }) => {
-  const team = await bevorAction.getTeam();
-  const projects = await bevorAction.getProjects({ page_size: "3" });
-
-  const versions = await bevorAction.getVersions({ page_size: "3" });
-  const audits = await bevorAction.getAudits({ page_size: "3" });
-
-  return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
-        <div className="xl:col-span-2 space-y-8">
-          {versions && <VersionsPreview teamSlug={teamSlug} versions={versions} />}
-          {audits && <AuditsPreview teamSlug={teamSlug} audits={audits} />}
-        </div>
-
-        <div className="xl:col-span-3">
-          <ProjectsSection team={team} projects={projects} teamSlug={teamSlug} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const ProjectsSection: AsyncComponent<{
   team: any;
-  projects: { results: any[] };
-  teamSlug: string;
-}> = async ({ team, projects, teamSlug }) => {
-  return (
-    <div>
-      <div className="mb-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold text-neutral-100">Projects</h2>
-          <a
-            href={navigation.team.projects({ teamSlug })}
-            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            View all →
-          </a>
-        </div>
-      </div>
+}> = async ({ team }) => {
+  const projects = await bevorAction.getProjects({ page_size: "3" });
 
-      {projects.results.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {projects.results.map((project) => (
-            <ProjectElement key={project.id} project={project} teamSlug={teamSlug} />
-          ))}
-        </div>
-      ) : (
-        <ProjectEmpty team={team} includeCta={true} />
-      )}
+  if (projects.results.length === 0) {
+    return <ProjectEmpty team={team} includeCta={true} />;
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {projects.results.map((project) => (
+        <ProjectElement key={project.id} project={project} teamSlug={team.slug} />
+      ))}
     </div>
   );
 };
 
 const VersionsPreview: AsyncComponent<{
   teamSlug: string;
-  versions: CodeVersionsResponseI;
-}> = async ({ teamSlug, versions }) => {
-  return (
-    <div>
-      <div className="mb-4">
-        <div className="flex items-center gap-4">
-          <h3 className="text-lg font-medium text-neutral-100">Recent Versions</h3>
-          <a
-            href={navigation.team.versions({ teamSlug })}
-            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            View all →
-          </a>
-        </div>
-      </div>
+}> = async ({ teamSlug }) => {
+  const versions = await bevorAction.getVersions({ page_size: "3" });
 
-      {versions.results.length > 0 ? (
-        <div className="space-y-3">
-          {versions.results.map((version) => (
-            <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} isPreview />
-          ))}
-        </div>
-      ) : (
-        <VersionEmpty />
-      )}
+  if (versions.results.length === 0) {
+    return <VersionEmpty />;
+  }
+
+  return (
+    <div className="space-y-3">
+      {versions.results.map((version) => (
+        <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} isPreview />
+      ))}
     </div>
   );
 };
 
 const AuditsPreview: AsyncComponent<{
   teamSlug: string;
-  audits: AuditTableResponseI;
-}> = async ({ teamSlug, audits }) => {
-  return (
-    <div>
-      <div className="mb-4">
-        <div className="flex items-center gap-4">
-          <h3 className="text-lg font-medium text-neutral-100">Recent Audits</h3>
-          <a
-            href={navigation.team.audits({ teamSlug })}
-            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            View all →
-          </a>
-        </div>
-      </div>
+}> = async ({ teamSlug }) => {
+  const audits = await bevorAction.getAudits({ page_size: "3" });
 
-      {audits.results.length > 0 ? (
-        <div className="space-y-3">
-          {audits.results.map((audit) => (
-            <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
-          ))}
-        </div>
-      ) : (
-        <AuditEmpty />
-      )}
+  if (audits.results.length === 0) {
+    return <AuditEmpty />;
+  }
+
+  return (
+    <div className="space-y-3">
+      {audits.results.map((audit) => (
+        <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
+      ))}
     </div>
   );
 };
@@ -134,12 +71,59 @@ const AuditsPreview: AsyncComponent<{
 const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   const { teamSlug } = await params;
 
+  const team = await bevorAction.getTeam();
+
   return (
-    <div className="px-6 py-8 min-h-screen">
+    <div className="max-w-6xl m-auto">
       <TeamHeader title="Overview" subTitle="projects, versions, and security analyses" />
-      <Suspense>
-        <TeamData teamSlug={teamSlug} />
-      </Suspense>
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
+        <div className="xl:col-span-2 space-y-8">
+          <div>
+            <div className="flex items-center gap-4 mb-4">
+              <h3 className="text-lg font-medium text-neutral-100">Recent Audits</h3>
+              <a
+                href={navigation.team.audits({ teamSlug })}
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                View all →
+              </a>
+            </div>
+            <Suspense>
+              <VersionsPreview teamSlug={teamSlug} />
+            </Suspense>
+          </div>
+          <div>
+            <div className="flex items-center gap-4 mb-4">
+              <h3 className="text-lg font-medium text-neutral-100">Recent Audits</h3>
+              <a
+                href={navigation.team.audits({ teamSlug })}
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                View all →
+              </a>
+            </div>
+            <Suspense>
+              <AuditsPreview teamSlug={teamSlug} />
+            </Suspense>
+          </div>
+        </div>
+        <div className="xl:col-span-3">
+          <div>
+            <div className="flex items-center gap-4 mb-4">
+              <h2 className="text-lg font-semibold text-neutral-100">Projects</h2>
+              <a
+                href={navigation.team.projects({ teamSlug: team.slug })}
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                View all →
+              </a>
+            </div>
+            <Suspense>
+              <ProjectsSection team={team} />
+            </Suspense>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -18,10 +18,10 @@ const ProjectsPage: AsyncComponent = async () => {
   });
 
   return (
-    <div className="px-6 py-8 fill-remaining-height">
+    <div className="max-w-6xl m-auto">
       <TeamHeader title="Projects" subTitle="projects">
         <Button>
-          <Plus className="w-4 h-4" />
+          <Plus className="size-4" />
           New Project
         </Button>
       </TeamHeader>

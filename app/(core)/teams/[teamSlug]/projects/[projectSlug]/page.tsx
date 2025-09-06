@@ -22,13 +22,9 @@ const ProjectData: AsyncComponent<{
   const audits = await bevorAction.getAudits({ project_id: project.id, page_size: "6" });
 
   return (
-    <div className="min-h-screen">
-      <div className="px-6 py-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          <VersionsSection teamSlug={teamSlug} teamId={team.id} versions={versions} />
-          <AuditsSection teamSlug={teamSlug} projectSlug={projectSlug} audits={audits} />
-        </div>
-      </div>
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <VersionsSection teamSlug={teamSlug} teamId={team.id} versions={versions} />
+      <AuditsSection teamSlug={teamSlug} projectSlug={projectSlug} audits={audits} />
     </div>
   );
 };
@@ -101,7 +97,7 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
   const { teamSlug, projectSlug } = await params;
 
   return (
-    <>
+    <div className="max-w-6xl m-auto">
       <ProjectHeader teamSlug={teamSlug} projectSlug={projectSlug} includeDescription={true} />
       <Suspense
         fallback={
@@ -122,7 +118,7 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
       >
         <ProjectData teamSlug={teamSlug} projectSlug={projectSlug} />
       </Suspense>
-    </>
+    </div>
   );
 };
 

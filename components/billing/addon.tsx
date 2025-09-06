@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { bevorAction } from "@/actions";
 import { Switch } from "@/components/ui/switch";
-import * as Tooltip from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { StripeAddonI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
@@ -65,11 +65,11 @@ export const AddonRow: React.FC<{
 
   const getSwitchLabel = (): string => {
     if (addon.is_pending_removal) {
-      return "Revert Removal";
+      return "reactivate";
     } else if (addon.is_active) {
-      return "Disable";
+      return "disable";
     } else {
-      return "Enable";
+      return "enable";
     }
   };
 
@@ -105,26 +105,28 @@ export const AddonRow: React.FC<{
             </div>
           </div>
         </div>
-        <div className="flex flex-row gap-4 items-center">
-          <div className="relative">
-            <Switch
-              checked={isChecked}
-              onCheckedChange={() => handleToggleAddon(addon.lookup_key)}
-              disabled={checkoutMutation.isPending || !addon.is_eligible}
-            />
-            <span className="text-xs text-neutral-400 text-center absolute top-full left-1/2 -translate-x-1/2">
-              {getSwitchLabel()}
-            </span>
+        {addon.is_eligible && (
+          <div className="flex flex-row gap-4 items-center">
+            <div className="relative">
+              <Switch
+                checked={isChecked}
+                onCheckedChange={() => handleToggleAddon(addon.lookup_key)}
+                disabled={checkoutMutation.isPending || !addon.is_eligible}
+              />
+              <span className="text-xs text-neutral-400 text-center absolute top-full left-1/2 -translate-x-1/2">
+                {getSwitchLabel()}
+              </span>
+            </div>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="text-neutral-400 w-4 h-4" />
+              </TooltipTrigger>
+              <TooltipContent className="w-52" side="top" align="end">
+                {tooltipCopy}
+              </TooltipContent>
+            </Tooltip>
           </div>
-          <Tooltip.Reference>
-            <Tooltip.Trigger>
-              <Info className="text-neutral-400 w-4 h-4" />
-            </Tooltip.Trigger>
-            <Tooltip.Content className="w-52" side="top" align="end">
-              {tooltipCopy}
-            </Tooltip.Content>
-          </Tooltip.Reference>
-        </div>
+        )}
       </div>
     </div>
   );

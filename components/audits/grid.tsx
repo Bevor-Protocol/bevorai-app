@@ -6,10 +6,13 @@ import { AuditEmpty } from "@/components/audits/empty";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 
-export const AuditGrid: React.FC<{ page: string; teamSlug: string }> = ({ page, teamSlug }) => {
+export const AuditGrid: React.FC<{ query: Record<string, string>; teamSlug: string }> = ({
+  query,
+  teamSlug,
+}) => {
   const { data: audits, isLoading } = useQuery({
-    queryKey: ["audits", page],
-    queryFn: () => bevorAction.getAudits({ page }),
+    queryKey: ["audits", query],
+    queryFn: () => bevorAction.getAudits(query),
   });
 
   if (!audits || isLoading) {
