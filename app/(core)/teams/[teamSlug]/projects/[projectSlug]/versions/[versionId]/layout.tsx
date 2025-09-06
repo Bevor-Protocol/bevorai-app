@@ -2,7 +2,7 @@ import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { formatDate, truncateVersion } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
-import { AsyncComponent, SourceTypeEnum } from "@/utils/types";
+import { AsyncComponent } from "@/utils/types";
 import { Calendar, ExternalLink, Network, Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -10,21 +10,6 @@ interface LayoutProps {
   params: Promise<{ teamSlug: string; projectSlug: string; versionId: string }>;
   children: React.ReactNode;
 }
-
-const getSourceCopy = (sourceType: SourceTypeEnum): string => {
-  switch (sourceType) {
-    case SourceTypeEnum.SCAN:
-      return "Address";
-    case SourceTypeEnum.PASTE:
-    case SourceTypeEnum.UPLOAD_FILE:
-    case SourceTypeEnum.UPLOAD_FOLDER:
-      return "Hash";
-    case SourceTypeEnum.REPOSITORY:
-      return "Commit";
-    default:
-      return "Version";
-  }
-};
 
 const VersionLayout: AsyncComponent<LayoutProps> = async ({ params, children }) => {
   const slugs = await params;
