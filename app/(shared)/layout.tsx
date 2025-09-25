@@ -1,6 +1,6 @@
 import { bevorAction } from "@/actions";
 import { Notifications, Profile } from "@/components/header";
-import Container from "@/components/subnav";
+import SubNav from "@/components/subnav";
 import { cn } from "@/lib/utils";
 import { AsyncComponent, TeamSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
@@ -57,7 +57,8 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
           </div>
         )}
       </header>
-      <Container>{children}</Container>
+      <SubNav />
+      {children}
     </div>
   );
 };
