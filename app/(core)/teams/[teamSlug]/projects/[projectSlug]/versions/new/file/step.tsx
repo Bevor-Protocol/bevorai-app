@@ -92,14 +92,14 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
     };
   }, [activeTab, uploadedFile]);
 
-  const handleFileUpload = useCallback(async (file: File) => {
+  const handleFileUpload = useCallback(async (file: File): Promise<void> => {
     if (!file.name.endsWith(".sol") && !file.name.endsWith(".js") && !file.name.endsWith(".ts")) {
       setError("Please upload a .sol, .js, or .ts file");
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = (e): void => {
       const content = e.target?.result as string;
       setContractCode(content);
       setUploadedFile({ file, content });
@@ -109,7 +109,7 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
     reader.readAsText(file);
   }, []);
 
-  const clearContent = useCallback(() => {
+  const clearContent = useCallback((): void => {
     setContractCode(templateCode);
     setUploadedFile(null);
     setError("");
