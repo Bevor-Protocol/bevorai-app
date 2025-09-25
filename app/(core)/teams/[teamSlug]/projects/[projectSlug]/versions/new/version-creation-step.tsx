@@ -79,7 +79,7 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center">
           <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-400" />
+            <CheckCircle className="size-8 text-green-400" />
           </div>
           <h2 className="text-2xl font-bold text-neutral-100 mb-2">
             Version Created Successfully!
@@ -96,7 +96,7 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="text-center">
         <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
-          <Globe className="w-8 h-8 text-purple-400" />
+          <Globe className="size-8 text-purple-400" />
         </div>
         <h2 className="text-2xl font-bold text-neutral-100 mb-2">Contract Address</h2>
         <p className="text-neutral-400">Enter a deployed contract address to analyze</p>
@@ -118,7 +118,7 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
           />
           {error && (
             <div className="flex items-center space-x-2 text-red-400 text-sm">
-              <XCircle className="w-4 h-4" />
+              <XCircle className="size-4" />
               <span>{error}</span>
             </div>
           )}
@@ -137,13 +137,13 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
           <Button type="submit" disabled={isPending || !address.trim()} className="flex-1">
             {isPending ? (
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 <span>Processing...</span>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <span>Create Version</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="size-4" />
               </div>
             )}
           </Button>
@@ -205,7 +205,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
         >
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-blue-400 group-hover:bg-blue-400/10 transition-colors">
-              <Upload className="w-6 h-6" />
+              <Upload className="size-6" />
             </div>
             <h3 className="text-lg font-semibold text-neutral-100">Upload Files</h3>
           </div>
@@ -221,7 +221,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
         >
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-green-400 group-hover:bg-green-400/10 transition-colors">
-              <Copy className="w-6 h-6" />
+              <Copy className="size-6" />
             </div>
             <h3 className="text-lg font-semibold text-neutral-100">Paste Code</h3>
           </div>
@@ -237,7 +237,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
         >
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-purple-400 group-hover:bg-purple-400/10 transition-colors">
-              <Globe className="w-6 h-6" />
+              <Globe className="size-6" />
             </div>
             <h3 className="text-lg font-semibold text-neutral-100">Contract Address</h3>
           </div>
@@ -250,7 +250,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
         <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-orange-400">
-              <FolderOpen className="w-6 h-6" />
+              <FolderOpen className="size-6" />
             </div>
             <div className="flex items-center space-x-2">
               <h3 className="text-lg font-semibold text-neutral-100">Upload Folder</h3>
@@ -270,7 +270,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
         <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-orange-400">
-              <Code className="w-6 h-6" />
+              <Code className="size-6" />
             </div>
             <div className="flex items-center space-x-2">
               <h3 className="text-lg font-semibold text-neutral-100">MCP / IDE Integration</h3>
@@ -290,7 +290,7 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
         <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-orange-400">
-              <GitBranch className="w-6 h-6" />
+              <GitBranch className="size-6" />
             </div>
             <div className="flex items-center space-x-2">
               <h3 className="text-lg font-semibold text-neutral-100">Repository Scanning</h3>

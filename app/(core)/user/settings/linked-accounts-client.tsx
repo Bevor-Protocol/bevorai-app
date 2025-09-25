@@ -34,7 +34,7 @@ const EmailAccount: React.FC<AccountProps & { linkedAccounts: EmailWithMetadata[
   return (
     <div className="flex items-center justify-between py-2 border-b border-neutral-800 last:border-b-0">
       <div className="flex items-center space-x-3">
-        <Mail className="w-4 h-4 text-blue-400" />
+        <Mail className="size-4 text-blue-400" />
         <div>
           <p className="text-neutral-100 font-medium text-sm">Email</p>
           <p className="text-xs text-neutral-400">
@@ -97,7 +97,7 @@ const GoogleAccount: React.FC<AccountProps & { linkedAccounts: GoogleOAuthWithMe
   return (
     <div className="flex items-center justify-between py-2 border-b border-neutral-800 last:border-b-0">
       <div className="flex items-center space-x-3">
-        <Chrome className="w-4 h-4 text-green-400" />
+        <Chrome className="size-4 text-green-400" />
         <div>
           <p className="text-neutral-100 font-medium text-sm">Google</p>
           <p className="text-xs text-neutral-400">
@@ -158,7 +158,7 @@ const WalletAccount: React.FC<AccountProps & { linkedAccounts: WalletWithMetadat
   return (
     <div className="flex items-center justify-between py-2 border-b border-neutral-800 last:border-b-0">
       <div className="flex items-center space-x-3">
-        <Wallet className="w-4 h-4 text-purple-400" />
+        <Wallet className="size-4 text-purple-400" />
         <div>
           <p className="text-neutral-100 font-medium text-sm">Wallet</p>
           <p className="text-xs text-neutral-400">
@@ -273,7 +273,7 @@ export const CreditSync: React.FC<{ credits: number }> = ({ credits }) => {
             className="p-1 text-neutral-400 hover:text-blue-400 transition-colors cursor-pointer"
             disabled={true}
           >
-            <RefreshCcw className="w-4 h-4" />
+            <RefreshCcw className="size-4" />
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" align="end" className="min-w-32">

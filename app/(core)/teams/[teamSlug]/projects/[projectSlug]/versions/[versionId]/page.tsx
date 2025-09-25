@@ -35,7 +35,7 @@ const VersionData: AsyncComponent<{
           <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Code className="w-5 h-5 text-blue-400" />
+                <Code className="size-5 text-blue-400" />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-neutral-100">View Sources</h3>
@@ -48,7 +48,7 @@ const VersionData: AsyncComponent<{
           <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-green-400" />
+                <Shield className="size-5 text-green-400" />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-neutral-100">New Audit</h3>
@@ -61,7 +61,7 @@ const VersionData: AsyncComponent<{
           <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-purple-400" />
+                <FileText className="size-5 text-purple-400" />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-neutral-100">View Audits</h3>
@@ -123,7 +123,7 @@ const RecentAuditsList: React.FC<{
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <div className="size-6 rounded-lg bg-purple-500/10 flex items-center justify-center">
                       <Shield className="w-3 h-3 text-purple-400" />
                     </div>
                     <h3 className="text-sm font-medium text-neutral-100">

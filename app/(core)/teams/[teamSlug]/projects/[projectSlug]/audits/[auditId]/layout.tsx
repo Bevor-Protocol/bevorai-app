@@ -1,5 +1,6 @@
 import { bevorAction } from "@/actions";
 import Shareable from "@/app/(core)/teams/[teamSlug]/projects/[projectSlug]/audits/[auditId]/shareable";
+import { navigation } from "@/utils/navigation";
 import { AsyncComponent } from "@/utils/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -20,10 +21,14 @@ const AuditLayout: AsyncComponent<LayoutProps> = async ({ params, children }) =>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4 text-sm my-4">
           <Link
-            href={`/teams/${teamSlug}/projects/${projectSlug}/versions/${audit.code_version_mapping_id}`}
+            href={navigation.version.overview({
+              teamSlug,
+              projectSlug,
+              versionId: audit.code_version_mapping_id,
+            })}
             className="flex items-center space-x-2 text-neutral-400 hover:text-neutral-100 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="size-4" />
             <span>Back to Code Version</span>
           </Link>
         </div>

@@ -1,7 +1,7 @@
 import { bevorAction } from "@/actions";
 import Breadcrumbs from "@/components/breadcrumbs";
-import Container from "@/components/container";
 import { Notifications, Profile } from "@/components/header";
+import SubNav from "@/components/subnav";
 import { cn } from "@/lib/utils";
 import { AsyncComponent, TeamSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
@@ -58,7 +58,7 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
       <header
         className={cn(
           "sticky top-0 z-50 backdrop-blur-sm",
-          "px-6 flex items-center justify-between h-16",
+          "px-6 flex items-center justify-between h-header",
         )}
       >
         <div className="flex items-center gap-6 h-">
@@ -76,7 +76,8 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
           </div>
         )}
       </header>
-      <Container>{children}</Container>
+      <SubNav />
+      {children}
     </div>
   );
 };

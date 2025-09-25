@@ -152,7 +152,7 @@ export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ us
               className="w-full flex items-center justify-between"
             >
               <span>Dashboard</span>
-              <LayoutDashboardIcon className="w-4 h-4" />
+              <LayoutDashboardIcon className="size-4" />
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>

@@ -1,21 +1,24 @@
 import api from "@/lib/api";
-import { ChatMessagesResponseI, ChatResponseI, ChatWithAuditResponseI } from "@/utils/types";
+import { ChatMessagesResponseI, ChatPagination, ChatResponseI } from "@/utils/types";
 
 class ChatService {
-  async initiateChat(auditId: string): Promise<ChatResponseI> {
-    return api.post(`/chat/initiate/${auditId}`, {}).then((response) => {
+  async initiateChat(versionId: string): Promise<ChatResponseI> {
+    return api.post("/chats", { version_mapping_id: versionId }).then((response) => {
       return response.data;
     });
   }
 
-  async getChats(): Promise<ChatWithAuditResponseI[]> {
-    return api.get("/chat/list").then((response) => {
-      return response.data.results;
+  async getChats(filters: { [key: string]: string } = {}): Promise<ChatPagination> {
+    const searchParams = new URLSearchParams(filters);
+    searchParams.set("page_size", filters.page_size ?? "10");
+
+    return api.get(`/chats?${searchParams.toString()}`).then((response) => {
+      return response.data;
     });
   }
 
   async getChat(chatId: string): Promise<ChatMessagesResponseI> {
-    return api.get(`/chat/${chatId}`).then((response) => {
+    return api.get(`/chats/${chatId}`).then((response) => {
       return response.data;
     });
   }

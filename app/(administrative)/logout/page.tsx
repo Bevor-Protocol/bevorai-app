@@ -25,7 +25,7 @@ const LogoutPage: React.FC = () => {
     fullLogout();
   }, [ready, logout]);
   return (
-    <div className="flex justify-center items-center fill-remaining-height">
+    <div className="flex justify-center items-center min-h-remaining">
       <Loader className="w-10 h-10" />
     </div>
   );

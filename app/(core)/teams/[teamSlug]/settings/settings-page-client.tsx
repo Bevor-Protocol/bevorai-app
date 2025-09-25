@@ -84,14 +84,14 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
         <div className="flex flex-row gap-8 items-center">
           <p className="block text-sm font-medium text-neutral-300 w-16">Created</p>
           <div className="flex items-center space-x-2 text-sm text-neutral-400">
-            <Calendar className="w-4 h-4" />
+            <Calendar className="size-4" />
             <span>{formatDate(team.created_at)}</span>
           </div>
         </div>
         <div className="flex flex-row gap-8 items-center">
           <p className="block text-sm font-medium text-neutral-300 w-16">Your Role</p>
           <div className="flex items-center space-x-2 text-sm text-neutral-400">
-            <User className="w-4 h-4" />
+            <User className="size-4" />
             <span className="capitalize">{team.role}</span>
           </div>
         </div>
@@ -126,7 +126,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
               disabled={updateTeamMutation.isPending || updateTeamMutation.isSuccess}
               className="h-10 px-4"
             >
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="size-4 mr-2" />
               {updateTeamMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           )}
@@ -150,7 +150,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
             </div>
             <div className="bg-neutral-800/30 border border-neutral-700 rounded-lg p-4">
               <div className="flex items-start space-x-3">
-                <Trash2 className="w-4 h-4 text-neutral-400 mt-0.5 flex-shrink-0" />
+                <Trash2 className="size-4 text-neutral-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-neutral-300 mb-4">
                     This will permanently delete the team and all associated projects, audits, and
@@ -161,7 +161,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
                       onClick={() => setShowDeleteConfirm(true)}
                       className="flex items-center cursor-pointer gap-2 px-4 py-2 text-red-400 hover:text-red-300"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="size-4" />
                       Delete Team
                     </button>
                   ) : (
@@ -172,7 +172,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
                         disabled={deleteTeamMutation.isPending}
                         className="text-red-400 hover:text-red-300 cursor-pointer flex gap-2 items-center"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="size-4" />
                         {deleteTeamMutation.isPending ? "Deleting..." : "Yes, Delete Team"}
                       </button>
                       <button

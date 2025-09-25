@@ -57,7 +57,7 @@ const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) =
     <div>
       <DialogHeader>
         <div className="inline-flex gap-2 items-center">
-          <Bell className="w-5 h-5" />
+          <Bell className="size-5" />
           <DialogTitle>Team Invite</DialogTitle>
         </div>
         <DialogDescription>Want to join this team?</DialogDescription>

@@ -82,7 +82,7 @@ const MembersList: React.FC<MembersListProps> = ({ team, curMember, members, isL
         {Array.from({ length: 8 }).map((_, index) => (
           <div key={index} className="p-3 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
+              <Skeleton className="size-8 rounded-full flex-shrink-0" />
               <div className="flex flex-row gap-4 items-center">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-3 w-16" />
@@ -103,8 +103,8 @@ const MembersList: React.FC<MembersListProps> = ({ team, curMember, members, isL
       {members?.map((member) => (
         <div key={member.id} className="p-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 text-neutral-400" />
+            <div className="size-8 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
+              <User className="size-4 text-neutral-400" />
             </div>
             <div className="flex flex-row gap-4 items-center">
               <div className="text-sm font-medium text-neutral-100">

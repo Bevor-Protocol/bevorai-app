@@ -12,7 +12,7 @@ export const CodeVersionElementLoader: React.FC = () => {
     <div className="border border-neutral-800 rounded-lg p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 flex-1">
-          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="size-8 rounded-lg" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2 mb-1">
               <Skeleton className="w-48 h-5" />
@@ -32,7 +32,7 @@ export const CodeVersionElementLoader: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center space-x-2 ml-4">
-          <Skeleton className="w-4 h-4" />
+          <Skeleton className="size-4" />
           <Skeleton className="w-16 h-7 rounded" />
         </div>
       </div>
@@ -86,7 +86,7 @@ export const CodeVersionElement: React.FC<{
           </div>
         </Link>
         <div className="flex items-center space-x-2 ml-4">
-          {version.source_url && <ExternalLink className="w-4 h-4 text-neutral-500" />}
+          {version.source_url && <ExternalLink className="size-4 text-neutral-500" />}
           <div className="relative">
             <Link
               href={navigation.version.audits.new({

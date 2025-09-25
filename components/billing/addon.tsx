@@ -93,7 +93,7 @@ export const AddonRow: React.FC<{
               <h4 className="text-lg font-semibold text-neutral-100 truncate">{addon.name}</h4>
               {getStatusBadge()}
               {checkoutMutation.isPending && (
-                <div className="w-4 h-4 border-2 border-neutral-600 border-t-blue-500 rounded-full animate-spin"></div>
+                <div className="size-4 border-2 border-neutral-600 border-t-blue-500 rounded-full animate-spin"></div>
               )}
             </div>
             <p className="text-neutral-400 text-sm mb-1">{addon.description}</p>
@@ -119,7 +119,7 @@ export const AddonRow: React.FC<{
             </div>
             <Tooltip>
               <TooltipTrigger>
-                <Info className="text-neutral-400 w-4 h-4" />
+                <Info className="text-neutral-400 size-4" />
               </TooltipTrigger>
               <TooltipContent className="w-52" side="top" align="end">
                 {tooltipCopy}

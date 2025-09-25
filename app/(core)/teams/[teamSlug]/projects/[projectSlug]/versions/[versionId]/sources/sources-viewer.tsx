@@ -63,7 +63,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ version, sources }) => {
         <span className="text-xs text-neutral-500">({sources.length})</span>
       </div>
       <div className="flex items-center space-x-2 p-3 border-b border-neutral-800 bg-neutral-900">
-        <FileText className="w-4 h-4 text-neutral-400" />
+        <FileText className="size-4 text-neutral-400" />
         <span className="text-sm font-medium text-neutral-100">
           {getFileName(selectedSource?.path ?? "")}
         </span>
@@ -85,7 +85,11 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ version, sources }) => {
               <div
                 className={cn(
                   "w-2 h-2 rounded-full",
-                  source.is_imported_dependency ? "bg-orange-500" : "bg-green-500",
+                  source.is_imported_dependency
+                    ? "bg-orange-500"
+                    : source.n_auditable_fcts > 0
+                      ? "bg-green-500"
+                      : "bg-gray-400",
                 )}
               />
               <span className="text-sm font-medium truncate">{getFileName(source.path)}</span>

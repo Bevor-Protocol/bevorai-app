@@ -7,7 +7,7 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
     <div className="min-h-screen bg-black">
       <header
         className={cn(
-          "bg-neutral-950 sticky top-0 z-50 backdrop-blur-sm",
+          "sticky top-0 z-50 backdrop-blur-sm",
           "px-6 flex items-center justify-between h-16",
         )}
       >

@@ -10,15 +10,15 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
   const getSeverityIcon = (level: string): React.ReactElement => {
     switch (level.toLowerCase()) {
       case "critical":
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="size-4 text-red-500" />;
       case "high":
-        return <AlertTriangle className="w-4 h-4 text-orange-500" />;
+        return <AlertTriangle className="size-4 text-orange-500" />;
       case "medium":
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+        return <AlertTriangle className="size-4 text-yellow-500" />;
       case "low":
-        return <Info className="w-4 h-4 text-blue-500" />;
+        return <Info className="size-4 text-blue-500" />;
       default:
-        return <Info className="w-4 h-4 text-neutral-500" />;
+        return <Info className="size-4 text-neutral-500" />;
     }
   };
 
@@ -104,7 +104,7 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-neutral-100">Security Findings</h2>
             <div className="flex items-center space-x-2">
-              <Shield className="w-4 h-4 text-neutral-400" />
+              <Shield className="size-4 text-neutral-400" />
               <span className="text-sm text-neutral-400">
                 {audit.findings.length} finding{audit.findings.length === 1 ? "" : "s"} found
               </span>

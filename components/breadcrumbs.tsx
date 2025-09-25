@@ -4,7 +4,7 @@ import { bevorAction } from "@/actions";
 import CreateProjectModal from "@/components/Modal/create-project";
 import CreateTeamModal from "@/components/Modal/create-team";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
 import { SearchInput } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -285,9 +285,9 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
                   <span className="font-medium">Create Team</span>
                 </button>
               </DialogTrigger>
-              <DialogDescription>
+              <DialogContent>
                 <CreateTeamModal />
-              </DialogDescription>
+              </DialogContent>
             </Dialog>
           )}
         </div>

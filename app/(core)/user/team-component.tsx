@@ -23,7 +23,7 @@ const TeamDisplay: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
     >
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-3">
-          <Icon size="sm" seed={team.id} className="w-4 h-4" />
+          <Icon size="sm" seed={team.id} className="size-4" />
           <span className="font-medium">{team.name}</span>
         </div>
         <p className="text-sm text-neutral-400">{formatDate(team.created_at)}</p>

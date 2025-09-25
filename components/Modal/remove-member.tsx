@@ -35,7 +35,7 @@ const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ teamName, memberI
       <div className="py-4 space-y-4">
         <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
           <div className="flex items-start space-x-3">
-            <div className="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="size-5 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
               <span className="text-orange-400 text-xs font-bold">!</span>
             </div>
             <div>

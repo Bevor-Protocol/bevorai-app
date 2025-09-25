@@ -1,4 +1,3 @@
-import tokenService from "@/actions/bevor/token.service";
 import { streaming_api } from "@/lib/api";
 import { NextRequest } from "next/server";
 
@@ -7,24 +6,29 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest): Promise<Response> {
   try {
     const { message, chatId } = await req.json();
-    const { user_id } = await tokenService.validateToken();
-    const headers = {
-      headers: {
-        "Bevor-User-Identifier": user_id,
-      },
-    };
 
+    const sessionToken = req.cookies.get("bevor-token")?.value;
+    const teamSlug = req.cookies.get("bevor-team-slug")?.value;
+
+    if (!sessionToken) {
+      throw new Error("invalidate token");
+    }
     // Create a new ReadableStream for streaming the response
     const stream = new ReadableStream({
       async start(controller: ReadableStreamDefaultController): Promise<void> {
         try {
           // Make the API request to your backend
           const response = await streaming_api.post(
-            `/chat/${chatId}`,
+            `/chats/${chatId}`,
             {
               message,
             },
-            headers,
+            {
+              headers: {
+                Authorization: `Bearer ${sessionToken}`,
+                "Bevor-Team-Slug": teamSlug,
+              },
+            },
           );
 
           // Get the response as a stream

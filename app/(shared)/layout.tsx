@@ -1,6 +1,6 @@
 import { bevorAction } from "@/actions";
-import Container from "@/components/container";
 import { Notifications, Profile } from "@/components/header";
+import Container from "@/components/subnav";
 import { cn } from "@/lib/utils";
 import { AsyncComponent, TeamSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";

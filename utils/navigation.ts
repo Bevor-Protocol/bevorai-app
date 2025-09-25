@@ -28,7 +28,22 @@ export const navigation = {
     versions: {
       overview: (data: HrefProps) =>
         `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions`,
-      new: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new`,
+      new: {
+        overview: (data: HrefProps) =>
+          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new`,
+        address: (data: HrefProps) =>
+          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/address`,
+        file: (data: HrefProps) =>
+          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/file`,
+        paste: (data: HrefProps) =>
+          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/paste`,
+        folder: (data: HrefProps) =>
+          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/folder`,
+        repo: (data: HrefProps) =>
+          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/repo`,
+        ide: (data: HrefProps) =>
+          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/ide`,
+      },
     },
     settings: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/settings`,
     analytics: (data: HrefProps) =>
@@ -45,6 +60,8 @@ export const navigation = {
       new: (data: HrefProps) =>
         `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/audits/new`,
     },
+    chats: (data: HrefProps) =>
+      `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/chats`,
     analytics: (data: HrefProps) =>
       `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/analytics`,
   },
@@ -60,5 +77,9 @@ export const navigation = {
     overview: (data: HrefProps) => `/shared/audits/${data.auditId}`,
     scope: (data: HrefProps) => `/shared/audits/${data.auditId}/scope`,
     overlay: (data: HrefProps) => `/shared/audits/${data.auditId}/overlay`,
+  },
+  chat: {
+    overview: (data: HrefProps) =>
+      `/teams/${data.teamSlug}/projects/${data.projectSlug}/chats/${data.chatId}`,
   },
 };

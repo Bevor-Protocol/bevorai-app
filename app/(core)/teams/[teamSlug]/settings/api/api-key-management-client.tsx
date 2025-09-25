@@ -60,7 +60,7 @@ const ApiKeyManagementClient: React.FC = () => {
           <Dialog>
             <DialogTrigger asChild>
               <Button className="text-white">
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="size-4 mr-2" />
                 Create API Key
               </Button>
             </DialogTrigger>
@@ -98,7 +98,7 @@ const ApiKeyManagementClient: React.FC = () => {
             >
               <div className="flex items-center space-x-4">
                 <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
-                  <Key className="w-5 h-5 text-blue-400" />
+                  <Key className="size-5 text-blue-400" />
                 </div>
                 <div className="flex flex-col space-y-1">
                   <div className="text-sm font-medium text-neutral-100">{apiKey.name}</div>
@@ -118,7 +118,7 @@ const ApiKeyManagementClient: React.FC = () => {
                     disabled={regenerateApiKeyMutation.isPending}
                     className="text-xs h-8 px-3"
                   >
-                    <RefreshCw className="w-4 h-4 mr-1" />
+                    <RefreshCw className="size-4 mr-1" />
                     Regenerate
                   </Button>
                   <Button
@@ -127,7 +127,7 @@ const ApiKeyManagementClient: React.FC = () => {
                     disabled={deleteApiKeyMutation.isPending}
                     className="text-red-400 hover:bg-red-500/10 text-xs h-8 px-3"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="size-4" />
                   </Button>
                 </div>
               </div>

@@ -31,16 +31,16 @@ const CreateTeamModal: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuccess, data]);
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    await mutate({ name: teamName });
+    mutate({ name: teamName });
   };
 
   return (
     <div>
       <DialogHeader>
         <div className="inline-flex gap-2 items-center">
-          <Users className="w-5 h-5 text-blue-400" />
+          <Users className="size-5 text-blue-400" />
           <DialogTitle>Create New Team</DialogTitle>
         </div>
         <DialogDescription>Create a team to start collaborating with others</DialogDescription>

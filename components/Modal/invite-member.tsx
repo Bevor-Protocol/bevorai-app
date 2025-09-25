@@ -142,7 +142,7 @@ const InviteMemberModal: React.FC<{ teamName: string }> = ({ teamName }) => {
             disabled={inviteMembersMutation.isPending}
             className="w-full"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Add Another Person
           </Button>
 

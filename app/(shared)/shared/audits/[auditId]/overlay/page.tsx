@@ -35,16 +35,13 @@ const AuditOverlayData: AsyncComponent<{ auditId: string }> = async ({ auditId }
             if (a.is_within_scope !== b.is_within_scope) {
               return b.is_within_scope ? 1 : -1;
             }
-            if (a.is_inherited !== b.is_inherited) {
-              return a.is_inherited ? 1 : -1;
-            }
             return a.src_start_pos - b.src_start_pos;
           }),
         })),
     }));
 
   return (
-    <div className="px-6 py-4 bg-neutral-950 fill-remaining-height-arrow">
+    <div className="px-6 py-4 bg-neutral-950 min-h-remaining">
       <ScopeOverlayClient scope={sortedScope} audit={audit} />
     </div>
   );
@@ -52,7 +49,7 @@ const AuditOverlayData: AsyncComponent<{ auditId: string }> = async ({ auditId }
 
 // Loading component
 const OverlayLoading: React.FC = () => (
-  <div className="px-6 py-4 bg-neutral-950 fill-remaining-height-arrow">
+  <div className="px-6 py-4 bg-neutral-950 min-h-remaining">
     <div className="animate-pulse">
       <div className="space-y-8">
         {Array.from({ length: 3 }).map((_, index) => (

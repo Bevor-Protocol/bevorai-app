@@ -49,7 +49,7 @@ export const ProjectHeader: AsyncComponent<{
         )}
       </div>
       <div className="flex space-x-3">
-        <Link href={navigation.project.versions.new({ teamSlug, projectSlug })}>
+        <Link href={navigation.project.versions.new.overview({ teamSlug, projectSlug })}>
           <Button className="flex items-center">
             <Plus className="size-4" />
             <span>New Version</span>

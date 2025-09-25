@@ -10,8 +10,8 @@ import {
   AuditWithChildrenResponseI,
   AuthSchema,
   ChatMessagesResponseI,
+  ChatPagination,
   ChatResponseI,
-  ChatWithAuditResponseI,
   CodeProjectSchema,
   CodeProjectsResponse,
   CodeVersionSchema,
@@ -158,12 +158,25 @@ const getAudits = async (filters: { [key: string]: string }): Promise<AuditTable
 };
 
 // Contract Operations
-const contractUploadFolder = async (fileMap: Record<string, File>): Promise<ContractResponseI> => {
-  return versionService.contractUploadFolder(fileMap);
+const contractUploadFolder = async (data: {
+  fileMap: Record<string, File>;
+  projectId: string;
+}): Promise<ContractResponseI> => {
+  return versionService.contractUploadFolder(data);
 };
 
-const contractUploadFile = async (file: File): Promise<ContractResponseI> => {
-  return versionService.contractUploadFile(file);
+const contractUploadFile = async (data: {
+  file: File;
+  projectId: string;
+}): Promise<ContractResponseI> => {
+  return versionService.contractUploadFile(data);
+};
+
+const contractUploadPaste = async (data: {
+  code: string;
+  projectId: string;
+}): Promise<ContractResponseI> => {
+  return versionService.contractUploadPaste(data);
 };
 
 const contractUploadScan = async (
@@ -174,10 +187,6 @@ const contractUploadScan = async (
     address,
     projectId,
   });
-};
-
-const contractUploadPaste = async (code: string): Promise<ContractResponseI> => {
-  return versionService.contractUploadPaste(code);
 };
 
 const getContractVersion = async (versionId: string): Promise<CodeVersionSchema> => {
@@ -210,12 +219,12 @@ const getFunctionChunk = async (functionId: string): Promise<FunctionChunkRespon
 };
 
 // Chat Operations
-const initiateChat = async (auditId: string): Promise<ChatResponseI> => {
-  return chatService.initiateChat(auditId);
+const initiateChat = async (versionId: string): Promise<ChatResponseI> => {
+  return chatService.initiateChat(versionId);
 };
 
-const getChats = async (): Promise<ChatWithAuditResponseI[]> => {
-  return chatService.getChats();
+const getChats = async (filters: { [key: string]: string }): Promise<ChatPagination> => {
+  return chatService.getChats(filters);
 };
 
 const getChat = async (chatId: string): Promise<ChatMessagesResponseI> => {

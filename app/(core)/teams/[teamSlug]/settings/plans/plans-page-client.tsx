@@ -84,7 +84,7 @@ const PlanCard: React.FC<{
                 </span>
                 <Tooltip>
                   <TooltipTrigger>
-                    <Info className="w-4 h-4 text-neutral-500 cursor-help" />
+                    <Info className="size-4 text-neutral-500 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent side="top" align="center">
                     <div className="max-w-xs">
@@ -104,7 +104,7 @@ const PlanCard: React.FC<{
                   </span>
                   <Tooltip>
                     <TooltipTrigger>
-                      <Info className="w-4 h-4 text-neutral-500 cursor-help" />
+                      <Info className="size-4 text-neutral-500 cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center">
                       <div className="max-w-xs">

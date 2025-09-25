@@ -145,25 +145,28 @@ export interface ContractResponseI {
 export interface ContractVersionSourceTrimI extends BaseSchema {
   path: string;
   is_imported_dependency: boolean;
+  n_auditable_fcts: number;
+  source_hash_id: string;
+  code_version_id: string;
 }
 
-export interface ContractVersionSourceI extends BaseSchema {
+export interface ContractVersionSourceI {
   content: string;
   solc_version: string;
+  content_hash: string;
+  created_at: Date;
+  is_imported_dependency: boolean;
 }
 
 export interface FunctionScopeI extends BaseSchema {
   name: string;
-  is_inherited: boolean;
   is_auditable: boolean;
   is_entry_point: boolean;
   is_override: boolean;
-  contract_name_defined: string;
   is_within_scope: boolean;
   src_start_pos: number;
   src_end_pos: number;
-  source_defined_in_id: string;
-  source_consumed_in_id: string;
+  source_id: string;
 }
 
 export interface ContractScopeI extends BaseSchema {
@@ -261,14 +264,20 @@ export interface ChatMessageI {
   role: "user" | "system";
   timestamp: string;
   content: string;
-  tools_called?: string[];
+}
+
+export interface ChatPagination {
+  more: boolean;
+  total_pages: number;
+  results: ChatResponseI[];
 }
 
 export interface ChatResponseI {
   id: string;
   created_at: string;
-  user_id: string;
-  audit_id: string;
+  team_id: string;
+  user_id?: string;
+  code_version_mapping_id: string;
   is_visible: boolean;
   total_messages: number;
 }
@@ -599,6 +608,7 @@ export type HrefProps = {
   projectSlug?: string;
   versionId?: string;
   auditId?: string;
+  chatId?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

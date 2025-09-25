@@ -53,7 +53,7 @@ export const useScopeHandler = ({
     return scope
       .flatMap((s) => s.contracts.flatMap((contract) => contract.functions))
       .filter((fct) => {
-        return fct.source_defined_in_id === selectedSource.id;
+        return fct.source_id === selectedSource.id;
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSource]);
@@ -81,7 +81,7 @@ export const useScopeHandler = ({
 
   const handleFunctionChange = (func: FunctionScopeI): void => {
     if (sourceTriggerOn === "function") {
-      const newSource = scope.find((s) => s.id === func.source_defined_in_id);
+      const newSource = scope.find((s) => s.id === func.source_id);
       if (newSource) {
         // update source.
         selectedScopeRef.current = [];
@@ -93,7 +93,7 @@ export const useScopeHandler = ({
         .flatMap((s) => s.contracts.flatMap((contract) => contract.functions))
         .filter(
           (f) =>
-            f.source_defined_in_id === func.source_defined_in_id &&
+            f.source_id === func.source_id &&
             f.src_start_pos === func.src_start_pos &&
             f.src_end_pos === func.src_end_pos,
         );

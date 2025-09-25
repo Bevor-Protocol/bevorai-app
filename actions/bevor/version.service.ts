@@ -11,9 +11,13 @@ import {
 } from "@/utils/types";
 
 class VersionService {
-  async contractUploadFolder(fileMap: Record<string, File>): Promise<ContractResponseI> {
+  async contractUploadFolder(data: {
+    fileMap: Record<string, File>;
+    projectId: string;
+  }): Promise<ContractResponseI> {
     const formData = new FormData();
-    Object.entries(fileMap).forEach(([relativePath, file]) => {
+    formData.append("project_id", data.projectId);
+    Object.entries(data.fileMap).forEach(([relativePath, file]) => {
       formData.append("files", file, relativePath);
     });
 
@@ -22,13 +26,22 @@ class VersionService {
     });
   }
 
-  async contractUploadFile(file: File): Promise<ContractResponseI> {
+  async contractUploadFile(data: { file: File; projectId: string }): Promise<ContractResponseI> {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("files", data.file);
+    formData.append("project_id", data.projectId);
 
     return api.post("/versions/create/file", formData).then((response) => {
       return response.data;
     });
+  }
+
+  async contractUploadPaste(data: { code: string; projectId: string }): Promise<ContractResponseI> {
+    return api
+      .post("/versions/create/paste", { code: data.code, project_id: data.projectId })
+      .then((response) => {
+        return response.data;
+      });
   }
 
   async contractUploadScan({
@@ -43,12 +56,6 @@ class VersionService {
       .then((response) => {
         return response.data;
       });
-  }
-
-  async contractUploadPaste(code: string): Promise<ContractResponseI> {
-    return api.post("/versions/create/paste", { code }).then((response) => {
-      return response.data;
-    });
   }
 
   async getContractVersion(versionId: string): Promise<CodeVersionSchema> {

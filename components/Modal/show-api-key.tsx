@@ -22,7 +22,7 @@ const ShowApiKeyModal: React.FC<ShowApiKeyModalProps> = ({ apiKey }) => {
     <div>
       <DialogHeader>
         <div className="inline-flex gap-2 items-center">
-          <AlertTriangle className="w-5 h-5 text-yellow-400 mt-0.5" />
+          <AlertTriangle className="size-5 text-yellow-400 mt-0.5" />
           <DialogTitle>Your API Key</DialogTitle>
         </div>
         <DialogDescription>
@@ -37,7 +37,7 @@ const ShowApiKeyModal: React.FC<ShowApiKeyModalProps> = ({ apiKey }) => {
             onClick={() => copy(apiKey)}
             className="p-2 border border-neutral-800 rounded cursor-pointer"
           >
-            {isCopied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+            {isCopied ? <Check className="size-4 text-green-400" /> : <Copy className="size-4" />}
           </div>
         </div>
       </div>

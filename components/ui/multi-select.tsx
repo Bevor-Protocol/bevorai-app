@@ -73,7 +73,7 @@ export const MultiSelect: React.FC<Props> = ({
               onClick={() => removeOption(option)}
             >
               <span>{option.name}</span>
-              <X className="h-3 w-3" />
+              <X className="size-3" />
             </Pill>
           ))}
         </div>

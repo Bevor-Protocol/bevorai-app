@@ -17,7 +17,7 @@ export const AuditElementLoader: React.FC = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Skeleton className="w-6 h-6 rounded-lg" />
+            <Skeleton className="size-6 rounded-lg" />
             <div className="flex items-center space-x-3">
               <Skeleton className="w-24 h-4" />
               <div className="flex items-center space-x-1">

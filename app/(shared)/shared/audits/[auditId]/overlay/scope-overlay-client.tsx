@@ -1,7 +1,6 @@
 "use client";
 
 import SolidityViewer from "@/components/code-viewer";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScopeHookResponse, useScopeHandler } from "@/hooks/useScopeHandler";
 import { cn } from "@/lib/utils";
 import { AuditSchemaI, ContractScopeI, FunctionScopeI, TreeResponseI } from "@/utils/types";
@@ -64,12 +63,12 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
         <div className="flex flex-row justify-between">
           <div className="flex flex-row gap-6 text-sm justify-between">
             <div className="flex items-center space-x-2 text-neutral-300">
-              <FileText className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+              <FileText className="size-4 text-neutral-400 flex-shrink-0" />
               <span className="font-medium text-neutral-400">Source Type:</span>
               <span className="text-neutral-200">{audit.code_version.version_method}</span>
             </div>
             <div className="flex items-center space-x-2 text-neutral-300">
-              <Code className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+              <Code className="size-4 text-neutral-400 flex-shrink-0" />
               <span className="font-medium text-neutral-400">Identifier:</span>
               <span className="text-neutral-200 break-all">
                 {audit.code_version.version_identifier}
@@ -106,7 +105,7 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
           </div>
           <div className="flex items-center justify-between p-3 border-b border-neutral-800">
             <div className="flex items-center space-x-2">
-              <FileText className="w-4 h-4 text-neutral-400" />
+              <FileText className="size-4 text-neutral-400" />
               <span className="text-sm font-medium text-neutral-100">
                 {getFileName(scopeHandler.selectedSource?.path ?? "")}
               </span>
@@ -128,12 +127,7 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
           </div>
           <div className="border-r border-neutral-800 overflow-y-auto min-h-0">
             {scope.map((source) => (
-              <TreeSource
-                key={source.id}
-                source={source}
-                currentSource={scopeHandler.selectedSource}
-                scopeHandler={scopeHandler}
-              >
+              <TreeSource key={source.id} source={source} scopeHandler={scopeHandler}>
                 <div className="ml-4 space-y-1">
                   {source.contracts.map((contract) => (
                     <TreeContract key={contract.id} contract={contract} scopeHandler={scopeHandler}>
@@ -188,17 +182,15 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
 
 const TreeSource = ({
   source,
-  currentSource,
   scopeHandler,
   children,
 }: {
   source: TreeResponseI;
-  currentSource: TreeResponseI | null;
   scopeHandler: ScopeHookResponse;
   children: React.ReactNode;
 }): JSX.Element => {
   const isInScope = source.is_within_scope;
-  const isSelected = currentSource?.id === source.id;
+  const isSelected = scopeHandler.selectedScope?.id === source.id;
   const [isExpanded, setIsExpanded] = useState(isInScope && isSelected);
   const toggleSource = (source: TreeResponseI): void => {
     setIsExpanded(!isExpanded);
@@ -256,11 +248,11 @@ const TreeContract = ({
         )}
       >
         {isExpanded ? (
-          <ChevronDown className="w-4 h-4 flex-shrink-0" />
+          <ChevronDown className="size-4 flex-shrink-0" />
         ) : (
-          <ChevronRight className="w-4 h-4 flex-shrink-0" />
+          <ChevronRight className="size-4 flex-shrink-0" />
         )}
-        <Code className="w-4 h-4 flex-shrink-0" />
+        <Code className="size-4 flex-shrink-0" />
         <span className="text-sm font-medium truncate">{contract.name}</span>
         {isInScope && <Eye className="w-3 h-3 text-green-400 flex-shrink-0" />}
       </button>
@@ -291,19 +283,7 @@ const TreeFunction = ({
       >
         {func.is_within_scope && <Eye className="w-3 h-3 text-green-400 flex-shrink-0" />}
         {func.is_override && <Replace className="w-3 h-3 text-red-400 flex-shrink-0" />}
-        {func.is_inherited && (
-          <Tooltip>
-            <TooltipTrigger>
-              <ArrowUpRight className="w-3 h-3 text-purple-400 flex-shrink-0" />
-            </TooltipTrigger>
-            <TooltipContent align="start">
-              <div className="whitespace-nowrap">
-                Inherited from <br />
-                {func.contract_name_defined}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        )}
+
         <span className="text-sm truncate">{func.name}</span>
       </button>
     </div>

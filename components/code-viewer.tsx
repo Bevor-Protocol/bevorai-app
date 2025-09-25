@@ -274,7 +274,7 @@ const SolidityViewer: React.FC<SolidityViewerProps> = ({
       .cm-gutterElement {color: #8b949e !important;}
       .cm-editor { height: 100% !important; }
       .cm-scroller { overflow: auto !important; }
-      .cm-content { background: black !important; }
+      .cm-editor { background-color: black !important; }
       `}</style>
     </>
   );

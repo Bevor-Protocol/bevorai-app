@@ -4,9 +4,7 @@ import React from "react";
 
 const ErrorPage: React.FC = () => {
   return (
-    <div className="fill-remaining-height flex justify-center items-center">
-      Resource not available
-    </div>
+    <div className="min-h-remaining flex justify-center items-center">Resource not available</div>
   );
 };
 

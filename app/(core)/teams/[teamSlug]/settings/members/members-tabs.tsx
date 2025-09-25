@@ -45,7 +45,7 @@ const MembersTabs: React.FC<MembersTabsProps> = ({ team, curMember }) => {
       <div className="mb-6 p-4 border border-neutral-800 rounded-lg bg-neutral-950/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Users className="w-5 h-5 text-neutral-400" />
+            <Users className="size-5 text-neutral-400" />
             <div>
               <p className="text-sm font-medium text-neutral-100">
                 Team Seats: {totalSeats}
@@ -98,7 +98,7 @@ const MembersTabs: React.FC<MembersTabsProps> = ({ team, curMember }) => {
           <Dialog>
             <DialogTrigger asChild disabled={(isTrial && totalSeats >= 3) || isLoading}>
               <Button>
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="size-4 mr-2" />
                 Invite Member
               </Button>
             </DialogTrigger>

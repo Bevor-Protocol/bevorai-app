@@ -327,7 +327,7 @@ const AdminPanel: React.FC = () => {
               </div>
             </div>
             <Button variant="outline" onClick={() => setIsAddingPrompt(true)}>
-              <PlusIcon className="h-4 w-4 mr-2" />
+              <PlusIcon className="size-4 mr-2" />
               Add Prompt
             </Button>
           </div>
@@ -529,7 +529,7 @@ const UserPermission = ({
         className="absolute top-2 right-2 text-gray-400 hover:text-white cursor-pointer"
         onClick={handleClose}
       >
-        <XIcon className="h-5 w-5" />
+        <XIcon className="size-5" />
       </button>
 
       <h2 className="text-xl font-bold mb-4">User Details</h2>
@@ -634,7 +634,7 @@ const AppPermission = ({
         className="absolute top-2 right-2 text-gray-400 hover:text-white cursor-pointer"
         onClick={handleClose}
       >
-        <XIcon className="h-5 w-5" />
+        <XIcon className="size-5" />
       </button>
 
       <h2 className="text-xl font-bold mb-4">App Details</h2>
@@ -769,7 +769,7 @@ const PromptEditor = ({
         className="absolute top-2 right-2 text-gray-400 hover:text-white cursor-pointer"
         onClick={handleClose}
       >
-        <XIcon className="h-5 w-5" />
+        <XIcon className="size-5" />
       </button>
 
       <h2 className="text-xl font-bold mb-4">{isNewPrompt ? "Add Prompt" : "Edit Prompt"}</h2>

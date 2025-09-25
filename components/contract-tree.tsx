@@ -127,18 +127,18 @@ const ContractTree = ({
                         className="p-1 hover:bg-neutral-700/50 rounded transition-colors"
                       >
                         {isSourceExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-neutral-400" />
+                          <ChevronDown className="size-4 text-neutral-400" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-neutral-400" />
+                          <ChevronRight className="size-4 text-neutral-400" />
                         )}
                       </button>
                     ) : (
-                      <div className="w-6 h-6" />
+                      <div className="size-6" />
                     )}
                     {isSourceExpanded ? (
-                      <FolderOpen className="w-5 h-5 text-blue-400" />
+                      <FolderOpen className="size-5 text-blue-400" />
                     ) : (
-                      <Folder className="w-5 h-5 text-blue-400" />
+                      <Folder className="size-5 text-blue-400" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -239,7 +239,7 @@ const ContractTree = ({
                                   )}
                                 </button>
                               )}
-                              <Code className="w-4 h-4 text-green-400" />
+                              <Code className="size-4 text-green-400" />
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center space-x-2">
@@ -311,7 +311,7 @@ const ContractTree = ({
                                     }
                                   >
                                     <div className="flex items-center space-x-3 min-w-0 flex-1">
-                                      <Zap className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                                      <Zap className="size-4 text-yellow-400 flex-shrink-0" />
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center space-x-2">
                                           <span className="text-xs font-medium text-green-400 uppercase tracking-wide flex-shrink-0">
@@ -321,11 +321,6 @@ const ContractTree = ({
                                             {func.name}
                                           </span>
                                         </div>
-                                        {func.is_inherited && (
-                                          <div className="text-xs text-neutral-500 mt-1">
-                                            Inherited from {func.contract_name_defined}
-                                          </div>
-                                        )}
                                       </div>
                                     </div>
                                     <div className="flex items-center space-x-6 text-xs text-neutral-400">
@@ -334,12 +329,6 @@ const ContractTree = ({
                                           {func.is_override ? "Yes" : "No"}
                                         </div>
                                         <div>Override</div>
-                                      </div>
-                                      <div className="text-center min-w-[80px]">
-                                        <div className="font-medium text-neutral-100">
-                                          {func.is_inherited ? "Yes" : "No"}
-                                        </div>
-                                        <div>Inherited</div>
                                       </div>
                                     </div>
                                     <div className="flex items-center space-x-2 flex-shrink-0">

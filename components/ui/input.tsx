@@ -24,7 +24,7 @@ function SearchInput({ className, type, ...props }: React.ComponentProps<"input"
     <div className="relative">
       <Search
         className={cn(
-          "w-4 h-4 absolute left-3 top-1/2",
+          "size-4 absolute left-3 top-1/2",
           "transform -translate-y-1/2 text-neutral-500",
         )}
       />

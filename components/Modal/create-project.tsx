@@ -62,7 +62,7 @@ const CreateProjectModal: React.FC<{ targetTeamSlug: string }> = ({ targetTeamSl
     <div>
       <DialogHeader>
         <div className="inline-flex gap-2 items-center">
-          <Code className="w-5 h-5 text-blue-400" />
+          <Code className="size-5 text-blue-400" />
           <DialogTitle>Create New Project</DialogTitle>
         </div>
         <DialogDescription>

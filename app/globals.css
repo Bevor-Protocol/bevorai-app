@@ -8,6 +8,10 @@
   --animate-appear: appear 0.15s forwards;
   --animate-disappear: disappear 0.15s forwards;
   --animate-pulse-more: pulse-more 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --spacing-header: 4rem;
+  --spacing-subheader: 2.25rem;
+  --spacing-remaining: calc(100svh - var(--spacing-header) - var(--spacing-subheader));
+  --spacing-remaining-nosub: calc(100svh - var(--spacing-header));
 
   @keyframes dots {
     0% {
@@ -106,50 +110,41 @@
 }
 
 @utility markdown {
-  @apply text-white *:whitespace-pre-wrap;
+  @apply text-white leading-relaxed;
 
   /* Headings */
   h1 {
-    @apply text-2xl font-bold my-4;
+    @apply text-2xl font-bold mt-6 mb-4;
   }
   h2 {
-    @apply text-xl font-bold my-2;
+    @apply text-xl font-semibold mt-5 mb-3;
   }
   h3 {
-    @apply text-lg font-bold my-2;
+    @apply text-lg font-semibold mt-4 mb-2;
   }
 
   /* Lists */
   ul {
-    @apply list-disc pl-5 inline-block;
+    @apply list-disc pl-6 my-2 space-y-1;
   }
   ol {
-    @apply list-decimal pl-2 m-0 inline-block;
+    @apply list-decimal pl-6 my-2 space-y-1;
   }
-
   li {
-    @apply list-item ml-1.5;
-  }
-
-  li::marker {
-    @apply mr-6;
-  }
-
-  li p {
-    @apply block m-0 -mt-5;
+    @apply ml-2;
   }
 
   /* Code blocks */
   pre {
     @apply bg-gray-900 rounded-lg p-4 my-4 overflow-x-auto;
-    code {
-      @apply block text-sm;
-    }
+  }
+  pre code {
+    @apply block text-sm font-mono;
   }
 
   /* Inline code */
-  code {
-    @apply bg-gray-800 rounded px-1 py-0.5 text-sm;
+  code:not(pre code) {
+    @apply bg-gray-800 rounded px-1.5 py-0.5 text-sm font-mono;
   }
 
   /* Links */
@@ -159,24 +154,23 @@
 
   /* Blockquotes */
   blockquote {
-    @apply border-l-2 border-gray-600 pl-4 italic my-4;
+    @apply border-l-4 border-gray-700 pl-4 italic my-4 text-gray-300;
   }
 
   /* Tables */
   table {
-    @apply w-full border-collapse my-4;
-    th,
-    td {
-      @apply border border-gray-700 p-2;
-    }
-    th {
-      @apply bg-gray-800;
-    }
+    @apply w-full border-collapse my-4 text-sm;
+  }
+  th {
+    @apply bg-gray-800 text-left font-semibold p-2;
+  }
+  td {
+    @apply border border-gray-700 p-2;
   }
 
   /* Horizontal rule */
   hr {
-    @apply border-gray-600 my-4;
+    @apply border-t border-gray-700 my-6;
   }
 }
 
@@ -241,12 +235,15 @@
 
 @layer base {
   :root {
-    --remainder-height: calc(100svh - 4rem);
     --radius: 0.5rem;
     --color-critical: #ef4444;
     --color-high: #f97316;
     --color-medium: #eab308;
     --color-low: #22c55e;
+  }
+
+  @media (width >= theme(--breakpoint-md)) {
+    --spacing-header: 3rem;
   }
 
   h1 {
@@ -277,12 +274,17 @@
 }
 
 @layer components {
-  .nav-item {
+  .nav-item,
+  .nav-item-sub {
     @apply relative flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors text-neutral-400;
   }
 
   .nav-item:hover {
     @apply text-neutral-300 bg-neutral-800;
+  }
+
+  .nav-item-sub:hover {
+    @apply text-purple-300;
   }
 
   .nav-item[data-active="false"]:hover {
@@ -293,23 +295,18 @@
     @apply text-company;
   }
 
+  .nav-item-sub[data-active="true"] {
+    @apply text-purple-300;
+  }
+
   .nav-item[data-active="true"]::after {
     content: "";
     @apply absolute left-0 bottom-0 w-full h-0.5 bg-company;
-    border-bottom-left-radius: inherit;
-    border-bottom-right-radius: inherit;
   }
 
-  .require-remaining-height {
-    min-height: var(--remainder-height);
-  }
-
-  .fill-remaining-height {
-    height: var(--remainder-height);
-  }
-
-  .fill-remaining-height-arrow {
-    height: calc(var(--remainder-height) - 52px);
+  .nav-item-sub[data-active="true"]::after {
+    content: "";
+    @apply absolute left-0 bottom-0 w-full h-0.5 bg-purple-400;
   }
 
   .breadcrumb-divider {
