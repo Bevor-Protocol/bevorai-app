@@ -105,7 +105,7 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
       setUploadedFile({ file, content });
       setError("");
     };
-    reader.onerror = () => setError("Failed to read file");
+    reader.onerror = (): void => setError("Failed to read file");
     reader.readAsText(file);
   }, []);
 
