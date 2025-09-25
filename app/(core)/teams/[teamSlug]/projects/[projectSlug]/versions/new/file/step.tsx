@@ -115,12 +115,12 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
     setError("");
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent): void => {
     e.preventDefault();
     setIsDragOver(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: React.DragEvent): void => {
     e.preventDefault();
     setIsDragOver(false);
   }, []);

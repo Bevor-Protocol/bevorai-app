@@ -60,7 +60,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, teamSlug, 
     const container = messagesContainerRef.current;
     if (container) {
       container.addEventListener("scroll", checkScrollPosition);
-      return () => container.removeEventListener("scroll", checkScrollPosition);
+      return (): void => container.removeEventListener("scroll", checkScrollPosition);
     }
   }, []);
 
