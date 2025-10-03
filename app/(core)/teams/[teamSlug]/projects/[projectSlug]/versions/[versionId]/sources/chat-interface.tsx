@@ -14,7 +14,7 @@ interface ChatInterfaceProps {
   projectSlug: string;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, teamSlug, projectSlug }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
@@ -103,6 +103,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, teamSlug, 
       const decoder = new TextDecoder();
       let finalMessage = "";
 
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
