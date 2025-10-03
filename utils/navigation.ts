@@ -12,6 +12,7 @@ export const navigation = {
     projects: (data: HrefProps) => `/teams/${data.teamSlug}/projects`,
     audits: (data: HrefProps) => `/teams/${data.teamSlug}/audits`,
     versions: (data: HrefProps) => `/teams/${data.teamSlug}/versions`,
+    chats: (data: HrefProps) => `/teams/${data.teamSlug}/chats`,
     settings: {
       overview: (data: HrefProps) => `/teams/${data.teamSlug}/settings`,
       billing: (data: HrefProps) => `/teams/${data.teamSlug}/settings/billing`,
@@ -25,6 +26,7 @@ export const navigation = {
   project: {
     overview: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}`,
     audits: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/audits`,
+    chats: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/chats`,
     versions: {
       overview: (data: HrefProps) =>
         `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions`,

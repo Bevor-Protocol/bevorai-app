@@ -2,20 +2,19 @@ import { bevorAction } from "@/actions";
 import { navigation } from "@/utils/navigation";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
-import { NewChatButton } from "./chat-client";
 import { ChatGrid } from "./chat-grid";
 import { ChatPagination } from "./chat-pagination";
 
 interface ChatsPageProps {
-  params: Promise<{ teamSlug: string; projectSlug: string; versionId: string }>;
+  params: Promise<{ teamSlug: string }>;
   searchParams: Promise<{ page?: string }>;
 }
 
 const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params, searchParams }) => {
-  const { teamSlug, projectSlug, versionId } = await params;
+  const { teamSlug } = await params;
   const { page = "0" } = await searchParams;
 
-  const query = { page, version_id: versionId };
+  const query = { page };
 
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery({
@@ -32,23 +31,14 @@ const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params, searchParams 
             View and continue your conversations about this version
           </p>
         </div>
-        <NewChatButton versionId={versionId} teamSlug={teamSlug} projectSlug={projectSlug} />
       </div>
 
       <div className="space-y-6">
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <ChatPagination
-            basePath={navigation.version.chats({ teamSlug, projectSlug, versionId })}
-            page={page}
-          />
+          <ChatPagination basePath={navigation.team.chats({ teamSlug })} page={page} />
         </HydrationBoundary>
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <ChatGrid
-            teamSlug={teamSlug}
-            projectSlug={projectSlug}
-            versionId={versionId}
-            query={query}
-          />
+          <ChatGrid query={query} />
         </HydrationBoundary>
       </div>
     </div>

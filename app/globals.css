@@ -10,6 +10,7 @@
   --animate-pulse-more: pulse-more 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --spacing-header: 4rem;
   --spacing-subheader: 2.25rem;
+  --spacing-header-comb: calc(var(--spacing-header) + var(--spacing-subheader));
   --spacing-remaining: calc(100svh - var(--spacing-header) - var(--spacing-subheader));
   --spacing-remaining-nosub: calc(100svh - var(--spacing-header));
 

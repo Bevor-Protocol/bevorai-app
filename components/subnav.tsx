@@ -41,6 +41,10 @@ const navigationItemsTeam: NavItemProp[] = [
     href: navigation.team.versions,
   },
   {
+    name: "Chats",
+    href: navigation.team.chats,
+  },
+  {
     name: "Analytics",
     href: navigation.team.analytics,
   },
@@ -63,6 +67,10 @@ const navigationItemsProject: NavItemProp[] = [
   {
     name: "Versions",
     href: navigation.project.versions.overview,
+  },
+  {
+    name: "Chats",
+    href: navigation.project.chats,
   },
   {
     name: "Analytics",

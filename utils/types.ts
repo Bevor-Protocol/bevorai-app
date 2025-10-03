@@ -275,11 +275,12 @@ export interface ChatPagination {
 export interface ChatResponseI {
   id: string;
   created_at: string;
-  team_id: string;
-  user_id?: string;
   code_version_mapping_id: string;
   is_visible: boolean;
   total_messages: number;
+  team_id: string;
+  team_slug: string;
+  project_slug: string;
 }
 
 export interface ChatMessagesResponseI extends ChatResponseI {
