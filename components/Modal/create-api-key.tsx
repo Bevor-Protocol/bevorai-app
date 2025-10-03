@@ -91,7 +91,7 @@ const CreateApiKeyModal: React.FC = () => {
                   Project Access
                 </label>
                 <div className="grid grid-cols-4 gap-2">
-                  {(["read", "write", "none"] as const).map((scope) => (
+                  {(["read", "write"] as const).map((scope) => (
                     <button
                       key={scope}
                       type="button"
@@ -118,7 +118,7 @@ const CreateApiKeyModal: React.FC = () => {
                   Contract Access
                 </label>
                 <div className="grid grid-cols-4 gap-2">
-                  {(["read", "write", "none"] as const).map((scope) => (
+                  {(["read", "write"] as const).map((scope) => (
                     <button
                       key={scope}
                       type="button"
@@ -145,7 +145,7 @@ const CreateApiKeyModal: React.FC = () => {
                   Audit Access
                 </label>
                 <div className="grid grid-cols-4 gap-2">
-                  {(["read", "write", "none"] as const).map((scope) => (
+                  {(["read", "write"] as const).map((scope) => (
                     <button
                       key={scope}
                       type="button"

@@ -9,9 +9,17 @@ class ApiKeyService {
   }
 
   async createKey(data: CreateKeyBody): Promise<{ api_key: string }> {
-    return api.post("/auth", data).then((response: any) => {
-      return response.data;
+    const scopes = Object.entries(data.permissions).map(([k, v]) => {
+      return `${k}.${v}`;
     });
+    return api
+      .post("/auth", {
+        name: data.name,
+        scopes,
+      })
+      .then((response: any) => {
+        return response.data;
+      });
   }
 
   async refreshKey(keyId: string): Promise<{ api_key: string }> {
