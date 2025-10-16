@@ -55,8 +55,8 @@ export async function generateMetadata(): Promise<Metadata> {
         },
       }),
     },
-  }
-};
+  };
+}
 
 const RootLayout: AsyncComponent<{ children: React.ReactNode }> = async ({ children }) => {
   return (
