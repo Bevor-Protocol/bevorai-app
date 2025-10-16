@@ -14,6 +14,7 @@
     "@codemirror/language": "^6.11.2",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.38.1",
+    "@farcaster/miniapp-sdk": "^0.2.1",
     "@privy-io/react-auth": "^2.21.1",
     "@privy-io/server-auth": "^1.30.0",
     "@radix-ui/react-dialog": "^1.1.15",
