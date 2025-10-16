@@ -1,14 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { sdk } from '@farcaster/miniapp-sdk';
+import { sdk } from "@farcaster/miniapp-sdk";
 import { useLogin, useLogout, usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Building2, Shield, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from 'react';
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const SignInPage: React.FC = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
