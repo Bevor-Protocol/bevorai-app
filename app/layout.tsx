@@ -36,22 +36,22 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "BevorAI",
       description: "AI Agent Smart Contract Auditor",
       card: "summary_large_image",
-      site: "@CertaiK_Agent",
-      creator: "@CertaiK_Agent",
+      site: "@BevorAI_Agent",
+      creator: "@BevorAI_Agent",
       images: [`${baseURL}/opengraph.png`],
     },
       other: {
-      'fc:miniapp': JSON.stringify({
-          version: 'next',
-          imageUrl: 'https://your-app.com/embed-image',
+      "fc:miniapp": JSON.stringify({
+          version: "next",
+          imageUrl: "https://pbs.twimg.com/profile_images/1886423225925533696/KRveUwhh_400x400.jpg",
           button: {
-              title: `Launch Your App Name`,
+              title: "Bevor Mini App",
               action: {
-                  type: 'launch_miniapp',
-                  name: 'Your App Name',
-                  url: 'https://your-app.com',
-                  splashImageUrl: 'https://your-app.com/splash-image',
-                  splashBackgroundColor: '#000000',
+                  type: "bevor_miniapp",
+                  name: "Bevor Mini App",
+                  url: "certaik-app-git-feat-base-mini-app-support-bevor.vercel.app",
+                  splashImageUrl: "https://pbs.twimg.com/profile_banners/1862890581896163328/1738593320/1500x500",
+                  splashBackgroundColor: "#000000",
               },
           },
       }),
