@@ -7,10 +7,10 @@ return Object.fromEntries(
 export async function GET() {
 const URL = process.env.NEXT_PUBLIC_URL as string;
 return Response.json({
-    "accountAssociation": {  // these will be added in step 5
-      "header": "",
-      "payload": "",
-      "signature": ""
+    "accountAssociation": {
+        "header": "eyJmaWQiOjIxMTYxMSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDBERTkzM0JkZTc4ODU2RWY5ZmM2MTMzNDYxQ0Y1NDQ2Y0I1NTlDMGMifQ",
+        "payload": "eyJkb21haW4iOiJjZXJ0YWlrLWFwcC1naXQtZmVhdC1iYXNlLW1pbmktYXBwLXN1cHBvcnQtYmV2b3IudmVyY2VsLmFwcCJ9",
+        "signature": "MHgzMGViNzQ5MzUzNGZlMTJjNWZmYzFhZTIwMzU5ODJkZjY3MGE2ZjlmNjM5YjMwMjZkZDgyNDA2MWQ2NzkzNmFhNDAwNDM0MGU4NWEzZjc5MmM5OGQ5ZmE5MWFhYWYwZDM3Y2NmZGNjNWY4MTY1MTgyMDc0MDQ2YTY2MzRjZDc0ODFi"
     },
     "baseBuilder": {
       "allowedAddresses": [""] // add your Base Account address here
