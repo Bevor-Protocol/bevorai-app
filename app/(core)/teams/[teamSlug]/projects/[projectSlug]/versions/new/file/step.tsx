@@ -49,8 +49,7 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
       }
       throw new Error("No file or code provided");
     },
-    onError: (err) => {
-      console.log(err.message);
+    onError: () => {
       setError("Failed to upload contract");
     },
     onSuccess: (result) => {
@@ -90,6 +89,7 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
         viewRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, uploadedFile]);
 
   const handleFileUpload = useCallback(async (file: File): Promise<void> => {

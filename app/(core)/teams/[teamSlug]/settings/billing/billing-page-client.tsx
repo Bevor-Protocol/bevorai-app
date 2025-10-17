@@ -35,6 +35,7 @@ const InvoiceNameSection: React.FC = () => {
     if (customer?.name && !name) {
       setName(customer.name);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer?.name]);
 
   const updateNameMutation = useMutation({
@@ -102,7 +103,7 @@ const BillingEmailSection: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer"] });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       setEmailError(error.message || "Failed to update customer");
     },
   });

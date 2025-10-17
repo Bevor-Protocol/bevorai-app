@@ -7,7 +7,7 @@ import { ProjectEmpty } from "@/components/projects/empty";
 import { TeamHeader } from "@/components/team/header";
 import { CodeVersionElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent, TeamSchemaI } from "@/utils/types";
 import { Suspense } from "react";
 
 interface TeamPageProps {
@@ -15,7 +15,7 @@ interface TeamPageProps {
 }
 
 const ProjectsSection: AsyncComponent<{
-  team: any;
+  team: TeamSchemaI;
 }> = async ({ team }) => {
   const projects = await bevorAction.getProjects({ page_size: "3" });
 

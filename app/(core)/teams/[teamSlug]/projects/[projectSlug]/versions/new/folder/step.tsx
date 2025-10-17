@@ -41,8 +41,7 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
       });
       return bevorAction.contractUploadFolder({ fileMap, projectId });
     },
-    onError: (err) => {
-      console.log(err.message);
+    onError: () => {
       setError("Failed to upload contract folder");
     },
     onSuccess: (result) => {
@@ -77,7 +76,7 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
     };
   }, [selectedFile]);
 
-  const processFiles = useCallback(async (files: FileList) => {
+  const processFiles = useCallback(async (files: File[] | FileList) => {
     const validFiles: SourceFile[] = [];
 
     for (const file of Array.from(files)) {
@@ -142,7 +141,7 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
       }
 
       if (files.length > 0) {
-        await processFiles(files as any);
+        await processFiles(files);
       }
     },
     [processFiles],
@@ -245,7 +244,7 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
               </div>
               <input
                 type="file"
-                {...({ webkitdirectory: "" } as any)}
+                {...{ webkitdirectory: "" }}
                 accept=".sol,.js,.ts"
                 onChange={handleFileInput}
                 className="absolute inset-0 appearance-none cursor-pointer opacity-0"

@@ -174,6 +174,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
     if (!hoveredTeam) {
       setHoveredTeam(filteredTeams[0]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teams, teamFilter]);
 
   useEffect(() => {

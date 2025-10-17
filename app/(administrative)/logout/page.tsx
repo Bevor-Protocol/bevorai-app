@@ -23,7 +23,8 @@ const LogoutPage: React.FC = () => {
       router.push("/sign-in");
     };
     fullLogout();
-  }, [ready, logout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, logout, router]);
   return (
     <div className="flex justify-center items-center min-h-remaining">
       <Loader className="w-10 h-10" />

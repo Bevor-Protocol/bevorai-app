@@ -51,7 +51,7 @@ const PlanCard: React.FC<{
 
   const currentPrice = plan.base_price / 100;
   const additionalSeatPrice =
-    (plan.seat_pricing.tiers.find((tier: any) => tier.up_to === null)?.unit_amount ?? 0) / 100;
+    (plan.seat_pricing.tiers.find((tier) => tier.up_to === null)?.unit_amount ?? 0) / 100;
 
   return (
     <div className="border border-border rounded-lg p-6">
@@ -198,8 +198,6 @@ const AddonsSection: React.FC = () => {
     queryKey: ["addons"],
     queryFn: () => bevorAction.getAddons(),
   });
-
-  console.log(addons);
 
   if (addonsLoading) {
     return (

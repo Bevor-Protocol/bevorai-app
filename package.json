@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "next lint && tsc --noEmit",
+    "lint": "eslint . && tsc --noEmit",
     "prepare": "husky"
   },
   "dependencies": {

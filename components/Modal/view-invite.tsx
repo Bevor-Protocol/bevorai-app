@@ -39,7 +39,7 @@ const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) =
     }, 1000);
 
     return (): void => clearTimeout(timeout);
-  }, [acceptInviteMutation.isSuccess]);
+  }, [acceptInviteMutation.isSuccess, invite.team.slug, router]);
 
   useEffect(() => {
     if (!rejectInviteMutation.isSuccess) return;
@@ -48,7 +48,7 @@ const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) =
     }, 1000);
 
     return (): void => clearTimeout(timeout);
-  }, [rejectInviteMutation.isSuccess]);
+  }, [rejectInviteMutation.isSuccess, invite.team.slug, router]);
 
   const isPending = acceptInviteMutation.isPending || rejectInviteMutation.isPending;
   const isSuccess = acceptInviteMutation.isSuccess || rejectInviteMutation.isSuccess;

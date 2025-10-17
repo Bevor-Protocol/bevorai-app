@@ -1,4 +1,6 @@
-const LogoDots = () => {
+import React from "react";
+
+const LogoDots: React.FC = () => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 71 97" fill="none">
       <path d="M70 96H71V97H70V96Z" fill="var(--logo-dot)" />

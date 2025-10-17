@@ -189,10 +189,10 @@ const WalletAccount: React.FC<AccountProps & { linkedAccounts: WalletWithMetadat
         ) : isLinked ? (
           <div className="flex flex-col gap-1">
             {linkedAccounts.map((account) => (
-              <div key={(account as any).address} className="flex items-center gap-2">
+              <div key={account.address} className="flex items-center gap-2">
                 {canUnlink && (
                   <button
-                    onClick={() => handleDisconnect((account as any).address)}
+                    onClick={() => handleDisconnect(account.address)}
                     className="p-1 text-muted-foreground hover:text-red-400 transition-colors cursor-pointer"
                     title="Unlink wallet"
                   >
@@ -200,7 +200,7 @@ const WalletAccount: React.FC<AccountProps & { linkedAccounts: WalletWithMetadat
                   </button>
                 )}
                 <span className="text-xs text-muted-foreground">
-                  {trimAddress((account as any).address)}
+                  {trimAddress(account.address)}
                 </span>
                 <span className="px-2 py-1 text-xs bg-green text-green-foreground rounded">
                   Connected
@@ -229,7 +229,7 @@ const LinkedAccountsClient: React.FC = () => {
     if (!authenticated) {
       router.push("/sign-in?method=privy");
     }
-  }, [ready, authenticated]);
+  }, [ready, authenticated, router]);
 
   const linkedAccounts = user?.linkedAccounts ?? [];
   const canUnlink = linkedAccounts.length >= 2;

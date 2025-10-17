@@ -1,84 +1,79 @@
-const {
-    defineConfig,
-    globalIgnores,
-} = require("eslint/config");
-
+const js = require("@eslint/js");
 const tsParser = require("@typescript-eslint/parser");
 const typescriptEslint = require("@typescript-eslint/eslint-plugin");
 const prettier = require("eslint-plugin-prettier");
 const nextEslintPluginNext = require("@next/eslint-plugin-next");
-const js = require("@eslint/js");
 
-const {
-    FlatCompat,
-} = require("@eslint/eslintrc");
+const { FlatCompat } = require("@eslint/eslintrc");
 
 const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
+  baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended,
+  allConfig: js.configs.all,
 });
 
-module.exports = defineConfig([{
+module.exports = [
+  ...compat.extends("next/core-web-vitals"),
+  ...compat.extends("eslint:recommended"),
+  ...compat.extends("plugin:@typescript-eslint/recommended"),
+  ...compat.extends("plugin:prettier/recommended"),
+  ...compat.extends("next"),
+  {
     languageOptions: {
-        parser: tsParser,
-        sourceType: "module",
-
-        parserOptions: {
-            project: "./tsconfig.json",
-        },
+      parser: tsParser,
+      sourceType: "module",
+      parserOptions: {
+        project: "./tsconfig.json",
+      },
     },
-
-    extends: compat.extends(
-        "next/core-web-vitals",
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
-        "plugin:prettier/recommended",
-        "next",
-    ),
-
     plugins: {
-        "@typescript-eslint": typescriptEslint,
-        prettier,
-        "@next/next": nextEslintPluginNext,
+      "@typescript-eslint": typescriptEslint,
+      prettier,
+      "@next/next": nextEslintPluginNext,
     },
-
     rules: {
-        "@typescript-eslint/no-explicit-any": "warn",
-        quotes: ["error", "double"],
-        "@typescript-eslint/explicit-function-return-type": ["error"],
-
-        "no-console": ["warn", {
-            allow: ["error"],
-        }],
-
-        "no-debugger": "warn",
-        "no-underscore-dangle": "off",
-
-        "prettier/prettier": ["error", {
-            endOfLine: "auto",
-        }],
-    },
-
-    settings: {
-        "import/resolver": {
-            node: {
-                extensions: [".js", ".ts", ".tsx"],
-            },
+      "@typescript-eslint/no-explicit-any": "warn",
+      quotes: ["error", "double"],
+      "@typescript-eslint/explicit-function-return-type": ["error"],
+      "no-console": [
+        "warn",
+        {
+          allow: ["error"],
         },
+      ],
+      "no-debugger": "warn",
+      "no-underscore-dangle": "off",
+      "prettier/prettier": [
+        "error",
+        {
+          endOfLine: "auto",
+        },
+      ],
     },
-}, {
+    settings: {
+      "import/resolver": {
+        node: {
+          extensions: [".js", ".ts", ".tsx"],
+        },
+      },
+    },
+  },
+  {
     files: ["components/ui/**/*.tsx"],
-
     rules: {
-        "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-function-return-type": "off",
     },
-}, globalIgnores([
-    "**/dist",
-    "**/*.d.ts",
-    "**/node_modules",
-    "**/.eslintrc.js",
-    "**/next.config.js",
-    "**/postcss.config.mjs",
-    "**/tailwind.config.js",
-])]);
+  },
+  {
+    ignores: [
+      "**/dist",
+      "**/*.d.ts",
+      "**/node_modules",
+      "**/.eslintrc.js",
+      "**/eslint.config.js",
+      "**/next.config.js",
+      "**/postcss.config.mjs",
+      "**/tailwind.config.js",
+    ],
+  },
+];
