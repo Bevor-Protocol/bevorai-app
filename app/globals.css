@@ -44,6 +44,11 @@
   --logo-dot: oklch(0.45 0 0);
   --link: oklch(70.7% 0.165 254.624);
   --link-accent: oklch(80.9% 0.105 251.813);
+  --spacing-header: 4rem;
+
+  @media (min-width: theme(screens.md)) {
+    --spacing-header: 3rem;
+  }
 }
 
 @theme {
@@ -52,11 +57,7 @@
   --animate-appear: appear 0.15s forwards;
   --animate-disappear: disappear 0.15s forwards;
   --animate-pulse-more: pulse-more 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --spacing-header: 4rem;
-  --spacing-subheader: 2.25rem;
-  --spacing-header-comb: calc(var(--spacing-header) + var(--spacing-subheader));
-  --spacing-remaining: calc(100svh - var(--spacing-header) - var(--spacing-subheader));
-  --spacing-remaining-nosub: calc(100svh - var(--spacing-header));
+  --spacing-header: var(--spacing-header);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -307,10 +308,6 @@
     --color-high: #f97316;
     --color-medium: #eab308;
     --color-low: #22c55e;
-  }
-
-  @media (min-width >= theme(screens.md)) {
-    --spacing-header: 3rem;
   }
 
   h1 {

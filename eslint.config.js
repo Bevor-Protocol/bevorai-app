@@ -50,13 +50,6 @@ module.exports = [
         },
       ],
     },
-    settings: {
-      "import/resolver": {
-        node: {
-          extensions: [".js", ".ts", ".tsx"],
-        },
-      },
-    },
   },
   {
     files: ["components/ui/**/*.tsx"],
@@ -69,6 +62,7 @@ module.exports = [
       "**/dist",
       "**/*.d.ts",
       "**/node_modules",
+      "**/.next",
       "**/.eslintrc.js",
       "**/eslint.config.js",
       "**/next.config.js",
