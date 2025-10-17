@@ -81,10 +81,8 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
           <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="size-8 text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-neutral-100 mb-2">
-            Version Created Successfully!
-          </h2>
-          <p className="text-neutral-400">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Version Created Successfully!</h2>
+          <p className="text-muted-foreground">
             Your contract has been uploaded and is ready for audit.
           </p>
         </div>
@@ -98,13 +96,13 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
         <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
           <Globe className="size-8 text-purple-400" />
         </div>
-        <h2 className="text-2xl font-bold text-neutral-100 mb-2">Contract Address</h2>
-        <p className="text-neutral-400">Enter a deployed contract address to analyze</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Contract Address</h2>
+        <p className="text-muted-foreground">Enter a deployed contract address to analyze</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="address" className="text-sm font-medium text-neutral-300 hidden">
+          <label htmlFor="address" className="text-sm font-medium text-foreground hidden">
             Contract Address
           </label>
           <input
@@ -113,7 +111,7 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="0x1234..."
-            className="w-full p-4 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono"
+            className="w-full p-4 border border-neutral-700 rounded-lg text-foreground placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono"
             disabled={isPending}
           />
           {error && (
@@ -192,74 +190,74 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-neutral-100 mb-4">Add New Version</h1>
-        <p className="text-lg text-neutral-400">
+        <h1 className="text-3xl font-bold text-foreground mb-4">Add New Version</h1>
+        <p className="text-lg text-muted-foreground">
           Choose how you&apos;d like to provide your smart contract
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
-          className="border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
+          className="border border-border rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
           onClick={() => handleMethodSelect("upload")}
         >
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-blue-400 group-hover:bg-blue-400/10 transition-colors">
               <Upload className="size-6" />
             </div>
-            <h3 className="text-lg font-semibold text-neutral-100">Upload Files</h3>
+            <h3 className="text-lg font-semibold text-foreground">Upload Files</h3>
           </div>
-          <p className="text-sm text-neutral-400 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Drag and drop your .sol contract files for analysis
           </p>
           <Button className="w-full">Choose Files</Button>
         </div>
 
         <div
-          className="border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
+          className="border border-border rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
           onClick={() => handleMethodSelect("paste")}
         >
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-green-400 group-hover:bg-green-400/10 transition-colors">
               <Copy className="size-6" />
             </div>
-            <h3 className="text-lg font-semibold text-neutral-100">Paste Code</h3>
+            <h3 className="text-lg font-semibold text-foreground">Paste Code</h3>
           </div>
-          <p className="text-sm text-neutral-400 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Copy and paste your smart contract code directly
           </p>
           <Button className="w-full">Paste Code</Button>
         </div>
 
         <div
-          className="border border-neutral-800 rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
+          className="border border-border rounded-lg p-6 hover:border-neutral-700 transition-all cursor-pointer group"
           onClick={() => handleMethodSelect("address")}
         >
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-purple-400 group-hover:bg-purple-400/10 transition-colors">
               <Globe className="size-6" />
             </div>
-            <h3 className="text-lg font-semibold text-neutral-100">Contract Address</h3>
+            <h3 className="text-lg font-semibold text-foreground">Contract Address</h3>
           </div>
-          <p className="text-sm text-neutral-400 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Enter a deployed contract address to analyze
           </p>
           <Button className="w-full">Enter Address</Button>
         </div>
 
-        <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
+        <div className="border border-border rounded-lg p-6 opacity-50 cursor-not-allowed">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-orange-400">
               <FolderOpen className="size-6" />
             </div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-semibold text-neutral-100">Upload Folder</h3>
+              <h3 className="text-lg font-semibold text-foreground">Upload Folder</h3>
               <span className="px-2 py-1 rounded text-xs font-medium bg-orange-500/10 text-orange-400">
                 Coming Soon
               </span>
             </div>
           </div>
-          <p className="text-sm text-neutral-400 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Upload an entire folder of contract files at once
           </p>
           <Button variant="outline" className="w-full" disabled>
@@ -267,19 +265,19 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           </Button>
         </div>
 
-        <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
+        <div className="border border-border rounded-lg p-6 opacity-50 cursor-not-allowed">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-orange-400">
               <Code className="size-6" />
             </div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-semibold text-neutral-100">MCP / IDE Integration</h3>
+              <h3 className="text-lg font-semibold text-foreground">MCP / IDE Integration</h3>
               <span className="px-2 py-1 rounded text-xs font-medium bg-orange-500/10 text-orange-400">
                 Coming Soon
               </span>
             </div>
           </div>
-          <p className="text-sm text-neutral-400 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Integrate directly with your IDE for seamless development
           </p>
           <Button variant="outline" className="w-full" disabled>
@@ -287,19 +285,19 @@ const VersionCreationStep: React.FC<VersionCreationStepProps> = ({
           </Button>
         </div>
 
-        <div className="border border-neutral-800 rounded-lg p-6 opacity-50 cursor-not-allowed">
+        <div className="border border-border rounded-lg p-6 opacity-50 cursor-not-allowed">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-neutral-800 flex items-center justify-center text-orange-400">
               <GitBranch className="size-6" />
             </div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-semibold text-neutral-100">Repository Scanning</h3>
+              <h3 className="text-lg font-semibold text-foreground">Repository Scanning</h3>
               <span className="px-2 py-1 rounded text-xs font-medium bg-orange-500/10 text-orange-400">
                 Coming Soon
               </span>
             </div>
           </div>
-          <p className="text-sm text-neutral-400 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Automatically scan and analyze your Git repositories
           </p>
           <Button variant="outline" className="w-full" disabled>

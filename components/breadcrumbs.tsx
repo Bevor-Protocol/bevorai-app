@@ -76,7 +76,7 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
             <span>My Account</span>
           </Link>
           <Button variant="ghost" onClick={toggle}>
-            <ChevronsUpDown className="size-4 text-neutral-400" />
+            <ChevronsUpDown className="size-4 text-muted-foreground" />
           </Button>
         </div>
       )}
@@ -87,7 +87,7 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
             <span>{team?.name}</span>
           </Link>
           <Button variant="ghost" size="narrow" onClick={toggle}>
-            <ChevronsUpDown className="size-4 text-neutral-400" />
+            <ChevronsUpDown className="size-4 text-muted-foreground" />
           </Button>
         </div>
       )}
@@ -97,7 +97,7 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
             <span>{project?.name}</span>
           </Link>
           <Button variant="ghost" size="narrow" onClick={toggle}>
-            <ChevronsUpDown className="size-4 text-neutral-400" />
+            <ChevronsUpDown className="size-4 text-muted-foreground" />
           </Button>
         </div>
       )}
@@ -228,7 +228,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
   return (
     <div
       className={cn(
-        "border border-neutral-800 rounded-lg bg-black",
+        "border border-border rounded-lg bg-black",
         "shadow-2xl flex overflow-hidden divide-x divide-neutral-800",
         "absolute z-999 cursor-default transition-all animate-appear top-full",
       )}
@@ -256,7 +256,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
                   onClick={close}
                   className={cn(
                     "flex items-center px-3 py-2 text-sm rounded-md",
-                    "transition-colors text-neutral-100 hover:bg-neutral-800",
+                    "transition-colors text-foreground hover:bg-neutral-800",
                   )}
                 >
                   <Icon size="xs" seed={teamItem.id} className="size-4 flex-shrink-0" />
@@ -274,7 +274,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
                 <button
                   className={cn(
                     "flex items-center space-x-2 w-full px-3 py-2 text-sm",
-                    "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
+                    "text-muted-foreground hover:text-neutral-200 hover:bg-neutral-800",
                     "rounded-md transition-colors cursor-pointer",
                   )}
                   onMouseEnter={() => {
@@ -320,7 +320,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
                     href={buildEquivalentRoute(projectItem.slug)}
                     className={cn(
                       "flex items-center justify-between px-3 py-2 text-sm rounded-md",
-                      "transition-colors text-neutral-100 hover:bg-neutral-800",
+                      "transition-colors text-foreground hover:bg-neutral-800",
                     )}
                   >
                     <div className="flex items-center space-x-3 w-full">
@@ -338,7 +338,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
                   <button
                     className={cn(
                       "flex items-center space-x-2 w-full px-3 py-2 text-sm",
-                      "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800",
+                      "text-muted-foreground hover:text-neutral-200 hover:bg-neutral-800",
                       "rounded-md transition-colors cursor-pointer",
                     )}
                   >

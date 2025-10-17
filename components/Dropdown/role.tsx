@@ -39,7 +39,7 @@ const RoleUpdateDropdown: React.FC<RoleProps> = ({ memberId, fromRole }) => {
         className={`flex items-center space-x-3 px-3 py-2 cursor-pointer transition-colors ${
           fromRole === MemberRoleEnum.OWNER
             ? "bg-neutral-800 text-neutral-200"
-            : "hover:bg-neutral-800/50 text-neutral-300 hover:text-neutral-200"
+            : "hover:bg-neutral-800/50 text-foreground hover:text-neutral-200"
         }`}
       >
         <div className="flex-1 min-w-0">
@@ -61,7 +61,7 @@ const RoleUpdateDropdown: React.FC<RoleProps> = ({ memberId, fromRole }) => {
         className={`flex items-center space-x-3 px-3 py-2 cursor-pointer transition-colors ${
           fromRole === MemberRoleEnum.MEMBER
             ? "bg-neutral-800 text-neutral-200"
-            : "hover:bg-neutral-800/50 text-neutral-300 hover:text-neutral-200"
+            : "hover:bg-neutral-800/50 text-foreground hover:text-neutral-200"
         }`}
       >
         <div className="flex-1 min-w-0">

@@ -1,3 +1,4 @@
+import Container from "@/components/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
@@ -55,7 +56,7 @@ const versionMethods: VersionProps[] = [
   },
   {
     Icon: GitBranch,
-    iconColor: "text-white-400",
+    iconColor: "text-foreground-400",
     title: "Repository Scan",
     description: "Automatically scan and analyze your Git repositories",
     cta: "Get Started",
@@ -72,19 +73,17 @@ const NewVersionPage: AsyncComponent<VersionPageProps> = async ({ params }) => {
   const props = await params;
 
   return (
-    <div className="max-w-6xl m-auto">
-      <div className="text-center my-8">
-        <h1 className="text-3xl font-bold text-neutral-100 mb-4">Add New Version</h1>
-        <p className="text-lg text-neutral-400">
-          Choose how you&apos;d like to provide your smart contract
-        </p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <Container>
+      <h1 className="text-3xl font-bold text-foreground mb-4">Add New Version</h1>
+      <p className="text-lg text-muted-foreground">
+        Choose how you&apos;d like to provide your smart contract
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
         {versionMethods.map((method, ind) => (
           <div
             key={ind}
             className={cn(
-              "border border-neutral-800 rounded-lg p-6 transition-all cursor-default h-full flex flex-col",
+              "border border-border rounded-lg p-6 transition-all cursor-default h-full flex flex-col",
               !method.disabled && "hover:border-neutral-700",
               method.disabled && "opacity-70",
             )}
@@ -98,9 +97,9 @@ const NewVersionPage: AsyncComponent<VersionPageProps> = async ({ params }) => {
               >
                 <method.Icon className="size-5" />
               </div>
-              <h3 className="text-lg font-semibold text-neutral-100">{method.title}</h3>
+              <h3 className="text-lg font-semibold text-foreground">{method.title}</h3>
             </div>
-            <p className="text-sm text-neutral-400 mb-4">{method.description}</p>
+            <p className="text-sm text-muted-foreground mb-4">{method.description}</p>
             {!method.disabled ? (
               <Button className="w-full mt-auto" asChild>
                 <Link href={method.href(props)}>{method.cta}</Link>
@@ -113,7 +112,7 @@ const NewVersionPage: AsyncComponent<VersionPageProps> = async ({ params }) => {
           </div>
         ))}
       </div>
-    </div>
+    </Container>
   );
 };
 

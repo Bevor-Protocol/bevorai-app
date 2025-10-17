@@ -2,7 +2,9 @@
 
 import { bevorAction } from "@/actions";
 import { Button } from "@/components/ui/button";
-import { ChatMessageI } from "@/utils/types";
+import * as Chat from "@/components/ui/chat";
+import { Textarea } from "@/components/ui/textarea";
+import { ChatAttributeI, ChatMessageI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Cog, Lightbulb, MessageSquare, Send } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
@@ -22,8 +24,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
   const [streamedContent, setStreamedContent] = useState("");
   const [buffer, setBuffer] = useState("");
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [autocompleteQuery, setAutocompleteQuery] = useState("");
+  const [selectedAutocompleteIndex, setSelectedAutocompleteIndex] = useState(0);
+  const [selectedAttributeIds, setSelectedAttributeIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: chatData, isLoading: chatLoading } = useQuery({
     queryKey: ["chat", chatId],
@@ -31,6 +38,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
   });
 
   const [messages, setMessages] = useState<ChatMessageI[]>([]);
+
+  const { data: chatAttributes } = useQuery({
+    queryKey: ["chatAttributes", chatId],
+    queryFn: () => bevorAction.getChatAttributes(chatId),
+    enabled: !!chatId,
+  });
 
   useEffect(() => {
     if (chatData?.messages) {
@@ -74,6 +87,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
+    setSelectedAttributeIds(new Set());
     setIsLoading(true);
     setIsAwaitingResponse(true);
     setStreamedContent("");
@@ -88,6 +102,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
         body: JSON.stringify({
           message: inputValue.trim(),
           chatId,
+          attributes: Array.from(selectedAttributeIds),
         }),
       });
 
@@ -172,10 +187,131 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
     }
   };
 
+  const filteredAttributes =
+    chatAttributes?.filter((attr) =>
+      attr.string.toLowerCase().includes(autocompleteQuery.toLowerCase()),
+    ) || [];
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+    const value = e.target.value;
+    const previousValue = inputValue;
+    setInputValue(value);
+
+    // Check if content was deleted (backspace/delete)
+    if (value.length < previousValue.length) {
+      // Find which attributes might have been removed
+      const currentAttributeIds = new Set<string>();
+      const backtickMatches = value.match(/`([^`]+)`/g);
+
+      if (backtickMatches) {
+        backtickMatches.forEach((match) => {
+          const name = match.slice(1, -1); // Remove backticks
+          const matchingAttr = chatAttributes?.find((attr) => attr.name === name);
+          if (matchingAttr) {
+            currentAttributeIds.add(matchingAttr.id);
+          }
+        });
+      }
+
+      setSelectedAttributeIds(currentAttributeIds);
+    }
+
+    const cursorPosition = e.target.selectionStart;
+    const textBeforeCursor = value.substring(0, cursorPosition);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      if (!textAfterAt.includes(" ") && !textAfterAt.includes("\n")) {
+        setAutocompleteQuery(textAfterAt);
+        setShowAutocomplete(true);
+        setSelectedAutocompleteIndex(0);
+      } else {
+        setShowAutocomplete(false);
+      }
+    } else {
+      setShowAutocomplete(false);
+    }
+  };
+
+  const insertAutocompleteItem = (item: ChatAttributeI): void => {
+    const cursorPosition = textareaRef.current?.selectionStart || 0;
+    const textBeforeCursor = inputValue.substring(0, cursorPosition);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const beforeAt = inputValue.substring(0, lastAtIndex);
+      const afterCursor = inputValue.substring(cursorPosition);
+      const newValue = beforeAt + `\`${item.name}\`` + " " + afterCursor;
+
+      setInputValue(newValue);
+      setShowAutocomplete(false);
+      setSelectedAttributeIds((prev) => new Set([...prev, item.id]));
+
+      setTimeout(() => {
+        const newCursorPos = beforeAt.length + `\`${item.name}\``.length + 1;
+        if (textareaRef.current) {
+          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+          textareaRef.current.focus();
+        }
+      }, 0);
+    }
+  };
+
+  const scrollToSelectedItem = (index: number): void => {
+    const dropdown = document.querySelector("[data-autocomplete-dropdown]");
+    if (!dropdown) return;
+
+    const items = dropdown.querySelectorAll("[data-autocomplete-item]");
+    const selectedItem = items[index] as HTMLElement;
+    if (!selectedItem) return;
+
+    const dropdownRect = dropdown.getBoundingClientRect();
+    const itemRect = selectedItem.getBoundingClientRect();
+
+    if (itemRect.top < dropdownRect.top) {
+      selectedItem.scrollIntoView({ block: "start", behavior: "smooth" });
+    } else if (itemRect.bottom > dropdownRect.bottom) {
+      selectedItem.scrollIntoView({ block: "end", behavior: "smooth" });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+    if (showAutocomplete && filteredAttributes.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const newIndex =
+          selectedAutocompleteIndex < filteredAttributes.length - 1
+            ? selectedAutocompleteIndex + 1
+            : 0;
+        setSelectedAutocompleteIndex(newIndex);
+        scrollToSelectedItem(newIndex);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const newIndex =
+          selectedAutocompleteIndex > 0
+            ? selectedAutocompleteIndex - 1
+            : filteredAttributes.length - 1;
+        setSelectedAutocompleteIndex(newIndex);
+        scrollToSelectedItem(newIndex);
+      } else if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertAutocompleteItem(filteredAttributes[selectedAutocompleteIndex]);
+      } else if (e.key === "Escape") {
+        setShowAutocomplete(false);
+      }
+    } else if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (inputValue.trim() && !isLoading) {
+        sendMessage();
+      }
+    }
+  };
+
   if (chatLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-neutral-400">Loading chat...</div>
+        <div className="text-muted-foreground">Loading chat...</div>
       </div>
     );
   }
@@ -188,7 +324,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
                 <MessageSquare className="w-10 h-10 text-neutral-600 mx-auto mb-3" />
-                <h3 className="text-sm font-medium text-neutral-300 mb-1">Start a conversation</h3>
+                <h3 className="text-sm font-medium text-foreground mb-1">Start a conversation</h3>
                 <p className="text-xs text-neutral-500">Ask questions about your code</p>
               </div>
             </div>
@@ -197,14 +333,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
               <div key={message.id}>
                 {message.role === "user" ? (
                   <div className="flex justify-end">
-                    <div className="max-w-[85%] rounded-lg p-2.5 bg-blue-600 text-white">
+                    <div className="max-w-[85%] rounded-lg p-2.5 bg-blue-600 text-foreground">
                       <div className="prose prose-sm prose-invert max-w-none">
                         <ReactMarkdown className="markdown">{message.content}</ReactMarkdown>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="prose prose-sm prose-invert max-w-none text-neutral-100">
+                  <div className="prose prose-sm prose-invert max-w-none text-foreground">
                     <ReactMarkdown className="markdown">{message.content}</ReactMarkdown>
                   </div>
                 )}
@@ -213,7 +349,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
           )}
 
           {isAwaitingResponse && (
-            <div className="flex items-center space-x-2 text-neutral-400">
+            <div className="flex items-center space-x-2 text-muted-foreground">
               <div className="size-2 bg-neutral-400 rounded-full animate-pulse"></div>
               <span className="text-xs">Waiting for response...</span>
             </div>
@@ -222,11 +358,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
           {streamedContent && (
             <div>
               {currentEventType === "text" ? (
-                <div className="prose prose-sm prose-invert max-w-none text-neutral-100">
+                <div className="prose prose-sm prose-invert max-w-none text-foreground">
                   <ReactMarkdown className="markdown">{streamedContent + buffer}</ReactMarkdown>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2 text-neutral-300">
+                <div className="flex items-center space-x-2 text-foreground">
                   {currentEventType === "tool-call" && (
                     <Cog className="size-3 text-blue-400 animate-spin" />
                   )}
@@ -240,33 +376,35 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
           )}
           <div ref={messagesEndRef} />
         </div>
-
-        {showScrollToBottom && (
-          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10">
-            <Button onClick={scrollToBottom} size="sm" className="rounded-full shadow-lg">
-              <ChevronDown className="size-3" />
-            </Button>
-          </div>
-        )}
       </div>
 
-      <div className="p-2.5 border-t border-neutral-800">
+      <div className="p-2.5 border-t border-border">
         <form onSubmit={handleSubmit} className="flex gap-2">
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (inputValue.trim() && !isLoading) {
-                  sendMessage();
-                }
-              }
-            }}
-            placeholder="Type a message..."
-            className="flex-1 p-2 text-sm rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[2.5rem] max-h-24"
-            disabled={isLoading}
-          />
+          <div className="flex-1 relative">
+            <Textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message... (use @ for autocomplete)"
+              className="flex-1 min-h-24 max-h-48 w-full resize-none"
+            />
+
+            {showAutocomplete && filteredAttributes.length > 0 && (
+              <Chat.AutoComplete
+                attributes={filteredAttributes}
+                selectedAutocompleteIndex={selectedAutocompleteIndex}
+                insertAutocompleteItem={insertAutocompleteItem}
+              />
+            )}
+            {showScrollToBottom && (
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-10 bg-blue-600 rounded-full">
+                <Button onClick={scrollToBottom} size="sm" className="rounded-full shadow-lg">
+                  <ChevronDown className="size-3" />
+                </Button>
+              </div>
+            )}
+          </div>
           <Button
             type="submit"
             disabled={!inputValue.trim() || isLoading}

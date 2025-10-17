@@ -91,7 +91,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamSlug, projectSlug 
 
   if (!isOpen) {
     return (
-      <div className="fixed right-6 bottom-6 z-20">
+      <div className="absolute bottom-6 right-6 z-20">
         <Button
           onClick={() => setIsOpen(true)}
           size="lg"
@@ -106,8 +106,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamSlug, projectSlug 
   return (
     <div
       className={cn(
-        "fixed right-6 bottom-6 top-header-comb mt-6 z-20",
-        "border border-neutral-800 rounded-lg bg-neutral-950 shadow-2xl",
+        "absolute right-0 z-20 inset-y-0",
+        "border border-border rounded-lg rounded-l-none bg-card shadow-2xl",
         "flex flex-col overflow-hidden",
       )}
       style={{ width: `${panelWidth}px` }}
@@ -121,7 +121,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamSlug, projectSlug 
       />
       {selectedChatId ? (
         <>
-          <div className="p-3 border-b border-neutral-800 flex items-center justify-between bg-neutral-900/50">
+          <div className="px-3 h-11 border-b border-border flex items-center justify-between bg-neutral-900/50">
             <Button variant="ghost" size="sm" onClick={handleBackToList}>
               <ArrowLeft className="size-4 mr-2" />
               Back to Chats
@@ -142,17 +142,17 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamSlug, projectSlug 
         </>
       ) : (
         <>
-          <div className="p-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-900/50">
+          <div className="px-3 h-11 border-b border-border flex items-center justify-between bg-neutral-900/50">
             <div className="flex items-center space-x-2">
-              <MessageSquare className="size-5 text-blue-400" />
-              <h2 className="text-base font-semibold text-neutral-100">Chat History</h2>
+              <MessageSquare className="size-4 text-blue-400" />
+              <h2 className="text-base font-semibold text-foreground">Chat</h2>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
               <X className="size-4" />
             </Button>
           </div>
 
-          <div className="p-3 border-b border-neutral-800">
+          <div className="p-3 border-b border-border">
             <Button
               onClick={handleCreateChat}
               disabled={createChatMutation.isPending}
@@ -168,7 +168,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamSlug, projectSlug 
             {isLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="border border-neutral-800 rounded-lg p-3 animate-pulse">
+                  <div key={i} className="border border-border rounded-lg p-3 animate-pulse">
                     <div className="h-4 bg-neutral-800 rounded w-3/4 mb-2"></div>
                     <div className="h-3 bg-neutral-800 rounded w-1/2"></div>
                   </div>
@@ -177,7 +177,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamSlug, projectSlug 
             ) : chats?.results.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <MessageSquare className="size-12 text-neutral-600 mb-4" />
-                <h3 className="text-sm font-medium text-neutral-300 mb-2">No chats yet</h3>
+                <h3 className="text-sm font-medium text-foreground mb-2">No chats yet</h3>
                 <p className="text-xs text-neutral-500 text-center px-4">
                   Start a conversation to get help with your code analysis
                 </p>
@@ -188,20 +188,20 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamSlug, projectSlug 
                   <div
                     key={chat.id}
                     onClick={() => handleChatClick(chat.id)}
-                    className="border border-neutral-800 rounded-lg p-3 hover:border-neutral-700 hover:bg-neutral-900/50 transition-all cursor-pointer"
+                    className="border border-border rounded-lg p-3 hover:border-neutral-700 hover:bg-neutral-900/50 transition-all cursor-pointer"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
                           <MessageSquare className="size-4 text-blue-400" />
                         </div>
-                        <span className="text-xs font-medium text-neutral-100">
+                        <span className="text-xs font-medium text-foreground">
                           Chat #{chat.id.slice(-8)}
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between pl-10">
-                      <span className="text-xs text-neutral-400">
+                      <span className="text-xs text-muted-foreground">
                         {chat.total_messages} messages
                       </span>
                       <div className="flex items-center space-x-1 text-xs text-neutral-500">
@@ -216,7 +216,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamSlug, projectSlug 
           </div>
 
           {chats && chats.results.length > 0 && (
-            <div className="p-3 border-t border-neutral-800 bg-neutral-900/50">
+            <div className="p-3 border-t border-border bg-neutral-900/50">
               <div className="flex items-center justify-between">
                 <Button
                   variant="outline"
@@ -227,7 +227,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamSlug, projectSlug 
                   <ChevronLeft className="size-4 mr-1" />
                   Prev
                 </Button>
-                <span className="text-xs text-neutral-400">
+                <span className="text-xs text-muted-foreground">
                   Page {currentPage + 1} of {totalPages}
                 </span>
                 <Button

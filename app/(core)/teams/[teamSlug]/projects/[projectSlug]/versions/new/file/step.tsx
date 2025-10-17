@@ -197,10 +197,8 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
           <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="size-8 text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-neutral-100 mb-2">
-            Version Created Successfully!
-          </h2>
-          <p className="text-neutral-400">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Version Created Successfully!</h2>
+          <p className="text-muted-foreground">
             Your contract code has been uploaded and is ready for audit.
           </p>
         </div>
@@ -214,9 +212,9 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
         <div className="text-left space-y-2">
           <div className="flex flex-row gap-4 justify-start items-center">
             <Code className="size-6 text-purple-400" />
-            <h2 className="text-2xl font-bold text-neutral-100">Smart Contract Code</h2>
+            <h2 className="text-2xl font-bold text-foreground">Smart Contract Code</h2>
           </div>
-          <p className="text-neutral-400">
+          <p className="text-muted-foreground">
             Write, paste, or upload your Solidity contract code below
           </p>
         </div>
@@ -242,7 +240,7 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
 
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex flex-row justify-between">
-          <div className="flex border-b border-neutral-800 mb-4">
+          <div className="flex border-b border-border mb-4">
             <div
               onClick={() => {
                 setActiveTab("upload");
@@ -293,11 +291,11 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
             >
               <div className="flex flex-col items-center justify-center h-full space-y-4">
                 <div className="size-12 rounded-full bg-neutral-800 flex items-center justify-center">
-                  <Upload className="size-6 text-neutral-400" />
+                  <Upload className="size-6 text-muted-foreground" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-lg font-medium text-neutral-100 mb-2">Upload files here</h3>
-                  <p className="text-neutral-400 mb-4">
+                  <h3 className="text-lg font-medium text-foreground mb-2">Upload files here</h3>
+                  <p className="text-muted-foreground mb-4">
                     Click here or drag and drop to upload .sol files
                   </p>
                 </div>
@@ -314,7 +312,7 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
         )}
 
         {(activeTab === "paste" || (activeTab === "upload" && uploadedFile)) && (
-          <div className="border border-neutral-800 rounded-lg min-h-20 overflow-scroll">
+          <div className="border border-border rounded-lg min-h-20 overflow-scroll">
             <div ref={editorRef} role="region" aria-label="Solidity code editor" />
           </div>
         )}

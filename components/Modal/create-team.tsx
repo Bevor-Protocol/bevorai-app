@@ -63,7 +63,7 @@ const CreateTeamModal: React.FC = () => {
             {isSuccess && <p className="text-sm text-green-400">team successfully created</p>}
           </div>
         </div>
-        <div className="flex justify-between pt-4 border-t border-neutral-800">
+        <div className="flex justify-between pt-4 border-t border-border">
           <DialogClose disabled={isPending} asChild>
             <Button type="button" variant="outline" disabled={isPending}>
               Cancel

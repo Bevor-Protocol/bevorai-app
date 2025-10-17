@@ -113,7 +113,7 @@ const CreateProjectModal: React.FC<{ targetTeamSlug: string }> = ({ targetTeamSl
           {error && <p className="text-sm text-red-400">{error.message}</p>}
           {isSuccess && <p className="text-sm text-green-400">Project successfully created</p>}
         </div>
-        <div className="flex justify-between pt-4 border-t border-neutral-800">
+        <div className="flex justify-between pt-4 border-t border-border">
           <DialogClose disabled={isPending} asChild>
             <Button type="button" variant="outline">
               Cancel

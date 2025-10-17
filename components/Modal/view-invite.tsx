@@ -88,7 +88,7 @@ const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) =
         )}
       </div>
 
-      <div className="flex justify-between pt-4 border-t border-neutral-800">
+      <div className="flex justify-between pt-4 border-t border-border">
         <Button
           type="button"
           variant="outline"

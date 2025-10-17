@@ -39,7 +39,7 @@ export const AuditPagination: React.FC<{ page: string; basePath: string }> = ({
             </Link>
           </Button>
         )}
-        <span className="text-sm text-neutral-400">
+        <span className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
         </span>
         {!hasMore || isLoading ? (

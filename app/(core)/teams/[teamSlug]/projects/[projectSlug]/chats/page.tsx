@@ -1,4 +1,5 @@
 import { bevorAction } from "@/actions";
+import Container from "@/components/container";
 import { navigation } from "@/utils/navigation";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
@@ -24,11 +25,11 @@ const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params, searchParams 
   });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <Container>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-100">Chat History</h1>
-          <p className="text-neutral-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Chat History</h1>
+          <p className="text-muted-foreground mt-1">
             View and continue your conversations about this version
           </p>
         </div>
@@ -45,7 +46,7 @@ const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params, searchParams 
           <ChatGrid query={query} />
         </HydrationBoundary>
       </div>
-    </div>
+    </Container>
   );
 };
 

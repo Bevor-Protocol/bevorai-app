@@ -1,4 +1,5 @@
 import { bevorAction } from "@/actions";
+import Container from "@/components/container";
 import { AsyncComponent } from "@/utils/types";
 import ProjectSettingsPageClient from "./client";
 
@@ -16,7 +17,7 @@ const ProjectSettingsPage: AsyncComponent<ProjectSettingsPageProps> = async ({
   const project = await bevorAction.getProjectBySlug(projectSlug);
 
   return (
-    <div className="flex flex-col max-w-6xl m-auto">
+    <Container>
       <div className="border-b border-b-neutral-800 py-4">
         <h1>Settings</h1>
       </div>
@@ -25,7 +26,7 @@ const ProjectSettingsPage: AsyncComponent<ProjectSettingsPageProps> = async ({
           <ProjectSettingsPageClient teamSlug={teamSlug} project={project} isUpdated={!!updated} />
         </div>
       </div>
-    </div>
+    </Container>
   );
 };
 

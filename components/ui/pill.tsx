@@ -7,7 +7,7 @@ const Pill: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, child
       className={cn(
         "inline-flex items-center justify-center",
         "px-2 py-1 text-xs rounded-full",
-        "bg-gray-800 text-white",
+        "bg-gray-800 text-foreground",
         className,
       )}
       {...rest}

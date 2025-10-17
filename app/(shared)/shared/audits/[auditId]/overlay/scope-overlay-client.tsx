@@ -47,10 +47,10 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
   if (scope.length === 0) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="border border-neutral-800 rounded-lg p-6">
+        <div className="border border-border rounded-lg p-6">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-neutral-100 mb-2">Audit Scope Overlay</h1>
-            <p className="text-neutral-400">No source files found for this version.</p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Audit Scope Overlay</h1>
+            <p className="text-muted-foreground">No source files found for this version.</p>
           </div>
         </div>
       </div>
@@ -62,14 +62,14 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
       <div className="space-y-4">
         <div className="flex flex-row justify-between">
           <div className="flex flex-row gap-6 text-sm justify-between">
-            <div className="flex items-center space-x-2 text-neutral-300">
-              <FileText className="size-4 text-neutral-400 flex-shrink-0" />
-              <span className="font-medium text-neutral-400">Source Type:</span>
+            <div className="flex items-center space-x-2 text-foreground">
+              <FileText className="size-4 text-muted-foreground flex-shrink-0" />
+              <span className="font-medium text-muted-foreground">Source Type:</span>
               <span className="text-neutral-200">{audit.code_version.version_method}</span>
             </div>
-            <div className="flex items-center space-x-2 text-neutral-300">
-              <Code className="size-4 text-neutral-400 flex-shrink-0" />
-              <span className="font-medium text-neutral-400">Identifier:</span>
+            <div className="flex items-center space-x-2 text-foreground">
+              <Code className="size-4 text-muted-foreground flex-shrink-0" />
+              <span className="font-medium text-muted-foreground">Identifier:</span>
               <span className="text-neutral-200 break-all">
                 {audit.code_version.version_identifier}
               </span>
@@ -94,19 +94,19 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
           <span>No icon = Not in scope</span>
         </div>
       </div>
-      <div className="grow border border-neutral-800 rounded-lg overflow-hidden flex flex-col">
+      <div className="grow border border-border rounded-lg overflow-hidden flex flex-col">
         <div
           className="grid flex-1 h-full"
           style={{ gridTemplateColumns: "250px 1fr", gridTemplateRows: "auto 1fr" }}
         >
-          <div className="flex items-center space-x-2 p-3 border-b border-r border-neutral-800">
-            <span className="text-sm font-medium text-neutral-100">Sources</span>
+          <div className="flex items-center space-x-2 p-3 border-b border-r border-border">
+            <span className="text-sm font-medium text-foreground">Sources</span>
             <span className="text-xs text-neutral-500">({scope.length})</span>
           </div>
-          <div className="flex items-center justify-between p-3 border-b border-neutral-800">
+          <div className="flex items-center justify-between p-3 border-b border-border">
             <div className="flex items-center space-x-2">
-              <FileText className="size-4 text-neutral-400" />
-              <span className="text-sm font-medium text-neutral-100">
+              <FileText className="size-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">
                 {getFileName(scopeHandler.selectedSource?.path ?? "")}
               </span>
               <span className="text-xs text-neutral-500">{scopeHandler.selectedSource?.path}</span>
@@ -118,14 +118,14 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
                   "px-3 py-1.5 text-xs rounded-md transition-all duration-200 border",
                   overlayEnabledRef.current
                     ? "bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50"
-                    : "bg-neutral-700/50 text-neutral-400 border-neutral-600/50 hover:bg-neutral-600/50 hover:border-neutral-500/70",
+                    : "bg-neutral-700/50 text-muted-foreground border-neutral-600/50 hover:bg-neutral-600/50 hover:border-neutral-500/70",
                 )}
               >
                 {overlayEnabledRef.current ? "Hide Overlay" : "Show Overlay"}
               </button>
             </div>
           </div>
-          <div className="border-r border-neutral-800 overflow-y-auto min-h-0">
+          <div className="border-r border-border overflow-y-auto min-h-0">
             {scope.map((source) => (
               <TreeSource key={source.id} source={source} scopeHandler={scopeHandler}>
                 <div className="ml-4 space-y-1">
@@ -202,8 +202,8 @@ const TreeSource = ({
       <div
         className={cn(
           "px-3 py-2 rounded-lg transition-colors flex justify-center flex-col cursor-pointer",
-          isInScope ? "text-neutral-300 hover:bg-neutral-800/50" : "text-neutral-500",
-          isSelected && "bg-neutral-800 text-neutral-100",
+          isInScope ? "text-foreground hover:bg-neutral-800/50" : "text-neutral-500",
+          isSelected && "bg-neutral-800 text-foreground",
         )}
         onClick={() => toggleSource(source)}
       >
@@ -243,7 +243,7 @@ const TreeContract = ({
         className={cn(
           "w-full flex items-center space-x-2 p-2 rounded-lg text-left transition-colors",
           isInScope
-            ? "hover:bg-neutral-800 text-neutral-300"
+            ? "hover:bg-neutral-800 text-foreground"
             : "hover:bg-neutral-800/50 text-neutral-500",
         )}
       >
@@ -277,7 +277,7 @@ const TreeFunction = ({
           scopeHandler.selectedScopes.some((s) => s.id === func.id)
             ? "bg-[rgba(56,139,253,0.25)] border border-[rgba(56,139,253,0.8)]"
             : func.is_within_scope
-              ? "hover:bg-neutral-800 text-neutral-400"
+              ? "hover:bg-neutral-800 text-muted-foreground"
               : "hover:bg-neutral-800/50 text-neutral-500",
         )}
       >

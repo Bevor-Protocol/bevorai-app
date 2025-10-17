@@ -1,6 +1,7 @@
 "use server";
 
 import { bevorAction } from "@/actions";
+import Container from "@/components/container";
 import { TeamHeader } from "@/components/team/header";
 import { Button } from "@/components/ui/button";
 import { AsyncComponent } from "@/utils/types";
@@ -18,7 +19,7 @@ const ProjectsPage: AsyncComponent = async () => {
   });
 
   return (
-    <div className="max-w-6xl m-auto">
+    <Container>
       <TeamHeader title="Projects" subTitle="projects">
         <Button>
           <Plus className="size-4" />
@@ -28,7 +29,7 @@ const ProjectsPage: AsyncComponent = async () => {
       <HydrationBoundary state={dehydrate(queryClient)}>
         <ProjectsPageClient team={team} />
       </HydrationBoundary>
-    </div>
+    </Container>
   );
 };
 

@@ -1,4 +1,5 @@
 import { bevorAction } from "@/actions";
+import Container from "@/components/container";
 import { AsyncComponent } from "@/utils/types";
 import AuditResults from "./audit-results";
 
@@ -12,9 +13,9 @@ const AuditResultsPage: AsyncComponent<Props> = async ({ params }) => {
   const version = await bevorAction.getContractVersion(audit.code_version_mapping_id);
 
   return (
-    <div className="px-6 py-4">
+    <Container>
       <AuditResults audit={audit} version={version} />
-    </div>
+    </Container>
   );
 };
 

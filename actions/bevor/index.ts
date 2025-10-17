@@ -9,6 +9,7 @@ import {
   AuditTableResponseI,
   AuditWithChildrenResponseI,
   AuthSchema,
+  ChatAttributeI,
   ChatMessagesResponseI,
   ChatPagination,
   ChatResponseI,
@@ -229,6 +230,10 @@ const getChats = async (filters: { [key: string]: string }): Promise<ChatPaginat
 
 const getChat = async (chatId: string): Promise<ChatMessagesResponseI> => {
   return chatService.getChat(chatId);
+};
+
+const getChatAttributes = async (chatId: string): Promise<ChatAttributeI[]> => {
+  return chatService.getChatAttributes(chatId);
 };
 
 // Team Operations
@@ -464,6 +469,7 @@ export {
   getAuditStatus,
   getAuditWithChildren,
   getChat,
+  getChatAttributes,
   getChats,
   getContractSources,
   getContractTree,

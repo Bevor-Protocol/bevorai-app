@@ -2,8 +2,10 @@ import { bevorAction } from "@/actions";
 import { ProjectHeader } from "@/app/(core)/teams/[teamSlug]/projects/[projectSlug]/header";
 import { AuditElement } from "@/components/audits/element";
 import { AuditEmpty } from "@/components/audits/empty";
+import Container from "@/components/container";
 import { CodeVersionElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
+import { navigation } from "@/utils/navigation";
 import { AsyncComponent, AuditTableResponseI, CodeVersionsResponseI } from "@/utils/types";
 import { Suspense } from "react";
 
@@ -22,7 +24,7 @@ const ProjectData: AsyncComponent<{
   const audits = await bevorAction.getAudits({ project_id: project.id, page_size: "6" });
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <VersionsSection teamSlug={teamSlug} teamId={team.id} versions={versions} />
       <AuditsSection teamSlug={teamSlug} projectSlug={projectSlug} audits={audits} />
     </div>
@@ -38,10 +40,10 @@ const VersionsSection: AsyncComponent<{
     <div>
       <div className="mb-4">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold text-neutral-100">Versions</h2>
+          <h2 className="text-xl font-semibold text-foreground">Versions</h2>
           <a
             href={`/teams/${teamSlug}/versions`}
-            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            className="text-sm text-link hover:text-link-accent transition-colors"
           >
             View all →
           </a>
@@ -49,7 +51,7 @@ const VersionsSection: AsyncComponent<{
       </div>
 
       {versions.results.length > 0 ? (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {versions.results.slice(0, 3).map((version) => (
             <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} isPreview />
           ))}
@@ -70,10 +72,10 @@ const AuditsSection: AsyncComponent<{
     <div>
       <div className="mb-4">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold text-neutral-100">Recent Audits</h2>
+          <h2 className="text-xl font-semibold text-foreground">Recent Audits</h2>
           <a
-            href={`/teams/${teamSlug}/projects/${projectSlug}/audits`}
-            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            href={navigation.project.audits({ teamSlug, projectSlug })}
+            className="text-sm text-link hover:text-link-accent transition-colors"
           >
             View all →
           </a>
@@ -81,7 +83,7 @@ const AuditsSection: AsyncComponent<{
       </div>
 
       {audits.results.length > 0 ? (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {audits.results.slice(0, 3).map((audit) => (
             <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
           ))}
@@ -97,7 +99,7 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
   const { teamSlug, projectSlug } = await params;
 
   return (
-    <div className="max-w-6xl m-auto">
+    <Container>
       <ProjectHeader teamSlug={teamSlug} projectSlug={projectSlug} includeDescription={true} />
       <Suspense
         fallback={
@@ -118,7 +120,7 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
       >
         <ProjectData teamSlug={teamSlug} projectSlug={projectSlug} />
       </Suspense>
-    </div>
+    </Container>
   );
 };
 

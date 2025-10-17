@@ -59,10 +59,8 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({ projectId, pa
           <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="size-8 text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-neutral-100 mb-2">
-            Version Created Successfully!
-          </h2>
-          <p className="text-neutral-400">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Version Created Successfully!</h2>
+          <p className="text-muted-foreground">
             Your contract has been uploaded and is ready for audit.
           </p>
         </div>
@@ -76,13 +74,13 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({ projectId, pa
         <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
           <Globe className="size-8 text-purple-400" />
         </div>
-        <h2 className="text-2xl font-bold text-neutral-100 mb-2">Contract Address</h2>
-        <p className="text-neutral-400">Enter a deployed contract address to analyze</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Contract Address</h2>
+        <p className="text-muted-foreground">Enter a deployed contract address to analyze</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="address" className="text-sm font-medium text-neutral-300 hidden">
+          <label htmlFor="address" className="text-sm font-medium text-foreground hidden">
             Contract Address
           </label>
           <div className="flex flex-row gap-4 flex-wrap">

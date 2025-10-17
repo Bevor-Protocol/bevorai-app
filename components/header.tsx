@@ -107,10 +107,10 @@ export const Notifications: React.FC = () => {
               <DropdownMenuItem onClick={() => setInviteUse(invite)}>
                 <Icon size="sm" seed={invite.team.id} className="text-blue-400 mt-1" />
                 <div className="flex-1">
-                  <p className="text-sm text-neutral-100">
+                  <p className="text-sm text-foreground">
                     You&apos;ve been added to a team: {invite.team.name}
                   </p>
-                  <p className="text-xs text-neutral-400">
+                  <p className="text-xs text-muted-foreground">
                     {new Date(invite.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -118,7 +118,7 @@ export const Notifications: React.FC = () => {
             </DialogTrigger>
           ))}
           {invites.length === 0 && (
-            <DropdownMenuItem disabled className="text-sm text-neutral-400 justify-center">
+            <DropdownMenuItem disabled className="text-sm text-muted-foreground justify-center">
               No team invites
             </DropdownMenuItem>
           )}

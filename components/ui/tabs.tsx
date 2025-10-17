@@ -93,7 +93,7 @@ export const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
           "cursor-pointer",
           isSelected
-            ? "bg-gray-700 text-white shadow-sm"
+            ? "bg-gray-700 text-foreground shadow-sm"
             : "text-gray-400 hover:text-gray-200 hover:bg-gray-700/50",
           className,
         )}

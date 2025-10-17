@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest): Promise<Response> {
   try {
-    const { message, chatId } = await req.json();
+    const { message, chatId, attributes } = await req.json();
 
     const sessionToken = req.cookies.get("bevor-token")?.value;
     const teamSlug = req.cookies.get("bevor-team-slug")?.value;
@@ -22,6 +22,7 @@ export async function POST(req: NextRequest): Promise<Response> {
             `/chats/${chatId}`,
             {
               message,
+              attributes,
             },
             {
               headers: {

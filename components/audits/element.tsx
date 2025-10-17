@@ -13,7 +13,7 @@ type AuditElementProps = {
 
 export const AuditElementLoader: React.FC = () => {
   return (
-    <div className="border border-neutral-800 rounded-lg p-4">
+    <div className="border border-border rounded-lg p-4">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -44,14 +44,8 @@ export const AuditElementLoader: React.FC = () => {
 };
 
 export const AuditElement: React.FC<AuditElementProps> = ({ audit, teamSlug }) => {
-  const totalFindings =
-    audit.findings.n_critical +
-    audit.findings.n_high +
-    audit.findings.n_medium +
-    audit.findings.n_low;
-
   return (
-    <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all">
+    <div className="border border-border rounded-lg p-4 hover:border-neutral-700 transition-all">
       <Link
         href={`/teams/${teamSlug}/projects/${audit.project_slug}/audits/${audit.id}`}
         className="block"
@@ -61,9 +55,7 @@ export const AuditElement: React.FC<AuditElementProps> = ({ audit, teamSlug }) =
             <div className="flex items-center space-x-3">
               <Shield className="size-4 text-purple-400" />
               <div className="flex items-center space-x-3">
-                <h3 className="text-sm font-medium text-neutral-100">
-                  Audit #{audit.id.slice(-8)}
-                </h3>
+                <h3 className="text-sm font-medium text-foreground">Audit #{audit.id.slice(-8)}</h3>
                 <div className="flex items-center space-x-1 text-xs text-neutral-500">
                   <Clock className="size-3" />
                   <span>{formatDate(audit.created_at)}</span>
@@ -80,24 +72,11 @@ export const AuditElement: React.FC<AuditElementProps> = ({ audit, teamSlug }) =
           </div>
           <div className="flex items-center justify-between pl-7">
             <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-1">
-                <div className="size-2 rounded-full bg-red-500/60"></div>
-                <span className="text-xs text-red-400">{audit.findings.n_critical}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <div className="size-2 rounded-full bg-orange-500/60"></div>
-                <span className="text-xs text-orange-400">{audit.findings.n_high}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <div className="size-2 rounded-full bg-yellow-500/60"></div>
-                <span className="text-xs text-yellow-400">{audit.findings.n_medium}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <div className="size-2 rounded-full bg-blue-500/60"></div>
-                <span className="text-xs text-blue-400">{audit.findings.n_low}</span>
+              <div className="text-xs text-muted-foreground">
+                {audit.n_versions} version{audit.n_versions !== 1 ? "s" : ""} audited
               </div>
             </div>
-            <div className="text-xs text-neutral-400">{totalFindings} total findings</div>
+            <div className="text-xs text-muted-foreground">Order: {audit.n}</div>
           </div>
         </div>
       </Link>

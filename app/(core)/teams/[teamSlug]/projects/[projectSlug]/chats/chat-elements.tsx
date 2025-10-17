@@ -17,15 +17,15 @@ export const ChatElement: React.FC<{
     })}
     className="block"
   >
-    <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
+    <div className="border border-border rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
             <MessageSquare className="size-5 text-blue-400" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-neutral-100">Chat #{chat.id.slice(-8)}</h3>
-            <div className="flex items-center space-x-2 text-xs text-neutral-400">
+            <h3 className="text-sm font-medium text-foreground">Chat #{chat.id.slice(-8)}</h3>
+            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
               <span>{chat.total_messages} messages</span>
             </div>
           </div>
@@ -43,7 +43,7 @@ export const ChatElement: React.FC<{
 );
 
 export const ChatElementLoader: React.FC = () => (
-  <div className="border border-neutral-800 rounded-lg p-4 animate-pulse">
+  <div className="border border-border rounded-lg p-4 animate-pulse">
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-3">
         <div className="w-10 h-10 rounded-lg bg-neutral-800"></div>

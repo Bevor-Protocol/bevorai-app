@@ -87,7 +87,7 @@ const CreateApiKeyModal: React.FC = () => {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-neutral-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Project Access
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -104,7 +104,7 @@ const CreateApiKeyModal: React.FC = () => {
                       className={`px-3 py-2 text-xs rounded border transition-colors ${
                         createForm.permissions.project === scope
                           ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                          : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                          : "border-neutral-700 text-muted-foreground hover:border-neutral-600"
                       }`}
                     >
                       {getScopeLabel(scope)}
@@ -114,7 +114,7 @@ const CreateApiKeyModal: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Contract Access
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -131,7 +131,7 @@ const CreateApiKeyModal: React.FC = () => {
                       className={`px-3 py-2 text-xs rounded border transition-colors ${
                         createForm.permissions.contract === scope
                           ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                          : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                          : "border-neutral-700 text-muted-foreground hover:border-neutral-600"
                       }`}
                     >
                       {getScopeLabel(scope)}
@@ -141,7 +141,7 @@ const CreateApiKeyModal: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Audit Access
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -158,7 +158,7 @@ const CreateApiKeyModal: React.FC = () => {
                       className={`px-3 py-2 text-xs rounded border transition-colors ${
                         createForm.permissions.audit === scope
                           ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                          : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                          : "border-neutral-700 text-muted-foreground hover:border-neutral-600"
                       }`}
                     >
                       {getScopeLabel(scope)}
@@ -174,7 +174,7 @@ const CreateApiKeyModal: React.FC = () => {
           )}
         </div>
 
-        <div className="flex justify-between pt-4 border-t border-neutral-800">
+        <div className="flex justify-between pt-4 border-t border-border">
           <DialogClose asChild>
             <Button type="button" variant="outline" disabled={createKeyMutation.isPending}>
               Cancel

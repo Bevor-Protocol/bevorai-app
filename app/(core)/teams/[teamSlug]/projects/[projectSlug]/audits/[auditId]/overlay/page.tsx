@@ -1,4 +1,5 @@
 import { bevorAction } from "@/actions";
+import Container from "@/components/container";
 import { AsyncComponent, TreeResponseI } from "@/utils/types";
 import { Suspense } from "react";
 import ScopeOverlayClient from "./scope-overlay-client";
@@ -49,7 +50,7 @@ const AuditOverlayData: AsyncComponent<{ auditId: string }> = async ({ auditId }
 
 // Loading component
 const OverlayLoading: React.FC = () => (
-  <div className="px-6 py-4 bg-neutral-950 min-h-remaining">
+  <Container>
     <div className="animate-pulse">
       <div className="space-y-8">
         {Array.from({ length: 3 }).map((_, index) => (
@@ -60,7 +61,7 @@ const OverlayLoading: React.FC = () => (
         ))}
       </div>
     </div>
-  </div>
+  </Container>
 );
 
 const AuditOverlayPage: AsyncComponent<AuditOverlayPageProps> = async ({ params }) => {

@@ -1,5 +1,6 @@
 import { bevorAction } from "@/actions";
 import { ProjectHeader } from "@/app/(core)/teams/[teamSlug]/projects/[projectSlug]/header";
+import Container from "@/components/container";
 import { VersionGrid } from "@/components/versions/grid";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
@@ -21,12 +22,12 @@ const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params })
   });
 
   return (
-    <div className="max-w-6xl m-auto">
+    <Container>
       <ProjectHeader teamSlug={teamSlug} projectSlug={projectSlug} />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <VersionGrid teamSlug={teamSlug} query={query} />
       </HydrationBoundary>
-    </div>
+    </Container>
   );
 };
 

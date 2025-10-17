@@ -67,14 +67,10 @@ export interface AuditObservationI {
   n: number;
   id: string;
   created_at: string;
-  status: string;
-  logic_version: string;
-  processing_time_seconds: number;
-  code_version_mapping_id: string;
   is_public: boolean;
   project_slug: string;
-  version: CodeVersionSchema;
-  findings: FindingSummaryI;
+  code_project_id: string;
+  n_versions: number;
 }
 
 export interface AuditTableResponseI {
@@ -285,6 +281,22 @@ export interface ChatResponseI {
 
 export interface ChatMessagesResponseI extends ChatResponseI {
   messages: ChatMessageI[];
+}
+
+export interface ChatAttributeI {
+  id: string;
+  type:
+    | "FunctionDefinition"
+    | "ModifierDefinition"
+    | "VariableDeclaration"
+    | "EventDefinition"
+    | "StructDefinition"
+    | "EnumDefinition"
+    | "ErrorDefinition"
+    | "ContractDefinition";
+  name: string;
+  string: string;
+  metadata?: string;
 }
 
 export interface ChatWithAuditResponseI extends ChatResponseI {

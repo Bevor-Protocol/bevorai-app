@@ -6,6 +6,7 @@ export const navigation = {
   user: {
     overview: (data: HrefProps) => "/user",
     settings: (data: HrefProps) => "/user/settings",
+    notifications: (data: HrefProps) => "/user/notifications",
   },
   team: {
     overview: (data: HrefProps) => `/teams/${data.teamSlug}`,
@@ -54,16 +55,12 @@ export const navigation = {
   version: {
     overview: (data: HrefProps) =>
       `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}`,
-    sources: (data: HrefProps) =>
-      `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/sources`,
     audits: {
       overview: (data: HrefProps) =>
         `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/audits`,
       new: (data: HrefProps) =>
         `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/audits/new`,
     },
-    chats: (data: HrefProps) =>
-      `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/chats`,
     analytics: (data: HrefProps) =>
       `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/analytics`,
   },
@@ -79,9 +76,5 @@ export const navigation = {
     overview: (data: HrefProps) => `/shared/audits/${data.auditId}`,
     scope: (data: HrefProps) => `/shared/audits/${data.auditId}/scope`,
     overlay: (data: HrefProps) => `/shared/audits/${data.auditId}/overlay`,
-  },
-  chat: {
-    overview: (data: HrefProps) =>
-      `/teams/${data.teamSlug}/projects/${data.projectSlug}/chats/${data.chatId}`,
   },
 };

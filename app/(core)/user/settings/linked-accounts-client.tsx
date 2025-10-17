@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { trimAddress } from "@/utils/helpers";
 import {
@@ -32,12 +33,12 @@ const EmailAccount: React.FC<AccountProps & { linkedAccounts: EmailWithMetadata[
   };
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-neutral-800 last:border-b-0">
+    <div className="flex items-center justify-between py-2 border-b border-border last:border-b-0">
       <div className="flex items-center space-x-3">
         <Mail className="size-4 text-blue-400" />
         <div>
-          <p className="text-neutral-100 font-medium text-sm">Email</p>
-          <p className="text-xs text-neutral-400">
+          <p className="text-foreground font-medium text-sm">Email</p>
+          <p className="text-xs text-muted-foreground">
             {isLoading ? (
               <span className="inline-block w-20 h-3 bg-neutral-700 rounded animate-pulse" />
             ) : isLinked ? (
@@ -60,7 +61,7 @@ const EmailAccount: React.FC<AccountProps & { linkedAccounts: EmailWithMetadata[
             {canUnlink && (
               <button
                 onClick={handleDisconnect}
-                className="p-1 text-neutral-400 hover:text-red-400 transition-colors cursor-pointer"
+                className="p-1 text-muted-foreground hover:text-red-400 transition-colors cursor-pointer"
                 title="Unlink email"
               >
                 <Unlink className="w-3 h-3" />
@@ -69,7 +70,7 @@ const EmailAccount: React.FC<AccountProps & { linkedAccounts: EmailWithMetadata[
           </>
         ) : (
           <button
-            className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors cursor-pointer"
+            className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-foreground rounded transition-colors cursor-pointer"
             onClick={linkEmail}
           >
             Connect
@@ -95,12 +96,12 @@ const GoogleAccount: React.FC<AccountProps & { linkedAccounts: GoogleOAuthWithMe
   };
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-neutral-800 last:border-b-0">
+    <div className="flex items-center justify-between py-2 border-b border-border last:border-b-0">
       <div className="flex items-center space-x-3">
         <Chrome className="size-4 text-green-400" />
         <div>
-          <p className="text-neutral-100 font-medium text-sm">Google</p>
-          <p className="text-xs text-neutral-400">
+          <p className="text-foreground font-medium text-sm">Google</p>
+          <p className="text-xs text-muted-foreground">
             {isLoading ? (
               <span className="inline-block w-20 h-3 bg-neutral-700 rounded animate-pulse" />
             ) : isLinked ? (
@@ -117,13 +118,13 @@ const GoogleAccount: React.FC<AccountProps & { linkedAccounts: GoogleOAuthWithMe
           <span className="inline-block w-16 h-6 bg-neutral-700 rounded animate-pulse" />
         ) : isLinked ? (
           <>
-            <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">
+            <span className="px-2 py-1 text-xs bg-green text-green-foreground rounded">
               Connected
             </span>
             {canUnlink && (
               <button
                 onClick={handleDisconnect}
-                className="p-1 text-neutral-400 hover:text-red-400 transition-colors cursor-pointer"
+                className="p-1 text-muted-foreground hover:text-red-400 transition-colors cursor-pointer"
                 title="Unlink Google"
               >
                 <Unlink className="w-3 h-3" />
@@ -132,7 +133,7 @@ const GoogleAccount: React.FC<AccountProps & { linkedAccounts: GoogleOAuthWithMe
           </>
         ) : (
           <button
-            className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors cursor-pointer"
+            className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-foreground rounded transition-colors cursor-pointer"
             onClick={linkGoogle}
           >
             Connect
@@ -156,12 +157,12 @@ const WalletAccount: React.FC<AccountProps & { linkedAccounts: WalletWithMetadat
   };
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-neutral-800 last:border-b-0">
+    <div className="flex items-center justify-between py-2 border-b border-border last:border-b-0">
       <div className="flex items-center space-x-3">
         <Wallet className="size-4 text-purple-400" />
         <div>
-          <p className="text-neutral-100 font-medium text-sm">Wallet</p>
-          <p className="text-xs text-neutral-400">
+          <p className="text-foreground font-medium text-sm">Wallet</p>
+          <p className="text-xs text-muted-foreground">
             {isLoading ? (
               <span className="inline-block w-24 h-3 bg-neutral-700 rounded animate-pulse" />
             ) : isLinked ? (
@@ -192,16 +193,16 @@ const WalletAccount: React.FC<AccountProps & { linkedAccounts: WalletWithMetadat
                 {canUnlink && (
                   <button
                     onClick={() => handleDisconnect((account as any).address)}
-                    className="p-1 text-neutral-400 hover:text-red-400 transition-colors cursor-pointer"
+                    className="p-1 text-muted-foreground hover:text-red-400 transition-colors cursor-pointer"
                     title="Unlink wallet"
                   >
                     <Unlink className="w-3 h-3" />
                   </button>
                 )}
-                <span className="text-xs text-neutral-400">
+                <span className="text-xs text-muted-foreground">
                   {trimAddress((account as any).address)}
                 </span>
-                <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">
+                <span className="px-2 py-1 text-xs bg-green text-green-foreground rounded">
                   Connected
                 </span>
               </div>
@@ -209,7 +210,7 @@ const WalletAccount: React.FC<AccountProps & { linkedAccounts: WalletWithMetadat
           </div>
         ) : (
           <button
-            className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors cursor-pointer"
+            className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-foreground rounded transition-colors cursor-pointer"
             onClick={linkWallet}
           >
             Connect
@@ -238,11 +239,11 @@ const LinkedAccountsClient: React.FC = () => {
   const googleAccounts = linkedAccounts.filter((account) => account.type === "google_oauth");
 
   return (
-    <div className="border border-neutral-800 rounded-lg p-6">
-      <h2 className="text-lg font-semibold text-neutral-100">
+    <div className="border border-border rounded-lg p-6">
+      <h2 className="text-lg font-semibold text-foreground">
         Linked Accounts ({linkedAccounts.length ?? 0})
       </h2>
-      <p className="text-sm text-neutral-400 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         You can link many wallets, but only 1 email or google account. At least 1 account must be
         connected.
       </p>
@@ -262,19 +263,20 @@ export const CreditSync: React.FC<{ credits: number }> = ({ credits }) => {
   };
 
   return (
-    <div className="text-center p-4 border border-neutral-800 rounded-lg relative">
-      <div className="text-2xl font-bold text-neutral-100 mb-1">{credits}</div>
-      <div className="text-sm text-neutral-400">Credits</div>
+    <div className="text-center p-4 border border-border rounded-lg relative">
+      <div className="text-2xl font-bold text-foreground mb-1">{credits}</div>
+      <div className="text-sm text-muted-foreground">Credits</div>
 
       <Tooltip>
-        <TooltipTrigger>
-          <button
+        <TooltipTrigger className="absolute right-2 top-2" asChild>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleSyncCredits}
-            className="p-1 text-neutral-400 hover:text-blue-400 transition-colors cursor-pointer"
-            disabled={true}
+            className="p-1 text-muted-foreground hover:text-blue-400 transition-colors cursor-pointer"
           >
-            <RefreshCcw className="size-4" />
-          </button>
+            <RefreshCcw className="size-4 absolute" />
+          </Button>
         </TooltipTrigger>
         <TooltipContent side="top" align="end" className="min-w-32">
           Sync credits from your account

@@ -79,26 +79,26 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
     <div className="flex flex-col gap-8">
       <div className="space-y-4">
         <div className="flex items-center space-x-3">
-          <h3 className="text-xl font-semibold text-neutral-100">Team Information</h3>
+          <h3 className="text-xl font-semibold text-foreground">Team Information</h3>
         </div>
         <div className="flex flex-row gap-8 items-center">
-          <p className="block text-sm font-medium text-neutral-300 w-16">Created</p>
-          <div className="flex items-center space-x-2 text-sm text-neutral-400">
+          <p className="block text-sm font-medium text-foreground w-16">Created</p>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Calendar className="size-4" />
             <span>{formatDate(team.created_at)}</span>
           </div>
         </div>
         <div className="flex flex-row gap-8 items-center">
-          <p className="block text-sm font-medium text-neutral-300 w-16">Your Role</p>
-          <div className="flex items-center space-x-2 text-sm text-neutral-400">
+          <p className="block text-sm font-medium text-foreground w-16">Your Role</p>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <User className="size-4" />
             <span className="capitalize">{team.role}</span>
           </div>
         </div>
         {team.is_default && (
           <div className="flex flex-row gap-8 items-center">
-            <p className="block text-sm font-medium text-neutral-300 w-16">Type</p>
-            <div className="flex items-center space-x-2 text-sm text-neutral-400">
+            <p className="block text-sm font-medium text-foreground w-16">Type</p>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded text-xs">
                 Default Team
               </span>
@@ -110,13 +110,13 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
       <form className="flex flex-col gap-4" onSubmit={handleSave}>
         <div className="flex flex-row flex-wrap items-end gap-x-4 gap-y-2">
           <div className="grow min-w-52 max-w-80">
-            <label className="block font-medium text-neutral-300 mb-2">Team Name</label>
+            <label className="block font-medium text-foreground mb-2">Team Name</label>
             <input
               type="text"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               disabled={!isOwner}
-              className="w-full h-10 px-3 border border-neutral-700 text-neutral-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-10 px-3 border border-neutral-700 text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Enter team name"
             />
           </div>
@@ -143,16 +143,16 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
       </form>
 
       {canDelete && (
-        <div className="border-t border-neutral-800 pt-8">
+        <div className="border-t border-border pt-8">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <h3 className="text-lg font-medium text-neutral-100">Delete Team</h3>
+              <h3 className="text-lg font-medium text-foreground">Delete Team</h3>
             </div>
             <div className="bg-neutral-800/30 border border-neutral-700 rounded-lg p-4">
               <div className="flex items-start space-x-3">
-                <Trash2 className="size-4 text-neutral-400 mt-0.5 flex-shrink-0" />
+                <Trash2 className="size-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm text-neutral-300 mb-4">
+                  <p className="text-sm text-foreground mb-4">
                     This will permanently delete the team and all associated projects, audits, and
                     data.
                   </p>
@@ -166,7 +166,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
                     </button>
                   ) : (
                     <div className="flex items-center space-x-3">
-                      <span className="text-sm text-neutral-300 font-medium">Are you sure?</span>
+                      <span className="text-sm text-foreground font-medium">Are you sure?</span>
                       <button
                         onClick={() => deleteTeamMutation.mutate()}
                         disabled={deleteTeamMutation.isPending}
@@ -177,7 +177,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
                       </button>
                       <button
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="text-neutral-400 hover:text-neutral-300 cursor-pointer flex gap-2 items-center"
+                        className="text-muted-foreground hover:text-foreground cursor-pointer flex gap-2 items-center"
                       >
                         Cancel
                       </button>

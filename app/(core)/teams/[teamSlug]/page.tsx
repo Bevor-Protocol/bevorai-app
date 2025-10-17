@@ -1,12 +1,12 @@
 import { bevorAction } from "@/actions";
 import { AuditElement } from "@/components/audits/element";
 import { AuditEmpty } from "@/components/audits/empty";
+import Container from "@/components/container";
 import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
 import { TeamHeader } from "@/components/team/header";
 import { CodeVersionElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
-import { navigation } from "@/utils/navigation";
 import { AsyncComponent } from "@/utils/types";
 import { Suspense } from "react";
 
@@ -42,7 +42,7 @@ const VersionsPreview: AsyncComponent<{
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {versions.results.map((version) => (
         <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} isPreview />
       ))}
@@ -60,7 +60,7 @@ const AuditsPreview: AsyncComponent<{
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {audits.results.map((audit) => (
         <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
       ))}
@@ -74,57 +74,39 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   const team = await bevorAction.getTeam();
 
   return (
-    <div className="max-w-6xl m-auto">
+    <Container>
       <TeamHeader title="Overview" subTitle="projects, versions, and security analyses" />
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
-        <div className="xl:col-span-2 space-y-8">
+      <div className="flex flex-col gap-8">
+        <div>
           <div>
             <div className="flex items-center gap-4 mb-4">
-              <h3 className="text-lg font-medium text-neutral-100">Recent Audits</h3>
-              <a
-                href={navigation.team.audits({ teamSlug })}
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                View all →
-              </a>
-            </div>
-            <Suspense>
-              <VersionsPreview teamSlug={teamSlug} />
-            </Suspense>
-          </div>
-          <div>
-            <div className="flex items-center gap-4 mb-4">
-              <h3 className="text-lg font-medium text-neutral-100">Recent Audits</h3>
-              <a
-                href={navigation.team.audits({ teamSlug })}
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                View all →
-              </a>
-            </div>
-            <Suspense>
-              <AuditsPreview teamSlug={teamSlug} />
-            </Suspense>
-          </div>
-        </div>
-        <div className="xl:col-span-3">
-          <div>
-            <div className="flex items-center gap-4 mb-4">
-              <h2 className="text-lg font-semibold text-neutral-100">Projects</h2>
-              <a
-                href={navigation.team.projects({ teamSlug: team.slug })}
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                View all →
-              </a>
+              <h2 className="text-lg font-semibold text-foreground">Projects</h2>
             </div>
             <Suspense>
               <ProjectsSection team={team} />
             </Suspense>
           </div>
         </div>
+        <div className="flex flex-col items-start lg:flex-row lg:items-center gap-8">
+          <div className="basis-1/2">
+            <div className="flex items-center gap-4 mb-4">
+              <h3 className="text-lg font-medium text-foreground">Recent Code Versions</h3>
+            </div>
+            <Suspense>
+              <VersionsPreview teamSlug={teamSlug} />
+            </Suspense>
+          </div>
+          <div className="basis-1/2">
+            <div className="flex items-center gap-4 mb-4">
+              <h3 className="text-lg font-medium text-foreground">Recent Audits</h3>
+            </div>
+            <Suspense>
+              <AuditsPreview teamSlug={teamSlug} />
+            </Suspense>
+          </div>
+        </div>
       </div>
-    </div>
+    </Container>
   );
 };
 

@@ -52,7 +52,7 @@ const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ teamName, memberI
           <label className="text-md font-medium text-neutral-200">
             What happens when you leave:
           </label>
-          <ul className="text-sm text-neutral-400 space-y-1 ml-4">
+          <ul className="text-sm text-muted-foreground space-y-1 ml-4">
             <li>• You will lose access to all team projects and resources</li>
             <li>• Your team membership will be permanently removed</li>
             <li>• You will need to be re-invited to rejoin the team</li>
@@ -63,7 +63,7 @@ const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ teamName, memberI
         {isSuccess && <p className="text-sm text-green-400">Successfully left the team</p>}
       </div>
 
-      <div className="flex justify-between pt-4 border-t border-neutral-800">
+      <div className="flex justify-between pt-4 border-t border-border">
         <DialogClose asChild disabled={isPending}>
           <Button type="button" variant="outline">
             Cancel

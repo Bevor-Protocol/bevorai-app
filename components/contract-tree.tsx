@@ -96,7 +96,7 @@ const ContractTree = ({
           return (
             <div
               key={source.id}
-              className="bg-neutral-900/50 border border-neutral-800 rounded-lg overflow-hidden"
+              className="bg-neutral-900/50 border border-border rounded-lg overflow-hidden"
             >
               {/* Source Header */}
               <div
@@ -127,9 +127,9 @@ const ContractTree = ({
                         className="p-1 hover:bg-neutral-700/50 rounded transition-colors"
                       >
                         {isSourceExpanded ? (
-                          <ChevronDown className="size-4 text-neutral-400" />
+                          <ChevronDown className="size-4 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="size-4 text-neutral-400" />
+                          <ChevronRight className="size-4 text-muted-foreground" />
                         )}
                       </button>
                     ) : (
@@ -146,23 +146,23 @@ const ContractTree = ({
                       <span className="text-xs font-medium text-purple-400 uppercase tracking-wide flex-shrink-0">
                         Source
                       </span>
-                      <span className="font-medium text-neutral-100 truncate">{source.path}</span>
+                      <span className="font-medium text-foreground truncate">{source.path}</span>
                       {source.is_imported && (
-                        <span className="px-2 py-0.5 bg-neutral-700 text-xs text-neutral-300 rounded flex-shrink-0">
+                        <span className="px-2 py-0.5 bg-neutral-700 text-xs text-foreground rounded flex-shrink-0">
                           Imported
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-6 text-xs text-neutral-400">
+                <div className="flex items-center space-x-6 text-xs text-muted-foreground">
                   <div className="text-center min-w-[80px]">
-                    <div className="font-medium text-neutral-100">{source.contracts.length}</div>
+                    <div className="font-medium text-foreground">{source.contracts.length}</div>
                     <div>Contracts</div>
                   </div>
                   {hasAuditableFcts && (
                     <div className="text-center min-w-[80px]">
-                      <div className="font-medium text-neutral-100 flex items-center justify-center space-x-1">
+                      <div className="font-medium text-foreground flex items-center justify-center space-x-1">
                         <Shield className="w-3 h-3" />
                         <span>{auditableCount}</span>
                       </div>
@@ -171,7 +171,7 @@ const ContractTree = ({
                   )}
                   {readOnly && (
                     <div className="text-center min-w-[80px]">
-                      <div className="font-medium text-neutral-100 flex items-center justify-center space-x-1">
+                      <div className="font-medium text-foreground flex items-center justify-center space-x-1">
                         <Eye className="w-3 h-3" />
                         <span>{scopeCount}</span>
                       </div>
@@ -191,7 +191,7 @@ const ContractTree = ({
 
               {/* Contracts */}
               {isSourceExpanded && hasAuditableFcts && (
-                <div className="border-t border-neutral-800 bg-neutral-950/30">
+                <div className="border-t border-border bg-neutral-950/30">
                   {source.contracts.map((contract) => {
                     const isContractSelected = isSelected(contract.id, "contract");
                     const isContractExpanded = expandedContracts[contract.id] ?? false;
@@ -200,10 +200,7 @@ const ContractTree = ({
                     const hasAuditableFcts = contractAuditableCount > 0;
 
                     return (
-                      <div
-                        key={contract.id}
-                        className="border-b border-neutral-800/50 last:border-b-0"
-                      >
+                      <div key={contract.id} className="border-b border-border/50 last:border-b-0">
                         {/* Contract Header */}
                         <div
                           className={cn(
@@ -233,9 +230,9 @@ const ContractTree = ({
                                   className="p-1 hover:bg-neutral-700/50 rounded transition-colors"
                                 >
                                   {isContractExpanded ? (
-                                    <ChevronDown className="w-3 h-3 text-neutral-400" />
+                                    <ChevronDown className="w-3 h-3 text-muted-foreground" />
                                   ) : (
-                                    <ChevronRight className="w-3 h-3 text-neutral-400" />
+                                    <ChevronRight className="w-3 h-3 text-muted-foreground" />
                                   )}
                                 </button>
                               )}
@@ -246,22 +243,22 @@ const ContractTree = ({
                                 <span className="text-xs font-medium text-blue-400 uppercase tracking-wide flex-shrink-0">
                                   Contract
                                 </span>
-                                <span className="font-medium text-neutral-100 truncate">
+                                <span className="font-medium text-foreground truncate">
                                   {contract.name}
                                 </span>
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-6 text-xs text-neutral-400">
+                          <div className="flex items-center space-x-6 text-xs text-muted-foreground">
                             <div className="text-center min-w-[80px]">
-                              <div className="font-medium text-neutral-100">
+                              <div className="font-medium text-foreground">
                                 {contract.functions.length}
                               </div>
                               <div>Functions</div>
                             </div>
                             {hasAuditableFcts && (
                               <div className="text-center min-w-[80px]">
-                                <div className="font-medium text-neutral-100 flex items-center justify-center space-x-1">
+                                <div className="font-medium text-foreground flex items-center justify-center space-x-1">
                                   <Shield className="w-3 h-3" />
                                   <span>{contractAuditableCount}</span>
                                 </div>
@@ -270,7 +267,7 @@ const ContractTree = ({
                             )}
                             {readOnly && (
                               <div className="text-center min-w-[80px]">
-                                <div className="font-medium text-neutral-100 flex items-center justify-center space-x-1">
+                                <div className="font-medium text-foreground flex items-center justify-center space-x-1">
                                   <Eye className="w-3 h-3" />
                                   <span>{contractScopeCount}</span>
                                 </div>
@@ -297,7 +294,7 @@ const ContractTree = ({
                                   <div
                                     key={func.id}
                                     className={cn(
-                                      "flex items-center justify-between p-3 transition-all duration-200 border-b border-neutral-800/30 last:border-b-0 ml-12",
+                                      "flex items-center justify-between p-3 transition-all duration-200 border-b border-border/30 last:border-b-0 ml-12",
                                       !readOnly && "cursor-pointer",
                                       isFunctionSelected || func.is_within_scope
                                         ? "bg-green-500/10 border-l-4 border-l-green-500"
@@ -317,15 +314,15 @@ const ContractTree = ({
                                           <span className="text-xs font-medium text-green-400 uppercase tracking-wide flex-shrink-0">
                                             Function
                                           </span>
-                                          <span className="font-medium text-neutral-100 truncate">
+                                          <span className="font-medium text-foreground truncate">
                                             {func.name}
                                           </span>
                                         </div>
                                       </div>
                                     </div>
-                                    <div className="flex items-center space-x-6 text-xs text-neutral-400">
+                                    <div className="flex items-center space-x-6 text-xs text-muted-foreground">
                                       <div className="text-center min-w-[80px]">
-                                        <div className="font-medium text-neutral-100">
+                                        <div className="font-medium text-foreground">
                                           {func.is_override ? "Yes" : "No"}
                                         </div>
                                         <div>Override</div>

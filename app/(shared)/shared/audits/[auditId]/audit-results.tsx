@@ -48,7 +48,7 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
       case "low":
         return "text-blue-400";
       default:
-        return "text-neutral-400";
+        return "text-muted-foreground";
     }
   };
 
@@ -72,7 +72,7 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-100 mb-2">Shared Audit Results</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Shared Audit Results</h1>
         </div>
       </div>
 
@@ -94,7 +94,7 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
                       {level}
                     </span>
                   </div>
-                  <div className="text-3xl font-bold text-neutral-100">{findings.length}</div>
+                  <div className="text-3xl font-bold text-foreground">{findings.length}</div>
                 </div>
               );
             })}
@@ -102,10 +102,10 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
 
           {/* Summary Header */}
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-neutral-100">Security Findings</h2>
+            <h2 className="text-xl font-semibold text-foreground">Security Findings</h2>
             <div className="flex items-center space-x-2">
-              <Shield className="size-4 text-neutral-400" />
-              <span className="text-sm text-neutral-400">
+              <Shield className="size-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
                 {audit.findings.length} finding{audit.findings.length === 1 ? "" : "s"} found
               </span>
             </div>
@@ -135,11 +135,11 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
                           <div className="flex items-start space-x-4 flex-1">
                             {getSeverityIcon(level)}
                             <div className="flex-1 space-y-2">
-                              <h4 className="text-base font-medium text-neutral-100">
+                              <h4 className="text-base font-medium text-foreground">
                                 {finding.name || `Finding ${index + 1}`}
                               </h4>
                               {finding.explanation && (
-                                <p className="text-sm text-neutral-400 leading-relaxed">
+                                <p className="text-sm text-muted-foreground leading-relaxed">
                                   {finding.explanation}
                                 </p>
                               )}
@@ -147,20 +147,20 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
                                 <div className="mt-4 space-y-4 pt-4 border-t border-neutral-700/50">
                                   {finding.recommendation && (
                                     <div>
-                                      <h5 className="text-sm font-medium text-neutral-300 mb-2">
+                                      <h5 className="text-sm font-medium text-foreground mb-2">
                                         Recommendation
                                       </h5>
-                                      <p className="text-sm text-neutral-400 leading-relaxed">
+                                      <p className="text-sm text-muted-foreground leading-relaxed">
                                         {finding.recommendation}
                                       </p>
                                     </div>
                                   )}
                                   {finding.reference && (
                                     <div>
-                                      <h5 className="text-sm font-medium text-neutral-300 mb-2">
+                                      <h5 className="text-sm font-medium text-foreground mb-2">
                                         Reference
                                       </h5>
-                                      <p className="text-sm text-neutral-400 leading-relaxed">
+                                      <p className="text-sm text-muted-foreground leading-relaxed">
                                         {finding.reference}
                                       </p>
                                     </div>

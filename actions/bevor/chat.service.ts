@@ -1,5 +1,10 @@
 import api from "@/lib/api";
-import { ChatMessagesResponseI, ChatPagination, ChatResponseI } from "@/utils/types";
+import {
+  ChatAttributeI,
+  ChatMessagesResponseI,
+  ChatPagination,
+  ChatResponseI,
+} from "@/utils/types";
 
 class ChatService {
   async initiateChat(versionId: string): Promise<ChatResponseI> {
@@ -20,6 +25,12 @@ class ChatService {
   async getChat(chatId: string): Promise<ChatMessagesResponseI> {
     return api.get(`/chats/${chatId}`).then((response) => {
       return response.data;
+    });
+  }
+
+  async getChatAttributes(chatId: string): Promise<ChatAttributeI[]> {
+    return api.get(`/chats/${chatId}/attributes`).then((response) => {
+      return response.data.results;
     });
   }
 }

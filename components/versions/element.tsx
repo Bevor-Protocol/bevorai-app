@@ -1,15 +1,13 @@
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, truncateVersion } from "@/utils/helpers";
-import { navigation } from "@/utils/navigation";
 import { CodeVersionSchema } from "@/utils/types";
-import { Clock, Code, ExternalLink, Network, Shield } from "lucide-react";
+import { Clock, Code, ExternalLink, Network } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
 export const CodeVersionElementLoader: React.FC = () => {
   return (
-    <div className="border border-neutral-800 rounded-lg p-4">
+    <div className="border border-border rounded-lg p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 flex-1">
           <Skeleton className="size-8 rounded-lg" />
@@ -17,7 +15,7 @@ export const CodeVersionElementLoader: React.FC = () => {
             <div className="flex items-center space-x-2 mb-1">
               <Skeleton className="w-48 h-5" />
             </div>
-            <div className="flex items-center space-x-4 text-xs text-neutral-400">
+            <div className="flex items-center space-x-4 text-xs text-muted-foreground">
               <div className="flex items-center space-x-1">
                 <Skeleton className="w-3 h-3" />
                 <Skeleton className="w-20 h-3" />
@@ -46,7 +44,7 @@ export const CodeVersionElement: React.FC<{
   isPreview?: boolean;
 }> = ({ version, teamSlug, isPreview = false }) => {
   return (
-    <div className="border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all">
+    <div className="border border-border rounded-lg p-4 hover:border-neutral-700 transition-all">
       <div className="flex items-center justify-between">
         <Link
           href={`/teams/${teamSlug}/projects/${version.project_slug}/versions/${version.id}`}
@@ -55,7 +53,7 @@ export const CodeVersionElement: React.FC<{
           <div className="space-y-1">
             <div className="flex flex-row gap-3 items-center">
               <Code className="size-4 text-green-400" />
-              <div className="text-base font-medium text-neutral-100 flex flex-row gap-4 ">
+              <div className="text-base font-medium text-foreground flex flex-row gap-4 ">
                 <p>
                   {version.version_method} -{" "}
                   {truncateVersion({
@@ -69,7 +67,7 @@ export const CodeVersionElement: React.FC<{
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-4 text-xs text-neutral-400 pl-7">
+            <div className="flex items-center space-x-4 text-xs text-muted-foreground pl-7">
               {version.solc_version && !isPreview && (
                 <span className="text-xs bg-neutral-800 px-2 py-0.5 rounded">
                   Solidity {version.solc_version}
@@ -77,7 +75,7 @@ export const CodeVersionElement: React.FC<{
               )}
               {version.network && (
                 <div className="flex items-center space-x-1">
-                  <Network className="size-3 text-neutral-400" />
+                  <Network className="size-3 text-muted-foreground" />
                   <span>{version.network}</span>
                 </div>
               )}
@@ -87,21 +85,6 @@ export const CodeVersionElement: React.FC<{
         </Link>
         <div className="flex items-center space-x-2 ml-4">
           {version.source_url && <ExternalLink className="size-4 text-neutral-500" />}
-          <div className="relative">
-            <Link
-              href={navigation.version.audits.new({
-                teamSlug,
-                projectSlug: version.project_slug,
-                versionId: version.id,
-              })}
-              className="inline-block"
-            >
-              <Button size="sm" variant="secondary">
-                <Shield className="size-3 text-sm" />
-                <span className="text-xs">Audit</span>
-              </Button>
-            </Link>
-          </div>
         </div>
       </div>
     </div>

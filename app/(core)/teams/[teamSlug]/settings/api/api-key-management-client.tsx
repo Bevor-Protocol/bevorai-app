@@ -56,10 +56,10 @@ const ApiKeyManagementClient: React.FC = () => {
     <div className="flex flex-col gap-8">
       <div className="space-y-4">
         <div className="flex flex-row mb-8 justify-between">
-          <h3 className="text-xl font-semibold text-neutral-100">API Keys</h3>
+          <h3 className="text-xl font-semibold text-foreground">API Keys</h3>
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="text-white">
+              <Button className="text-foreground">
                 <Plus className="size-4 mr-2" />
                 Create API Key
               </Button>
@@ -69,7 +69,7 @@ const ApiKeyManagementClient: React.FC = () => {
             </DialogContent>
           </Dialog>
         </div>
-        <p className="text-neutral-400">
+        <p className="text-muted-foreground">
           API keys allow you to integrate with our API for MCP, CI/CD, and other automation.
         </p>
       </div>
@@ -82,12 +82,12 @@ const ApiKeyManagementClient: React.FC = () => {
       {isLoading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto"></div>
-          <p className="text-neutral-400 mt-4">Loading API keys...</p>
+          <p className="text-muted-foreground mt-4">Loading API keys...</p>
         </div>
       ) : apiKeys.length === 0 ? (
         <div className="text-center py-12">
-          <Key className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-neutral-100 mb-2">No API Keys</h3>
+          <Key className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No API Keys</h3>
         </div>
       ) : (
         <div className="border border-blue-500/50 rounded divide-blue-500/25 divide-y">
@@ -101,8 +101,8 @@ const ApiKeyManagementClient: React.FC = () => {
                   <Key className="size-5 text-blue-400" />
                 </div>
                 <div className="flex flex-col space-y-1">
-                  <div className="text-sm font-medium text-neutral-100">{apiKey.name}</div>
-                  <div className="text-xs text-neutral-400">
+                  <div className="text-sm font-medium text-foreground">{apiKey.name}</div>
+                  <div className="text-xs text-muted-foreground">
                     Created {formatDate(apiKey.created_at)}
                   </div>
                 </div>

@@ -3,6 +3,7 @@
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
@@ -18,7 +19,7 @@ const TeamDisplay: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
     <div
       className={cn(
         "flex items-center justify-between",
-        "p-2 border-b border-neutral-800 last:border-b-0 rounded-md",
+        "p-2 border-b border-border last:border-b-0 rounded-md",
       )}
     >
       <div className="flex items-center space-x-3">
@@ -26,7 +27,7 @@ const TeamDisplay: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
           <Icon size="sm" seed={team.id} className="size-4" />
           <span className="font-medium">{team.name}</span>
         </div>
-        <p className="text-sm text-neutral-400">{formatDate(team.created_at)}</p>
+        <p className="text-sm text-muted-foreground">{formatDate(team.created_at)}</p>
       </div>
       <div className="flex items-center space-x-2">
         <span
@@ -40,25 +41,17 @@ const TeamDisplay: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger>
-            <div className="p-3 text-neutral-400">
+            <div className="p-3 text-muted-foreground">
               <Ellipsis />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="top-full right-0">
-            <div className="p-2 bg-black shadow-sm rounded-lg border border-neutral-800">
-              <Link
-                href={navigation.team.overview({ teamSlug: team.slug })}
-                className="rounded-md block px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100 transition-colors"
-              >
-                View
-              </Link>
-              <Link
-                href={navigation.team.settings.overview({ teamSlug: team.slug })}
-                className="rounded-md block px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100 transition-colors"
-              >
-                Manage
-              </Link>
-            </div>
+          <DropdownMenuContent side="bottom" align="start">
+            <DropdownMenuItem asChild>
+              <Link href={navigation.team.overview({ teamSlug: team.slug })}>View</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={navigation.team.settings.overview({ teamSlug: team.slug })}>Manage</Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

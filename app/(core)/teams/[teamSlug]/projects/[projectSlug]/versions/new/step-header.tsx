@@ -13,7 +13,7 @@ const StepHeader: React.FC<Props> = ({ params }) => {
       <div className="flex items-center space-x-4 text-sm">
         <Link
           href={navigation.project.versions.new.overview(params)}
-          className="flex items-center space-x-2 text-neutral-400 hover:text-neutral-100 transition-colors"
+          className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-4" />
           <span>Back to Version Method</span>

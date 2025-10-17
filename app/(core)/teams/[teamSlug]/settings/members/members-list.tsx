@@ -104,10 +104,10 @@ const MembersList: React.FC<MembersListProps> = ({ team, curMember, members, isL
         <div key={member.id} className="p-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="size-8 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
-              <User className="size-4 text-neutral-400" />
+              <User className="size-4 text-muted-foreground" />
             </div>
             <div className="flex flex-row gap-4 items-center">
-              <div className="text-sm font-medium text-neutral-100">
+              <div className="text-sm font-medium text-foreground">
                 {getDisplayIdentifier(member.identifier)}
               </div>
               {member.id === curMember.id && (

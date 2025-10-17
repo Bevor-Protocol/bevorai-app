@@ -126,7 +126,7 @@ const InviteMemberModal: React.FC<{ teamName: string }> = ({ teamName }) => {
                   <button
                     type="button"
                     onClick={() => removeInvitee(index)}
-                    className="p-1 text-neutral-400 hover:text-red-400 transition-colors"
+                    className="p-1 text-muted-foreground hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>

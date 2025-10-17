@@ -26,7 +26,7 @@ const AuditLayout: AsyncComponent<LayoutProps> = async ({ params, children }) =>
               projectSlug,
               versionId: audit.code_version_mapping_id,
             })}
-            className="flex items-center space-x-2 text-neutral-400 hover:text-neutral-100 transition-colors"
+            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="size-4" />
             <span>Back to Code Version</span>

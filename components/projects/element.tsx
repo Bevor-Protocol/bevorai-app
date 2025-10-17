@@ -8,7 +8,7 @@ import React from "react";
 
 export const ProjectElementLoader: React.FC = () => {
   return (
-    <div className="border border-neutral-800 rounded-lg p-6">
+    <div className="border border-border rounded-lg p-6">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="min-w-0 flex-1">
@@ -25,7 +25,7 @@ export const ProjectElementLoader: React.FC = () => {
       <Skeleton className="w-full h-4 mb-2" />
       <Skeleton className="w-3/4 h-4 mb-4" />
 
-      <div className="flex items-center justify-between pt-3 border-t border-neutral-800">
+      <div className="flex items-center justify-between pt-3 border-t border-border">
         <Skeleton className="w-32 h-4" />
         <div className="flex flex-wrap gap-1.5">
           <Skeleton className="w-16 h-5 rounded" />
@@ -40,17 +40,19 @@ export const ProjectElementLoader: React.FC = () => {
 export const ProjectElement: React.FC<{
   project: CodeProjectSchema;
   teamSlug: string;
-}> = ({ project, teamSlug }) => {
+  isDisabled?: boolean;
+}> = ({ project, teamSlug, isDisabled = false }) => {
   return (
     <Link
       key={project.id}
       href={`/teams/${teamSlug}/projects/${project.slug}`}
-      className="block border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-all"
+      className="block border border-border rounded-lg bg-card text-card-foreground p-4 hover:border-neutral-700 transition-all aria-disabled:opacity-80 aria-disabled:pointer-events-none"
+      aria-disabled={isDisabled}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-semibold text-neutral-100 truncate">{project.name}</h3>
+            <h3 className="text-lg font-semibold text-foreground truncate">{project.name}</h3>
           </div>
         </div>
         <div className="flex flex-col gap-1 items-end">
@@ -59,11 +61,11 @@ export const ProjectElement: React.FC<{
         </div>
       </div>
       {project.description && (
-        <p className="text-sm text-neutral-300 mb-4 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-foreground mb-4 line-clamp-2 leading-relaxed">
           {project.description}
         </p>
       )}
-      <div className="flex items-center justify-between pt-3 border-t border-neutral-800">
+      <div className="flex items-center justify-between pt-3 border-t border-border">
         <div className="flex items-center space-x-1 text-xs text-neutral-500">
           <Clock className="size-3" />
           <span>{formatDate(project.created_at)}</span>

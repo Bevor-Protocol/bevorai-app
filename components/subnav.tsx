@@ -92,16 +92,8 @@ const navigationItemsVersion: NavItemProp[] = [
     href: navigation.version.audits.overview,
   },
   {
-    name: "Code",
-    href: navigation.version.sources,
-  },
-  {
     name: "Analytics",
     href: navigation.version.analytics,
-  },
-  {
-    name: "Chats",
-    href: navigation.version.chats,
   },
 ];
 
@@ -164,7 +156,7 @@ const SubNav: React.FC = () => {
     <div className="flex flex-col h-subheader">
       <div
         id="nav-items"
-        className="w-full px-4 flex items-center border-b border-neutral-800 h-9 overflow-auto overflow-y-hidden"
+        className="w-full px-4 flex items-center border-b border-border h-9 overflow-auto overflow-y-hidden"
       >
         {navigationItemsFiltered.map((item) => (
           <Link key={item.name} href={item.href} data-active={item.isActive} className="nav-item">

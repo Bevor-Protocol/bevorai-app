@@ -5,9 +5,9 @@ import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
 import { SearchInput } from "@/components/ui/input";
 import { TeamSchemaI } from "@/utils/types";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface ProjectsPageClientProps {
   team: TeamSchemaI;
@@ -41,9 +41,14 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
     };
   }, [searchQuery]);
 
-  const { data: projects } = useQuery({
+  const {
+    data: projects,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["projects", team.id, debouncedSearchQuery],
     queryFn: () => bevorAction.getProjects(debouncedSearchQuery),
+    placeholderData: keepPreviousData,
   });
 
   const handleSearch = useCallback((value: string) => {
@@ -53,6 +58,8 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
   const handleTag = useCallback((value: string) => {
     setSearchQuery((prev) => ({ ...prev, tag: value }));
   }, []);
+
+  const isSearching = useMemo(() => isLoading || isFetching, [isLoading, isFetching]);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -75,7 +82,12 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {projects &&
           projects.results.map((project) => (
-            <ProjectElement key={project.id} project={project} teamSlug={team.slug} />
+            <ProjectElement
+              key={project.id}
+              project={project}
+              teamSlug={team.slug}
+              isDisabled={isSearching}
+            />
           ))}
       </div>
       {projects &&
@@ -83,8 +95,8 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
         (debouncedSearchQuery.name || debouncedSearchQuery.tag) && (
           <div className="text-center py-12">
             <Search className="w-12 h-12 text-neutral-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-neutral-100 mb-2">No projects found</h3>
-            <p className="text-neutral-400">Try adjusting your search terms</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No projects found</h3>
+            <p className="text-muted-foreground">Try adjusting your search terms</p>
           </div>
         )}
       {projects &&

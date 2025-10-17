@@ -76,7 +76,7 @@ export const AddonRow: React.FC<{
   return (
     <div
       className={`border rounded-lg p-6 ${
-        addon.is_pending_removal ? "border-amber-600/50 bg-amber-950/20" : "border-neutral-800"
+        addon.is_pending_removal ? "border-amber-600/50 bg-amber-950/20" : "border-border"
       }`}
     >
       <div className="flex items-center justify-between gap-4">
@@ -90,18 +90,18 @@ export const AddonRow: React.FC<{
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-3 mb-2">
-              <h4 className="text-lg font-semibold text-neutral-100 truncate">{addon.name}</h4>
+              <h4 className="text-lg font-semibold text-foreground truncate">{addon.name}</h4>
               {getStatusBadge()}
               {checkoutMutation.isPending && (
                 <div className="size-4 border-2 border-neutral-600 border-t-blue-500 rounded-full animate-spin"></div>
               )}
             </div>
-            <p className="text-neutral-400 text-sm mb-1">{addon.description}</p>
+            <p className="text-muted-foreground text-sm mb-1">{addon.description}</p>
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-neutral-100">
+              <span className="text-sm font-medium text-foreground">
                 {formatCurrency(currentPrice)}
               </span>
-              <span className="text-neutral-400 text-sm">/{addon.billing_interval}</span>
+              <span className="text-muted-foreground text-sm">/{addon.billing_interval}</span>
             </div>
           </div>
         </div>
@@ -113,13 +113,13 @@ export const AddonRow: React.FC<{
                 onCheckedChange={() => handleToggleAddon(addon.lookup_key)}
                 disabled={checkoutMutation.isPending || !addon.is_eligible}
               />
-              <span className="text-xs text-neutral-400 text-center absolute top-full left-1/2 -translate-x-1/2">
+              <span className="text-xs text-muted-foreground text-center absolute top-full left-1/2 -translate-x-1/2">
                 {getSwitchLabel()}
               </span>
             </div>
             <Tooltip>
               <TooltipTrigger>
-                <Info className="text-neutral-400 size-4" />
+                <Info className="text-muted-foreground size-4" />
               </TooltipTrigger>
               <TooltipContent className="w-52" side="top" align="end">
                 {tooltipCopy}

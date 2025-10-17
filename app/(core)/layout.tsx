@@ -1,84 +1,46 @@
 import { bevorAction } from "@/actions";
-import Breadcrumbs from "@/components/breadcrumbs";
-import { Notifications, Profile } from "@/components/header";
-import SubNav from "@/components/subnav";
-import { cn } from "@/lib/utils";
-import { AsyncComponent, TeamSchemaI } from "@/utils/types";
+import AppSidebar from "@/components/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { cookies } from "next/headers";
-import Image from "next/image";
-
-const BreadcrumbsHydration: AsyncComponent<{ userId: string; teams: TeamSchemaI[] }> = async ({
-  userId,
-  teams,
-}) => {
-  const queryClient = new QueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: ["projects"],
-    queryFn: () => bevorAction.getAllProjects(),
-  });
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <Breadcrumbs userId={userId} teams={teams} />
-    </HydrationBoundary>
-  );
-};
-
-const NotificationHydration: AsyncComponent = async () => {
-  const queryClient = new QueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: ["user-invites"],
-    queryFn: () => bevorAction.getUserInvites(),
-  });
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <Notifications />
-    </HydrationBoundary>
-  );
-};
+import { redirect } from "next/navigation";
 
 const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children }) => {
   const queryClient = new QueryClient();
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("bevor-token")?.value;
-  let currentUser = null;
-  let teams: TeamSchemaI[] = [];
-  if (sessionToken) {
-    currentUser = await bevorAction.getUser();
-    teams = await queryClient.fetchQuery({
-      queryKey: ["teams"],
-      queryFn: () => bevorAction.getTeams(),
-    });
+  const sidebarOpen = cookieStore.get("sidebar_state")?.value === "true";
+
+  if (!sessionToken) {
+    redirect("/logout");
   }
 
+  const currentUser = await bevorAction.getUser();
+  if (!currentUser) {
+    redirect("/logout");
+  }
+
+  await queryClient.prefetchQuery({
+    queryKey: ["teams"],
+    queryFn: () => bevorAction.getTeams(),
+  });
+
+  await queryClient.prefetchQuery({
+    queryKey: ["user-invites"],
+    queryFn: async () => bevorAction.getUserInvites(),
+  });
+
   return (
-    <div className="min-h-screen bg-black">
-      <header
-        className={cn(
-          "sticky top-0 z-50 backdrop-blur-sm",
-          "px-6 flex items-center justify-between h-header",
-        )}
-      >
-        <div className="flex items-center gap-6 h-">
-          <div className="aspect-423/564 relative h-[30px]">
-            <Image src="/logo-small.png" alt="BevorAI logo" fill priority />
-          </div>
-          {!!currentUser && <BreadcrumbsHydration userId={currentUser.id} teams={teams} />}
-        </div>
-        {!!currentUser && (
-          <div className="gap-4 items-center relative flex">
-            <NotificationHydration />
-            <HydrationBoundary state={dehydrate(queryClient)}>
-              <Profile userId={currentUser.id} teams={teams} />
-            </HydrationBoundary>
-          </div>
-        )}
-      </header>
-      <SubNav />
-      {children}
-    </div>
+    <SidebarProvider defaultOpen={sidebarOpen}>
+      <TooltipProvider>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <AppSidebar userId={currentUser.id} />
+        </HydrationBoundary>
+        {children}
+      </TooltipProvider>
+    </SidebarProvider>
   );
 };
 

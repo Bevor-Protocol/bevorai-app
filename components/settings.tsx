@@ -68,7 +68,7 @@ const SettingsSidebar: React.FC = () => {
           href={item.href}
           className={cn(
             "text-base hover:bg-neutral-800 px-2 py-1 rounded",
-            pathname === item.href ? "text-white" : "text-neutral-400",
+            pathname === item.href ? "text-foreground" : "text-muted-foreground",
           )}
         >
           {item.name}

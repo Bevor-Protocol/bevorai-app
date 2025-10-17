@@ -42,16 +42,16 @@ const MembersTabs: React.FC<MembersTabsProps> = ({ team, curMember }) => {
   return (
     <>
       {/* Seat Information */}
-      <div className="mb-6 p-4 border border-neutral-800 rounded-lg bg-neutral-950/50">
+      <div className="mb-6 p-4 border border-border rounded-lg bg-neutral-950/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Users className="size-5 text-neutral-400" />
+            <Users className="size-5 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-neutral-100">
+              <p className="text-sm font-medium text-foreground">
                 Team Seats: {totalSeats}
                 {isTrial && " / 3"}
               </p>
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-muted-foreground">
                 {isTrial
                   ? "3 seat limit during trial period"
                   : totalSeats > 3

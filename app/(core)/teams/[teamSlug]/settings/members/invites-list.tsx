@@ -58,7 +58,7 @@ const InvitesList: React.FC<InvitesListProps> = ({ curMember, invites, isLoading
   // Don't render anything if no invites
   if (!invites || invites.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-neutral-400 text-center">
+      <div className="flex items-center justify-center h-48 text-muted-foreground text-center">
         <p className="text-sm">No pending invites</p>
       </div>
     );
@@ -70,10 +70,10 @@ const InvitesList: React.FC<InvitesListProps> = ({ curMember, invites, isLoading
         <div key={invite.id} className="p-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="size-8 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
-              <Mail className="size-4 text-neutral-400" />
+              <Mail className="size-4 text-muted-foreground" />
             </div>
             <div className="flex flex-row gap-4 items-center">
-              <div className="text-sm font-medium text-neutral-100">
+              <div className="text-sm font-medium text-foreground">
                 {getDisplayIdentifier(invite.identifier)}
               </div>
             </div>

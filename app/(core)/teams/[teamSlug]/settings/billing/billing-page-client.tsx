@@ -50,16 +50,16 @@ const InvoiceNameSection: React.FC = () => {
   };
 
   return (
-    <div className="border border-neutral-800 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-neutral-100 mb-4">Invoice Name</h3>
-      <p className="text-sm text-neutral-400 my-4">
+    <div className="border border-border rounded-lg p-6">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Invoice Name</h3>
+      <p className="text-sm text-muted-foreground my-4">
         Your team name is shown on your invoice by default. If you want, you can have it show a
         custom name.
       </p>
       <form onSubmit={handleNameSubmit} className="space-y-4">
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-1">Custom Name</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Custom Name</label>
             <Input
               type="text"
               value={name}
@@ -71,7 +71,7 @@ const InvoiceNameSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-neutral-800">
+        <div className="pt-4 border-t border-border">
           <Button type="submit" disabled={updateNameMutation.isPending} className="text-sm">
             {updateNameMutation.isPending ? "Updating..." : "Update Invoice Name"}
           </Button>
@@ -125,16 +125,16 @@ const BillingEmailSection: React.FC = () => {
   };
 
   return (
-    <div className="border border-neutral-800 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-neutral-100 mb-4">Billing Email</h3>
-      <p className="text-sm text-neutral-400 my-4">
+    <div className="border border-border rounded-lg p-6">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Billing Email</h3>
+      <p className="text-sm text-muted-foreground my-4">
         By default, your invoices will go to the email of the user who created the team. If you
         want, you can update it here.
       </p>
       <form onSubmit={handleEmailSubmit} className="space-y-4">
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Email Address</label>
             <Input
               type="email"
               value={email}
@@ -147,7 +147,7 @@ const BillingEmailSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-neutral-800">
+        <div className="pt-4 border-t border-border">
           <Button type="submit" disabled={updateEmailMutation.isPending} className="text-sm">
             {updateEmailMutation.isPending ? "Updating..." : "Update Billing Email"}
           </Button>
@@ -199,8 +199,8 @@ const PaymentMethodSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
 
   if (paymentMethodLoading) {
     return (
-      <div className="border border-neutral-800 rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-neutral-100 mb-4">Payment Method</h3>
+      <div className="border border-border rounded-lg p-6 mb-8">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Payment Method</h3>
         <div className="animate-pulse">
           <div className="h-4 bg-neutral-800 rounded mb-2"></div>
           <div className="h-4 bg-neutral-800 rounded mb-4"></div>
@@ -216,9 +216,9 @@ const PaymentMethodSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   // Type guard to ensure we have a valid payment method with card details
   if (!paymentMethod.card || paymentMethod.type !== "card") {
     return (
-      <div className="border border-neutral-800 rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-neutral-100 mb-4">Payment Method</h3>
-        <p className="text-sm text-neutral-400 mb-4">
+      <div className="border border-border rounded-lg p-6 mb-8">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Payment Method</h3>
+        <p className="text-sm text-muted-foreground mb-4">
           Unsupported payment method type. Please contact support.
         </p>
       </div>
@@ -226,32 +226,32 @@ const PaymentMethodSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   }
 
   return (
-    <div className="border border-neutral-800 rounded-lg p-6 mb-8">
-      <h3 className="text-lg font-semibold text-neutral-100 mb-4">Payment Method</h3>
+    <div className="border border-border rounded-lg p-6 mb-8">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Payment Method</h3>
       <div className="space-y-4">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-8 bg-neutral-800 rounded flex items-center justify-center">
-            <span className="text-xs text-neutral-400 font-mono">
+            <span className="text-xs text-muted-foreground font-mono">
               {getCardDisplayText(paymentMethod.card.brand)}
             </span>
           </div>
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-1">
-              <span className="text-sm font-medium text-neutral-100">
+              <span className="text-sm font-medium text-foreground">
                 {formatCardBrand(paymentMethod.card.brand)} •••• {paymentMethod.card.last4}
               </span>
-              <span className="text-xs text-neutral-400">
+              <span className="text-xs text-muted-foreground">
                 Expires{" "}
                 {formatExpiryDate(paymentMethod.card.exp_month, paymentMethod.card.exp_year)}
               </span>
             </div>
             {paymentMethod.billing_details.name && (
-              <p className="text-sm text-neutral-400">{paymentMethod.billing_details.name}</p>
+              <p className="text-sm text-muted-foreground">{paymentMethod.billing_details.name}</p>
             )}
           </div>
         </div>
 
-        <div className="pt-4 border-t border-neutral-800">
+        <div className="pt-4 border-t border-border">
           <Button
             className="text-sm px-4 py-2"
             onClick={() => checkoutMutation.mutate()}
@@ -349,9 +349,9 @@ const CurrentSubscription: React.FC<{
 
   return (
     <>
-      <div className="border border-neutral-800 rounded-lg p-6 mb-8">
+      <div className="border border-border rounded-lg p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-neutral-100">
+          <h3 className="text-lg font-semibold text-foreground">
             {isTrial ? "Free Trial" : "BevorAI Pro"}
           </h3>
           {isCancelling && (
@@ -375,7 +375,7 @@ const CurrentSubscription: React.FC<{
 
         {periodInfo && (
           <div className="mb-4">
-            <p className="text-sm text-neutral-400 mb-2">
+            <p className="text-sm text-muted-foreground mb-2">
               {periodInfo.label}: {formatDate(periodInfo.start)} -{" "}
               {periodInfo.end ? formatDate(periodInfo.end) : "Ongoing"}
             </p>
@@ -383,7 +383,7 @@ const CurrentSubscription: React.FC<{
         )}
 
         <div className="mb-4">
-          <p className="text-sm text-neutral-400 mb-2">
+          <p className="text-sm text-muted-foreground mb-2">
             Team Seats: {subscription.n_seats}
             {subscription.plan_status === PlanStatusEnum.TRIALING && (
               <span className="text-orange-400 ml-2">(3 seat limit during trial)</span>
@@ -391,7 +391,7 @@ const CurrentSubscription: React.FC<{
           </p>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-neutral-800">
+        <div className="flex items-center justify-between pt-4 border-t border-border">
           {isTrial ? (
             <Link href={`/teams/${team.slug}/settings/plans`}>
               <Button className="text-sm px-4 py-2">Upgrade Plan</Button>
@@ -421,7 +421,7 @@ const CurrentSubscription: React.FC<{
               href="https://bevor.io"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-neutral-400 hover:text-neutral-300 transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Contact Sales
             </a>
@@ -430,13 +430,15 @@ const CurrentSubscription: React.FC<{
       </div>
 
       {subscription.limits && subscription.limits.length > 0 && (
-        <div className="border border-neutral-800 rounded-lg p-6 mb-8">
-          <h4 className="text-lg font-semibold text-neutral-100 mb-4">Usage & Limits</h4>
+        <div className="border border-border rounded-lg p-6 mb-8">
+          <h4 className="text-lg font-semibold text-foreground mb-4">Usage & Limits</h4>
           <div className="space-y-3">
             {subscription.limits.map((limit, index) => (
               <div key={index} className="flex items-center justify-between">
-                <span className="text-sm text-neutral-400">{getFeatureName(limit.feature)}</span>
-                <span className="text-sm text-neutral-300">{getLimitCopy(limit)}</span>
+                <span className="text-sm text-muted-foreground">
+                  {getFeatureName(limit.feature)}
+                </span>
+                <span className="text-sm text-foreground">{getLimitCopy(limit)}</span>
               </div>
             ))}
           </div>
@@ -454,11 +456,11 @@ const AddonsSection: React.FC = () => {
 
   if (addonsLoading) {
     return (
-      <div className="border border-neutral-800 rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-neutral-100 mb-4">Add-ons</h3>
+      <div className="border border-border rounded-lg p-6 mb-8">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Add-ons</h3>
         <div className="space-y-4">
           {[1, 2].map((i) => (
-            <div key={i} className="border border-neutral-800 rounded-lg p-6 animate-pulse">
+            <div key={i} className="border border-border rounded-lg p-6 animate-pulse">
               <div className="h-6 bg-neutral-800 rounded mb-4"></div>
               <div className="h-4 bg-neutral-800 rounded mb-2"></div>
               <div className="h-4 bg-neutral-800 rounded mb-4"></div>
@@ -474,8 +476,8 @@ const AddonsSection: React.FC = () => {
   }
 
   return (
-    <div className="border border-neutral-800 rounded-lg p-6 mb-8">
-      <h3 className="text-lg font-semibold text-neutral-100 mb-4">Add-ons</h3>
+    <div className="border border-border rounded-lg p-6 mb-8">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Add-ons</h3>
       <div className="space-y-4">
         {addons.map((addon: StripeAddonI) => (
           <AddonRow key={addon.id} addon={addon} />
@@ -490,20 +492,20 @@ const NoSubscription: React.FC<{ team: TeamSchemaI; subscription?: StripeSubscri
   subscription,
 }) => {
   return (
-    <div className="border border-neutral-800 rounded-lg p-6 mb-8">
+    <div className="border border-border rounded-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-neutral-100">No Active Subscription</h3>
-        <span className="bg-neutral-500/20 text-neutral-400 text-xs px-2 py-1 rounded">
+        <h3 className="text-lg font-semibold text-foreground">No Active Subscription</h3>
+        <span className="bg-neutral-500/20 text-muted-foreground text-xs px-2 py-1 rounded">
           {subscription ? subscription.plan_status : "Inactive"}
         </span>
       </div>
 
-      <p className="text-sm text-neutral-400 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         You don&apos;t have an active subscription. Upgrade to a plan to access premium features and
         manage your billing.
       </p>
 
-      <div className="flex items-center justify-between pt-4 border-t border-neutral-800">
+      <div className="flex items-center justify-between pt-4 border-t border-border">
         <Link href={`/teams/${team.slug}/settings/plans`}>
           <Button className="text-sm px-4 py-2">View Plans</Button>
         </Link>
@@ -512,7 +514,7 @@ const NoSubscription: React.FC<{ team: TeamSchemaI; subscription?: StripeSubscri
             href="https://bevor.io"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-neutral-400 hover:text-neutral-300 transition-colors"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Contact Sales
           </a>
@@ -526,9 +528,9 @@ const AccessRestricted: React.FC = () => (
   <div className="px-6 py-8 bg-neutral-950 min-h-screen">
     <div className="max-w-7xl mx-auto">
       <div className="text-center py-12">
-        <Lock className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-neutral-100 mb-2">Access Restricted</h3>
-        <p className="text-neutral-400 mb-6 max-w-md mx-auto">
+        <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">Access Restricted</h3>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
           Only team owners can manage billing and subscription settings.
         </p>
       </div>

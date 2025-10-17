@@ -19,7 +19,7 @@ export const ProjectHeader: AsyncComponent<{
       <div className="space-x-4">
         <div>
           <h1>{project.name}</h1>
-          <div className="flex items-center space-x-4 text-sm text-neutral-400 mt-2">
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-2">
             <div className="flex items-center space-x-1">
               <Calendar className="size-4" />
               <span>Created {formatDate(project.created_at)}</span>
@@ -44,7 +44,7 @@ export const ProjectHeader: AsyncComponent<{
         </div>
         {includeDescription && project.description && (
           <div className="my-2">
-            <p className="text-lg text-neutral-300 leading-relaxed">{project.description}</p>
+            <p className="text-lg text-foreground leading-relaxed">{project.description}</p>
           </div>
         )}
       </div>

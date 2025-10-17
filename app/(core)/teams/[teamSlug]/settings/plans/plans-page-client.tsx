@@ -54,7 +54,7 @@ const PlanCard: React.FC<{
     (plan.seat_pricing.tiers.find((tier: any) => tier.up_to === null)?.unit_amount ?? 0) / 100;
 
   return (
-    <div className="border border-neutral-800 rounded-lg p-6">
+    <div className="border border-border rounded-lg p-6">
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center space-x-4">
@@ -65,21 +65,21 @@ const PlanCard: React.FC<{
                 className="w-12 h-12 object-contain rounded-lg"
               />
             )}
-            <h3 className="text-xl font-semibold text-neutral-100">{plan.name}</h3>
+            <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-lg font-semibold text-neutral-100">
+            <span className="text-lg font-semibold text-foreground">
               {formatCurrency(currentPrice)}
             </span>
-            <span className="text-neutral-400">/{plan.billing_interval}</span>
+            <span className="text-muted-foreground">/{plan.billing_interval}</span>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="flex-1">
-            <p className="text-neutral-400 text-sm mb-3">{plan.description}</p>
+            <p className="text-muted-foreground text-sm mb-3">{plan.description}</p>
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-neutral-400">
+                <span className="text-sm text-muted-foreground">
                   {plan.included_seats} seats included
                 </span>
                 <Tooltip>
@@ -99,7 +99,7 @@ const PlanCard: React.FC<{
               </div>
               {plan.usage?.audits && (
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-neutral-400">
+                  <span className="text-sm text-muted-foreground">
                     {plan.usage.audits.included} audits included
                   </span>
                   <Tooltip>
@@ -122,25 +122,27 @@ const PlanCard: React.FC<{
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <span className="text-xs text-neutral-400">Features:</span>
+              <span className="text-xs text-muted-foreground">Features:</span>
               <div className="flex flex-wrap items-center gap-3">
                 {plan.features.slice(0, 3).map((feature: string, index: number) => (
                   <div key={index} className="flex items-center space-x-1">
                     <Check className="w-3 h-3 text-green-400" />
-                    <span className="text-xs text-neutral-300">
+                    <span className="text-xs text-foreground">
                       {getFeatureName(feature.toLowerCase())}
                     </span>
                   </div>
                 ))}
                 {plan.features.length > 3 && (
-                  <span className="text-xs text-neutral-400">+{plan.features.length - 3} more</span>
+                  <span className="text-xs text-muted-foreground">
+                    +{plan.features.length - 3} more
+                  </span>
                 )}
               </div>
             </div>
           </div>
           <div className="flex-shrink-0 sm:ml-6">
             {plan.is_active ? (
-              <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full">
+              <span className="bg-green-500 text-foreground text-xs px-3 py-1 rounded-full">
                 Current
               </span>
             ) : (
@@ -169,7 +171,7 @@ const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
     return (
       <div className="space-y-4">
         {[1, 2].map((i) => (
-          <div key={i} className="border border-neutral-800 rounded-lg p-6 animate-pulse">
+          <div key={i} className="border border-border rounded-lg p-6 animate-pulse">
             <div className="h-6 bg-neutral-800 rounded mb-4"></div>
             <div className="h-4 bg-neutral-800 rounded mb-2"></div>
             <div className="h-4 bg-neutral-800 rounded mb-4"></div>
@@ -203,7 +205,7 @@ const AddonsSection: React.FC = () => {
     return (
       <div className="space-y-4">
         {[1, 2].map((i) => (
-          <div key={i} className="border border-neutral-800 rounded-lg p-6 animate-pulse">
+          <div key={i} className="border border-border rounded-lg p-6 animate-pulse">
             <div className="h-6 bg-neutral-800 rounded mb-4"></div>
             <div className="h-4 bg-neutral-800 rounded mb-2"></div>
             <div className="h-4 bg-neutral-800 rounded mb-4"></div>
@@ -230,9 +232,9 @@ const AccessRestricted: React.FC = () => (
   <div className="px-6 py-8 bg-neutral-950 min-h-screen">
     <div className="max-w-7xl mx-auto">
       <div className="text-center py-12">
-        <Lock className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-neutral-100 mb-2">Access Restricted</h3>
-        <p className="text-neutral-400 mb-6 max-w-md mx-auto">
+        <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">Access Restricted</h3>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
           Only team owners can manage billing and subscription settings.
         </p>
       </div>
@@ -251,11 +253,11 @@ const PlansPageClient: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
     <div className="px-6 pb-8 bg-neutral-950 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="mb-12">
-          <h2 className="text-xl font-semibold text-neutral-100 mb-6">Available Plans</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-6">Available Plans</h2>
           <PlansSection team={team} />
         </div>
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-neutral-100 mb-6">Optional Add-ons</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-6">Optional Add-ons</h2>
           <AddonsSection />
         </div>
       </div>

@@ -27,7 +27,7 @@ const Networks: React.FC<{ close?: () => void }> = ({ close }) => {
       className={cn("text-sm min-w-44 shadow-sm", "divide-gray-200/10 divide-y divide-solid")}
     >
       <div className="flex flex-col px-2 py-2 gap-2">
-        <p className="text-white/60 pl-2">Select Network:</p>
+        <p className="text-foreground/60 pl-2">Select Network:</p>
         {supportedChains.map((chain) => (
           <div
             className={cn(

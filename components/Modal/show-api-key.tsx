@@ -32,10 +32,10 @@ const ShowApiKeyModal: React.FC<ShowApiKeyModalProps> = ({ apiKey }) => {
       </DialogHeader>
       <div className="border border-neutral-700 rounded-lg p-4">
         <div className="flex items-center justify-between">
-          <code className="text-sm font-mono text-neutral-100 break-all">{apiKey}</code>
+          <code className="text-sm font-mono text-foreground break-all">{apiKey}</code>
           <div
             onClick={() => copy(apiKey)}
-            className="p-2 border border-neutral-800 rounded cursor-pointer"
+            className="p-2 border border-border rounded cursor-pointer"
           >
             {isCopied ? <Check className="size-4 text-green-400" /> : <Copy className="size-4" />}
           </div>

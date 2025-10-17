@@ -24,6 +24,18 @@ export const Icon: React.FC<IconI> = ({ size, image, seed, className, ...rest })
     urlUse = `url(${image})`;
   } else if (seed) {
     urlUse = `url(https://avatar.vercel.sh/${generateSlug(seed)})`;
+  } else {
+    return (
+      <Skeleton
+        className="avatar"
+        style={
+          {
+            "--size-desktop": desktop,
+            "--size-mobile": mobile,
+          } as React.CSSProperties
+        }
+      />
+    );
   }
   return (
     <div

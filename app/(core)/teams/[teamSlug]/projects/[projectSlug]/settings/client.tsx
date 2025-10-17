@@ -99,32 +99,32 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
     <div className="flex flex-col gap-8">
       <div className="space-y-4">
         <div className="flex items-center space-x-3">
-          <h3 className="text-xl font-semibold text-neutral-100">Project Information</h3>
+          <h3 className="text-xl font-semibold text-foreground">Project Information</h3>
         </div>
         <div className="flex flex-row gap-8 items-center">
-          <p className="block text-sm font-medium text-neutral-300 w-16">Created</p>
-          <div className="flex items-center space-x-2 text-sm text-neutral-400">
+          <p className="block text-sm font-medium text-foreground w-16">Created</p>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Calendar className="size-4" />
             <span>{formatDate(project.created_at)}</span>
           </div>
         </div>
         <div className="flex flex-row gap-8 items-center">
-          <p className="block text-sm font-medium text-neutral-300 w-16">Versions</p>
-          <div className="flex items-center space-x-2 text-sm text-neutral-400">
+          <p className="block text-sm font-medium text-foreground w-16">Versions</p>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <GitBranch className="size-4" />
             <span>{project.n_versions}</span>
           </div>
         </div>
         <div className="flex flex-row gap-8 items-center">
-          <p className="block text-sm font-medium text-neutral-300 w-16">Audits</p>
-          <div className="flex items-center space-x-2 text-sm text-neutral-400">
+          <p className="block text-sm font-medium text-foreground w-16">Audits</p>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <File className="size-4" />
             <span>{project.n_audits}</span>
           </div>
         </div>
         {project.tags.length > 0 && (
           <div className="flex flex-row gap-8 items-center">
-            <p className="block text-sm font-medium text-neutral-300 w-16">Tags</p>
+            <p className="block text-sm font-medium text-foreground w-16">Tags</p>
             <div className="flex items-center gap-2">
               {project.tags.map((tag, index) => (
                 <Badge key={index} variant="outline">
@@ -141,7 +141,7 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
         <div className="space-y-4">
           <div className="flex flex-row flex-wrap items-end gap-x-4 gap-y-2">
             <div className="grow min-w-52 max-w-80">
-              <label className="block font-medium text-neutral-300 mb-2" htmlFor="project-name">
+              <label className="block font-medium text-foreground mb-2" htmlFor="project-name">
                 Project Name
               </label>
               <Input
@@ -154,7 +154,7 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
               />
             </div>
             <div className="grow min-w-52 max-w-80">
-              <label className="block font-medium text-neutral-300 mb-2" htmlFor="project-tags">
+              <label className="block font-medium text-foreground mb-2" htmlFor="project-tags">
                 Tags
               </label>
               <Input
@@ -168,10 +168,7 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
             </div>
           </div>
           <div className="max-w-[calc(2*20rem+1rem)]">
-            <label
-              className="block font-medium text-neutral-300 mb-2"
-              htmlFor="project-description"
-            >
+            <label className="block font-medium text-foreground mb-2" htmlFor="project-description">
               Description
             </label>
             <Textarea
@@ -209,14 +206,14 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
         <AlertTitle>Delete Project</AlertTitle>
         <AlertDescription>
           This will permanently delete the project and all associated versions, audits, and data.
-          <div className="space-y-4 text-primary mt-2">
+          <div className="space-y-4 mt-2">
             {!showDeleteConfirm ? (
               <Button variant="outline" onClick={() => setShowDeleteConfirm(true)}>
                 Delete
               </Button>
             ) : (
               <div className="flex items-center space-x-3">
-                <span className="text-sm text-neutral-300 font-medium">Are you sure?</span>
+                <span className="text-sm text-foreground font-medium">Are you sure?</span>
                 <Button
                   variant="destructive"
                   size="sm"

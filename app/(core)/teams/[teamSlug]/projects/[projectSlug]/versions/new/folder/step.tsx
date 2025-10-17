@@ -177,10 +177,8 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
           <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="size-8 text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-neutral-100 mb-2">
-            Version Created Successfully!
-          </h2>
-          <p className="text-neutral-400">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Version Created Successfully!</h2>
+          <p className="text-muted-foreground">
             Your contract folder has been uploaded and is ready for audit.
           </p>
         </div>
@@ -194,9 +192,9 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
         <div className="text-left space-y-2">
           <div className="flex flex-row gap-4 justify-start items-center">
             <Code className="size-6 text-purple-400" />
-            <h2 className="text-2xl font-bold text-neutral-100">Smart Contract Folder</h2>
+            <h2 className="text-2xl font-bold text-foreground">Smart Contract Folder</h2>
           </div>
-          <p className="text-neutral-400">
+          <p className="text-muted-foreground">
             Upload a folder containing your Solidity contract files
           </p>
         </div>
@@ -236,11 +234,11 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
             >
               <div className="flex flex-col items-center justify-center h-full space-y-4">
                 <div className="size-12 rounded-full bg-neutral-800 flex items-center justify-center">
-                  <Upload className="size-6 text-neutral-400" />
+                  <Upload className="size-6 text-muted-foreground" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-lg font-medium text-neutral-100 mb-2">Upload folder here</h3>
-                  <p className="text-neutral-400 mb-4">
+                  <h3 className="text-lg font-medium text-foreground mb-2">Upload folder here</h3>
+                  <p className="text-muted-foreground mb-4">
                     Click here or drag and drop to upload a folder with .sol files
                   </p>
                 </div>
@@ -265,19 +263,19 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
         )}
 
         {sourceFiles.length > 0 && (
-          <div className="grow border border-neutral-800 rounded-lg overflow-hidden flex flex-col">
+          <div className="grow border border-border rounded-lg overflow-hidden flex flex-col">
             <div
               className="grid flex-1 h-full"
               style={{ gridTemplateColumns: "250px 1fr", gridTemplateRows: "auto 1fr" }}
             >
-              <div className="flex items-center space-x-2 p-3 border-b border-r border-neutral-800">
-                <span className="text-sm font-medium text-neutral-100">Sources</span>
+              <div className="flex items-center space-x-2 p-3 border-b border-r border-border">
+                <span className="text-sm font-medium text-foreground">Sources</span>
                 <span className="text-xs text-neutral-500">({sourceFiles.length})</span>
               </div>
-              <div className="flex items-center justify-between p-3 border-b border-neutral-800">
+              <div className="flex items-center justify-between p-3 border-b border-border">
                 <div className="flex items-center space-x-2">
-                  <FileText className="size-4 text-neutral-400" />
-                  <span className="text-sm font-medium text-neutral-100">
+                  <FileText className="size-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">
                     {selectedFile ? selectedFile.path.split("/").pop() : "No file selected"}
                   </span>
                   {selectedFile && (
@@ -285,15 +283,15 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
                   )}
                 </div>
               </div>
-              <div className="border-r border-neutral-800 overflow-y-auto min-h-0">
+              <div className="border-r border-border overflow-y-auto min-h-0">
                 {sourceFiles.map((sourceFile) => (
                   <div key={sourceFile.path} className="space-y-1">
                     <div
                       className={cn(
                         "px-3 py-2 rounded-lg transition-colors flex justify-center flex-col cursor-pointer",
                         selectedFile?.path === sourceFile.path
-                          ? "bg-neutral-800 text-neutral-100"
-                          : "text-neutral-300 hover:bg-neutral-800/50",
+                          ? "bg-neutral-800 text-foreground"
+                          : "text-foreground hover:bg-neutral-800/50",
                       )}
                       onClick={() => setSelectedFile(sourceFile)}
                     >
@@ -307,7 +305,7 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
               </div>
               <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
                 {selectedFile ? (
-                  <div className="border border-neutral-800 rounded-lg h-full overflow-scroll">
+                  <div className="border border-border rounded-lg h-full overflow-scroll">
                     <div ref={editorRef} role="region" aria-label="Solidity code editor" />
                   </div>
                 ) : (

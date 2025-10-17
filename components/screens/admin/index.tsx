@@ -407,13 +407,13 @@ const AdminPanel: React.FC = () => {
                   <div className="mb-4">
                     <p className="text-sm text-gray-400 mb-1">
                       ID
-                      <span className="text-sm font-mono bg-black/50 p-2 rounded text-white">
+                      <span className="text-sm font-mono bg-black/50 p-2 rounded text-foreground">
                         {selectedPrompt.id}
                       </span>
                     </p>
                     <p className="text-sm text-gray-400 mb-1">
                       tag
-                      <span className="text-sm font-mono bg-black/50 p-2 rounded text-white">
+                      <span className="text-sm font-mono bg-black/50 p-2 rounded text-foreground">
                         {selectedPrompt.tag}
                       </span>
                     </p>
@@ -526,7 +526,7 @@ const UserPermission = ({
   return (
     <div className="bg-black/90 p-6 rounded-lg shadow-lg w-96 border border-gray-600">
       <button
-        className="absolute top-2 right-2 text-gray-400 hover:text-white cursor-pointer"
+        className="absolute top-2 right-2 text-gray-400 hover:text-foreground cursor-pointer"
         onClick={handleClose}
       >
         <XIcon className="size-5" />
@@ -631,7 +631,7 @@ const AppPermission = ({
   return (
     <div className="bg-black/90 p-6 rounded-lg shadow-lg w-96 border border-gray-600">
       <button
-        className="absolute top-2 right-2 text-gray-400 hover:text-white cursor-pointer"
+        className="absolute top-2 right-2 text-gray-400 hover:text-foreground cursor-pointer"
         onClick={handleClose}
       >
         <XIcon className="size-5" />
@@ -766,7 +766,7 @@ const PromptEditor = ({
       )}
     >
       <button
-        className="absolute top-2 right-2 text-gray-400 hover:text-white cursor-pointer"
+        className="absolute top-2 right-2 text-gray-400 hover:text-foreground cursor-pointer"
         onClick={handleClose}
       >
         <XIcon className="size-5" />
@@ -779,19 +779,19 @@ const PromptEditor = ({
           <div className="mb-4">
             <p className="text-sm text-gray-400 mb-1">
               ID
-              <span className="text-sm font-mono bg-black/50 p-2 rounded text-white">
+              <span className="text-sm font-mono bg-black/50 p-2 rounded text-foreground">
                 {prompt.id}
               </span>
             </p>
             <p className="text-sm text-gray-400 mb-1">
               Type
-              <span className="text-sm font-mono bg-black/50 p-2 rounded text-white">
+              <span className="text-sm font-mono bg-black/50 p-2 rounded text-foreground">
                 {prompt.audit_type}
               </span>
             </p>
             <p className="text-sm text-gray-400 mb-1">
               tag
-              <span className="text-sm font-mono bg-black/50 p-2 rounded text-white">
+              <span className="text-sm font-mono bg-black/50 p-2 rounded text-foreground">
                 {prompt.tag}
               </span>
             </p>
@@ -814,7 +814,7 @@ const PromptEditor = ({
             type="text"
             value={auditType}
             onChange={(e) => setAuditType(e.target.value)}
-            className="w-full bg-gray-800/50 border border-gray-700 rounded p-2 text-white"
+            className="w-full bg-gray-800/50 border border-gray-700 rounded p-2 text-foreground"
           />
         </div>
         <div className="text-sm">
@@ -823,7 +823,7 @@ const PromptEditor = ({
             type="text"
             value={tag}
             onChange={(e) => setTag(e.target.value)}
-            className="w-full bg-gray-800/50 border border-gray-700 rounded p-2 text-white"
+            className="w-full bg-gray-800/50 border border-gray-700 rounded p-2 text-foreground"
           />
         </div>
         <div className="text-sm">
@@ -832,7 +832,7 @@ const PromptEditor = ({
             type="text"
             value={version}
             onChange={(e) => setVersion(e.target.value)}
-            className="w-full bg-gray-800/50 border border-gray-700 rounded p-2 text-white"
+            className="w-full bg-gray-800/50 border border-gray-700 rounded p-2 text-foreground"
           />
         </div>
         <div className="text-sm">
@@ -840,7 +840,7 @@ const PromptEditor = ({
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full bg-gray-800/50 border border-gray-700 rounded p-2 text-white h-64 
+            className="w-full bg-gray-800/50 border border-gray-700 rounded p-2 text-foreground h-64 
             font-mono"
           />
         </div>
