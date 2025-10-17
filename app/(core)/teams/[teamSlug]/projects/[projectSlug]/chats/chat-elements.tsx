@@ -1,5 +1,4 @@
 import { formatDate } from "@/utils/helpers";
-import { navigation } from "@/utils/navigation";
 import { ChatResponseI } from "@/utils/types";
 import { ChevronRight, Clock, MessageSquare } from "lucide-react";
 import Link from "next/link";
@@ -9,12 +8,13 @@ export const ChatElement: React.FC<{
   chat: ChatResponseI;
 }> = ({ chat }) => (
   <Link
-    href={navigation.chat.overview({
-      teamSlug: chat.team_slug,
-      projectSlug: chat.project_slug,
-      versionId: chat.code_version_mapping_id,
-      chatId: chat.id,
-    })}
+    // href={navigation.chat.overview({
+    //   teamSlug: chat.team_slug,
+    //   projectSlug: chat.project_slug,
+    //   versionId: chat.code_version_mapping_id,
+    //   chatId: chat.id,
+    // })}
+    href="/"
     className="block"
   >
     <div className="border border-border rounded-lg p-4 hover:border-neutral-700 transition-all cursor-pointer">
