@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import React from "react";
+import React, { ReactNode } from "react";
 
 interface AppSidebarProps {
   userId: string;
@@ -260,7 +260,7 @@ const StarredSidebarItems: React.FC = () => {
     return null;
   }
 
-  const getIcon = (item: StarredItem) => {
+  const getIcon = (item: StarredItem): ReactNode => {
     if (item.type === "version") {
       return <Code2 />;
     }

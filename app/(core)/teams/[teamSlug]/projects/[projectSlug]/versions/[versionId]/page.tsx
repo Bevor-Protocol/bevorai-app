@@ -11,6 +11,7 @@ import { formatDate, truncateVersion } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
 import { AsyncComponent } from "@/utils/types";
 import { Calendar, ExternalLink, Network } from "lucide-react";
+import React from "react";
 import ChatPanel from "./chat-panel";
 import SourcesViewer from "./sources-viewer";
 
@@ -24,7 +25,7 @@ type Props = {
   params: Promise<ResolvedParams>;
 };
 
-const CodeVersionBreadCrumb = (params: ResolvedParams) => {
+const CodeVersionBreadCrumb: React.FC<ResolvedParams> = (params) => {
   return (
     <Breadcrumb>
       <BreadcrumbList>

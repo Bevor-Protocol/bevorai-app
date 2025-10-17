@@ -12,6 +12,7 @@ import {
 import { navigation } from "@/utils/navigation";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import React from "react";
 
 type ResolvedParams = {
   teamSlug: string;
@@ -23,7 +24,7 @@ interface ProjectAuditsPageProps {
   searchParams: Promise<{ page?: string }>;
 }
 
-const AuditBreadCrumb = (params: ResolvedParams) => {
+const AuditBreadCrumb: React.FC<ResolvedParams> = (params) => {
   return (
     <Breadcrumb>
       <BreadcrumbList>

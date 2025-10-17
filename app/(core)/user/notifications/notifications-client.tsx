@@ -57,7 +57,9 @@ const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
             </div>
             <div>
               <h3 className="text-base font-semibold">Team Invitation</h3>
-              <p className="text-sm text-muted-foreground">You've been invited to join a team</p>
+              <p className="text-sm text-muted-foreground">
+                You&apos;ve been invited to join a team
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">

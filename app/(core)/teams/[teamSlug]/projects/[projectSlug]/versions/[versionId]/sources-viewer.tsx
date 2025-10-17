@@ -42,10 +42,11 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ version, sources }) => {
     );
   }
 
-  const handleSourceChange = (source: ContractVersionSourceTrimI) => {
+  const handleSourceChange = (source: ContractVersionSourceTrimI): void => {
     if (!ref.current) return;
     const { top } = ref.current.getBoundingClientRect();
     if (top <= 44) {
+      // scroll such that we're at the start of the sticky container
       window.scrollTo({
         top: window.pageYOffset + top - 44,
       });

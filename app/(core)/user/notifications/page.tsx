@@ -41,8 +41,8 @@ const NotificationsPage: React.FC = async () => {
             </div>
             <h3 className="text-lg font-semibold mb-2">No notifications</h3>
             <p className="text-muted-foreground text-center max-w-md">
-              You're all caught up! When you receive team invitations or other notifications,
-              they'll appear here.
+              You&apos;re all caught up! When you receive team invitations or other notifications,
+              they&apos;ll appear here.
             </p>
           </div>
         )}

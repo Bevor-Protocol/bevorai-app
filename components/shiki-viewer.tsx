@@ -13,7 +13,7 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ sourceContent }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const highlightCode = async () => {
+    const highlightCode = async (): Promise<void> => {
       try {
         setIsLoading(true);
         const result = await codeToHtml(sourceContent.content, {
@@ -22,13 +22,13 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ sourceContent }) => {
           colorReplacements: {},
           transformers: [
             {
-              code(node) {
+              code(node): void {
                 this.addClassToHast(node, "language-sol");
               },
-              line(node, line) {
+              line(node, line): void {
                 node.properties["data-line"] = line;
               },
-              span(node, line, col, lineElement, token) {
+              span(node, line, col, lineElement, token): void {
                 const startPos = token.offset;
                 const endPos = startPos + token.content.length;
                 node.properties["data-token"] = `token:${startPos}:${endPos}`;
