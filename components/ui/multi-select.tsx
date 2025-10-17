@@ -28,7 +28,7 @@ export const MultiSelect: React.FC<Props> = ({
   options,
   selectedOptions,
   setSelectedOptions,
-}): JSX.Element => {
+}) => {
   const toggleOption = (option: DropdownOption): void => {
     setSelectedOptions((prev) =>
       prev.some((item) => item.value === option.value)

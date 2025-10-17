@@ -180,15 +180,11 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
   );
 };
 
-const TreeSource = ({
-  source,
-  scopeHandler,
-  children,
-}: {
+const TreeSource: React.FC<{
   source: TreeResponseI;
   scopeHandler: ScopeHookResponse;
   children: React.ReactNode;
-}): JSX.Element => {
+}> = ({ source, scopeHandler, children }) => {
   const isInScope = source.is_within_scope;
   const isSelected = scopeHandler.selectedScope?.id === source.id;
   const [isExpanded, setIsExpanded] = useState(isInScope && isSelected);
@@ -218,15 +214,11 @@ const TreeSource = ({
   );
 };
 
-const TreeContract = ({
-  contract,
-  scopeHandler,
-  children,
-}: {
+const TreeContract: React.FC<{
   contract: ContractScopeI;
   scopeHandler: ScopeHookResponse;
   children: React.ReactNode;
-}): JSX.Element => {
+}> = ({ contract, scopeHandler, children }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleContract = (contract: ContractScopeI): void => {
@@ -261,13 +253,10 @@ const TreeContract = ({
   );
 };
 
-const TreeFunction = ({
-  func,
-  scopeHandler,
-}: {
+const TreeFunction: React.FC<{
   func: FunctionScopeI;
   scopeHandler: ScopeHookResponse;
-}): JSX.Element => {
+}> = ({ func, scopeHandler }) => {
   return (
     <div key={func.id} className="space-y-1">
       <button

@@ -46,7 +46,7 @@ export const AddonRow: React.FC<{
 
   const isChecked = addon.is_pending_removal ? false : addon.is_active;
 
-  const getStatusBadge = (): JSX.Element | null => {
+  const getStatusBadge = (): React.ReactNode => {
     if (addon.is_pending_removal) {
       return (
         <span className="bg-amber-500/20 text-amber-400 text-xs px-2 py-1 rounded flex-shrink-0">
@@ -60,7 +60,7 @@ export const AddonRow: React.FC<{
         </span>
       );
     }
-    return null;
+    return <></>;
   };
 
   const getSwitchLabel = (): string => {

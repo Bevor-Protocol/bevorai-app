@@ -28,7 +28,7 @@ import {
   Replace,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface AuditScopeSelectorProps {
   tree: TreeResponseI[];
@@ -341,21 +341,23 @@ const AuditScopeSelector: React.FC<AuditScopeSelectorProps> = ({
   );
 };
 
-const TreeSource = ({
-  source,
-  scopeHandler,
-  getAuditableCount,
-  onScopeSelect,
-  selectedScopes,
-  children,
-}: {
+type TreeProps = {
   source: TreeResponseI;
   scopeHandler: ScopeHookResponse;
   getAuditableCount: (source: TreeResponseI) => number;
   onScopeSelect: (scope: { identifier: string; level: string }) => void;
   selectedScopes: { identifier: string; level: string }[];
   children: React.ReactNode;
-}): JSX.Element => {
+};
+
+const TreeSource: React.FC<TreeProps> = ({
+  source,
+  scopeHandler,
+  getAuditableCount,
+  onScopeSelect,
+  selectedScopes,
+  children,
+}) => {
   const isInScope = source.is_within_scope;
   const isSelected = scopeHandler.selectedSource?.id === source.id;
   const isScopeSelected = selectedScopes.some(
@@ -426,19 +428,21 @@ const TreeSource = ({
   );
 };
 
-const TreeContract = ({
-  contract,
-  scopeHandler,
-  onScopeSelect,
-  selectedScopes,
-  children,
-}: {
+type TreeContractProps = {
   contract: ContractScopeI;
   scopeHandler: ScopeHookResponse;
   onScopeSelect: (scope: { identifier: string; level: string }) => void;
   selectedScopes: { identifier: string; level: string }[];
   children: React.ReactNode;
-}): JSX.Element => {
+};
+
+const TreeContract: React.FC<TreeContractProps> = ({
+  contract,
+  scopeHandler,
+  onScopeSelect,
+  selectedScopes,
+  children,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isScopeSelected = selectedScopes.some(
     (s) => s.identifier === contract.id && s.level === "contract",
@@ -492,17 +496,19 @@ const TreeContract = ({
   );
 };
 
-const TreeFunction = ({
-  func,
-  scopeHandler,
-  onScopeSelect,
-  selectedScopes,
-}: {
+type TreeFunctionProps = {
   func: FunctionScopeI;
   scopeHandler: ScopeHookResponse;
   onScopeSelect: (scope: { identifier: string; level: string }) => void;
   selectedScopes: { identifier: string; level: string }[];
-}): JSX.Element => {
+};
+
+const TreeFunction: React.FC<TreeFunctionProps> = ({
+  func,
+  scopeHandler,
+  onScopeSelect,
+  selectedScopes,
+}) => {
   const isSelected = selectedScopes.some((s) => s.identifier === func.id && s.level === "function");
 
   return (

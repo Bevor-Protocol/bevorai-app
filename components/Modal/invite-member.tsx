@@ -96,7 +96,11 @@ const InviteMemberModal: React.FC<{ teamName: string }> = ({ teamName }) => {
       </DialogHeader>
       <form onSubmit={handleSubmit} className="justify-center flex flex-col gap-2">
         <div className="py-4 space-y-4">
-          <ScrollArea className="space-y-3 h-[calc(44px*5)]" viewportRef={scrollRef} type="auto">
+          <ScrollArea
+            className="space-y-3 h-[calc(44px*5)]"
+            viewportRef={scrollRef as React.RefObject<HTMLDivElement>}
+            type="auto"
+          >
             {invitees.map((invitee, index) => (
               <div key={index} className="flex items-center gap-3 py-1 pr-4 pl-1">
                 <Input

@@ -493,12 +493,7 @@ const AdminPanel: React.FC = () => {
   );
 };
 
-const UserPermission = ({
-  user,
-  handleClose,
-  handleUpdate,
-  isLoading,
-}: {
+const UserPermission: React.FC<{
   user: UserSearchResponseI;
   isLoading: boolean;
   handleClose: () => void;
@@ -511,7 +506,7 @@ const UserPermission = ({
     canCreateApp: boolean;
     canCreateApiKey: boolean;
   }) => void;
-}): JSX.Element => {
+}> = ({ user, handleClose, handleUpdate, isLoading }) => {
   const [permission, setPermission] = useState(user.permissions);
 
   const handleSave = (): void => {
@@ -598,12 +593,7 @@ const UserPermission = ({
   );
 };
 
-const AppPermission = ({
-  app,
-  handleClose,
-  handleUpdate,
-  isLoading,
-}: {
+const AppPermission: React.FC<{
   app: AppSearchResponseI;
   isLoading: boolean;
   handleClose: () => void;
@@ -616,7 +606,7 @@ const AppPermission = ({
     canCreateApp: boolean;
     canCreateApiKey: boolean;
   }) => void;
-}): JSX.Element => {
+}> = ({ app, handleClose, handleUpdate, isLoading }) => {
   const [permission, setPermission] = useState(app.permissions);
 
   const handleSave = (): void => {
@@ -694,13 +684,7 @@ const AppPermission = ({
   );
 };
 
-const PromptEditor = ({
-  prompt,
-  handleClose,
-  handleUpdate,
-  handleCreate,
-  isLoading,
-}: {
+const PromptEditor: React.FC<{
   prompt?: PromptResponseI;
   isLoading: boolean;
   handleClose: () => void;
@@ -730,7 +714,7 @@ const PromptEditor = ({
     version: string;
     is_active?: boolean;
   }) => void;
-}): JSX.Element => {
+}> = ({ prompt, handleClose, handleUpdate, handleCreate, isLoading }) => {
   const [auditType, setAuditType] = useState(prompt?.audit_type || "");
   const [content, setContent] = useState(prompt?.content || "");
   const [tag, setTag] = useState(prompt?.tag || "");

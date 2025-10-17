@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 
 export const useClickOutside = (
-  node: React.RefObject<HTMLElement | undefined>,
+  node: React.RefObject<HTMLElement | null>,
   handler: undefined | (() => void),
 ): void => {
-  const handlerRef = useRef<undefined | (() => void)>(handler);
+  const handlerRef = useRef<null | (() => void)>(handler);
 
   useEffect(() => {
     handlerRef.current = handler;

@@ -12,7 +12,7 @@ import {
   Shield,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 
 interface ContractTreeProps {
   tree: TreeResponseI[];
@@ -22,13 +22,13 @@ interface ContractTreeProps {
   readOnly?: boolean;
 }
 
-const ContractTree = ({
+const ContractTree: React.FC<ContractTreeProps> = ({
   tree,
   selectedScope = [],
   onScopeSelect,
   className,
   readOnly = false,
-}: ContractTreeProps): JSX.Element => {
+}) => {
   const [expandedSources, setExpandedSources] = useState<Record<string, boolean>>({});
   const [expandedContracts, setExpandedContracts] = useState<Record<string, boolean>>({});
 

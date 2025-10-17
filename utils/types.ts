@@ -629,5 +629,5 @@ export type AsyncComponent<P = {}> = AsyncFunctionComponent<P>;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface AsyncFunctionComponent<P = {}> {
-  (props: P): Promise<JSX.Element>;
+  (props: P): Promise<React.ReactNode>;
 }

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { AsyncComponent } from "@/utils/types";
 import { BarChart3 } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 
 const Stats: AsyncComponent = async () => {
   const data = await bevorAction.getStats();
@@ -46,7 +46,7 @@ const Stats: AsyncComponent = async () => {
   );
 };
 
-export default function AnalyticsPage(): JSX.Element {
+const AnalyticsPage: React.FC = () => {
   return (
     <Content>
       <Suspense fallback={<LoadWaifu />}>
@@ -54,4 +54,6 @@ export default function AnalyticsPage(): JSX.Element {
       </Suspense>
     </Content>
   );
-}
+};
+
+export default AnalyticsPage;

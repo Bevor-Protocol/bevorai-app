@@ -20,7 +20,7 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
     name: "",
     tag: "",
   });
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout>(null);
 
   // Debounce the search query to prevent excessive API calls
   useEffect(() => {
