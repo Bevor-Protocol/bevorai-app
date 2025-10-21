@@ -63,12 +63,12 @@ const AuditScopeSelector: React.FC<AuditScopeSelectorProps> = ({
   });
 
   const {
-    mutate: initiateAudit,
+    mutate: initiateSecurityAnalysis,
     isPending,
     data: evalData,
   } = useMutation({
     mutationFn: async () => {
-      return await bevorAction.initiateAudit(versionId, selectedScopes);
+      return await bevorAction.initiateSecurityAnalysis(versionId, selectedScopes);
     },
   });
 
@@ -236,7 +236,7 @@ const AuditScopeSelector: React.FC<AuditScopeSelectorProps> = ({
             )}
             <Button
               className="flex items-center space-x-2"
-              onClick={() => initiateAudit()}
+              onClick={() => initiateSecurityAnalysis()}
               disabled={isPending}
             >
               <Play className="size-4" />
