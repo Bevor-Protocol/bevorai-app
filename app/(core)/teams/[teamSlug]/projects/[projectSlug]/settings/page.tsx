@@ -18,7 +18,7 @@ const ProjectSettingsPage: AsyncComponent<ProjectSettingsPageProps> = async ({
 
   return (
     <Container>
-      <div className="border-b border-b-neutral-800 py-4">
+      <div className="border-b border-b-border py-4">
         <h1>Settings</h1>
       </div>
       <div className="flex flex-row py-10 gap-10">

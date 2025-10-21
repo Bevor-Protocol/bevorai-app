@@ -1,5 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/utils/helpers";
+import { navigation } from "@/utils/navigation";
 import { AuditObservationI } from "@/utils/types";
 import { Clock, Lock, Shield, Unlock } from "lucide-react";
 import Link from "next/link";
@@ -45,39 +46,41 @@ export const AuditElementLoader: React.FC = () => {
 
 export const AuditElement: React.FC<AuditElementProps> = ({ audit, teamSlug }) => {
   return (
-    <div className="border border-border rounded-lg p-4 hover:border-neutral-700 transition-all">
+    <div className="border border-border hover:border-border-accent transition-all rounded-lg p-4">
       <Link
-        href={`/teams/${teamSlug}/projects/${audit.project_slug}/audits/${audit.id}`}
-        className="block"
+        href={navigation.audit.overview({
+          teamSlug,
+          projectSlug: audit.project_slug,
+          auditId: audit.id,
+        })}
+        className="flex items-center gap-3 flex-1"
       >
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Shield className="size-4 text-purple-400" />
             <div className="flex items-center space-x-3">
-              <Shield className="size-4 text-purple-400" />
-              <div className="flex items-center space-x-3">
-                <h3 className="text-sm font-medium text-foreground">Audit #{audit.id.slice(-8)}</h3>
-                <div className="flex items-center space-x-1 text-xs text-neutral-500">
-                  <Clock className="size-3" />
-                  <span>{formatDate(audit.created_at)}</span>
-                </div>
+              <h3 className="text-sm font-medium text-foreground">Audit #{audit.id.slice(-8)}</h3>
+              <div className="flex items-center space-x-1 text-xs text-neutral-500">
+                <Clock className="size-3" />
+                <span>{formatDate(audit.created_at)}</span>
               </div>
             </div>
-            <div className="size-4">
-              {audit.is_public ? (
-                <Unlock className="size-3 text-green-500" />
-              ) : (
-                <Lock className="size-3 text-purple-400" />
-              )}
+          </div>
+          <div className="size-4">
+            {audit.is_public ? (
+              <Unlock className="size-3 text-green-500" />
+            ) : (
+              <Lock className="size-3 text-purple-400" />
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-between pl-7">
+          <div className="flex items-center space-x-3">
+            <div className="text-xs text-muted-foreground">
+              {audit.n_versions} version{audit.n_versions !== 1 ? "s" : ""} audited
             </div>
           </div>
-          <div className="flex items-center justify-between pl-7">
-            <div className="flex items-center space-x-3">
-              <div className="text-xs text-muted-foreground">
-                {audit.n_versions} version{audit.n_versions !== 1 ? "s" : ""} audited
-              </div>
-            </div>
-            <div className="text-xs text-muted-foreground">Order: {audit.n}</div>
-          </div>
+          <div className="text-xs text-muted-foreground">Order: {audit.n}</div>
         </div>
       </Link>
     </div>

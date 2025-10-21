@@ -56,15 +56,15 @@ const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
 
   return (
     <Container breadcrumb={<CodeVersionBreadCrumb {...resolvedParams} />}>
-      <div className="flex flex-row justify-between mb-8 border-b border-b-neutral-800 py-4">
+      <div className="flex flex-row justify-between mb-8 border-b border-b-border py-4">
         <div>
-          <h1>
+          <h3>
             Version{" - "}
             {truncateVersion({
               versionMethod: version.version_identifier,
               versionIdentifier: version.version_identifier,
             })}
-          </h1>
+          </h3>
           <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-2">
             <div className="flex items-center space-x-1">
               <Calendar className="size-4" />

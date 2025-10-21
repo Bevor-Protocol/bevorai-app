@@ -1,125 +1,149 @@
 import { bevorAction } from "@/actions";
-import { ProjectHeader } from "@/app/(core)/teams/[teamSlug]/projects/[projectSlug]/header";
 import { AuditElement } from "@/components/audits/element";
 import { AuditEmpty } from "@/components/audits/empty";
 import Container from "@/components/container";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CodeVersionElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
+import { formatDate } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
-import { AsyncComponent, AuditTableResponseI, CodeVersionsResponseI } from "@/utils/types";
+import { AsyncComponent } from "@/utils/types";
+import { Calendar, File, GitBranch, Plus, Tag } from "lucide-react";
+import Link from "next/link";
 import { Suspense } from "react";
+
+const VersionsList: AsyncComponent<{
+  teamSlug: string;
+  projectSlug: string;
+}> = async ({ teamSlug, projectSlug }) => {
+  const versions = await bevorAction.getVersions({ project_slug: projectSlug, page_size: "6" });
+
+  if (versions.results.length > 0) {
+    return (
+      <div className="flex flex-col gap-3">
+        {versions.results.slice(0, 3).map((version) => (
+          <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} isPreview />
+        ))}
+      </div>
+    );
+  }
+
+  return <VersionEmpty />;
+};
+
+const AuditsList: AsyncComponent<{
+  teamSlug: string;
+  projectSlug: string;
+}> = async ({ teamSlug, projectSlug }) => {
+  await new Promise((resolve) => setTimeout(() => resolve(true), 3000));
+  const audits = await bevorAction.getAudits({ project_slug: projectSlug, page_size: "6" });
+
+  if (audits.results.length > 0) {
+    return (
+      <div className="flex flex-col gap-3">
+        {audits.results.slice(0, 3).map((audit) => (
+          <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
+        ))}
+      </div>
+    );
+  }
+
+  return <AuditEmpty />;
+};
+
+const ProjectHeader: AsyncComponent<{
+  teamSlug: string;
+  projectSlug: string;
+}> = async ({ teamSlug, projectSlug }) => {
+  const project = await bevorAction.getProjectBySlug(projectSlug);
+
+  return (
+    <div className="flex flex-row justify-between mb-8 border-b border-b-border py-4">
+      <div className="space-x-4">
+        <div>
+          <h1>{project.name}</h1>
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-2">
+            <div className="flex items-center space-x-1">
+              <Calendar className="size-4" />
+              <span>Created {formatDate(project.created_at)}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <GitBranch className="size-4" />
+              <span>{project.n_versions} versions</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <File className="size-4" />
+              <span>{project.n_audits} audits</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              {project.tags.map((tag, index) => (
+                <Badge key={index} variant="outline">
+                  <Tag className="w-2 h-2" />
+                  <span>{tag}</span>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+        {project.description && (
+          <div className="my-2">
+            <p className="text-lg text-foreground leading-relaxed">{project.description}</p>
+          </div>
+        )}
+      </div>
+      <div className="flex space-x-3">
+        <Button asChild>
+          <Link href={navigation.project.versions.new.overview({ teamSlug, projectSlug })}>
+            <Plus className="size-4" />
+            <span>New Version</span>
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 interface ProjectPageProps {
   params: Promise<{ teamSlug: string; projectSlug: string }>;
 }
-
-const ProjectData: AsyncComponent<{
-  teamSlug: string;
-  projectSlug: string;
-}> = async ({ teamSlug, projectSlug }) => {
-  const team = await bevorAction.getTeam();
-  const project = await bevorAction.getProjectBySlug(projectSlug);
-
-  const versions = await bevorAction.getVersions({ project_id: project.id, page_size: "6" });
-  const audits = await bevorAction.getAudits({ project_id: project.id, page_size: "6" });
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <VersionsSection teamSlug={teamSlug} teamId={team.id} versions={versions} />
-      <AuditsSection teamSlug={teamSlug} projectSlug={projectSlug} audits={audits} />
-    </div>
-  );
-};
-
-const VersionsSection: AsyncComponent<{
-  teamId: string;
-  teamSlug: string;
-  versions: CodeVersionsResponseI;
-}> = async ({ teamSlug, versions }) => {
-  return (
-    <div>
-      <div className="mb-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold text-foreground">Versions</h2>
-          <a
-            href={`/teams/${teamSlug}/versions`}
-            className="text-sm text-link hover:text-link-accent transition-colors"
-          >
-            View all →
-          </a>
-        </div>
-      </div>
-
-      {versions.results.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {versions.results.slice(0, 3).map((version) => (
-            <CodeVersionElement key={version.id} version={version} teamSlug={teamSlug} isPreview />
-          ))}
-        </div>
-      ) : (
-        <VersionEmpty />
-      )}
-    </div>
-  );
-};
-
-const AuditsSection: AsyncComponent<{
-  teamSlug: string;
-  projectSlug: string;
-  audits: AuditTableResponseI;
-}> = async ({ teamSlug, projectSlug, audits }) => {
-  return (
-    <div>
-      <div className="mb-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold text-foreground">Recent Audits</h2>
-          <a
-            href={navigation.project.audits({ teamSlug, projectSlug })}
-            className="text-sm text-link hover:text-link-accent transition-colors"
-          >
-            View all →
-          </a>
-        </div>
-      </div>
-
-      {audits.results.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {audits.results.slice(0, 3).map((audit) => (
-            <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
-          ))}
-        </div>
-      ) : (
-        <AuditEmpty />
-      )}
-    </div>
-  );
-};
 
 const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
   const { teamSlug, projectSlug } = await params;
 
   return (
     <Container>
-      <ProjectHeader teamSlug={teamSlug} projectSlug={projectSlug} includeDescription={true} />
-      <Suspense
-        fallback={
-          <div className="px-6 py-8 bg-neutral-950 min-h-screen">
-            <div className="max-w-7xl mx-auto">
-              <div className="animate-pulse">
-                <div className="h-8 bg-neutral-800 rounded w-64 mb-4"></div>
-                <div className="h-12 bg-neutral-800 rounded w-96 mb-8"></div>
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div key={index} className="h-32 bg-neutral-800 rounded"></div>
-                  ))}
-                </div>
-              </div>
-            </div>
+      <ProjectHeader teamSlug={teamSlug} projectSlug={projectSlug} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div>
+          <div className="mb-4 flex items-center gap-4">
+            <h2>Recent Code Versions</h2>
+            <Link
+              href={navigation.project.versions.overview({ teamSlug, projectSlug })}
+              className="text-sm text-link hover:text-link-accent transition-colors"
+            >
+              View all →
+            </Link>
           </div>
-        }
-      >
-        <ProjectData teamSlug={teamSlug} projectSlug={projectSlug} />
-      </Suspense>
+          <Suspense>
+            <VersionsList teamSlug={teamSlug} projectSlug={projectSlug} />
+          </Suspense>
+        </div>
+        <div>
+          <div className="mb-4 flex items-center gap-4">
+            <h2>Recent Audits</h2>
+            <Link
+              href={navigation.project.audits({ teamSlug, projectSlug })}
+              className="text-sm text-link hover:text-link-accent transition-colors"
+            >
+              View all →
+            </Link>
+          </div>
+          <Suspense>
+            <AuditsList teamSlug={teamSlug} projectSlug={projectSlug} />
+          </Suspense>
+        </div>
+      </div>
     </Container>
   );
 };

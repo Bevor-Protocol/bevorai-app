@@ -1,5 +1,4 @@
 import { bevorAction } from "@/actions";
-import { ProjectHeader } from "@/app/(core)/teams/[teamSlug]/projects/[projectSlug]/header";
 import Container from "@/components/container";
 import { VersionGrid } from "@/components/versions/grid";
 import { AsyncComponent } from "@/utils/types";
@@ -23,7 +22,6 @@ const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params })
 
   return (
     <Container>
-      <ProjectHeader teamSlug={teamSlug} projectSlug={projectSlug} />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <VersionGrid teamSlug={teamSlug} query={query} />
       </HydrationBoundary>

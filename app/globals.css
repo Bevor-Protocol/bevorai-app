@@ -25,6 +25,7 @@
   --green: oklch(0.792 0.209 151.711 / 20%);
   --green-foreground: oklch(0.723 0.219 149.579);
   --border: oklch(1 0 0 / 20%);
+  --border-accent: oklch(1 0 0 / 40%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --card: oklch(0.1 0 0);
@@ -41,7 +42,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
-  --logo-dot: oklch(0.45 0 0);
+  --logo-dot: oklch(0.65 0 0);
   --link: oklch(70.7% 0.165 254.624);
   --link-accent: oklch(80.9% 0.105 251.813);
   --spacing-header: 4rem;
@@ -56,7 +57,6 @@
   --animate-modal: modal 0.25s forwards;
   --animate-appear: appear 0.15s forwards;
   --animate-disappear: disappear 0.15s forwards;
-  --animate-pulse-more: pulse-more 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --spacing-header: var(--spacing-header);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -82,6 +82,7 @@
   --color-green: var(--green);
   --color-green-foreground: var(--green-foreground);
   --color-border: var(--border);
+  --color-border-accent: var(--border-accent);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-card: var(--card);
@@ -311,13 +312,13 @@
   }
 
   h1 {
-    @apply text-3xl;
-  }
-  h2 {
     @apply text-2xl;
   }
-  h3 {
+  h2 {
     @apply text-xl;
+  }
+  h3 {
+    @apply text-base;
   }
 }
 
@@ -326,53 +327,6 @@
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
-  }
-}
-
-@layer components {
-  .nav-item,
-  .nav-item-sub {
-    @apply relative flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground;
-  }
-
-  .nav-item:hover {
-    @apply text-foreground bg-neutral-800;
-  }
-
-  .nav-item-sub:hover {
-    @apply text-purple-300;
-  }
-
-  .nav-item[data-active="true"] {
-    @apply text-primary;
-  }
-
-  .nav-item-sub[data-active="true"] {
-    @apply text-purple-300;
-  }
-
-  .nav-item[data-active="true"]::after {
-    content: "";
-    @apply absolute left-0 bottom-0 w-full h-0.5 bg-primary;
-  }
-
-  .nav-item-sub[data-active="true"]::after {
-    content: "";
-    @apply absolute left-0 bottom-0 w-full h-0.5 bg-purple-400;
-  }
-
-  .breadcrumb-divider {
-    position: relative;
-  }
-
-  .breadcrumb-divider::before {
-    content: "/";
-    position: absolute;
-    color: gray;
-    font-size: 1rem;
-    left: -1rem;
-    top: 50%;
-    transform: translateY(-45%);
   }
 }
 
