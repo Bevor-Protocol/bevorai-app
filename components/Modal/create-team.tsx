@@ -24,7 +24,7 @@ const CreateTeamModal: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ["teams"] });
     const timeout = setTimeout(() => {
       // Refresh the page to get updated team list and redirect to the new team
-      router.push(navigation.team.overview({ teamSlug: data.slug }));
+      router.push(navigation.team.overview({ teamId: data.id }));
     }, 1000);
 
     return (): void => clearTimeout(timeout);

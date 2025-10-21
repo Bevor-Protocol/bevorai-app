@@ -69,9 +69,9 @@ const VersionMeta: React.FC<{
 
 export const CodeVersionElement: React.FC<{
   version: CodeVersionSchema;
-  teamSlug: string;
+  teamId: string;
   isPreview?: boolean;
-}> = ({ version, teamSlug, isPreview = false }) => {
+}> = ({ version, teamId, isPreview = false }) => {
   const versionDisplay = truncateVersion({
     versionMethod: version.version_method,
     versionIdentifier: version.version_identifier,
@@ -80,8 +80,8 @@ export const CodeVersionElement: React.FC<{
   return (
     <Link
       href={navigation.version.overview({
-        teamSlug,
-        projectSlug: version.project_slug,
+        teamId,
+        projectId: version.id, // TODO: fix this.
         versionId: version.id,
       })}
       className="block border border-border hover:border-border-accent transition-all rounded-md p-4"

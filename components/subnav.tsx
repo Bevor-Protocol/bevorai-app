@@ -140,9 +140,9 @@ const SubNav: React.FC = () => {
       items = navigationItemsAudit;
     } else if (params.versionId) {
       items = navigationItemsVersion;
-    } else if (params.projectSlug) {
+    } else if (params.projectId) {
       items = navigationItemsProject;
-    } else if (params.teamSlug) {
+    } else if (params.teamId) {
       items = navigationItemsTeam;
     }
     return items.map((item) => ({

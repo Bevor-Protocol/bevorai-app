@@ -50,10 +50,10 @@ import {
 } from "@/utils/types";
 import { cookies } from "next/headers";
 import adminService from "./admin.service";
-import auditService from "./audit.service";
 import billingService from "./billing.service";
 import chatService from "./chat.service";
 import projectService from "./project.service";
+import auditService from "./security-analysis.service";
 import teamService from "./team.service";
 import userService from "./user.service";
 import versionService from "./version.service";
@@ -116,34 +116,34 @@ const updatePrompt = async (data: {
 };
 
 // Audit Operations
-const initiateAudit = async (
+const initiateSecurityAnalysis = async (
   versionId: string,
   scopes: { identifier: string; level: string }[],
 ): Promise<{
   id: string;
   status: string;
 }> => {
-  return auditService.initiateAudit(versionId, scopes);
+  return auditService.initiateSecurityAnalysis(versionId, scopes);
 };
 
-const getAudit = async (auditId: string): Promise<AuditSchemaI> => {
-  return auditService.getAudit(auditId);
+const getSecurityAnalysis = async (auditId: string): Promise<AuditSchemaI> => {
+  return auditService.getSecurityAnalysis(auditId);
 };
 
-const getAuditFindings = async (auditId: string): Promise<AuditFindingsResponseI> => {
-  return auditService.getAuditFindings(auditId);
+const getFindings = async (auditId: string): Promise<AuditFindingsResponseI> => {
+  return auditService.getFindings(auditId);
 };
 
-const getAuditScope = async (auditId: string): Promise<TreeResponseI[]> => {
-  return auditService.getAuditScope(auditId);
+const getScope = async (auditId: string): Promise<TreeResponseI[]> => {
+  return auditService.getScope(auditId);
 };
 
-const toggleAuditVisibility = async (auditId: string): Promise<boolean> => {
-  return auditService.toggleAuditVisibility(auditId);
+const toggleVisibility = async (auditId: string): Promise<boolean> => {
+  return auditService.toggleVisibility(auditId);
 };
 
-const getAuditStatus = async (id: string): Promise<AuditStatusResponseI> => {
-  return auditService.getAuditStatus(id);
+const getStatus = async (id: string): Promise<AuditStatusResponseI> => {
+  return auditService.getStatus(id);
 };
 
 const submitFeedback = async (
@@ -154,8 +154,10 @@ const submitFeedback = async (
   return auditService.submitFeedback(id, feedback, verified);
 };
 
-const getAudits = async (filters: { [key: string]: string }): Promise<AuditTableResponseI> => {
-  return auditService.getAudits(filters);
+const getSecurityAnalyses = async (filters: {
+  [key: string]: string;
+}): Promise<AuditTableResponseI> => {
+  return auditService.getSecurityAnalyses(filters);
 };
 
 // Contract Operations
@@ -252,7 +254,7 @@ const getTeams = async (): Promise<TeamSchemaI[]> => {
 const deleteTeam = async (): Promise<boolean> => {
   const response = await teamService.deleteTeam();
   const cookieStore = await cookies();
-  cookieStore.delete("bevor-team-slug");
+  cookieStore.delete("bevor-team-id");
 
   return response;
 };
@@ -304,10 +306,6 @@ const getProjects = async (filters: { [key: string]: string }): Promise<CodeProj
 
 const getProject = async (projectId: string): Promise<CodeProjectSchema> => {
   return projectService.getProject(projectId);
-};
-
-const getProjectBySlug = async (projectSlug: string): Promise<CodeProjectSchema> => {
-  return projectService.getProjectBySlug(projectSlug);
 };
 
 const getAllProjects = async (): Promise<CodeProjectSchema[]> => {
@@ -462,11 +460,6 @@ export {
   deleteTeam,
   getAddons,
   getAllProjects,
-  getAudit,
-  getAuditFindings,
-  getAudits,
-  getAuditScope,
-  getAuditStatus,
   getAuditWithChildren,
   getChat,
   getChatAttributes,
@@ -479,16 +472,20 @@ export {
   getCurrentGas,
   getCurrentMember,
   getCustomer,
+  getFindings,
   getFunctionChunk,
   getInvites,
   getMembers,
   getPaymentMethod,
   getProducts,
   getProject,
-  getProjectBySlug,
   getProjects,
   getPrompts,
+  getScope,
+  getSecurityAnalyses,
+  getSecurityAnalysis,
   getStats,
+  getStatus,
   getSubscription,
   getTeam,
   getTeams,
@@ -501,8 +498,8 @@ export {
   getUserInvites,
   getUserTimeSeries,
   getVersions,
-  initiateAudit,
   initiateChat,
+  initiateSecurityAnalysis,
   inviteMembers,
   isAdmin,
   listKeys,
@@ -516,7 +513,7 @@ export {
   searchUsers,
   submitFeedback,
   syncCredits,
-  toggleAuditVisibility,
+  toggleVisibility,
   updateAppPermissions,
   updateCustomer,
   updateMember,

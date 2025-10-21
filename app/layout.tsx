@@ -1,4 +1,3 @@
-import { PrivyWrapper } from "@/providers/privy";
 import QueryProvider from "@/providers/query";
 import { AsyncComponent } from "@/utils/types";
 import { Analytics } from "@vercel/analytics/react";
@@ -42,10 +41,8 @@ const RootLayout: AsyncComponent<{ children: React.ReactNode }> = async ({ child
     <html lang="en">
       <body className={`${figtree.className} antialiased`}>
         <QueryProvider>
-          <PrivyWrapper>
-            {children}
-            <Analytics />
-          </PrivyWrapper>
+          {children}
+          <Analytics />
         </QueryProvider>
       </body>
     </html>

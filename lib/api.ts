@@ -13,7 +13,7 @@ api.interceptors.request.use(async (config) => {
   const cookieStore = await cookies();
   const headerStore = await headers();
   const sessionToken = cookieStore.get("bevor-token")?.value;
-  const teamSlug = headerStore.get("bevor-team-slug");
+  const teamId = headerStore.get("bevor-team-id");
   if (!sessionToken) {
     // just mock an actual api response, so we can handle this, and api responses that are errors, the same.
     throw new AxiosError("no session token", "ERR_BAD_REQUEST", undefined, null, {
@@ -28,8 +28,8 @@ api.interceptors.request.use(async (config) => {
     });
   }
   config.headers["Authorization"] = `Bearer ${sessionToken}`;
-  if (teamSlug && !config.headers.has("skip-team")) {
-    config.headers["Bevor-Team-Slug"] = teamSlug;
+  if (teamId && !config.headers.has("skip-team")) {
+    config.headers["Bevor-Team-Id"] = teamId;
   }
 
   return config;
@@ -42,7 +42,7 @@ const idpApi = axios.create({
 // Add request interceptor to inject session token
 idpApi.interceptors.request.use(async (config) => {
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("privy-token")?.value;
+  const sessionToken = cookieStore.get("bevor-token")?.value;
   if (!sessionToken) {
     throw new Error("no session token");
   }

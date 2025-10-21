@@ -6,8 +6,8 @@ import { VersionEmpty } from "@/components/versions/empty";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 
-export const VersionGrid: React.FC<{ teamSlug: string; query: Record<string, string> }> = ({
-  teamSlug,
+export const VersionGrid: React.FC<{ teamId: string; query: Record<string, string> }> = ({
+  teamId,
   query,
 }) => {
   const { data: versions, isLoading } = useQuery({
@@ -28,7 +28,7 @@ export const VersionGrid: React.FC<{ teamSlug: string; query: Record<string, str
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {versions.results.map((version, ind) => (
-        <CodeVersionElement key={version.id + String(ind)} version={version} teamSlug={teamSlug} />
+        <CodeVersionElement key={version.id + String(ind)} version={version} teamId={teamId} />
       ))}
       {versions.results.length === 0 && <VersionEmpty centered />}
     </div>

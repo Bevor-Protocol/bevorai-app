@@ -23,12 +23,6 @@ class ProjectService {
     });
   }
 
-  async getProjectBySlug(projectSlug: string): Promise<CodeProjectSchema> {
-    return api.get(`/projects/from-slug/${projectSlug}`).then((response) => {
-      return response.data;
-    });
-  }
-
   async getAllProjects(): Promise<CodeProjectSchema[]> {
     return api.get("/projects/admin/all", { headers: { "skip-team": true } }).then((response) => {
       return response.data.results;

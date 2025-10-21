@@ -11,10 +11,10 @@ import { Code } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
-const CreateProjectModal: React.FC<{ targetTeamSlug: string }> = ({ targetTeamSlug }) => {
+const CreateProjectModal: React.FC<{ targetTeamId: string }> = ({ targetTeamId }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { teamSlug } = useParams<{ teamSlug: string }>();
+  const { teamId } = useParams<{ teamId: string }>();
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -29,11 +29,9 @@ const CreateProjectModal: React.FC<{ targetTeamSlug: string }> = ({ targetTeamSl
     queryClient.invalidateQueries({ queryKey: ["projects"] });
     const timeout = setTimeout(() => {
       // Redirect to the new project
-      router.push(
-        navigation.project.overview({ teamSlug: targetTeamSlug, projectSlug: data.slug }),
-      );
-      if (teamSlug !== targetTeamSlug) {
-        router.push(`/teams/${targetTeamSlug}`);
+      router.push(navigation.project.overview({ teamId: targetTeamId, projectId: data.id }));
+      if (teamId !== targetTeamId) {
+        router.push(`/teams/${targetTeamId}`);
       }
     }, 1000);
 

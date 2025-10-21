@@ -4,14 +4,14 @@ import { notFound } from "next/navigation";
 import AuditResults from "./audit-results";
 
 type Props = {
-  params: Promise<{ teamSlug: string; projectSlug: string; auditId: string }>;
+  params: Promise<{ teamId: string; projectId: string; auditId: string }>;
 };
 
 const AuditResultsPage: AsyncComponent<Props> = async ({ params }) => {
   const { auditId } = await params;
   let audit;
   try {
-    audit = await bevorAction.getAuditFindings(auditId);
+    audit = await bevorAction.getFindings(auditId);
     if (!audit.is_public) {
       throw new Error("not public");
     }

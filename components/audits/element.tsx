@@ -8,7 +8,7 @@ import React from "react";
 
 type AuditElementProps = {
   audit: AuditObservationI;
-  teamSlug: string;
+  teamId: string;
   isPreview?: boolean;
 };
 
@@ -44,13 +44,13 @@ export const AuditElementLoader: React.FC = () => {
   );
 };
 
-export const AuditElement: React.FC<AuditElementProps> = ({ audit, teamSlug }) => {
+export const AuditElement: React.FC<AuditElementProps> = ({ audit, teamId }) => {
   return (
     <div className="border border-border hover:border-border-accent transition-all rounded-lg p-4">
       <Link
         href={navigation.audit.overview({
-          teamSlug,
-          projectSlug: audit.project_slug,
+          teamId,
+          projectId: audit.code_project_id,
           auditId: audit.id,
         })}
         className="flex items-center gap-3 flex-1"

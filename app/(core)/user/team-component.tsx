@@ -47,10 +47,10 @@ const TeamDisplay: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
           </DropdownMenuTrigger>
           <DropdownMenuContent side="bottom" align="start">
             <DropdownMenuItem asChild>
-              <Link href={navigation.team.overview({ teamSlug: team.slug })}>View</Link>
+              <Link href={navigation.team.overview({ teamId: team.id })}>View</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={navigation.team.settings.overview({ teamSlug: team.slug })}>Manage</Link>
+              <Link href={navigation.team.settings.overview({ teamId: team.id })}>Manage</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -68,7 +68,6 @@ export interface AuditObservationI {
   id: string;
   created_at: string;
   is_public: boolean;
-  project_slug: string;
   code_project_id: string;
   n_versions: number;
 }
@@ -275,8 +274,6 @@ export interface ChatResponseI {
   is_visible: boolean;
   total_messages: number;
   team_id: string;
-  team_slug: string;
-  project_slug: string;
 }
 
 export interface ChatMessagesResponseI extends ChatResponseI {
@@ -326,7 +323,6 @@ export interface TeamSchemaI extends BaseSchema {
   name: string;
   is_default: boolean;
   created_by_user_id: string | null;
-  slug: string;
   role: MemberRoleEnum;
 }
 
@@ -390,7 +386,6 @@ export interface CodeProjectSchema extends BaseSchema {
   n: number;
   team_id: string;
   name: string;
-  slug: string;
   description?: string;
   tags: string[];
   n_versions: number;
@@ -426,7 +421,6 @@ export interface CodeVersionSchema extends BaseSchema {
   source_url?: string;
   solc_version?: string;
   is_code_available: boolean;
-  project_slug: string;
 }
 
 export interface CodeVersionsResponseI {
@@ -617,8 +611,8 @@ export interface UpdateSubscriptionRequest {
 }
 
 export type HrefProps = {
-  teamSlug?: string;
-  projectSlug?: string;
+  teamId?: string;
+  projectId?: string;
   versionId?: string;
   auditId?: string;
   chatId?: string;

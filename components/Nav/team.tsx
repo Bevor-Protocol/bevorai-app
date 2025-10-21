@@ -30,9 +30,9 @@ export const TeamNavigation: React.FC<{
   });
 
   const team = useMemo(() => {
-    if (!teams || !params.teamSlug) return;
-    return teams.find((team) => team.slug === params.teamSlug);
-  }, [teams, params.teamSlug]);
+    if (!teams || !params.teamId) return;
+    return teams.find((team) => team.id === params.teamId);
+  }, [teams, params.teamId]);
 
   return (
     <Dialog>

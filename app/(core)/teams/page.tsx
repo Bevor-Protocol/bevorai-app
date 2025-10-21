@@ -6,19 +6,19 @@ import { redirect } from "next/navigation";
 const TeamBasePage: AsyncComponent = async () => {
   // cannot SET cookies in this context. can only GET them.
   const cookieStore = await cookies();
-  const recentTeamSlug = cookieStore.get("bevor-recent-team")?.value;
+  const recentTeamId = cookieStore.get("bevor-recent-team")?.value;
 
-  if (recentTeamSlug) {
-    redirect(`/teams/${recentTeamSlug}`);
+  if (recentTeamId) {
+    redirect(`/teams/${recentTeamId}`);
   }
 
   const teams = await bevorAction.getTeams();
 
   const defaultTeam = teams.find((team) => team.is_default);
   if (defaultTeam) {
-    redirect(`/teams/${defaultTeam.slug}`);
+    redirect(`/teams/${defaultTeam.id}`);
   }
-  redirect(`/teams/${teams[0].slug}`);
+  redirect(`/teams/${teams[0].id}`);
 };
 
 export default TeamBasePage;

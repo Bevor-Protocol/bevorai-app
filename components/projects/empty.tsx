@@ -27,7 +27,7 @@ export const ProjectEmpty: React.FC<{
             <Button>Start New Project</Button>
           </DialogTrigger>
           <DialogContent>
-            <CreateProjectModal targetTeamSlug={team.slug} />
+            <CreateProjectModal targetTeamId={team.id} />
           </DialogContent>
         </Dialog>
       )}
@@ -47,7 +47,7 @@ export const ProjectEmpty: React.FC<{
             <Button>Start New Project</Button>
           </DialogTrigger>
           <DialogContent>
-            <CreateProjectModal targetTeamSlug={team.slug} />
+            <CreateProjectModal targetTeamId={team.id} />
           </DialogContent>
         </Dialog>
       )}

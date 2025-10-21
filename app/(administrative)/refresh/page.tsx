@@ -1,33 +1,34 @@
 "use client";
 
 import { Loader } from "@/components/ui/loader";
-import { usePrivy } from "@privy-io/react-auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 
 const RefreshPageContent: React.FC = () => {
-  const { getAccessToken } = usePrivy();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     if (!router) return;
-    const waitToken = async (): Promise<void> => {
-      // swap these, the redirect is in the server action.
-      const accessToken = await getAccessToken();
-      if (!accessToken) {
-        router.push("/sign-in");
-      } else {
-        const redirect_uri = searchParams.get("redirect");
-        if (redirect_uri) {
-          router.push(redirect_uri);
+    const checkAuth = async (): Promise<void> => {
+      try {
+        const response = await fetch("/api/token/validate", { method: "GET" });
+        if (!response.ok) {
+          router.push("/sign-in");
         } else {
-          router.push("/teams");
+          const redirect_uri = searchParams.get("redirect");
+          if (redirect_uri) {
+            router.push(redirect_uri);
+          } else {
+            router.push("/teams");
+          }
         }
+      } catch {
+        router.push("/sign-in");
       }
     };
-    waitToken();
-  }, [getAccessToken, router, searchParams]);
+    checkAuth();
+  }, [router, searchParams]);
 
   return (
     <div className="flex justify-center items-center min-h-remaining">

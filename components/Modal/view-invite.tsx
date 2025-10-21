@@ -35,20 +35,20 @@ const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) =
   useEffect(() => {
     if (!acceptInviteMutation.isSuccess) return;
     const timeout = setTimeout(() => {
-      router.push(navigation.team.overview({ teamSlug: invite.team.slug }));
+      router.push(navigation.team.overview({ teamId: invite.team.id }));
     }, 1000);
 
     return (): void => clearTimeout(timeout);
-  }, [acceptInviteMutation.isSuccess, invite.team.slug, router]);
+  }, [acceptInviteMutation.isSuccess, invite.team.id, router]);
 
   useEffect(() => {
     if (!rejectInviteMutation.isSuccess) return;
     const timeout = setTimeout(() => {
-      router.push(navigation.team.overview({ teamSlug: invite.team.slug }));
+      router.push(navigation.team.overview({ teamId: invite.team.id }));
     }, 1000);
 
     return (): void => clearTimeout(timeout);
-  }, [rejectInviteMutation.isSuccess, invite.team.slug, router]);
+  }, [rejectInviteMutation.isSuccess, invite.team.id, router]);
 
   const isPending = acceptInviteMutation.isPending || rejectInviteMutation.isPending;
   const isSuccess = acceptInviteMutation.isSuccess || rejectInviteMutation.isSuccess;

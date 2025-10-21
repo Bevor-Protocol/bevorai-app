@@ -377,8 +377,8 @@ const UserNavigationItems: React.FC = () => {
 const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
   const params = useParams<HrefProps>();
 
-  const isUserPage = !params.teamSlug;
-  const isProjectPage = !!params.projectSlug;
+  const isUserPage = !params.teamId;
+  const isProjectPage = !!params.projectId;
 
   return (
     <Sidebar collapsible="icon">

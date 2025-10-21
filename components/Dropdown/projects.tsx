@@ -22,9 +22,9 @@ const ProjectsDropdown: React.FC<ProjectsDropdownProps> = ({ projects }) => {
   const [projectFilter, setProjectFilter] = useState("");
 
   const project = useMemo(() => {
-    if (!projects || !params.projectSlug) return;
-    return projects.find((project) => project.slug === params.projectSlug);
-  }, [projects, params?.projectSlug]);
+    if (!projects || !params.projectId) return;
+    return projects.find((project) => project.id === params.projectId);
+  }, [projects, params?.projectId]);
 
   useEffect(() => {
     if (!projectFilter) {
@@ -50,7 +50,7 @@ const ProjectsDropdown: React.FC<ProjectsDropdownProps> = ({ projects }) => {
           {projectsShow.map((projectItem) => (
             <DropdownMenuItem key={projectItem.id} asChild>
               <Link
-                href={navigation.team.overview({ projectSlug: projectItem.slug })}
+                href={navigation.team.overview({ projectId: projectItem.id })}
                 className="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors text-foreground hover:bg-neutral-800"
               >
                 <div className="flex items-center gap-3 w-full">

@@ -17,7 +17,7 @@ export const AuditPagination: React.FC<{ page: string; basePath: string }> = ({
 
   const { data: audits, isLoading } = useQuery({
     queryKey: ["audits", page],
-    queryFn: () => bevorAction.getAudits({ page }),
+    queryFn: () => bevorAction.getSecurityAnalyses({ page }),
   });
 
   const totalPages = audits?.total_pages || 1;

@@ -1,25 +1,8 @@
-import { privyConfig } from "@/lib/config/privy";
 import { DropdownOption } from "@/utils/types";
 import { Address } from "viem";
-import { ChainPresets } from "./constants";
 
 export const trimAddress = (address: Address | string | undefined): string => {
   return address?.substring(0, 6) + "..." + address?.substring(address.length - 3, address.length);
-};
-
-export const getNetworkImage = (
-  chainId: string | undefined,
-): { supported: boolean; networkImg: string } => {
-  const result = { supported: false, networkImg: ChainPresets[99999] };
-  if (chainId) {
-    const chains = privyConfig.supportedChains;
-    const chain = chains?.find((c) => c.id === Number(chainId.split(":")[1]));
-    if (chain) {
-      result.supported = true;
-      result.networkImg = ChainPresets[chain.id];
-    }
-  }
-  return result;
 };
 
 export const constructSearchQuery = ({

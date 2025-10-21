@@ -35,18 +35,18 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
   });
 
   const team = useMemo(() => {
-    if (!teams || !params.teamSlug) return;
-    return teams.find((team) => team.slug === params.teamSlug);
-  }, [teams, params.teamSlug]);
+    if (!teams || !params.teamId) return;
+    return teams.find((team) => team.id === params.teamId);
+  }, [teams, params.teamId]);
 
   const project = useMemo(() => {
-    if (!allProjects || !params.projectSlug || !teams?.length) return;
-    const team = teams.find((team) => team.slug === params.teamSlug);
+    if (!allProjects || !params.projectId || !teams?.length) return;
+    const team = teams.find((team) => team.id === params.teamId);
     if (!team) return;
     return allProjects.find(
-      (project) => project.team_id === team.id && project.slug === params.projectSlug,
+      (project) => project.team_id === team.id && project.id === params.projectId,
     );
-  }, [allProjects, params.projectSlug, params.teamSlug, teams]);
+  }, [allProjects, params.projectId, params.teamId, teams]);
 
   if (isProjectsLoading) {
     return <Skeleton className="h-[41px] w-36" />;
@@ -80,7 +80,7 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
           </Button>
         </div>
       )}
-      {!isErrorPage && params.teamSlug && (
+      {!isErrorPage && params.teamId && (
         <div className="flex flex-row gap-1 items-center text-sm">
           <Link href={teamHref} className="flex flex-row gap-2 items-center">
             <Icon size="sm" seed={team?.id} className="size-5" />
@@ -91,7 +91,7 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
           </Button>
         </div>
       )}
-      {!isErrorPage && params.projectSlug && (
+      {!isErrorPage && params.projectId && (
         <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider">
           <Link href={projectHref} className="flex flex-row gap-2">
             <span>{project?.name}</span>
@@ -194,7 +194,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
   }, [teams, hoveredTeam, projects, projectFilter]);
 
   const buildEquivalentRoute = useCallback(
-    (newProjectSlug?: string): string => {
+    (newProjectId?: string): string => {
       if (!hoveredTeam) return "";
 
       const projectPattern = /\/teams\/[^/]+\/projects\/[^/]+(\/.*)?/;
@@ -203,7 +203,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
       if (projectMatch) {
         const remainingPath = projectMatch[1] || "";
         const trailingPath = remainingPath.split("/").slice(0, 2).join("/");
-        return `/teams/${hoveredTeam.slug}/projects/${newProjectSlug}${trailingPath}`;
+        return `/teams/${hoveredTeam.id}/projects/${newProjectId}${trailingPath}`;
       }
 
       const teamRoutePattern = /\/teams\/[^/]+\/([^/]+)(\/.*)?/;
@@ -213,15 +213,15 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
         const routeSegment = teamRouteMatch[1];
         const remainingPath = teamRouteMatch[2] || "";
 
-        if (newProjectSlug) {
-          return `/teams/${hoveredTeam.slug}/projects/${newProjectSlug}`;
+        if (newProjectId) {
+          return `/teams/${hoveredTeam.id}/projects/${newProjectId}`;
         } else {
-          return `/teams/${hoveredTeam.slug}/${routeSegment}${remainingPath}`;
+          return `/teams/${hoveredTeam.id}/${routeSegment}${remainingPath}`;
         }
       }
 
       // Fallback - just the team route
-      return `/teams/${hoveredTeam.slug}`;
+      return `/teams/${hoveredTeam.id}`;
     },
     [hoveredTeam, pathname],
   );
@@ -253,7 +253,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
             {teamsShow.map((teamItem) => (
               <div key={teamItem.id} onMouseEnter={() => setHoveredTeam(teamItem)}>
                 <Link
-                  href={navigation.team.overview({ teamSlug: teamItem.slug })}
+                  href={navigation.team.overview({ teamId: teamItem.id })}
                   onClick={close}
                   className={cn(
                     "flex items-center px-3 py-2 text-sm rounded-md",
@@ -315,10 +315,10 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
                   <Link
                     onClick={close}
                     // href={navigation.project.overview({
-                    //   teamSlug: hoveredTeam.slug,
-                    //   projectSlug: projectItem.slug,
+                    //   teamId: hoveredTeam.slug,
+                    //   projectId: projectItem.slug,
                     // })}
-                    href={buildEquivalentRoute(projectItem.slug)}
+                    href={buildEquivalentRoute(projectItem.id)}
                     className={cn(
                       "flex items-center justify-between px-3 py-2 text-sm rounded-md",
                       "transition-colors text-foreground hover:bg-neutral-800",
@@ -348,7 +348,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
                   </button>
                 </DialogTrigger>
                 <DialogContent>
-                  <CreateProjectModal targetTeamSlug={hoveredTeam.slug} />
+                  <CreateProjectModal targetTeamId={hoveredTeam.id} />
                 </DialogContent>
               </Dialog>
             )}

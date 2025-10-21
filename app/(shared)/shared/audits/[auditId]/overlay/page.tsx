@@ -9,8 +9,8 @@ interface AuditOverlayPageProps {
 
 // Server component for audit overlay data
 const AuditOverlayData: AsyncComponent<{ auditId: string }> = async ({ auditId }) => {
-  const audit = await bevorAction.getAudit(auditId);
-  const scope = await bevorAction.getAuditScope(auditId);
+  const audit = await bevorAction.getSecurityAnalysis(auditId);
+  const scope = await bevorAction.getScope(auditId);
 
   // Sort scope data on the server
   const sortedScope: TreeResponseI[] = scope

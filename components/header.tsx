@@ -1,7 +1,6 @@
 "use client";
 
 import { bevorAction } from "@/actions";
-import Networks from "@/components/Dropdown/networks";
 import ViewInviteModal from "@/components/Modal/view-invite";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -15,69 +14,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { getNetworkImage } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
 import { MemberInviteSchema, TeamSchemaI } from "@/utils/types";
-import { useWallets } from "@privy-io/react-auth";
+// Removed Privy wallet dependency
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import {
-  Bell,
-  ChevronDown,
-  ExternalLink,
-  LayoutDashboardIcon,
-  LogOut,
-  Settings,
-} from "lucide-react";
+import { Bell, ExternalLink, LayoutDashboardIcon, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export const Web3Network: React.FC = () => {
-  const { wallets, ready } = useWallets();
-  if (!ready || !wallets.length) {
-    return <></>;
-  }
-
-  const wallet = wallets[0];
-  const { supported, networkImg } = getNetworkImage(wallet.chainId);
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Tooltip>
-          <TooltipTrigger>
-            <div
-              className={cn(
-                "flex justify-center items-center gap-2 px-2",
-                "h-12 rounded-lg hover:bg-slate-700/40",
-              )}
-            >
-              <Icon
-                size="sm"
-                image={networkImg}
-                className={cn(
-                  !supported && "bg-auto!",
-                  // for localhost for now.
-                  supported && networkImg.includes("unknown") && "bg-auto!",
-                )}
-              />
-              <ChevronDown />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="left" align="start">
-            <div className="bg-black shadow-sm rounded-lg cursor-default min-w-40">
-              <div className="px-2 py-1">This is an unsupported network</div>
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="top-full right-0">
-        <Networks />
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  // Wallet functionality removed - using Stytch for authentication only
+  return <></>;
 };
 
 export const Notifications: React.FC = () => {
@@ -148,7 +97,7 @@ export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ us
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
             <Link
-              href={navigation.team.overview({ teamSlug: defaultTeam?.slug })}
+              href={navigation.team.overview({ teamId: defaultTeam?.id })}
               className="w-full flex items-center justify-between"
             >
               <span>Dashboard</span>

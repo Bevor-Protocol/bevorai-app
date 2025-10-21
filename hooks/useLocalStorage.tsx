@@ -5,7 +5,7 @@ type localStorageKeys = "bevor:starred";
 export interface StarredItem {
   id: string;
   type: "project" | "audit" | "version" | "chat";
-  teamSlug: string;
+  teamId: string;
   label: string;
   url: string;
 }

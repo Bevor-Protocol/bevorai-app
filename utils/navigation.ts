@@ -9,68 +9,66 @@ export const navigation = {
     notifications: (data: HrefProps) => "/user/notifications",
   },
   team: {
-    overview: (data: HrefProps) => `/teams/${data.teamSlug}`,
-    projects: (data: HrefProps) => `/teams/${data.teamSlug}/projects`,
-    audits: (data: HrefProps) => `/teams/${data.teamSlug}/audits`,
-    versions: (data: HrefProps) => `/teams/${data.teamSlug}/versions`,
-    chats: (data: HrefProps) => `/teams/${data.teamSlug}/chats`,
+    overview: (data: HrefProps) => `/teams/${data.teamId}`,
+    projects: (data: HrefProps) => `/teams/${data.teamId}/projects`,
+    audits: (data: HrefProps) => `/teams/${data.teamId}/audits`,
+    versions: (data: HrefProps) => `/teams/${data.teamId}/versions`,
+    chats: (data: HrefProps) => `/teams/${data.teamId}/chats`,
     settings: {
-      overview: (data: HrefProps) => `/teams/${data.teamSlug}/settings`,
-      billing: (data: HrefProps) => `/teams/${data.teamSlug}/settings/billing`,
-      api: (data: HrefProps) => `/teams/${data.teamSlug}/settings/api`,
-      invoices: (data: HrefProps) => `/teams/${data.teamSlug}/settings/invoices`,
-      members: (data: HrefProps) => `/teams/${data.teamSlug}/settings/members`,
+      overview: (data: HrefProps) => `/teams/${data.teamId}/settings`,
+      billing: (data: HrefProps) => `/teams/${data.teamId}/settings/billing`,
+      api: (data: HrefProps) => `/teams/${data.teamId}/settings/api`,
+      invoices: (data: HrefProps) => `/teams/${data.teamId}/settings/invoices`,
+      members: (data: HrefProps) => `/teams/${data.teamId}/settings/members`,
     },
-    // audits: (data: HrefProps) => `/teams/${data.teamSlug}/audits`,
-    analytics: (data: HrefProps) => `/teams/${data.teamSlug}/analytics`,
+    // audits: (data: HrefProps) => `/teams/${data.teamId}/audits`,
+    analytics: (data: HrefProps) => `/teams/${data.teamId}/analytics`,
   },
   project: {
-    overview: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}`,
-    audits: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/audits`,
-    chats: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/chats`,
+    overview: (data: HrefProps) => `/teams/${data.teamId}/projects/${data.projectId}`,
+    audits: (data: HrefProps) => `/teams/${data.teamId}/projects/${data.projectId}/audits`,
+    chats: (data: HrefProps) => `/teams/${data.teamId}/projects/${data.projectId}/chats`,
     versions: {
-      overview: (data: HrefProps) =>
-        `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions`,
+      overview: (data: HrefProps) => `/teams/${data.teamId}/projects/${data.projectId}/versions`,
       new: {
         overview: (data: HrefProps) =>
-          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new`,
+          `/teams/${data.teamId}/projects/${data.projectId}/versions/new`,
         address: (data: HrefProps) =>
-          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/address`,
+          `/teams/${data.teamId}/projects/${data.projectId}/versions/new/address`,
         file: (data: HrefProps) =>
-          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/file`,
+          `/teams/${data.teamId}/projects/${data.projectId}/versions/new/file`,
         paste: (data: HrefProps) =>
-          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/paste`,
+          `/teams/${data.teamId}/projects/${data.projectId}/versions/new/paste`,
         folder: (data: HrefProps) =>
-          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/folder`,
+          `/teams/${data.teamId}/projects/${data.projectId}/versions/new/folder`,
         repo: (data: HrefProps) =>
-          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/repo`,
+          `/teams/${data.teamId}/projects/${data.projectId}/versions/new/repo`,
         ide: (data: HrefProps) =>
-          `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/new/ide`,
+          `/teams/${data.teamId}/projects/${data.projectId}/versions/new/ide`,
       },
     },
-    settings: (data: HrefProps) => `/teams/${data.teamSlug}/projects/${data.projectSlug}/settings`,
-    analytics: (data: HrefProps) =>
-      `/teams/${data.teamSlug}/projects/${data.projectSlug}/analytics`,
+    settings: (data: HrefProps) => `/teams/${data.teamId}/projects/${data.projectId}/settings`,
+    analytics: (data: HrefProps) => `/teams/${data.teamId}/projects/${data.projectId}/analytics`,
   },
   version: {
     overview: (data: HrefProps) =>
-      `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}`,
+      `/teams/${data.teamId}/projects/${data.projectId}/versions/${data.versionId}`,
     audits: {
       overview: (data: HrefProps) =>
-        `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/audits`,
+        `/teams/${data.teamId}/projects/${data.projectId}/versions/${data.versionId}/audits`,
       new: (data: HrefProps) =>
-        `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/audits/new`,
+        `/teams/${data.teamId}/projects/${data.projectId}/versions/${data.versionId}/audits/new`,
     },
     analytics: (data: HrefProps) =>
-      `/teams/${data.teamSlug}/projects/${data.projectSlug}/versions/${data.versionId}/analytics`,
+      `/teams/${data.teamId}/projects/${data.projectId}/versions/${data.versionId}/analytics`,
   },
   audit: {
     overview: (data: HrefProps) =>
-      `/teams/${data.teamSlug}/projects/${data.projectSlug}/audits/${data.auditId}`,
+      `/teams/${data.teamId}/projects/${data.projectId}/audits/${data.auditId}`,
     scope: (data: HrefProps) =>
-      `/teams/${data.teamSlug}/projects/${data.projectSlug}/audits/${data.auditId}/scope`,
+      `/teams/${data.teamId}/projects/${data.projectId}/audits/${data.auditId}/scope`,
     overlay: (data: HrefProps) =>
-      `/teams/${data.teamSlug}/projects/${data.projectSlug}/audits/${data.auditId}/overlay`,
+      `/teams/${data.teamId}/projects/${data.projectId}/audits/${data.auditId}/overlay`,
   },
   shared: {
     overview: (data: HrefProps) => `/shared/audits/${data.auditId}`,

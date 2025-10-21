@@ -6,13 +6,13 @@ import { AuditEmpty } from "@/components/audits/empty";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 
-export const AuditGrid: React.FC<{ query: Record<string, string>; teamSlug: string }> = ({
+export const AuditGrid: React.FC<{ query: Record<string, string>; teamId: string }> = ({
   query,
-  teamSlug,
+  teamId,
 }) => {
   const { data: audits, isLoading } = useQuery({
     queryKey: ["audits", query],
-    queryFn: () => bevorAction.getAudits(query),
+    queryFn: () => bevorAction.getSecurityAnalyses(query),
   });
 
   if (!audits || isLoading) {
@@ -32,7 +32,7 @@ export const AuditGrid: React.FC<{ query: Record<string, string>; teamSlug: stri
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {audits.results.map((audit) => (
-        <AuditElement key={audit.id} audit={audit} teamSlug={teamSlug} />
+        <AuditElement key={audit.id} audit={audit} teamId={teamId} />
       ))}
     </div>
   );

@@ -8,57 +8,57 @@ import { useMemo } from "react";
 
 type NavItemProp = {
   name: string;
-  href: ({ teamSlug, projectSlug }: { teamSlug: string; projectSlug?: string }) => string;
-  include: ({ teamSlug, projectSlug }: { teamSlug: string; projectSlug?: string }) => boolean;
+  href: ({ teamId, projectId }: { teamId: string; projectId?: string }) => string;
+  include: ({ teamId, projectId }: { teamId: string; projectId?: string }) => boolean;
 };
 
 const navigationItems: NavItemProp[] = [
   {
     name: "Overview",
-    href: ({ teamSlug, projectSlug }) =>
-      projectSlug ? `/teams/${teamSlug}/projects/settings` : `/teams/${teamSlug}/settings`,
-    include: ({ teamSlug, projectSlug }) => true,
+    href: ({ teamId, projectId }) =>
+      projectId ? `/teams/${teamId}/projects/settings` : `/teams/${teamId}/settings`,
+    include: ({ teamId, projectId }) => true,
   },
   {
     name: "Billing",
-    href: ({ teamSlug, projectSlug }) => `/teams/${teamSlug}/settings/billing`,
-    include: ({ teamSlug, projectSlug }) => !projectSlug,
+    href: ({ teamId, projectId }) => `/teams/${teamId}/settings/billing`,
+    include: ({ teamId, projectId }) => !projectId,
   },
   {
     name: "Plans",
-    href: ({ teamSlug, projectSlug }) => `/teams/${teamSlug}/settings/plans`,
-    include: ({ teamSlug, projectSlug }) => !projectSlug,
+    href: ({ teamId, projectId }) => `/teams/${teamId}/settings/plans`,
+    include: ({ teamId, projectId }) => !projectId,
   },
   {
     name: "Invoices",
-    href: ({ teamSlug, projectSlug }) => `/teams/${teamSlug}/settings/invoices`,
-    include: ({ teamSlug, projectSlug }) => !projectSlug,
+    href: ({ teamId, projectId }) => `/teams/${teamId}/settings/invoices`,
+    include: ({ teamId, projectId }) => !projectId,
   },
   {
     name: "API",
-    href: ({ teamSlug, projectSlug }) => `/teams/${teamSlug}/settings/api`,
-    include: ({ teamSlug, projectSlug }) => !projectSlug,
+    href: ({ teamId, projectId }) => `/teams/${teamId}/settings/api`,
+    include: ({ teamId, projectId }) => !projectId,
   },
   {
     name: "Members",
-    href: ({ teamSlug, projectSlug }) => `/teams/${teamSlug}/settings/members`,
-    include: ({ teamSlug, projectSlug }) => !projectSlug,
+    href: ({ teamId, projectId }) => `/teams/${teamId}/settings/members`,
+    include: ({ teamId, projectId }) => !projectId,
   },
 ];
 
 const SettingsSidebar: React.FC = () => {
   const pathname = usePathname();
-  const { teamSlug, projectSlug } = useParams<{ teamSlug: string; projectSlug?: string }>();
+  const { teamId, projectId } = useParams<{ teamId: string; projectId?: string }>();
   const navigationItemsFiltered = useMemo(() => {
     return navigationItems
-      .filter((item) => item.include({ teamSlug, projectSlug }))
+      .filter((item) => item.include({ teamId, projectId }))
       .map((item) => {
         return {
           name: item.name,
-          href: item.href({ teamSlug, projectSlug }),
+          href: item.href({ teamId, projectId }),
         };
       });
-  }, [teamSlug, projectSlug]);
+  }, [teamId, projectId]);
 
   return (
     <div className="flex flex-col gap-4 min-w-28">

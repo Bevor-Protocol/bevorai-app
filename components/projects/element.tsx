@@ -39,13 +39,13 @@ export const ProjectElementLoader: React.FC = () => {
 
 export const ProjectElement: React.FC<{
   project: CodeProjectSchema;
-  teamSlug: string;
+  teamId: string;
   isDisabled?: boolean;
-}> = ({ project, teamSlug, isDisabled = false }) => {
+}> = ({ project, teamId, isDisabled = false }) => {
   return (
     <Link
       key={project.id}
-      href={`/teams/${teamSlug}/projects/${project.slug}`}
+      href={`/teams/${teamId}/projects/${project.id}`}
       className="block border border-border rounded-lg bg-card text-card-foreground p-4 hover:border-neutral-700 transition-all aria-disabled:opacity-80 aria-disabled:pointer-events-none"
       aria-disabled={isDisabled}
     >

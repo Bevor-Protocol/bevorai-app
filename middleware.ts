@@ -49,10 +49,8 @@ const attemptRefresh = async (
     if (isSignIn) {
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {
-        console.log("refresh: /teams/slug");
         return NextResponse.redirect(new URL(`/teams/${lastTeam}`, request.url));
       } else {
-        console.log("refresh:  /teams");
         return NextResponse.redirect(new URL("/teams", request.url));
       }
     }
@@ -70,26 +68,14 @@ const middleware = async (request: NextRequest): Promise<NextResponse> => {
   const response = NextResponse.next();
   const { pathname, searchParams } = request.nextUrl;
 
-  const refreshToken = request.cookies.get("bevor-refresh-token")?.value;
-  const sessionToken = request.cookies.get("bevor-token")?.value;
-  console.log(
-    "MIDDLEWARE PATH",
-    pathname,
-    request.method,
-    "refresh exists: ",
-    !!refreshToken,
-    "session exists:",
-    !!sessionToken,
-  );
-
   // const accessToken = await getAccessToken();
   // console.log("PRIVY TOKEN", accessToken?.substring(0, 10));
 
   if (pathname.startsWith("/teams")) {
     const segments = pathname.split("/").filter(Boolean);
     if (segments.length > 1) {
-      response.headers.set("bevor-team-slug", segments[1]);
-      response.cookies.set("bevor-team-slug", segments[1]);
+      response.headers.set("bevor-team-id", segments[1]);
+      response.cookies.set("bevor-team-id", segments[1]);
     }
   }
 
@@ -135,10 +121,8 @@ const middleware = async (request: NextRequest): Promise<NextResponse> => {
       // If we got here, they're already logged in → redirect them away
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {
-        console.log("redirecting to team slug");
         return NextResponse.redirect(new URL(`/teams/${lastTeam}`, request.url));
       } else {
-        console.log("redirecting to teams");
         return NextResponse.redirect(new URL("/teams", request.url));
       }
     } catch {
