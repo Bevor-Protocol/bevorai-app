@@ -46,10 +46,6 @@
   --link: oklch(70.7% 0.165 254.624);
   --link-accent: oklch(80.9% 0.105 251.813);
   --spacing-header: 4rem;
-
-  @media (min-width: theme(screens.md)) {
-    --spacing-header: 3rem;
-  }
 }
 
 @theme {
@@ -168,6 +164,14 @@
   }
 }
 
+@layer utilities {
+  @variants md {
+    :root {
+      --spacing-header: 3rem; /* example: 3rem */
+    }
+  }
+}
+
 @utility markdown {
   @apply text-foreground leading-relaxed;
 
@@ -240,7 +244,7 @@
   min-width: var(--size-mobile);
   @apply rounded-full transition-all bg-no-repeat bg-cover bg-center;
 
-  @media (width >= theme(screens.md)) {
+  @media (width >= 48rem) {
     height: var(--size-desktop);
     width: var(--size-desktop);
     min-height: var(--size-desktop);

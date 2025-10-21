@@ -3,7 +3,6 @@ import Content from "@/components/content";
 import MultiTimeSeriesPlot from "@/components/screens/analytics/multi-plot";
 import TimeSeriesPlot from "@/components/screens/analytics/plot";
 import { Button } from "@/components/ui/button";
-import { LoadWaifu } from "@/components/ui/loader";
 import MetricCard from "@/components/ui/metric-card";
 import { cn } from "@/lib/utils";
 import { AsyncComponent } from "@/utils/types";
@@ -49,7 +48,7 @@ const Stats: AsyncComponent = async () => {
 const AnalyticsPage: React.FC = () => {
   return (
     <Content>
-      <Suspense fallback={<LoadWaifu />}>
+      <Suspense>
         <Stats />
       </Suspense>
     </Content>
