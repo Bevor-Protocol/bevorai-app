@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { projectActions } from "@/actions/bevor";
 import ContractAddressStep from "@/app/(core)/teams/[teamId]/projects/[projectId]/versions/new/address/step";
 import StepHeader from "@/app/(core)/teams/[teamId]/projects/[projectId]/versions/new/step-header";
 import Container from "@/components/container";
@@ -15,7 +15,7 @@ const AddressStep: AsyncComponent<Props> = async ({ params }) => {
   const queryClient = new QueryClient();
   const project = await queryClient.fetchQuery({
     queryKey: ["projects", slugs.projectId],
-    queryFn: () => bevorAction.getProject(slugs.projectId),
+    queryFn: () => projectActions.getProject(slugs.projectId),
   });
 
   return (

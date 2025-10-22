@@ -1,6 +1,7 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { chatActions } from "@/actions/bevor";
+
 import { Button } from "@/components/ui/button";
 import * as Chat from "@/components/ui/chat";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,14 +35,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId }) => {
 
   const { data: chatData, isLoading: chatLoading } = useQuery({
     queryKey: ["chat", chatId],
-    queryFn: () => bevorAction.getChat(chatId),
+    queryFn: () => chatActions.getChat(chatId),
   });
 
   const [messages, setMessages] = useState<ChatMessageI[]>([]);
 
   const { data: chatAttributes } = useQuery({
     queryKey: ["chatAttributes", chatId],
-    queryFn: () => bevorAction.getChatAttributes(chatId),
+    queryFn: () => chatActions.getChatAttributes(chatId),
     enabled: !!chatId,
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { versionActions } from "@/actions/bevor";
 import { CodeVersionElement, CodeVersionElementLoader } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ export const VersionGrid: React.FC<{ teamId: string; query: Record<string, strin
 }) => {
   const { data: versions, isLoading } = useQuery({
     queryKey: ["versions", query],
-    queryFn: () => bevorAction.getVersions(query),
+    queryFn: () => versionActions.getVersions(query),
   });
 
   if (!versions || isLoading) {

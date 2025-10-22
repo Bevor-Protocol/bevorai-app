@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { securityAnalysisActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -17,7 +17,7 @@ export const AuditPagination: React.FC<{ page: string; basePath: string }> = ({
 
   const { data: audits, isLoading } = useQuery({
     queryKey: ["audits", page],
-    queryFn: () => bevorAction.getSecurityAnalyses({ page }),
+    queryFn: () => securityAnalysisActions.getSecurityAnalyses({ page }),
   });
 
   const totalPages = audits?.total_pages || 1;

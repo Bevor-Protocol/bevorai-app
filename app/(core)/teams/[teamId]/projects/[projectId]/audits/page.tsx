@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { projectActions, securityAnalysisActions } from "@/actions/bevor";
 import { AuditGrid } from "@/components/audits/grid";
 import { AuditPagination } from "@/components/audits/pagination";
 import Container from "@/components/container";
@@ -53,14 +53,14 @@ const ProjectAuditsPage: AsyncComponent<ProjectAuditsPageProps> = async ({
   const { teamId, projectId } = await params;
   const { page = "0" } = await searchParams;
 
-  const project = await bevorAction.getProject(projectId);
+  const project = await projectActions.getProject(projectId);
 
   const query = { page, project_id: project.id };
 
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery({
     queryKey: ["audits", query],
-    queryFn: () => bevorAction.getSecurityAnalyses(query),
+    queryFn: () => securityAnalysisActions.getSecurityAnalyses(query),
   });
 
   return (

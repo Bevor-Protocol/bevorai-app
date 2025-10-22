@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { userActions } from "@/actions/bevor";
 import Content from "@/components/content";
 import MultiTimeSeriesPlot from "@/components/screens/analytics/multi-plot";
 import TimeSeriesPlot from "@/components/screens/analytics/plot";
@@ -11,11 +11,11 @@ import Link from "next/link";
 import React, { Suspense } from "react";
 
 const Stats: AsyncComponent = async () => {
-  const data = await bevorAction.getStats();
-  const auditsTs = await bevorAction.getTimeseriesAudits();
-  const usersTs = await bevorAction.getTimeseriesUsers();
-  const securityFindingsTs = await bevorAction.getTimeseriesFindings("security");
-  const gasFindingsTs = await bevorAction.getTimeseriesFindings("gas");
+  const data = await userActions.getStats();
+  const auditsTs = await userActions.getTimeseriesAudits();
+  const usersTs = await userActions.getTimeseriesUsers();
+  const securityFindingsTs = await userActions.getTimeseriesFindings("security");
+  const gasFindingsTs = await userActions.getTimeseriesFindings("gas");
 
   return (
     <>

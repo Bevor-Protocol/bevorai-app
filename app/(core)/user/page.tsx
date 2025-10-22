@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { userActions } from "@/actions/bevor";
 import TeamDisplay from "@/app/(core)/user/team-component";
 import Container from "@/components/container";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,7 +19,7 @@ const Loading: React.FC = () => {
 };
 
 const HeaderContent: AsyncComponent = async () => {
-  const userInfo = await bevorAction.getUserInfo();
+  const userInfo = await userActions.getUserInfo();
   const teams = userInfo.teams;
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -48,7 +48,7 @@ const HeaderContent: AsyncComponent = async () => {
 };
 
 const OtherContent: AsyncComponent = async () => {
-  const userInfo = await bevorAction.getUserInfo();
+  const userInfo = await userActions.getUserInfo();
   const teams = userInfo.teams;
   return (
     <div className="border border-border rounded-lg p-6">

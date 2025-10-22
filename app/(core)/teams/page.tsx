@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
 import { AsyncComponent } from "@/utils/types";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -12,7 +12,7 @@ const TeamBasePage: AsyncComponent = async () => {
     redirect(`/teams/${recentTeamId}`);
   }
 
-  const teams = await bevorAction.getTeams();
+  const teams = await teamActions.getTeams();
 
   const defaultTeam = teams.find((team) => team.is_default);
   if (defaultTeam) {

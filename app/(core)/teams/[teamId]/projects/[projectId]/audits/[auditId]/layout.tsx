@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { securityAnalysisActions } from "@/actions/bevor";
 import Shareable from "@/app/(core)/teams/[teamId]/projects/[projectId]/audits/[auditId]/shareable";
 import { navigation } from "@/utils/navigation";
 import { AsyncComponent } from "@/utils/types";
@@ -14,12 +14,12 @@ type LayoutProps = {
 const AuditLayout: AsyncComponent<LayoutProps> = async ({ params, children }) => {
   const { teamId, projectId, auditId } = await params;
 
-  const audit = await bevorAction.getSecurityAnalysis(auditId);
+  const audit = await securityAnalysisActions.getSecurityAnalysis(auditId);
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4 text-sm my-4">
+        <div className="flex items-center space-x-4 my-4">
           <Link
             href={navigation.version.overview({
               teamId,

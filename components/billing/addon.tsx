@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import { bevorAction } from "@/actions";
+import { billingActions } from "@/actions/bevor";
+
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { StripeAddonI } from "@/utils/types";
@@ -14,7 +15,7 @@ export const AddonRow: React.FC<{
   const currentPrice = addon.price / 100;
 
   const checkoutMutation = useMutation({
-    mutationFn: (lookupKey: string) => bevorAction.modifySubscription(lookupKey),
+    mutationFn: (lookupKey: string) => billingActions.modifySubscription(lookupKey),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["addons"],

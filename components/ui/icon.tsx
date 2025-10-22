@@ -1,91 +1,75 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { iconSizeMapper } from "@/utils/constants";
 import { generateSlug } from "@/utils/helpers";
+import { cva, type VariantProps } from "class-variance-authority";
 import React from "react";
 
-interface IconI extends React.HTMLAttributes<HTMLElement> {
-  size: string;
-  image?: string | null;
-  seed?: string | null;
-  className?: string;
-}
+type IconI = React.ComponentProps<"div"> &
+  VariantProps<typeof iconVariants> & {
+    size: string;
+    image?: string | null;
+    seed?: string | null;
+    className?: string;
+  };
 
-interface SocialI extends React.HTMLAttributes<HTMLElement> {
+type SocialI = IconI & {
   children: React.ReactNode;
-  size: string;
-}
+};
 
-export const Icon: React.FC<IconI> = ({ size, image, seed, className, ...rest }) => {
-  const { desktop, mobile } = iconSizeMapper[size];
+const iconVariants = cva("inline-flex items-center justify-center", {
+  variants: {
+    size: {
+      default: "size-icon-sm",
+      sm: "size-icon-sm",
+      md: "size-icon-md",
+      lg: "size-icon-lg",
+    },
+    shape: {
+      default: "rounded-full",
+      rounded: "rounded-full",
+      block: "rounded-lg",
+    },
+  },
+  defaultVariants: {
+    size: "default",
+    shape: "default",
+  },
+});
 
+export const Icon: React.FC<IconI> = ({ size, shape, image, seed, className, ...props }) => {
   let urlUse = "";
   if (image && !seed) {
     urlUse = `url(${image})`;
   } else if (seed) {
     urlUse = `url(https://avatar.vercel.sh/${generateSlug(seed)})`;
   } else {
-    return (
-      <Skeleton
-        className="avatar"
-        style={
-          {
-            "--size-desktop": desktop,
-            "--size-mobile": mobile,
-          } as React.CSSProperties
-        }
-      />
-    );
+    return <Skeleton className={cn(iconVariants({ size, shape, className }))} />;
   }
   return (
     <div
-      className={cn("avatar", className)}
+      className={cn(iconVariants({ size, shape, className }))}
       style={
         {
           backgroundImage: urlUse,
-          "--size-desktop": desktop,
-          "--size-mobile": mobile,
         } as React.CSSProperties
       }
-      {...rest}
+      {...props}
     />
   );
 };
 
-export const IconEmpty: React.FC<IconI> = ({ size, className, ...rest }) => {
-  const { desktop, mobile } = iconSizeMapper[size];
-
-  return (
-    <Skeleton
-      className={cn("avatar", className)}
-      style={
-        {
-          "--size-desktop": desktop,
-          "--size-mobile": mobile,
-        } as React.CSSProperties
-      }
-      {...rest}
-    />
-  );
+export const IconEmpty: React.FC<IconI> = ({ size, shape, className, ...props }) => {
+  return <Skeleton className={cn(iconVariants({ size, shape, className }))} {...props} />;
 };
 
-export const Social: React.FC<SocialI> = ({ children, size, className, ...rest }) => {
-  const { desktop, mobile } = iconSizeMapper[size];
+export const Social: React.FC<SocialI> = ({ children, size, shape, className, ...props }) => {
   return (
     <div
       className={cn(
-        "flex justify-center items-center p-1",
-        "border border-transparent",
-        "avatar",
-        className,
+        iconVariants({ size, shape, className }),
+        "flex justify-center items-center p-1 border border-transparent",
       )}
-      style={
-        {
-          "--size-desktop": desktop,
-          "--size-mobile": mobile,
-        } as React.CSSProperties
-      }
-      {...rest}
+      {...props}
     >
       {children}
     </div>

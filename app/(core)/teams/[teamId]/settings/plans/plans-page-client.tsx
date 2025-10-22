@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { bevorAction } from "@/actions";
+import { billingActions } from "@/actions/bevor";
+
 import { AddonRow } from "@/components/billing/addon";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -33,7 +34,7 @@ const PlanCard: React.FC<{
 }> = ({ plan, team }) => {
   const checkoutMutation = useMutation({
     mutationFn: () =>
-      bevorAction.createCheckoutSession({
+      billingActions.createCheckoutSession({
         success_url: `${window.location.origin}/teams/${team.id}/settings/billing?success=true`,
         cancel_url: `${window.location.origin}/teams/${team.id}/settings/plans?canceled=true`,
       }),
@@ -164,7 +165,7 @@ const PlanCard: React.FC<{
 const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: ["products"],
-    queryFn: () => bevorAction.getProducts(),
+    queryFn: () => billingActions.getProducts(),
   });
 
   if (plansLoading) {
@@ -196,7 +197,7 @@ const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
 const AddonsSection: React.FC = () => {
   const { data: addons, isLoading: addonsLoading } = useQuery({
     queryKey: ["addons"],
-    queryFn: () => bevorAction.getAddons(),
+    queryFn: () => billingActions.getAddons(),
   });
 
   if (addonsLoading) {

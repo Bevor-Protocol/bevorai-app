@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { versionActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { navigation } from "@/utils/navigation";
@@ -39,7 +39,7 @@ const FolderStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
       files.forEach((sourceFile) => {
         fileMap[sourceFile.path] = sourceFile.file;
       });
-      return bevorAction.contractUploadFolder({ fileMap, projectId });
+      return versionActions.contractUploadFolder({ fileMap, projectId });
     },
     onError: () => {
       setError("Failed to upload contract folder");

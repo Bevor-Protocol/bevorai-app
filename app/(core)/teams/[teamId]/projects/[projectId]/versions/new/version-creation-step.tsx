@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { versionActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -39,7 +39,8 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({
   const [error, setError] = useState("");
 
   const { mutate, isSuccess, isPending } = useMutation({
-    mutationFn: async (address: string) => bevorAction.contractUploadScan(address, projectId),
+    mutationFn: async (address: string) =>
+      versionActions.contractUploadScan({ address, projectId }),
     onError: (err) => {
       console.log(err.message);
       setError("something went wrong");

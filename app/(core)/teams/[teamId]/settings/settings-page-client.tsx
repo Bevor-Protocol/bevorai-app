@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { TeamSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -23,7 +23,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
   const [deleteError, setDeleteError] = useState(false);
 
   const updateTeamMutation = useMutation({
-    mutationFn: async (name: string) => bevorAction.updateTeam({ name }),
+    mutationFn: async (name: string) => teamActions.updateTeam({ name }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
@@ -32,7 +32,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
   });
 
   const deleteTeamMutation = useMutation({
-    mutationFn: async () => bevorAction.deleteTeam(),
+    mutationFn: async () => teamActions.deleteTeam(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });

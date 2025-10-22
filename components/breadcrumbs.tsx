@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { projectActions } from "@/actions/bevor";
 import CreateProjectModal from "@/components/Modal/create-project";
 import CreateTeamModal from "@/components/Modal/create-team";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userI
 
   const { data: allProjects, isLoading: isProjectsLoading } = useQuery({
     queryKey: ["projects"],
-    queryFn: async () => bevorAction.getAllProjects(),
+    queryFn: async () => projectActions.getAllProjects(),
   });
 
   const team = useMemo(() => {
@@ -260,7 +260,7 @@ const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
                     "transition-colors text-foreground hover:bg-neutral-800",
                   )}
                 >
-                  <Icon size="xs" seed={teamItem.id} className="size-4 flex-shrink-0" />
+                  <Icon size="sm" seed={teamItem.id} className="size-4 flex-shrink-0" />
                   <span className="truncate text-ellipsis mx-3 flex-1">{teamItem.name}</span>
                   <div className="flex-shrink-0">
                     {team?.id === teamItem.id && <Check className="size-3" />}

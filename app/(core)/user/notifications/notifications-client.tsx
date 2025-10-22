@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,7 +24,7 @@ const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
   const [showModal, setShowModal] = useState(false);
 
   const acceptInviteMutation = useMutation({
-    mutationFn: async () => bevorAction.acceptInvite(invite.id),
+    mutationFn: async () => teamActions.acceptInvite(invite.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-invites"] });
       queryClient.invalidateQueries({ queryKey: ["teams"] });
@@ -34,7 +34,7 @@ const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
   });
 
   const rejectInviteMutation = useMutation({
-    mutationFn: async () => bevorAction.removeInvite(invite.id),
+    mutationFn: async () => teamActions.removeInvite(invite.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-invites"] });
       setShowModal(false);

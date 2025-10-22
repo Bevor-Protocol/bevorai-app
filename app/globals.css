@@ -1,8 +1,4 @@
 @import "tailwindcss";
-/*
-  ---break---
-*/
-@custom-variant dark (&:is(.dark *));
 
 :root {
   --background: oklch(0 0 0);
@@ -46,6 +42,15 @@
   --link: oklch(70.7% 0.165 254.624);
   --link-accent: oklch(80.9% 0.105 251.813);
   --spacing-header: 4rem;
+  --size-icon-sm: 20px;
+  --size-icon-md: 25px;
+  --size-icon-lg: 60px;
+
+  @media (width >= 48rem) {
+    --size-icon-sm: 20px;
+    --size-icon-md: 30px;
+    --size-icon-lg: 75px;
+  }
 }
 
 @theme {
@@ -97,6 +102,10 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-link: var(--link);
   --color-link-accent: var(--link-accent);
+  --spacing-icon-sm: var(--size-icon-sm);
+  --spacing-icon-md: var(--size-icon-md);
+  --spacing-icon-lg: var(--size-icon-lg);
+  --leading-normal: 1.2;
 
   @keyframes dots {
     0% {
@@ -161,6 +170,7 @@
   ::backdrop,
   ::file-selector-button {
     border-color: var(--color-gray-200, currentColor);
+    font-size: 14px;
   }
 }
 
@@ -237,21 +247,6 @@
   }
 }
 
-@utility avatar {
-  height: var(--size-mobile);
-  width: var(--size-mobile);
-  min-height: var(--size-mobile);
-  min-width: var(--size-mobile);
-  @apply rounded-full transition-all bg-no-repeat bg-cover bg-center;
-
-  @media (width >= 48rem) {
-    height: var(--size-desktop);
-    width: var(--size-desktop);
-    min-height: var(--size-desktop);
-    min-width: var(--size-desktop);
-  }
-}
-
 @utility no-scrollbar {
   /* Hide scrollbar for Chrome, Safari and Opera */
   &::-webkit-scrollbar {
@@ -316,13 +311,13 @@
   }
 
   h1 {
-    @apply text-2xl;
+    @apply text-3xl font-semibold;
   }
   h2 {
-    @apply text-xl;
+    @apply text-2xl font-medium;
   }
   h3 {
-    @apply text-base;
+    @apply text-xl font-medium;
   }
 }
 
@@ -339,6 +334,6 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground leading-normal;
   }
 }

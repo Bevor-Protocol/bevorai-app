@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { versionActions } from "@/actions/bevor";
 import { CodeCounter, CodeHeader, CodeHolder, CodeSource, CodeSources } from "@/components/code";
 import ShikiViewer from "@/components/shiki-viewer";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ version, sources }) => {
     error,
   } = useQuery({
     queryKey: ["source", selectedSource?.id ?? "", version.id],
-    queryFn: () => bevorAction.getContractVersionSource(selectedSource?.id ?? "", version.id),
+    queryFn: () => versionActions.getContractVersionSource(selectedSource?.id ?? "", version.id),
     enabled: !!selectedSource,
   });
 

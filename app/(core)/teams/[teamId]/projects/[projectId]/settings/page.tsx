@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { projectActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { AsyncComponent } from "@/utils/types";
 import ProjectSettingsPageClient from "./client";
@@ -14,7 +14,7 @@ const ProjectSettingsPage: AsyncComponent<ProjectSettingsPageProps> = async ({
 }) => {
   const { updated } = await searchParams;
   const { teamId, projectId } = await params;
-  const project = await bevorAction.getProject(projectId);
+  const project = await projectActions.getProject(projectId);
 
   return (
     <Container>

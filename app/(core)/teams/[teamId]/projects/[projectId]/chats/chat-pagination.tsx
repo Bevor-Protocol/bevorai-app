@@ -1,6 +1,7 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { chatActions } from "@/actions/bevor";
+
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -17,7 +18,7 @@ export const ChatPagination: React.FC<{ page: string; basePath: string }> = ({
 
   const { data: chats, isLoading } = useQuery({
     queryKey: ["chats", page],
-    queryFn: () => bevorAction.getChats({ page }),
+    queryFn: () => chatActions.getChats({ page }),
   });
 
   const totalPages = chats?.total_pages || 1;

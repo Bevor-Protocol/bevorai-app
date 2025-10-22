@@ -25,8 +25,8 @@ const Container: React.FC<Props> = ({
       </header>
       <div
         className={cn(
-          "pb-2 px-4 grow",
-          constrainHeight && "h-remaining flex flex-col max-h-remaining overflow-hidden",
+          "pb-2 px-4 grow overflow-x-hidden max-w-screen",
+          constrainHeight && "flex flex-col max-h-remaining overflow-hidden",
           className,
         )}
       >

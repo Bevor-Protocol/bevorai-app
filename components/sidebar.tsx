@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { userActions } from "@/actions/bevor";
 import { TeamNavigation } from "@/components/Nav/team";
 import { UserNavigation } from "@/components/Nav/user";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -59,7 +59,7 @@ const TeamSidebarItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.team.overview(params)}
               tooltip="Overview"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.team.overview(params)}>
                 <LayoutDashboard />
@@ -73,7 +73,7 @@ const TeamSidebarItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.team.projects(params)}
               tooltip="projects"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.team.projects(params)}>
                 <Code />
@@ -84,9 +84,9 @@ const TeamSidebarItems: React.FC = () => {
           <Collapsible className="group/collapsible">
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip="settings" size="lg" asChild>
+                <SidebarMenuButton tooltip="settings" size="sm" asChild>
                   <div>
-                    <Settings className="shrink-0 size-4 group-data-[collapsible=icon]:ml-2" />
+                    <Settings className="group-data-[collapsible=icon]:ml-2" />
                     <span className="truncate">Settings</span>
                     <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
                   </div>
@@ -99,7 +99,7 @@ const TeamSidebarItems: React.FC = () => {
                       asChild
                       isActive={pathname == navigation.team.settings.overview(params)}
                       tooltip="settings - overview"
-                      size="lg"
+                      size="sm"
                     >
                       <Link href={navigation.team.settings.overview(params)}>
                         <Home />
@@ -112,7 +112,7 @@ const TeamSidebarItems: React.FC = () => {
                       asChild
                       isActive={pathname == navigation.team.settings.billing(params)}
                       tooltip="settings - billing"
-                      size="lg"
+                      size="sm"
                     >
                       <Link href={navigation.team.settings.billing(params)}>
                         <DollarSign />
@@ -125,7 +125,7 @@ const TeamSidebarItems: React.FC = () => {
                       asChild
                       isActive={pathname == navigation.team.settings.api(params)}
                       tooltip="settings - api"
-                      size="lg"
+                      size="sm"
                     >
                       <Link href={navigation.team.settings.api(params)}>
                         <Code />
@@ -138,7 +138,7 @@ const TeamSidebarItems: React.FC = () => {
                       asChild
                       isActive={pathname == navigation.team.settings.invoices(params)}
                       tooltip="settings - invoices"
-                      size="lg"
+                      size="sm"
                     >
                       <Link href={navigation.team.settings.invoices(params)}>
                         <FileText />
@@ -151,7 +151,7 @@ const TeamSidebarItems: React.FC = () => {
                       asChild
                       isActive={pathname == navigation.team.settings.members(params)}
                       tooltip="settings - members"
-                      size="lg"
+                      size="sm"
                     >
                       <Link href={navigation.team.settings.members(params)}>
                         <Users />
@@ -183,7 +183,7 @@ const ProjectSidebarItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.project.overview(params)}
               tooltip="Overview"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.project.overview(params)}>
                 <LayoutDashboard />
@@ -196,7 +196,7 @@ const ProjectSidebarItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.project.audits(params)}
               tooltip="audits"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.project.audits(params)}>
                 <Shield />
@@ -209,7 +209,7 @@ const ProjectSidebarItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.project.versions.overview(params)}
               tooltip="versions"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.project.versions.overview(params)}>
                 <Code2 />
@@ -223,7 +223,7 @@ const ProjectSidebarItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.project.chats(params)}
               tooltip="chats"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.project.chats(params)}>
                 <MessageSquare />
@@ -236,7 +236,7 @@ const ProjectSidebarItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.project.settings(params)}
               tooltip="chats"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.project.settings(params)}>
                 <Settings />
@@ -293,7 +293,7 @@ const StarredSidebarItems: React.FC = () => {
                       asChild
                       isActive={pathname === item.url}
                       tooltip={item.label}
-                      size="lg"
+                      size="sm"
                     >
                       <Link href={item.url}>
                         {getIcon(item)}
@@ -316,7 +316,7 @@ const UserNavigationItems: React.FC = () => {
 
   const invites = useQuery({
     queryKey: ["user-invites"],
-    queryFn: async () => bevorAction.getUserInvites(),
+    queryFn: async () => userActions.getUserInvites(),
   });
 
   const hasInvites = (invites.data ?? []).length > 0;
@@ -331,7 +331,7 @@ const UserNavigationItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.user.overview({})}
               tooltip="Overview"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.user.overview({})}>
                 <LayoutDashboard />
@@ -344,7 +344,7 @@ const UserNavigationItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.user.notifications({})}
               tooltip="audits"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.user.notifications({})} className="relative">
                 <Bell />
@@ -360,7 +360,7 @@ const UserNavigationItems: React.FC = () => {
               asChild
               isActive={pathname === navigation.user.settings({})}
               tooltip="versions"
-              size="lg"
+              size="sm"
             >
               <Link href={navigation.user.settings({})}>
                 <Settings />
@@ -381,7 +381,10 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
   const isProjectPage = !!params.projectId;
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar
+      collapsible="icon"
+      className="[&_svg]:text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0"
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

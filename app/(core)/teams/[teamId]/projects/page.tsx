@@ -1,6 +1,6 @@
 "use server";
 
-import { bevorAction } from "@/actions";
+import { projectActions, teamActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { TeamHeader } from "@/components/team/header";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,11 @@ import ProjectsPageClient from "./projects-page-client";
 
 const ProjectsPage: AsyncComponent = async () => {
   const queryClient = new QueryClient();
-  const team = await bevorAction.getTeam();
+  const team = await teamActions.getTeam();
 
   await queryClient.prefetchQuery({
     queryKey: ["projects", team.id, { page_size: "6", name: "", tag: "" }],
-    queryFn: () => bevorAction.getProjects({ page_size: "6" }),
+    queryFn: () => projectActions.getProjects({ page_size: "6" }),
   });
 
   return (

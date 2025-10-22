@@ -54,7 +54,7 @@ const ProjectsDropdown: React.FC<ProjectsDropdownProps> = ({ projects }) => {
                 className="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors text-foreground hover:bg-neutral-800"
               >
                 <div className="flex items-center gap-3 w-full">
-                  <Icon size="xs" seed={projectItem.id} className="size-4 flex-shrink-0" />
+                  <Icon size="sm" seed={projectItem.id} className="size-4 flex-shrink-0" />
                   <span className="truncate text-ellipsis flex-1">{projectItem.name}</span>
                 </div>
                 {project?.id === projectItem.id && <Check className="size-3" />}

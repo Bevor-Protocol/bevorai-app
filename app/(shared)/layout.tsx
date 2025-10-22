@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { teamActions, userActions } from "@/actions/bevor";
 import { Notifications, Profile } from "@/components/header";
 import SubNav from "@/components/subnav";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ const NotificationHydration: AsyncComponent = async () => {
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery({
     queryKey: ["user-invites"],
-    queryFn: () => bevorAction.getUserInvites(),
+    queryFn: () => userActions.getUserInvites(),
   });
 
   return (
@@ -28,10 +28,10 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
   let currentUser = null;
   let teams: TeamSchemaI[] = [];
   if (sessionToken) {
-    currentUser = await bevorAction.getUser();
+    currentUser = await userActions.getUser();
     teams = await queryClient.fetchQuery({
       queryKey: ["teams"],
-      queryFn: () => bevorAction.getTeams(),
+      queryFn: () => teamActions.getTeams(),
     });
   }
 

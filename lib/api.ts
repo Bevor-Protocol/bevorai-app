@@ -39,17 +39,6 @@ const idpApi = axios.create({
   baseURL: process.env.API_URL,
 });
 
-// Add request interceptor to inject session token
-idpApi.interceptors.request.use(async (config) => {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("bevor-token")?.value;
-  if (!sessionToken) {
-    throw new Error("no session token");
-  }
-  config.headers["Authorization"] = `Bearer ${sessionToken}`;
-  return config;
-});
-
 const streaming_api = axios.create({
   baseURL: process.env.API_URL,
   responseType: "stream",

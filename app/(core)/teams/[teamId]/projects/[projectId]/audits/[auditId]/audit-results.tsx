@@ -75,7 +75,7 @@ const AuditResults: React.FC<AuditResultsProps> = ({ audit, version }) => {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+        <div className="flex items-center space-x-6 text-muted-foreground">
           <div className="flex items-center space-x-2">
             <span>Version: {version.version_identifier}</span>
           </div>
@@ -87,7 +87,7 @@ const AuditResults: React.FC<AuditResultsProps> = ({ audit, version }) => {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Audit Results</h1>
+          <h1 className="mb-2">Audit Results</h1>
           <p className="text-muted-foreground text-lg">
             Security analysis of your smart contract code
           </p>
@@ -96,7 +96,6 @@ const AuditResults: React.FC<AuditResultsProps> = ({ audit, version }) => {
 
       {audit.findings && (
         <div className="space-y-8">
-          {/* Severity Summary */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {levelOrder.map((level) => {
               const findings = findingsByLevel[level] || [];
@@ -117,8 +116,6 @@ const AuditResults: React.FC<AuditResultsProps> = ({ audit, version }) => {
               );
             })}
           </div>
-
-          {/* Summary Header */}
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-foreground">Security Findings</h2>
             <div className="flex items-center space-x-2">
@@ -128,8 +125,6 @@ const AuditResults: React.FC<AuditResultsProps> = ({ audit, version }) => {
               </span>
             </div>
           </div>
-
-          {/* Detailed Findings */}
           <div className="space-y-6">
             {levelOrder.map((level) => {
               const findings = findingsByLevel[level] || [];

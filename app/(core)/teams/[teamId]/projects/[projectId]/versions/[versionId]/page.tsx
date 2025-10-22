@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { versionActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import {
   Breadcrumb,
@@ -51,8 +51,8 @@ const CodeVersionBreadCrumb: React.FC<ResolvedParams> = (params) => {
 
 const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
   const resolvedParams = await params;
-  const version = await bevorAction.getContractVersion(resolvedParams.versionId);
-  const sources = await bevorAction.getContractVersionSources(resolvedParams.versionId);
+  const version = await versionActions.getContractVersion(resolvedParams.versionId);
+  const sources = await versionActions.getContractVersionSources(resolvedParams.versionId);
 
   return (
     <Container breadcrumb={<CodeVersionBreadCrumb {...resolvedParams} />}>

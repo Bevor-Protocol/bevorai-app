@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { adminActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -39,17 +39,17 @@ const AdminPanel: React.FC = () => {
 
   const { data: users } = useQuery({
     queryKey: ["users", userSearch],
-    queryFn: async () => await bevorAction.searchUsers(userSearch),
+    queryFn: async () => await adminActions.searchUsers(userSearch),
   });
 
   const { data: apps } = useQuery({
     queryKey: ["apps", appSearch],
-    queryFn: async () => await bevorAction.searchApps(appSearch),
+    queryFn: async () => await adminActions.searchApps(appSearch),
   });
 
   const { data: prompts } = useQuery({
     queryKey: ["prompts"],
-    queryFn: async () => await bevorAction.getPrompts(),
+    queryFn: async () => await adminActions.getPrompts(),
   });
 
   const { mutate: updateUserPermissions, isPending: userPending } = useMutation({
@@ -63,7 +63,7 @@ const AdminPanel: React.FC = () => {
       canCreateApp: boolean;
       canCreateApiKey: boolean;
     }) =>
-      bevorAction.updateUserPermissions({
+      adminActions.updateUserPermissions({
         toUpdateId,
         canCreateApp,
         canCreateApiKey,
@@ -81,7 +81,7 @@ const AdminPanel: React.FC = () => {
       canCreateApp: boolean;
       canCreateApiKey: boolean;
     }) =>
-      bevorAction.updateAppPermissions({
+      adminActions.updateAppPermissions({
         toUpdateId,
         canCreateApp,
         canCreateApiKey,
@@ -99,7 +99,7 @@ const AdminPanel: React.FC = () => {
       content?: string;
       version?: string;
       is_active?: boolean;
-    }) => bevorAction.updatePrompt(data),
+    }) => adminActions.updatePrompt(data),
   });
 
   const { mutate: createPrompt, isPending: promptCreatePending } = useMutation({
@@ -113,7 +113,7 @@ const AdminPanel: React.FC = () => {
       content: string;
       version: string;
       is_active?: boolean;
-    }) => bevorAction.addPrompt(data),
+    }) => adminActions.addPrompt(data),
   });
 
   const promptTypes = useMemo(() => {

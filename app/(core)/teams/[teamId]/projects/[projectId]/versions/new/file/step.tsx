@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { versionActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -43,9 +43,9 @@ const FileStep: React.FC<FileStepStepProps> = ({ projectId, params }) => {
   const { mutate, isSuccess, isPending } = useMutation({
     mutationFn: async (data: { code?: string; file?: File }) => {
       if (data.file) {
-        return bevorAction.contractUploadFile({ file: data.file, projectId });
+        return versionActions.contractUploadFile({ file: data.file, projectId });
       } else if (data.code) {
-        return bevorAction.contractUploadPaste({ code: data.code, projectId });
+        return versionActions.contractUploadPaste({ code: data.code, projectId });
       }
       throw new Error("No file or code provided");
     },

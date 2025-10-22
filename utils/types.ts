@@ -382,6 +382,13 @@ export interface MemberSchema extends BaseSchema {
   can_update: boolean;
 }
 
+export interface MemberInviteSchema extends BaseSchema {
+  user_id?: string;
+  identifier: string;
+  role: MemberRoleEnum;
+  team: TeamSchemaI;
+}
+
 export interface CodeProjectSchema extends BaseSchema {
   n: number;
   team_id: string;
@@ -403,13 +410,6 @@ export interface InitialUserObject {
   userId?: string;
   teams: TeamSchemaI[];
   projects: CodeProjectSchema[];
-}
-
-export interface MemberInviteSchema extends BaseSchema {
-  user_id?: string;
-  identifier: string;
-  role: MemberRoleEnum;
-  team: TeamSchemaI;
 }
 
 export interface CodeVersionSchema extends BaseSchema {

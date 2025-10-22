@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { projectActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { DialogClose, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ const CreateProjectModal: React.FC<{ targetTeamId: string }> = ({ targetTeamId }
 
   const { mutate, error, isSuccess, data, isPending } = useMutation({
     mutationFn: async (data: { name: string; description?: string; tags?: string[] }) =>
-      bevorAction.createProject(data),
+      projectActions.createProject(data),
   });
 
   useEffect(() => {

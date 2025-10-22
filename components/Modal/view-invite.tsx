@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
@@ -16,7 +16,7 @@ const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) =
   const router = useRouter();
 
   const acceptInviteMutation = useMutation({
-    mutationFn: async () => bevorAction.acceptInvite(invite.id),
+    mutationFn: async () => teamActions.acceptInvite(invite.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-invites"] });
       // also refresh the breadcrumbs nav.
@@ -26,7 +26,7 @@ const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) =
   });
 
   const rejectInviteMutation = useMutation({
-    mutationFn: async () => bevorAction.removeInvite(invite.id),
+    mutationFn: async () => teamActions.removeInvite(invite.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-invites"] });
     },

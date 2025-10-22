@@ -1,4 +1,6 @@
-import { bevorAction } from "@/actions";
+import { chatActions } from "@/actions/bevor";
+
+import { projectActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { navigation } from "@/utils/navigation";
 import { AsyncComponent } from "@/utils/types";
@@ -13,7 +15,7 @@ interface ChatsPageProps {
 
 const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params, searchParams }) => {
   const { teamId, projectId } = await params;
-  const project = await bevorAction.getProject(projectId);
+  const project = await projectActions.getProject(projectId);
   const { page = "0" } = await searchParams;
 
   const query = { page, project_id: project.id };
@@ -21,7 +23,7 @@ const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params, searchParams 
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery({
     queryKey: ["chats", query],
-    queryFn: () => bevorAction.getChats(query),
+    queryFn: () => chatActions.getChats(query),
   });
 
   return (

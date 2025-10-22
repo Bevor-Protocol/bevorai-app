@@ -1,24 +1,42 @@
 "use client";
 
-import { bevorAction } from "@/actions";
-import RemoveMemberModal from "@/components/Modal/remove-member";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { teamActions } from "@/actions/bevor";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Icon } from "@/components/ui/icon";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { SelectItem } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toTitleCase } from "@/lib/utils";
 import { trimAddress } from "@/utils/helpers";
 import { MemberRoleEnum, MemberSchema, TeamSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { User } from "lucide-react";
-import React from "react";
+import { MoreHorizontal } from "lucide-react";
+import React, { useState } from "react";
 
 interface MembersListProps {
   team: TeamSchemaI;
@@ -60,12 +78,22 @@ const MemberDescriptionItem: React.FC<{
 
 const MembersList: React.FC<MembersListProps> = ({ team, curMember, members, isLoading }) => {
   const queryClient = useQueryClient();
+  const [selectedMember, setSelectedMember] = useState<MemberSchema | null>(null);
+  const [selectedAction, setSelectedAction] = useState<"leave" | "remove" | "update" | null>(null);
 
   const updateMemberMutation = useMutation({
     mutationFn: async (data: { memberId: string; toRole: MemberRoleEnum }) =>
-      bevorAction.updateMember(data.memberId, { role: data.toRole }),
+      teamActions.updateMember(data.memberId, { role: data.toRole }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => teamActions.removeMember(memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
     },
   });
 
@@ -76,91 +104,197 @@ const MembersList: React.FC<MembersListProps> = ({ team, curMember, members, isL
     return trimAddress(identifier);
   };
 
-  if (isLoading) {
-    return (
-      <div className="border border-blue-500/50 rounded divide-blue-500/25 divide-y">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="p-3 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Skeleton className="size-8 rounded-full flex-shrink-0" />
-              <div className="flex flex-row gap-4 items-center">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-16" />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Skeleton className="h-8 w-20" />
-              <Skeleton className="h-8 w-16" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const handleAction = (member: MemberSchema, action: "leave" | "remove" | "update"): void => {
+    setSelectedMember(member);
+    setSelectedAction(action);
+  };
+
+  const handleClose = (): void => {
+    setSelectedAction(null);
+    setSelectedMember(null);
+  };
 
   return (
-    <div className="border border-blue-500/50 rounded divide-blue-500/25 divide-y">
-      {members?.map((member) => (
-        <div key={member.id} className="p-3 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="size-8 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
-              <User className="size-4 text-muted-foreground" />
-            </div>
-            <div className="flex flex-row gap-4 items-center">
-              <div className="text-sm font-medium text-foreground">
-                {getDisplayIdentifier(member.identifier)}
+    <>
+      <AlertDialog open={selectedAction === "leave"} onOpenChange={handleClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will lose access to all data associated with this team. Someone will have to
+              invite you again if you want to rejoin.
+              <div className="space-y-2">
+                <label className="text-md font-medium text-neutral-200">
+                  What happens when you leave:
+                </label>
+                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                  <li>• You will lose access to all team projects and resources</li>
+                  <li>• Your team membership will be permanently removed</li>
+                  <li>• You will need to be re-invited to rejoin the team</li>
+                </ul>
               </div>
-              {member.id === curMember.id && (
-                <div className="text-xs text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                  You
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Select defaultValue={member.role} disabled={!member.can_update}>
-              <SelectTrigger className="text-xs font-bold h-8!">
-                <SelectValue>{toTitleCase(member.role)}</SelectValue>
-              </SelectTrigger>
-              <SelectContent align="end">
-                <SelectGroup>
-                  <MemberDescriptionItem
-                    currrentRole={member.role}
-                    targetRole={MemberRoleEnum.OWNER}
-                    handleUpdate={() =>
-                      updateMemberMutation.mutate({
-                        memberId: member.id,
-                        toRole: MemberRoleEnum.OWNER,
-                      })
-                    }
-                  />
-                  <MemberDescriptionItem
-                    currrentRole={member.role}
-                    targetRole={MemberRoleEnum.MEMBER}
-                    handleUpdate={() =>
-                      updateMemberMutation.mutate({
-                        memberId: member.id,
-                        toRole: MemberRoleEnum.MEMBER,
-                      })
-                    }
-                  />
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button disabled={!member.can_remove} size="sm" variant="destructive">
-                  {curMember.id === member.id ? "Leave" : "Remove"}
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <RemoveMemberModal teamName={team.name} memberId={member.id} />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      ))}
-    </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => removeMemberMutation.mutate(selectedMember!.id)}
+              variant="destructive"
+            >
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={selectedAction === "remove"} onOpenChange={handleClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You can add this user back whenever. You might want to revoke any API keys they have
+              access to.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => removeMemberMutation.mutate(selectedMember!.id)}
+              variant="destructive"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* <AlertDialog open={selectedAction === "update"} onOpenChange={handleClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will revoke the key.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteApiKeyMutation.mutate(selectedKey!)}
+              variant="destructive"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog> */}
+      <ScrollArea className="w-full pb-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-icon-sm" />
+              <TableHead className="w-[65%]">Member</TableHead>
+              <TableHead className="w-[10%]">Role</TableHead>
+              <TableHead className="w-[10%]">Status</TableHead>
+              <TableHead className="w-[10%]">Joined</TableHead>
+              <TableHead className="text-right w-[5%]" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading &&
+              [0, 1, 2].map((ind) => (
+                <TableRow key={ind}>
+                  <TableCell>
+                    <Skeleton className="size-icon-sm rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            {members?.map((member) => (
+              <TableRow key={member.id}>
+                <TableCell>
+                  <div className="flex items-center">
+                    <Icon size="sm" seed={member.user_id} />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {getDisplayIdentifier(member.identifier)}
+                  {member.id === curMember.id && (
+                    <Badge variant="blue" className="ml-4">
+                      You
+                    </Badge>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  <Badge variant={member.role === MemberRoleEnum.MEMBER ? "green" : "blue"}>
+                    {toTitleCase(member.role)}
+                  </Badge>
+                </TableCell>
+                <TableCell>active</TableCell>
+                <TableCell>{formatDate(member.created_at)}</TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      asChild
+                      disabled={!member.can_update && !member.can_remove}
+                    >
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {member.can_update && (
+                        <DropdownMenuItem onClick={() => handleAction(member, "update")}>
+                          Update Role
+                        </DropdownMenuItem>
+                      )}
+                      {member.can_remove && curMember.id === member.id && (
+                        <DropdownMenuItem
+                          onClick={() => handleAction(member, "leave")}
+                          variant="destructive"
+                        >
+                          Leave Team
+                        </DropdownMenuItem>
+                      )}
+                      {member.can_remove && curMember.id !== member.id && (
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleAction(member, "remove")}
+                        >
+                          Remove Member
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </>
   );
 };
 

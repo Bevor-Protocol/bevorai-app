@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { DialogClose, DialogDescription, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle } from "@radix-ui/react-dialog";
@@ -16,7 +16,7 @@ const RemoveMemberModal: React.FC<RemoveMemberModalProps> = ({ teamName, memberI
   const queryClient = useQueryClient();
 
   const { mutate, error, isSuccess, isPending } = useMutation({
-    mutationFn: async () => bevorAction.removeMember(memberId),
+    mutationFn: async () => teamActions.removeMember(memberId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
       queryClient.invalidateQueries({ queryKey: ["subscription"] });

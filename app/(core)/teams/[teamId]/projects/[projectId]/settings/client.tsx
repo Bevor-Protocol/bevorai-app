@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { projectActions } from "@/actions/bevor";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
 
   const updateProjectMutation = useMutation({
     mutationFn: (data: { name?: string; description?: string; tags?: string }) =>
-      bevorAction.updateProject(project.id, data),
+      projectActions.updateProject(project.id, data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
 
@@ -48,7 +48,7 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
   });
 
   const deleteProjectMutation = useMutation({
-    mutationFn: async () => bevorAction.deleteProject(project.id),
+    mutationFn: async () => projectActions.deleteProject(project.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       router.push(`/teams/${teamId}/projects`);

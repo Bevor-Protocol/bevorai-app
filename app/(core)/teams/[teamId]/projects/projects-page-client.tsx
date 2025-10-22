@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { projectActions } from "@/actions/bevor";
 import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
 import { SearchInput } from "@/components/ui/input";
@@ -47,7 +47,7 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
     isFetching,
   } = useQuery({
     queryKey: ["projects", team.id, debouncedSearchQuery],
-    queryFn: () => bevorAction.getProjects(debouncedSearchQuery),
+    queryFn: () => projectActions.getProjects(debouncedSearchQuery),
     placeholderData: keepPreviousData,
   });
 
@@ -95,7 +95,7 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
         (debouncedSearchQuery.name || debouncedSearchQuery.tag) && (
           <div className="text-center py-12">
             <Search className="w-12 h-12 text-neutral-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No projects found</h3>
+            <h3 className="text-foreground mb-2">No projects found</h3>
             <p className="text-muted-foreground">Try adjusting your search terms</p>
           </div>
         )}

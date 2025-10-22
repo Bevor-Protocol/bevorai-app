@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import {
   DialogClose,
@@ -41,7 +41,7 @@ const InviteMemberModal: React.FC<{ teamName: string }> = ({ teamName }) => {
   ]);
 
   const inviteMembersMutation = useMutation({
-    mutationFn: async (params: InviteMemberBody) => bevorAction.inviteMembers(params),
+    mutationFn: async (params: InviteMemberBody) => teamActions.inviteMembers(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invites"] });
       queryClient.invalidateQueries({ queryKey: ["subscription"] });

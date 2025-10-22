@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { teamActions, userActions } from "@/actions/bevor";
 import AppSidebar from "@/components/sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,19 +17,19 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
     redirect("/logout");
   }
 
-  const currentUser = await bevorAction.getUser();
+  const currentUser = await userActions.getUser();
   if (!currentUser) {
     redirect("/logout");
   }
 
   await queryClient.prefetchQuery({
     queryKey: ["teams"],
-    queryFn: () => bevorAction.getTeams(),
+    queryFn: () => teamActions.getTeams(),
   });
 
   await queryClient.prefetchQuery({
     queryKey: ["user-invites"],
-    queryFn: async () => bevorAction.getUserInvites(),
+    queryFn: async () => userActions.getUserInvites(),
   });
 
   return (

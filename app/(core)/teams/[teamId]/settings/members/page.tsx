@@ -1,22 +1,21 @@
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
+import Container from "@/components/container";
 import { AsyncComponent } from "@/utils/types";
-import MembersTabs from "./members-tabs";
+import MembersTabs, { MemberCreate } from "./members-tabs";
 
 const MembersPage: AsyncComponent = async () => {
   // don't care to stream this.
-  const team = await bevorAction.getTeam();
-  const curMember = await bevorAction.getCurrentMember();
+  const team = await teamActions.getTeam();
+  const curMember = await teamActions.getCurrentMember();
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="space-y-4">
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-foreground">Team Members</h3>
-          <p className="text-muted-foreground">Manage members and invites</p>
-        </div>
-        <MembersTabs team={team} curMember={curMember} />
+    <Container>
+      <div className="flex flex-row mb-8 justify-between">
+        <h3 className="text-foreground">Team Members</h3>
+        {curMember.role === "owner" && <MemberCreate team={team} />}
       </div>
-    </div>
+      <MembersTabs team={team} curMember={curMember} />
+    </Container>
   );
 };
 

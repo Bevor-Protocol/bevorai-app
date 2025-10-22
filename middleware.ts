@@ -1,4 +1,4 @@
-import tokenService from "@/actions/bevor/token.service";
+import { tokenActions } from "@/actions/bevor";
 import axios from "axios";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -9,7 +9,7 @@ const publicRoutes = ["/shared", "/sign-in", "/logout", "/not-found", "/404", "/
 const forceLogout = async (request: NextRequest): Promise<NextResponse> => {
   const refreshToken = request.cookies.get("bevor-refresh-token");
   if (refreshToken) {
-    await tokenService.revokeToken(refreshToken.value);
+    await tokenActions.revokeToken(refreshToken.value);
   }
 
   const logoutRedirect = NextResponse.redirect(new URL("/logout", request.url));
@@ -29,7 +29,7 @@ const attemptRefresh = async (
     if (!refreshToken) {
       throw new Error("no_refresh_token");
     }
-    const token = await tokenService.refreshToken(refreshToken);
+    const token = await tokenActions.refreshToken(refreshToken);
 
     response.cookies.set("bevor-token", token.scoped_token, {
       httpOnly: true,
@@ -87,7 +87,7 @@ const middleware = async (request: NextRequest): Promise<NextResponse> => {
   // do NOT use the "use server" equivalent. It isn't accessible in middleware edge context
   if (!isPublicRoute) {
     try {
-      await tokenService.validateToken();
+      await tokenActions.validateToken();
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.data) {
@@ -117,7 +117,7 @@ const middleware = async (request: NextRequest): Promise<NextResponse> => {
 
   if (pathname.startsWith("/sign-in") && !searchParams.has("method")) {
     try {
-      await tokenService.validateToken();
+      await tokenActions.validateToken();
       // If we got here, they're already logged in → redirect them away
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {

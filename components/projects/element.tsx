@@ -52,7 +52,7 @@ export const ProjectElement: React.FC<{
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-semibold text-foreground truncate">{project.name}</h3>
+            <h3 className="text-foreground truncate">{project.name}</h3>
           </div>
         </div>
         <div className="flex flex-col gap-1 items-end">
@@ -61,12 +61,10 @@ export const ProjectElement: React.FC<{
         </div>
       </div>
       {project.description && (
-        <p className="text-sm text-foreground mb-4 line-clamp-2 leading-relaxed">
-          {project.description}
-        </p>
+        <p className="mb-4 line-clamp-2 leading-relaxed">{project.description}</p>
       )}
       <div className="flex items-center justify-between pt-3 border-t border-border">
-        <div className="flex items-center space-x-1 text-xs text-neutral-500">
+        <div className="flex items-center space-x-1 text-muted-foreground text-mini">
           <Clock className="size-3" />
           <span>{formatDate(project.created_at)}</span>
         </div>

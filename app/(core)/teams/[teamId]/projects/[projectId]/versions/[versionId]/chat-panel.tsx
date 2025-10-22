@@ -1,6 +1,7 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { chatActions } from "@/actions/bevor";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/helpers";
@@ -28,11 +29,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ versionId, teamId, projectId }) =
 
   const { data: chats, isLoading } = useQuery({
     queryKey: ["chats", query],
-    queryFn: () => bevorAction.getChats(query),
+    queryFn: () => chatActions.getChats(query),
   });
 
   const createChatMutation = useMutation({
-    mutationFn: () => bevorAction.initiateChat(versionId),
+    mutationFn: () => chatActions.initiateChat(versionId),
     onSuccess: (data) => {
       setSelectedChatId(data.id);
       queryClient.invalidateQueries({ queryKey: ["chats"] });

@@ -31,11 +31,12 @@ const SigninContent: React.FC = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isError, setIsError] = useState(false);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isEmailError, setIsEmailError] = useState(false);
-  const [isPasswordError, setIsPasswordError] = useState(false);
+  const [isMagicLinkSuccess, setIsMagicLinkSuccess] = useState(false);
+  const [isMagicLinkError, setIsMagicLinkError] = useState(false);
 
   const handleOAuthLogin = (provider: "google" | "github"): void => {
+    setIsLoggingIn(true);
     if (provider === "google") {
       stytchClient.oauth.google.start({
         login_redirect_url: "http://localhost:3000/api/auth/callback",
@@ -63,64 +64,63 @@ const SigninContent: React.FC = () => {
     }
   };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const value = e.target.value;
-    setPassword(value);
-    // Only clear error if there was one and user is typing
-    if (isPasswordError) {
-      setIsPasswordError(false);
-    }
-  };
-
-  const handlePasswordLogin = async (e: React.FormEvent): Promise<void> => {
+  const handleMagicLinkLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     const isValidEmail = validateEmail(email);
     if (!isValidEmail) {
       setIsEmailError(true);
-    }
-    if (!password) {
-      setIsPasswordError(true);
-    }
-
-    if (!isValidEmail || !password) {
       return;
     }
 
     setIsLoggingIn(true);
     setIsError(false);
-
-    stytchClient.passwords.create({ email, password, session_duration_minutes: 60 });
+    setIsMagicLinkError(false);
+    setIsMagicLinkSuccess(false);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+      const response = await stytchClient.magicLinks.email.loginOrCreate(email, {
+        login_magic_link_url: "http://localhost:3000/api/auth/callback",
+        login_expiration_minutes: 10,
+        signup_magic_link_url: "http://localhost:3000/api/auth/callback",
+        signup_expiration_minutes: 10,
       });
 
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error("Login failed");
+      if (response.status_code < 200 || response.status_code >= 400) {
+        throw new Error(`Magic link request failed with status ${response.status_code}`);
       }
-
-      // Redirect to teams page - cookies should be set by your Python backend
-      window.location.href = "/teams";
+      setIsMagicLinkSuccess(true);
     } catch (error) {
-      console.error("Login error:", error);
-      setIsError(true);
+      console.log(error);
+      setIsMagicLinkError(true);
+    } finally {
       setIsLoggingIn(false);
     }
   };
 
+  const handleBackToLogin = (): void => {
+    setIsMagicLinkSuccess(false);
+    setIsMagicLinkError(false);
+    setIsError(false);
+    setEmail("");
+  };
+
+  if (isMagicLinkSuccess) {
+    return (
+      <div className="flex flex-col gap-6 w-full max-w-lg">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-600 text-sm">
+          Magic link sent! Check your email and click the link to sign in.
+        </div>
+        <Button onClick={handleBackToLogin} variant="outline">
+          Back to Login
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-lg">
-      <form onSubmit={handlePasswordLogin} noValidate>
+      <form onSubmit={handleMagicLinkLogin} noValidate>
         <FieldGroup>
           <Field className="relative pb-1">
             <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -139,26 +139,9 @@ const SigninContent: React.FC = () => {
               </FieldError>
             )}
           </Field>
-          <Field className="relative pb-1">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
-            <Input
-              id="password"
-              type="password"
-              placeholder="************"
-              value={password}
-              onChange={handlePasswordChange}
-              autoComplete="off"
-              aria-invalid={isPasswordError}
-            />
-            {isPasswordError && (
-              <FieldError className="absolute -bottom-5 left-0 right-0">
-                Input a password
-              </FieldError>
-            )}
-          </Field>
           <Field>
             <Button type="submit" disabled={isLoggingIn}>
-              {isLoggingIn ? "Signing In..." : "Sign In"}
+              Send Magic Link
             </Button>
             <p className="text-center">or</p>
             <Button
@@ -182,6 +165,12 @@ const SigninContent: React.FC = () => {
           </Field>
         </FieldGroup>
       </form>
+
+      {isMagicLinkError && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-destructive text-sm">
+          Failed to send magic link. Please try again.
+        </div>
+      )}
 
       {isError && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-destructive text-sm">

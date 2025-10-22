@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
 import { DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { MemberRoleEnum } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ const RoleUpdateDropdown: React.FC<RoleProps> = ({ memberId, fromRole }) => {
 
   const updateMemberMutation = useMutation({
     mutationFn: async (toRole: MemberRoleEnum) =>
-      bevorAction.updateMember(memberId, { role: toRole }),
+      teamActions.updateMember(memberId, { role: toRole }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
     },

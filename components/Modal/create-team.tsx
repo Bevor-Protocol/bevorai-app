@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { DialogClose, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ const CreateTeamModal: React.FC = () => {
   const [teamName, setTeamName] = useState("");
 
   const { mutate, error, isSuccess, data, isPending } = useMutation({
-    mutationFn: async (data: { name: string }) => bevorAction.createTeam(data),
+    mutationFn: async (data: { name: string }) => teamActions.createTeam(data),
   });
 
   useEffect(() => {

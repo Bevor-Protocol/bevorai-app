@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { teamActions } from "@/actions/bevor";
 import TeamsDropdown from "@/components/Dropdown/teams";
 import CreateTeamModal from "@/components/Modal/create-team";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -26,7 +26,7 @@ export const TeamNavigation: React.FC<{
 
   const { data: teams } = useQuery({
     queryKey: ["teams"],
-    queryFn: async () => bevorAction.getTeams(),
+    queryFn: async () => teamActions.getTeams(),
   });
 
   const team = useMemo(() => {
@@ -43,15 +43,17 @@ export const TeamNavigation: React.FC<{
               {isUserPage && (
                 <Icon
                   size="md"
+                  shape="block"
                   seed={userId}
-                  className="rounded-lg group-data-[collapsible=icon]:ml-[1px]"
+                  className="group-data-[collapsible=icon]:ml-[1px]"
                 />
               )}
               {!isUserPage && (
                 <Icon
                   size="md"
+                  shape="block"
                   seed={team?.id}
-                  className="rounded-lg group-data-[collapsible=icon]:ml-[1px]"
+                  className="group-data-[collapsible=icon]:ml-[1px]"
                 />
               )}
               <div>

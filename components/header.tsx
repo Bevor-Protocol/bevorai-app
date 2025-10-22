@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { userActions } from "@/actions/bevor";
 import ViewInviteModal from "@/components/Modal/view-invite";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -34,7 +34,7 @@ export const Notifications: React.FC = () => {
 
   const { data: invites } = useSuspenseQuery({
     queryKey: ["user-invites"],
-    queryFn: async () => bevorAction.getUserInvites(),
+    queryFn: async () => userActions.getUserInvites(),
   });
 
   const hasInvites = (invites?.length ?? 0) > 0;

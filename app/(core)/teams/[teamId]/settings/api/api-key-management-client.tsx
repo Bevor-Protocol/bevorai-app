@@ -1,28 +1,71 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { apiKeyActions } from "@/actions/bevor";
 import CreateApiKeyModal from "@/components/Modal/create-api-key";
 import ShowApiKeyModal from "@/components/Modal/show-api-key";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { AuthSchema } from "@/utils/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Key, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { MoreHorizontal, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-const ApiKeyManagementClient: React.FC = () => {
+export const ApiKeyCreate: React.FC = () => {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button className="text-foreground">
+          <Plus className="size-4 mr-2" />
+          Create API Key
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <CreateApiKeyModal />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export const ApiKeyTable: React.FC = () => {
   const queryClient = useQueryClient();
   const [showKey, setShowKey] = useState(false);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const { data: apiKeys = [], isLoading } = useQuery({
     queryKey: ["team-api-keys"],
     queryFn: async () => {
-      return await bevorAction.listKeys();
+      return await apiKeyActions.listKeys();
     },
   });
 
   const regenerateApiKeyMutation = useMutation({
-    mutationFn: async (apiKeyId: string) => bevorAction.refreshKey(apiKeyId),
+    mutationFn: async (apiKeyId: string) => apiKeyActions.refreshKey(apiKeyId),
     onSuccess: () => {
       setShowKey(true);
       queryClient.invalidateQueries({ queryKey: ["team-api-keys"] });
@@ -30,7 +73,7 @@ const ApiKeyManagementClient: React.FC = () => {
   });
 
   const deleteApiKeyMutation = useMutation({
-    mutationFn: async (apiKeyId: string) => bevorAction.revokeKey(apiKeyId),
+    mutationFn: async (apiKeyId: string) => apiKeyActions.revokeKey(apiKeyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["team-api-keys"] });
     },
@@ -45,98 +88,96 @@ const ApiKeyManagementClient: React.FC = () => {
     });
   };
 
-  const handleDeleteApiKey = (apiKey: AuthSchema): void => {
-    const confirmMessage = `Are you sure you want to delete the API key "${apiKey.name}" (${apiKey.prefix}...)? This action cannot be undone.`;
-    if (confirm(confirmMessage)) {
-      deleteApiKeyMutation.mutate(apiKey.id);
-    }
-  };
-
   return (
-    <div className="flex flex-col gap-8">
-      <div className="space-y-4">
-        <div className="flex flex-row mb-8 justify-between">
-          <h3 className="text-xl font-semibold text-foreground">API Keys</h3>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="text-foreground">
-                <Plus className="size-4 mr-2" />
-                Create API Key
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <CreateApiKeyModal />
-            </DialogContent>
-          </Dialog>
-        </div>
-        <p className="text-muted-foreground">
-          API keys allow you to integrate with our API for MCP, CI/CD, and other automation.
-        </p>
-      </div>
+    <>
       <Dialog open={showKey} onOpenChange={setShowKey}>
         <DialogContent>
           <ShowApiKeyModal apiKey={regenerateApiKeyMutation.data?.api_key ?? ""} />
         </DialogContent>
       </Dialog>
-
-      {isLoading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto"></div>
-          <p className="text-muted-foreground mt-4">Loading API keys...</p>
-        </div>
-      ) : apiKeys.length === 0 ? (
-        <div className="text-center py-12">
-          <Key className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No API Keys</h3>
-        </div>
-      ) : (
-        <div className="border border-blue-500/50 rounded divide-blue-500/25 divide-y">
-          {apiKeys.map((apiKey) => (
-            <div
-              key={apiKey.id}
-              className="p-4 flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0"
+      <AlertDialog open={!!selectedKey} onOpenChange={() => setSelectedKey(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will revoke the key.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteApiKeyMutation.mutate(selectedKey!)}
+              variant="destructive"
             >
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
-                  <Key className="size-5 text-blue-400" />
-                </div>
-                <div className="flex flex-col space-y-1">
-                  <div className="text-sm font-medium text-foreground">{apiKey.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    Created {formatDate(apiKey.created_at)}
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
-                <code className="text-xs font-mono text-green-400 px-3 py-1.5 rounded-md border border-neutral-700 tracking-wider whitespace-nowrap">
-                  sk_{apiKey.prefix}•••••••••••••••••••••••••••••
-                </code>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => regenerateApiKeyMutation.mutate(apiKey.id)}
-                    disabled={regenerateApiKeyMutation.isPending}
-                    className="text-xs h-8 px-3"
-                  >
-                    <RefreshCw className="size-4 mr-1" />
-                    Regenerate
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleDeleteApiKey(apiKey)}
-                    disabled={deleteApiKeyMutation.isPending}
-                    className="text-red-400 hover:bg-red-500/10 text-xs h-8 px-3"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <ScrollArea className="w-full pb-4">
+        <Table>
+          <TableCaption>
+            API keys allow you to integrate with our API for MCP, CI/CD, and other automation.
+          </TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[20%]">Name</TableHead>
+              <TableHead className="w-[40%]">Key Prefix</TableHead>
+              <TableHead className="w-[15%]">Created At</TableHead>
+              <TableHead className="text-right w-[10%]" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading &&
+              [0, 1].map((ind) => (
+                <TableRow key={ind}>
+                  <TableCell>
+                    <Skeleton className="h-8" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            {apiKeys.map((apiKey) => (
+              <TableRow key={apiKey.id}>
+                <TableCell>{apiKey.name}</TableCell>
+                <TableCell>sk_{apiKey.prefix}•••••••••••••••</TableCell>
+                <TableCell>{formatDate(apiKey.created_at)}</TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => regenerateApiKeyMutation.mutate(apiKey.id)}>
+                        <RefreshCw className="size-4" />
+                        Regenerate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => setSelectedKey(apiKey.id)}
+                      >
+                        <Trash2 className="size-4" />
+                        Revoke
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </>
   );
 };
-
-export default ApiKeyManagementClient;

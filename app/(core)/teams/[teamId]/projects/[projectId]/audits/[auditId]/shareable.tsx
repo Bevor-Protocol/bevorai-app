@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { securityAnalysisActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -14,7 +14,7 @@ const Shareable: React.FC<{ audit: AuditSchemaI }> = ({ audit }) => {
   const { copy, isCopied } = useCopyToClipboard();
 
   const visibilityMutation = useMutation({
-    mutationFn: () => bevorAction.toggleVisibility(audit.id),
+    mutationFn: () => securityAnalysisActions.toggleVisibility(audit.id),
     onSuccess: (updatedAudit) => {
       queryClient.setQueryData(["audit", audit.id], updatedAudit);
       queryClient.invalidateQueries({ queryKey: ["audits"] });

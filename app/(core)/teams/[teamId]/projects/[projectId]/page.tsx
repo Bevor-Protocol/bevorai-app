@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { projectActions, securityAnalysisActions, versionActions } from "@/actions/bevor";
 import { AuditElement } from "@/components/audits/element";
 import { AuditEmpty } from "@/components/audits/empty";
 import Container from "@/components/container";
@@ -17,7 +17,7 @@ const VersionsList: AsyncComponent<{
   teamId: string;
   projectId: string;
 }> = async ({ teamId, projectId }) => {
-  const versions = await bevorAction.getVersions({ project_id: projectId, page_size: "6" });
+  const versions = await versionActions.getVersions({ project_id: projectId, page_size: "6" });
 
   if (versions.results.length > 0) {
     return (
@@ -37,7 +37,10 @@ const AuditsList: AsyncComponent<{
   projectId: string;
 }> = async ({ teamId, projectId }) => {
   await new Promise((resolve) => setTimeout(() => resolve(true), 3000));
-  const audits = await bevorAction.getSecurityAnalyses({ project_id: projectId, page_size: "6" });
+  const audits = await securityAnalysisActions.getSecurityAnalyses({
+    project_id: projectId,
+    page_size: "6",
+  });
 
   if (audits.results.length > 0) {
     return (
@@ -56,7 +59,7 @@ const ProjectHeader: AsyncComponent<{
   teamId: string;
   projectId: string;
 }> = async ({ teamId, projectId }) => {
-  const project = await bevorAction.getProject(projectId);
+  const project = await projectActions.getProject(projectId);
 
   return (
     <div className="flex flex-row justify-between mb-8 border-b border-b-border py-4">
@@ -88,7 +91,7 @@ const ProjectHeader: AsyncComponent<{
         </div>
         {project.description && (
           <div className="my-2">
-            <p className="text-lg text-foreground leading-relaxed">{project.description}</p>
+            <p className="text-lg leading-relaxed">{project.description}</p>
           </div>
         )}
       </div>

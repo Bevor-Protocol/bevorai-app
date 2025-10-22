@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { securityAnalysisActions } from "@/actions/bevor";
 import { AuditElement, AuditElementLoader } from "@/components/audits/element";
 import { AuditEmpty } from "@/components/audits/empty";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ export const AuditGrid: React.FC<{ query: Record<string, string>; teamId: string
 }) => {
   const { data: audits, isLoading } = useQuery({
     queryKey: ["audits", query],
-    queryFn: () => bevorAction.getSecurityAnalyses(query),
+    queryFn: () => securityAnalysisActions.getSecurityAnalyses(query),
   });
 
   if (!audits || isLoading) {

@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { securityAnalysisActions } from "@/actions/bevor";
 import { AsyncComponent, TreeResponseI } from "@/utils/types";
 import { Suspense } from "react";
 import ScopeOverlayClient from "./scope-overlay-client";
@@ -9,8 +9,8 @@ interface AuditOverlayPageProps {
 
 // Server component for audit overlay data
 const AuditOverlayData: AsyncComponent<{ auditId: string }> = async ({ auditId }) => {
-  const audit = await bevorAction.getSecurityAnalysis(auditId);
-  const scope = await bevorAction.getScope(auditId);
+  const audit = await securityAnalysisActions.getSecurityAnalysis(auditId);
+  const scope = await securityAnalysisActions.getScope(auditId);
 
   // Sort scope data on the server
   const sortedScope: TreeResponseI[] = scope

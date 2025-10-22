@@ -1,6 +1,7 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { chatActions } from "@/actions/bevor";
+
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { ChatElement, ChatElementLoader } from "./chat-elements";
@@ -11,7 +12,7 @@ export const ChatGrid: React.FC<{
 }> = ({ query }) => {
   const { data: chats, isLoading } = useQuery({
     queryKey: ["chats", query],
-    queryFn: () => bevorAction.getChats(query),
+    queryFn: () => chatActions.getChats(query),
   });
 
   if (!chats || isLoading) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { securityAnalysisActions } from "@/actions/bevor";
 import SolidityViewer from "@/components/code-viewer";
 import Container from "@/components/container";
 import { Button } from "@/components/ui/button";
@@ -68,14 +68,14 @@ const AuditScopeSelector: React.FC<AuditScopeSelectorProps> = ({
     data: evalData,
   } = useMutation({
     mutationFn: async () => {
-      return await bevorAction.initiateSecurityAnalysis(versionId, selectedScopes);
+      return await securityAnalysisActions.initiateSecurityAnalysis(versionId, selectedScopes);
     },
   });
 
   // Poll for audit status
   const { data: pollingData } = useQuery({
     queryKey: ["polling", evalData?.id],
-    queryFn: async () => bevorAction.getStatus(evalData!.id),
+    queryFn: async () => securityAnalysisActions.getStatus(evalData!.id),
     refetchInterval: (query) => {
       const { data } = query.state;
       if (!data) return 1000;

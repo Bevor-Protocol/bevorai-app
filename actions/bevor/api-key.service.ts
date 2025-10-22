@@ -1,39 +1,36 @@
+"use server";
+
 import api from "@/lib/api";
 import { AuthSchema, CreateKeyBody } from "@/utils/types";
 
-class ApiKeyService {
-  async listKeys(): Promise<AuthSchema[]> {
-    return api.get("/auth").then((response) => {
-      return response.data.results;
-    });
-  }
+export const listKeys = async (): Promise<AuthSchema[]> => {
+  return api.get("/auth").then((response) => {
+    return response.data.results;
+  });
+};
 
-  async createKey(data: CreateKeyBody): Promise<{ api_key: string }> {
-    const scopes = Object.entries(data.permissions).map(([k, v]) => {
-      return `${k}.${v}`;
-    });
-    return api
-      .post("/auth", {
-        name: data.name,
-        scopes,
-      })
-      .then((response) => {
-        return response.data;
-      });
-  }
-
-  async refreshKey(keyId: string): Promise<{ api_key: string }> {
-    return api.patch(`/auth/${keyId}`, {}).then((response) => {
+export const createKey = async (data: CreateKeyBody): Promise<{ api_key: string }> => {
+  const scopes = Object.entries(data.permissions).map(([k, v]) => {
+    return `${k}.${v}`;
+  });
+  return api
+    .post("/auth", {
+      name: data.name,
+      scopes,
+    })
+    .then((response) => {
       return response.data;
     });
-  }
+};
 
-  async revokeKey(keyId: string): Promise<boolean> {
-    return api.delete(`/auth/${keyId}`).then((response) => {
-      return response.data.success;
-    });
-  }
-}
+export const refreshKey = async (keyId: string): Promise<{ api_key: string }> => {
+  return api.patch(`/auth/${keyId}`, {}).then((response) => {
+    return response.data;
+  });
+};
 
-const apiKeyService = new ApiKeyService();
-export default apiKeyService;
+export const revokeKey = async (keyId: string): Promise<boolean> => {
+  return api.delete(`/auth/${keyId}`).then((response) => {
+    return response.data.success;
+  });
+};

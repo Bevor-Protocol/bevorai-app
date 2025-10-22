@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { apiKeyActions } from "@/actions/bevor";
 import ShowApiKeyModal from "@/components/Modal/show-api-key";
 import { Button } from "@/components/ui/button";
 import { DialogClose, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -24,7 +24,7 @@ const CreateApiKeyModal: React.FC = () => {
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async (data: CreateKeyBody) => bevorAction.createKey(data),
+    mutationFn: async (data: CreateKeyBody) => apiKeyActions.createKey(data),
     onSuccess: () => {
       setShowKey(true);
       queryClient.invalidateQueries({ queryKey: ["team-api-keys"] });

@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { teamActions, userActions, projectActions, securityAnalysisActions, chatActions, versionActions, billingActions, adminActions, apiKeyActions, tokenActions } from "@/actions";
 import {
   ContractScopeI,
   ContractVersionSourceI,
@@ -43,7 +43,7 @@ export const useScopeHandler = ({
 
   const sourceResponse = useQuery({
     queryKey: ["source", selectedSource?.id ?? "", versionId],
-    queryFn: () => bevorAction.getContractVersionSource(selectedSource?.id ?? "", versionId),
+    queryFn: () => teamActions.getContractVersionSource(selectedSource?.id ?? "", versionId),
     enabled: !!selectedSource,
   });
 

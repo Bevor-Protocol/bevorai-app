@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { securityAnalysisActions, versionActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { AsyncComponent } from "@/utils/types";
 import AuditResults from "./audit-results";
@@ -9,8 +9,8 @@ type Props = {
 
 const AuditResultsPage: AsyncComponent<Props> = async ({ params }) => {
   const { auditId } = await params;
-  const audit = await bevorAction.getFindings(auditId);
-  const version = await bevorAction.getContractVersion(audit.code_version_mapping_id);
+  const audit = await securityAnalysisActions.getFindings(auditId);
+  const version = await versionActions.getContractVersion(audit.code_version_mapping_id);
 
   return (
     <Container>

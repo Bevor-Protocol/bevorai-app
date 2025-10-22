@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { bevorAction } from "@/actions";
+import { billingActions } from "@/actions/bevor";
+
 import { AddonRow } from "@/components/billing/addon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,7 @@ const InvoiceNameSection: React.FC = () => {
 
   const { data: customer } = useQuery({
     queryKey: ["customer"],
-    queryFn: () => bevorAction.getCustomer(),
+    queryFn: () => billingActions.getCustomer(),
   });
 
   useEffect(() => {
@@ -39,7 +40,7 @@ const InvoiceNameSection: React.FC = () => {
   }, [customer?.name]);
 
   const updateNameMutation = useMutation({
-    mutationFn: (data: { name: string }) => bevorAction.updateCustomer(data),
+    mutationFn: (data: { name: string }) => billingActions.updateCustomer(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer"] });
     },
@@ -89,7 +90,7 @@ const BillingEmailSection: React.FC = () => {
 
   const { data: customer } = useQuery({
     queryKey: ["customer"],
-    queryFn: () => bevorAction.getCustomer(),
+    queryFn: () => billingActions.getCustomer(),
   });
 
   useEffect(() => {
@@ -99,7 +100,7 @@ const BillingEmailSection: React.FC = () => {
   }, [customer?.email, email]);
 
   const updateEmailMutation = useMutation({
-    mutationFn: (data: { email: string }) => bevorAction.updateCustomer(data),
+    mutationFn: (data: { email: string }) => billingActions.updateCustomer(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer"] });
     },
@@ -161,12 +162,12 @@ const BillingEmailSection: React.FC = () => {
 const PaymentMethodSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   const { data: paymentMethod, isLoading: paymentMethodLoading } = useQuery({
     queryKey: ["payment-method"],
-    queryFn: () => bevorAction.getPaymentMethod(),
+    queryFn: () => billingActions.getPaymentMethod(),
   });
 
   const checkoutMutation = useMutation({
     mutationFn: () =>
-      bevorAction.updatePaymentMethod({
+      billingActions.updatePaymentMethod({
         success_url: `${window.location.origin}/teams/${team.id}/settings/billing?success=true`,
         cancel_url: `${window.location.origin}/teams/${team.id}/settings/billing?canceled=true`,
       }),
@@ -275,14 +276,14 @@ const CurrentSubscription: React.FC<{
   const isCancelling = subscription.subscription?.cancel_at_period_end;
 
   const unsubscribeMutation = useMutation({
-    mutationFn: async () => bevorAction.cancelSubscription(),
+    mutationFn: async () => billingActions.cancelSubscription(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription"] });
     },
   });
 
   const reactivateMutation = useMutation({
-    mutationFn: async () => bevorAction.reactivateSubscription(),
+    mutationFn: async () => billingActions.reactivateSubscription(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription"] });
     },
@@ -452,7 +453,7 @@ const CurrentSubscription: React.FC<{
 const AddonsSection: React.FC = () => {
   const { data: addons, isLoading: addonsLoading } = useQuery({
     queryKey: ["addons"],
-    queryFn: () => bevorAction.getAddons(),
+    queryFn: () => billingActions.getAddons(),
   });
 
   if (addonsLoading) {
@@ -544,7 +545,7 @@ const BillingPageClient: React.FC<BillingPageClientProps> = ({ team }) => {
 
   const { data: subscription } = useQuery({
     queryKey: ["subscription"],
-    queryFn: () => bevorAction.getSubscription(),
+    queryFn: () => billingActions.getSubscription(),
     enabled: isOwner,
   });
 

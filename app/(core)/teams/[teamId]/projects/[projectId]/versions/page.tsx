@@ -1,4 +1,4 @@
-import { bevorAction } from "@/actions";
+import { projectActions, versionActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { VersionGrid } from "@/components/versions/grid";
 import { AsyncComponent } from "@/utils/types";
@@ -11,13 +11,13 @@ interface ProjectPageProps {
 const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
   const { teamId, projectId } = await params;
 
-  const project = await bevorAction.getProject(projectId);
+  const project = await projectActions.getProject(projectId);
   const query = { page_size: "9", project_id: project.id };
 
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery({
     queryKey: ["versions", query],
-    queryFn: () => bevorAction.getVersions(query),
+    queryFn: () => versionActions.getVersions(query),
   });
 
   return (

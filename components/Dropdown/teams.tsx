@@ -57,12 +57,9 @@ const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
         <div className="max-h-36 overflow-scroll">
           {teamsShow.map((teamItem) => (
             <DropdownMenuItem key={teamItem.id} asChild>
-              <Link
-                href={newRoute(teamItem)}
-                className="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors text-foreground hover:bg-neutral-800"
-              >
+              <Link href={newRoute(teamItem)}>
                 <div className="flex items-center gap-3 w-full">
-                  <Icon size="xs" seed={teamItem.id} className="size-4 flex-shrink-0" />
+                  <Icon size="sm" seed={teamItem.id} className="size-4 flex-shrink-0" />
                   <span className="truncate text-ellipsis flex-1">{teamItem.name}</span>
                 </div>
                 {team?.id === teamItem.id && <Check className="size-3" />}
@@ -72,8 +69,11 @@ const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
         </div>
         {!teamFilter && (
           <DialogTrigger asChild>
-            <Button variant="ghost" className="w-full flex justify-start gap-4">
-              <PlusCircle className="size-4 text-blue-400" />
+            <Button variant="ghost" className="w-full flex justify-start gap-3 px-2 py-1.5">
+              <div className="size-icon-sm flex items-center justify-center">
+                <PlusCircle className="size-4 text-blue-400" />
+              </div>
+
               <span className="font-medium">Create Team</span>
             </Button>
           </DialogTrigger>

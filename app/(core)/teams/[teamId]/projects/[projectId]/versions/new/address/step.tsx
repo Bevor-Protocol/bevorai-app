@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { versionActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { navigation } from "@/utils/navigation";
@@ -20,7 +20,8 @@ const ContractAddressStep: React.FC<ContractAddressStepProps> = ({ projectId, pa
   const router = useRouter();
 
   const { mutate, isSuccess, isPending } = useMutation({
-    mutationFn: async (address: string) => bevorAction.contractUploadScan(address, projectId),
+    mutationFn: async (address: string) =>
+      versionActions.contractUploadScan({ address, projectId }),
     onError: (err) => {
       console.log(err.message);
       setError("something went wrong");

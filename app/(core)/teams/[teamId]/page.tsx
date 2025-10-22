@@ -1,4 +1,9 @@
-import { bevorAction } from "@/actions";
+import {
+  projectActions,
+  securityAnalysisActions,
+  teamActions,
+  versionActions,
+} from "@/actions/bevor";
 import { AuditElement } from "@/components/audits/element";
 import { AuditEmpty } from "@/components/audits/empty";
 import Container from "@/components/container";
@@ -17,7 +22,7 @@ interface TeamPageProps {
 const ProjectsSection: AsyncComponent<{
   team: TeamSchemaI;
 }> = async ({ team }) => {
-  const projects = await bevorAction.getProjects({ page_size: "3" });
+  const projects = await projectActions.getProjects({ page_size: "3" });
 
   if (projects.results.length === 0) {
     return <ProjectEmpty team={team} includeCta={true} />;
@@ -35,7 +40,7 @@ const ProjectsSection: AsyncComponent<{
 const VersionsPreview: AsyncComponent<{
   teamId: string;
 }> = async ({ teamId }) => {
-  const versions = await bevorAction.getVersions({ page_size: "3" });
+  const versions = await versionActions.getVersions({ page_size: "3" });
 
   if (versions.results.length === 0) {
     return <VersionEmpty />;
@@ -53,7 +58,7 @@ const VersionsPreview: AsyncComponent<{
 const AuditsPreview: AsyncComponent<{
   teamId: string;
 }> = async ({ teamId }) => {
-  const audits = await bevorAction.getSecurityAnalyses({ page_size: "3" });
+  const audits = await securityAnalysisActions.getSecurityAnalyses({ page_size: "3" });
 
   if (audits.results.length === 0) {
     return <AuditEmpty />;
@@ -71,7 +76,7 @@ const AuditsPreview: AsyncComponent<{
 const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   const { teamId } = await params;
 
-  const team = await bevorAction.getTeam();
+  const team = await teamActions.getTeam();
 
   return (
     <Container>
@@ -80,7 +85,7 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
         <div>
           <div>
             <div className="flex items-center gap-4 mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Projects</h2>
+              <h2 className="text-foreground">Projects</h2>
             </div>
             <Suspense>
               <ProjectsSection team={team} />
@@ -90,7 +95,7 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
         <div className="flex flex-col items-start lg:flex-row lg:items-center gap-8">
           <div className="basis-1/2">
             <div className="flex items-center gap-4 mb-4">
-              <h3 className="text-lg font-medium text-foreground">Recent Code Versions</h3>
+              <h3 className="text-foreground">Recent Code Versions</h3>
             </div>
             <Suspense>
               <VersionsPreview teamId={teamId} />
@@ -98,7 +103,7 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
           </div>
           <div className="basis-1/2">
             <div className="flex items-center gap-4 mb-4">
-              <h3 className="text-lg font-medium text-foreground">Recent Audits</h3>
+              <h3 className="text-foreground">Recent Audits</h3>
             </div>
             <Suspense>
               <AuditsPreview teamId={teamId} />

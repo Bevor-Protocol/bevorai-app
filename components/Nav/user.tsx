@@ -1,6 +1,6 @@
 "use client";
 
-import { bevorAction } from "@/actions";
+import { authActions, userActions } from "@/actions/bevor";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { navigation } from "@/utils/navigation";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Bell,
   ChevronsUpDown,
@@ -29,7 +29,11 @@ export const UserNavigation: React.FC<{
 }> = ({ userId }) => {
   const { data: invites } = useSuspenseQuery({
     queryKey: ["user-invites"],
-    queryFn: async () => bevorAction.getUserInvites(),
+    queryFn: async () => userActions.getUserInvites(),
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => authActions.logout(),
   });
 
   const hasInvites = (invites?.length ?? 0) == 0;
@@ -96,11 +100,9 @@ export const UserNavigation: React.FC<{
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild variant="destructive">
-                <Link href="/logout" className="flex justify-between">
-                  <span className="text-destructive">Logout</span>
-                  <LogOut className="size-4 text-destructive" />
-                </Link>
+              <DropdownMenuItem variant="destructive" onClick={() => logoutMutation.mutate()}>
+                <span className="text-destructive">Logout</span>
+                <LogOut className="size-4 text-destructive" />
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
