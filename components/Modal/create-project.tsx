@@ -5,39 +5,23 @@ import { Button } from "@/components/ui/button";
 import { DialogClose, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { navigation } from "@/utils/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Code } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-const CreateProjectModal: React.FC<{ targetTeamId: string }> = ({ targetTeamId }) => {
-  const router = useRouter();
+const CreateProjectModal: React.FC<{ teamId: string }> = ({ teamId }) => {
   const queryClient = useQueryClient();
-  const { teamId } = useParams<{ teamId: string }>();
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
 
-  const { mutate, error, isSuccess, data, isPending } = useMutation({
+  const createProjectMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string; tags?: string[] }) =>
-      projectActions.createProject(data),
+      projectActions.createProject(teamId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
   });
-
-  useEffect(() => {
-    if (!isSuccess || !data) return;
-    queryClient.invalidateQueries({ queryKey: ["projects"] });
-    const timeout = setTimeout(() => {
-      // Redirect to the new project
-      router.push(navigation.project.overview({ teamId: targetTeamId, projectId: data.id }));
-      if (teamId !== targetTeamId) {
-        router.push(`/teams/${targetTeamId}`);
-      }
-    }, 1000);
-
-    return (): void => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, data, router]);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -53,11 +37,11 @@ const CreateProjectModal: React.FC<{ targetTeamId: string }> = ({ targetTeamId }
       }),
     };
 
-    await mutate(projectData);
+    await createProjectMutation.mutate(projectData);
   };
 
   return (
-    <div>
+    <>
       <DialogHeader>
         <div className="inline-flex gap-2 items-center">
           <Code className="size-5 text-blue-400" />
@@ -78,7 +62,7 @@ const CreateProjectModal: React.FC<{ targetTeamId: string }> = ({ targetTeamId }
               className="bg-gray-900 rounded px-3 py-2 text-sm flex-1 w-full"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
-              disabled={isPending}
+              disabled={createProjectMutation.isPending}
               required
               placeholder="Enter project name"
             />
@@ -90,7 +74,7 @@ const CreateProjectModal: React.FC<{ targetTeamId: string }> = ({ targetTeamId }
               className="bg-gray-900 rounded px-3 py-2 text-sm flex-1 w-full min-h-[80px]"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              disabled={isPending}
+              disabled={createProjectMutation.isPending}
               placeholder="Describe your project (optional)"
             />
           </div>
@@ -102,27 +86,38 @@ const CreateProjectModal: React.FC<{ targetTeamId: string }> = ({ targetTeamId }
               className="bg-gray-900 rounded px-3 py-2 text-sm flex-1 w-full"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              disabled={isPending}
+              disabled={createProjectMutation.isPending}
               placeholder="Enter tags separated by commas (optional)"
             />
             <p className="text-xs text-neutral-500">Example: defi, ethereum, security</p>
           </div>
 
-          {error && <p className="text-sm text-red-400">{error.message}</p>}
-          {isSuccess && <p className="text-sm text-green-400">Project successfully created</p>}
+          {createProjectMutation.error && (
+            <p className="text-sm text-red-400">{createProjectMutation.error.message}</p>
+          )}
+          {createProjectMutation.isSuccess && (
+            <p className="text-sm text-green-400">Project successfully created</p>
+          )}
         </div>
         <div className="flex justify-between pt-4 border-t border-border">
-          <DialogClose disabled={isPending} asChild>
+          <DialogClose disabled={createProjectMutation.isPending} asChild>
             <Button type="button" variant="outline">
               Cancel
             </Button>
           </DialogClose>
-          <Button type="submit" disabled={isPending || !projectName.trim() || isSuccess}>
-            {isPending ? "Creating..." : "Create Project"}
+          <Button
+            type="submit"
+            disabled={
+              createProjectMutation.isPending ||
+              !projectName.trim() ||
+              createProjectMutation.isSuccess
+            }
+          >
+            {createProjectMutation.isPending ? "Creating..." : "Create Project"}
           </Button>
         </div>
       </form>
-    </div>
+    </>
   );
 };
 

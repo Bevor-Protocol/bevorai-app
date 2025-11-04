@@ -1,362 +1,98 @@
 "use client";
 
-import { projectActions } from "@/actions/bevor";
-import CreateProjectModal from "@/components/Modal/create-project";
-import CreateTeamModal from "@/components/Modal/create-team";
+import LucideIcon from "@/components/lucide-icon";
+import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Icon } from "@/components/ui/icon";
-import { SearchInput } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useClickOutside } from "@/hooks/useClickOutside";
 import { cn } from "@/lib/utils";
-import { navigation } from "@/utils/navigation";
-import { CodeProjectSchema, HrefProps, TeamSchemaI } from "@/utils/types";
-import { useQuery } from "@tanstack/react-query";
-import { Check, ChevronsUpDown, Code, PlusCircle } from "lucide-react";
+import { useLocalStorageState } from "@/providers/localStore";
+import { BreadcrumbSchemaI } from "@/utils/types";
+import { Star } from "lucide-react";
 import Link from "next/link";
-import { useParams, usePathname, useSelectedLayoutSegments } from "next/navigation";
-import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import React, { Fragment } from "react";
 
-const genericToggleReducer = (s: boolean): boolean => !s;
-
-const Breadcrumbs: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userId, teams }) => {
-  const isErrorPage = useSelectedLayoutSegments().includes("error");
-  const params = useParams<HrefProps>();
-  const pathname = usePathname();
-  const ref = useRef<HTMLDivElement>(null);
-  const [isShowing, toggle] = useReducer(genericToggleReducer, false);
-
-  useClickOutside(ref, isShowing ? toggle : undefined);
-
-  const { data: allProjects, isLoading: isProjectsLoading } = useQuery({
-    queryKey: ["projects"],
-    queryFn: async () => projectActions.getAllProjects(),
-  });
-
-  const team = useMemo(() => {
-    if (!teams || !params.teamId) return;
-    return teams.find((team) => team.id === params.teamId);
-  }, [teams, params.teamId]);
-
-  const project = useMemo(() => {
-    if (!allProjects || !params.projectId || !teams?.length) return;
-    const team = teams.find((team) => team.id === params.teamId);
-    if (!team) return;
-    return allProjects.find(
-      (project) => project.team_id === team.id && project.id === params.projectId,
-    );
-  }, [allProjects, params.projectId, params.teamId, teams]);
-
-  if (isProjectsLoading) {
-    return <Skeleton className="h-[41px] w-36" />;
-  }
-
-  const teamHref = params.versionId
-    ? navigation.team.versions(params)
-    : params.auditId
-      ? navigation.team.audits(params)
-      : navigation.team.overview(params);
-
-  const projectHref = params.versionId
-    ? navigation.project.versions.overview(params)
-    : params.auditId
-      ? navigation.project.audits(params)
-      : navigation.project.overview(params);
-
-  return (
-    <div className="flex flex-row items-center relative gap-4" ref={ref}>
-      {pathname.startsWith("/user") && (
-        <div className="flex flex-row gap-1 items-center text-sm">
-          <Link
-            href={navigation.user.overview(params)}
-            className="flex flex-row gap-2 items-center"
-          >
-            <Icon size="sm" seed={userId} className="size-6" />
-            <span>My Account</span>
-          </Link>
-          <Button variant="ghost" onClick={toggle}>
-            <ChevronsUpDown className="size-4 text-muted-foreground" />
-          </Button>
-        </div>
-      )}
-      {!isErrorPage && params.teamId && (
-        <div className="flex flex-row gap-1 items-center text-sm">
-          <Link href={teamHref} className="flex flex-row gap-2 items-center">
-            <Icon size="sm" seed={team?.id} className="size-5" />
-            <span>{team?.name}</span>
-          </Link>
-          <Button variant="ghost" size="narrow" onClick={toggle}>
-            <ChevronsUpDown className="size-4 text-muted-foreground" />
-          </Button>
-        </div>
-      )}
-      {!isErrorPage && params.projectId && (
-        <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider">
-          <Link href={projectHref} className="flex flex-row gap-2">
-            <span>{project?.name}</span>
-          </Link>
-          <Button variant="ghost" size="narrow" onClick={toggle}>
-            <ChevronsUpDown className="size-4 text-muted-foreground" />
-          </Button>
-        </div>
-      )}
-      {!isErrorPage && params.versionId && (
-        <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider">
-          <span className="size-2 bg-green-400 rounded-full" />
-          <Link href={navigation.version.overview(params)} className="flex flex-row gap-2">
-            <span>Version {params.versionId.substring(0, 12)}</span>
-          </Link>
-        </div>
-      )}
-      {!isErrorPage && params.auditId && (
-        <div className="flex flex-row gap-1 items-center text-sm breadcrumb-divider">
-          <span className="size-2 bg-orange-400 rounded-full" />
-          <Link href={navigation.audit.overview(params)} className="flex flex-row gap-2">
-            <span>Audit {params.auditId.substring(0, 12)}</span>
-          </Link>
-        </div>
-      )}
-      {isShowing && (
-        <BreadcrumbsContent
-          teams={teams ?? []}
-          projects={allProjects ?? []}
-          team={team}
-          project={project}
-          close={toggle}
-        />
-      )}
-    </div>
-  );
+export const BreadcrumbFallback: React.FC = () => {
+  return <Skeleton className="h-8 w-40" />;
 };
 
-type BreadCrumbsProps = {
-  teams: TeamSchemaI[];
-  projects: CodeProjectSchema[];
-  team?: TeamSchemaI;
-  project?: CodeProjectSchema;
-  close?: () => void;
-};
+const ContainerBreadcrumb: React.FC<{
+  breadcrumb: BreadcrumbSchemaI;
+  toggle?: React.ReactNode;
+}> = ({ breadcrumb, toggle }) => {
+  const { state, addItem, removeItem } = useLocalStorageState("bevor:starred");
 
-const BreadcrumbsContent: React.FC<BreadCrumbsProps> = ({
-  teams,
-  projects,
-  team,
-  project,
-  close,
-}) => {
-  const pathname = usePathname();
+  const isFavorite = state?.find((item) => item.id === breadcrumb.favorite?.id);
 
-  const [teamsShow, setTeamsShow] = useState(teams);
-  const [projectsShow, setProjectsShow] = useState(projects);
-  const [teamFilter, setTeamFilter] = useState("");
-  const [projectFilter, setProjectFilter] = useState("");
-  const [hoveredTeam, setHoveredTeam] = useState<TeamSchemaI | undefined>(team);
-
-  useEffect(() => {
-    if (!teamFilter) {
-      setTeamsShow(teams);
-      return;
+  const toggleFavorite = React.useCallback(() => {
+    if (!breadcrumb.favorite) return;
+    if (isFavorite) {
+      removeItem(breadcrumb.favorite.id);
+    } else {
+      addItem({
+        id: breadcrumb.favorite.id,
+        type: breadcrumb.favorite.type,
+        teamId: breadcrumb.team_id,
+        label: breadcrumb.favorite.display_name,
+        url: breadcrumb.favorite.route,
+      });
     }
-    const filteredTeams = teams.filter((team) =>
-      team.name.toLowerCase().includes(teamFilter.toLowerCase()),
-    );
-    setTeamsShow(filteredTeams);
-    if (!filteredTeams.length) {
-      setHoveredTeam(undefined);
-      return;
-    }
-    const teamIds = filteredTeams.map((t) => t.id);
-    if (hoveredTeam && !teamIds.includes(hoveredTeam.id)) {
-      setHoveredTeam(filteredTeams[0]);
-      return;
-    }
-    if (!hoveredTeam) {
-      setHoveredTeam(filteredTeams[0]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teams, teamFilter]);
-
-  useEffect(() => {
-    if (!teams || !hoveredTeam) {
-      setProjectsShow([]);
-      return;
-    }
-    const withinTeam = projects.filter((project) => project.team_id == hoveredTeam.id);
-    if (!projectFilter) {
-      setProjectsShow(withinTeam);
-      return;
-    }
-    const withinFilter = withinTeam.filter((project) =>
-      project.name.toLowerCase().includes(projectFilter.toLowerCase()),
-    );
-    setProjectsShow(withinFilter);
-  }, [teams, hoveredTeam, projects, projectFilter]);
-
-  const buildEquivalentRoute = useCallback(
-    (newProjectId?: string): string => {
-      if (!hoveredTeam) return "";
-
-      const projectPattern = /\/teams\/[^/]+\/projects\/[^/]+(\/.*)?/;
-      const projectMatch = pathname.match(projectPattern);
-
-      if (projectMatch) {
-        const remainingPath = projectMatch[1] || "";
-        const trailingPath = remainingPath.split("/").slice(0, 2).join("/");
-        return `/teams/${hoveredTeam.id}/projects/${newProjectId}${trailingPath}`;
-      }
-
-      const teamRoutePattern = /\/teams\/[^/]+\/([^/]+)(\/.*)?/;
-      const teamRouteMatch = pathname.match(teamRoutePattern);
-
-      if (teamRouteMatch) {
-        const routeSegment = teamRouteMatch[1];
-        const remainingPath = teamRouteMatch[2] || "";
-
-        if (newProjectId) {
-          return `/teams/${hoveredTeam.id}/projects/${newProjectId}`;
-        } else {
-          return `/teams/${hoveredTeam.id}/${routeSegment}${remainingPath}`;
-        }
-      }
-
-      // Fallback - just the team route
-      return `/teams/${hoveredTeam.id}`;
-    },
-    [hoveredTeam, pathname],
-  );
+  }, [isFavorite, removeItem, addItem, breadcrumb]);
 
   return (
-    <div
-      className={cn(
-        "border border-border rounded-lg bg-black",
-        "shadow-2xl flex overflow-hidden divide-x divide-neutral-800",
-        "absolute z-999 cursor-default transition-all animate-appear top-full",
-      )}
-    >
-      <div>
-        <SearchInput
-          placeholder="Find Team..."
-          value={teamFilter}
-          onChange={(e) => setTeamFilter(e.currentTarget.value)}
-          className="text-sm border-t-0 border-r-0 border-l-0 rounded-none focus-visible:border-input focus-visible:ring-transparent focus-visible:ring-0"
-        />
-        <div className="p-2 w-56">
-          <div
-            className={cn(
-              "px-3 py-2 text-xs font-semibold text-neutral-500 uppercase tracking-wide",
-            )}
-          >
-            teams
-          </div>
-          <div className="max-h-36 overflow-scroll">
-            {teamsShow.map((teamItem) => (
-              <div key={teamItem.id} onMouseEnter={() => setHoveredTeam(teamItem)}>
-                <Link
-                  href={navigation.team.overview({ teamId: teamItem.id })}
-                  onClick={close}
-                  className={cn(
-                    "flex items-center px-3 py-2 text-sm rounded-md",
-                    "transition-colors text-foreground hover:bg-neutral-800",
-                  )}
-                >
-                  <Icon size="sm" seed={teamItem.id} className="size-4 flex-shrink-0" />
-                  <span className="truncate text-ellipsis mx-3 flex-1">{teamItem.name}</span>
-                  <div className="flex-shrink-0">
-                    {team?.id === teamItem.id && <Check className="size-3" />}
-                  </div>
+    <div className="flex flex-row gap-2 items-center h-8">
+      <Breadcrumb>
+        <BreadcrumbList>
+          {breadcrumb.items.map((item) => (
+            <Fragment key={item.route}>
+              <BreadcrumbLink asChild>
+                <Link href={item.route} className="flex flex-row gap-2 items-center max-w-40">
+                  <LucideIcon assetType={item.type} className="size-4 shrink-0" />
+                  <span className="truncate">{item.display_name}</span>
                 </Link>
-              </div>
-            ))}
-          </div>
-          {!teamFilter && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <button
-                  className={cn(
-                    "flex items-center space-x-2 w-full px-3 py-2 text-sm",
-                    "text-muted-foreground hover:text-neutral-200 hover:bg-neutral-800",
-                    "rounded-md transition-colors cursor-pointer",
-                  )}
-                  onMouseEnter={() => {
-                    setHoveredTeam(undefined);
-                  }}
-                >
-                  <PlusCircle className="size-4 text-blue-400" />
-                  <span className="font-medium">Create Team</span>
-                </button>
-              </DialogTrigger>
-              <DialogContent>
-                <CreateTeamModal />
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </div>
-      {hoveredTeam && (
-        <div>
-          <SearchInput
-            placeholder="Find Project..."
-            value={projectFilter}
-            onChange={(e) => setProjectFilter(e.currentTarget.value)}
-            className="text-sm border-t-0 border-r-0 border-l-0 rounded-none focus-visible:border-input focus-visible:ring-transparent focus-visible:ring-0"
-          />
-          <div className="p-2 w-56">
-            <div
-              className={cn(
-                "px-3 py-2 text-xs font-semibold text-neutral-500 uppercase tracking-wide",
-              )}
-            >
-              projects
-            </div>
-            <div className="max-h-36 overflow-scroll">
-              {projectsShow.map((projectItem) => (
-                <div key={projectItem.id}>
-                  <Link
-                    onClick={close}
-                    // href={navigation.project.overview({
-                    //   teamId: hoveredTeam.slug,
-                    //   projectId: projectItem.slug,
-                    // })}
-                    href={buildEquivalentRoute(projectItem.id)}
-                    className={cn(
-                      "flex items-center justify-between px-3 py-2 text-sm rounded-md",
-                      "transition-colors text-foreground hover:bg-neutral-800",
-                    )}
-                  >
-                    <div className="flex items-center space-x-3 w-full">
-                      <Code className="size-4 text-neutral-500" />
-                      <span className="truncate text-ellipsis">{projectItem.name}</span>
-                    </div>
-                    {projectItem?.id === project?.id && <Check className="size-3" />}
-                  </Link>
-                </div>
-              ))}
-            </div>
-            {!projectFilter && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button
-                    className={cn(
-                      "flex items-center space-x-2 w-full px-3 py-2 text-sm",
-                      "text-muted-foreground hover:text-neutral-200 hover:bg-neutral-800",
-                      "rounded-md transition-colors cursor-pointer",
-                    )}
-                  >
-                    <PlusCircle className="size-4 text-blue-400" />
-                    <span className="font-medium">Create Project</span>
-                  </button>
-                </DialogTrigger>
-                <DialogContent>
-                  <CreateProjectModal targetTeamId={hoveredTeam.id} />
-                </DialogContent>
-              </Dialog>
+              </BreadcrumbLink>
+              <BreadcrumbSeparator />
+            </Fragment>
+          ))}
+          <BreadcrumbItem>
+            <BreadcrumbPage className="flex flex-row gap-2 items-center max-w-40">
+              <LucideIcon assetType={breadcrumb.page.type} className="size-4 shrink-0" />
+              <span className="truncate">{breadcrumb.page.display_name}</span>
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+      {breadcrumb.favorite && (
+        <Button variant="ghost" onClick={toggleFavorite} className="group" size="sm">
+          <Star
+            className={cn(
+              "size-4 transition-colors",
+              isFavorite
+                ? "fill-yellow-500 text-yellow-500 group-hover:fill-muted-foreground group-hover:text-muted-foreground"
+                : "text-muted-foreground group-hover:text-foreground",
             )}
-          </div>
-        </div>
+          />
+        </Button>
       )}
+      {toggle && toggle}
+      <div className="flex flex-row gap-2 items-center">
+        {breadcrumb.navs.map((item) => (
+          <Link href={item.route} key={item.route}>
+            <Badge variant="outline" size="sm">
+              {item.display_name}
+            </Badge>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 };
 
-export default Breadcrumbs;
+export default ContainerBreadcrumb;

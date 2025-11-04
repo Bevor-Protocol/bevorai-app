@@ -10,7 +10,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Key } from "lucide-react";
 import React, { useState } from "react";
 
-const CreateApiKeyModal: React.FC = () => {
+const CreateApiKeyModal: React.FC<{ teamId: string }> = ({ teamId }) => {
   const queryClient = useQueryClient();
   const [showKey, setShowKey] = useState(false);
 
@@ -24,10 +24,10 @@ const CreateApiKeyModal: React.FC = () => {
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async (data: CreateKeyBody) => apiKeyActions.createKey(data),
+    mutationFn: async (data: CreateKeyBody) => apiKeyActions.createKey(teamId, data),
     onSuccess: () => {
       setShowKey(true);
-      queryClient.invalidateQueries({ queryKey: ["team-api-keys"] });
+      queryClient.invalidateQueries({ queryKey: ["api-keys", teamId] });
     },
   });
 
@@ -142,7 +142,7 @@ const CreateApiKeyModal: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Audit Access
+                  Analysis Access
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   {(["read", "write"] as const).map((scope) => (

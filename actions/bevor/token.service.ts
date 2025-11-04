@@ -12,7 +12,7 @@ export const validateToken = async (): Promise<{ user_id: string }> => {
 export const refreshToken = async (refreshToken: string): Promise<TokenIssueResponse> => {
   // does not require authorization. We'll look for session expiry and valid refresh tokens in the api.
   return api
-    .post("/token/refresh", { refresh_token: refreshToken }, { headers: { "skip-auth": true } })
+    .post("/token/refresh", { refresh_token: refreshToken }, { headers: { skip_token: true } })
     .then((response) => {
       return response.data;
     });
@@ -20,7 +20,7 @@ export const refreshToken = async (refreshToken: string): Promise<TokenIssueResp
 
 export const revokeToken = async (refreshToken: string): Promise<boolean> => {
   return api
-    .post("/token/revoke", { refresh_token: refreshToken }, { headers: { "skip-auth": true } })
+    .post("/token/revoke", { refresh_token: refreshToken }, { headers: { skip_token: true } })
     .then((response) => {
       return response.data.success;
     });

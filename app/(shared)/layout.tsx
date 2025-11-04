@@ -1,6 +1,5 @@
-import { teamActions, userActions } from "@/actions/bevor";
+import { dashboardActions } from "@/actions/bevor";
 import { Notifications, Profile } from "@/components/header";
-import SubNav from "@/components/subnav";
 import { cn } from "@/lib/utils";
 import { AsyncComponent, TeamSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
@@ -9,9 +8,9 @@ import Image from "next/image";
 
 const NotificationHydration: AsyncComponent = async () => {
   const queryClient = new QueryClient();
-  await queryClient.prefetchQuery({
+  await queryClient.fetchQuery({
     queryKey: ["user-invites"],
-    queryFn: () => userActions.getUserInvites(),
+    queryFn: () => dashboardActions.getInvites(),
   });
 
   return (
@@ -28,10 +27,10 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
   let currentUser = null;
   let teams: TeamSchemaI[] = [];
   if (sessionToken) {
-    currentUser = await userActions.getUser();
+    currentUser = await dashboardActions.getUser();
     teams = await queryClient.fetchQuery({
       queryKey: ["teams"],
-      queryFn: () => teamActions.getTeams(),
+      queryFn: () => dashboardActions.getTeams(),
     });
   }
 
@@ -57,7 +56,6 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
           </div>
         )}
       </header>
-      <SubNav />
       {children}
     </div>
   );

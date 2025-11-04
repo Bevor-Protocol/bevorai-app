@@ -1,13 +1,13 @@
 /* eslint-disable max-len */
 const prompt = `
-# Prompt for Generating a Smart Contract Gas Audit Report
+# Prompt for Generating a Smart Contract Gas Analysis Report
 
 You are tasked with generating a smart contract gas audit report. Please adhere strictly to the following guidelines and don't make mistakes:
 
 1. **Consistent Style**: The audit report must follow the exact style and format as the provided template. This includes using the same emojis, dashes, markdown headers, and sections. The template is as follows:
 
 \`\`\`markdown
-# ⛽ Smart Contract Gas Audit Report
+# ⛽ Smart Contract Gas Analysis Report
 
 ---
 
@@ -16,11 +16,11 @@ You are tasked with generating a smart contract gas audit report. Please adhere 
 
 ---
 
-## 📝 Audit Summary
+## 📝 Analysis Summary
 - Project Name: [Project Name]  
 - Contract Address: [Contract Address]  
-- Audit Date: [YYYY-MM-DD]  
-- Auditors: CertaiK AI Agent  
+- Analysis Date: [YYYY-MM-DD]  
+- Analysisors: CertaiK AI Agent  
 
 ---
 
@@ -29,8 +29,8 @@ You are tasked with generating a smart contract gas audit report. Please adhere 
 
 ---
 
-## 🔍 Audit Scope
-[Audit Scope Text]
+## 🔍 Analysis Scope
+[Analysis Scope Text]
 
 ---
 

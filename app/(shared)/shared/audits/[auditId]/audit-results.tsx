@@ -1,10 +1,10 @@
 "use client";
 
-import { AuditFindingsResponseI } from "@/utils/types";
+import { AnalysisFindingsResponseI } from "@/utils/types";
 import { AlertTriangle, Info, Shield, XCircle } from "lucide-react";
 import { useState } from "react";
 
-const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) => {
+const AnalysisResults: React.FC<{ audit: AnalysisFindingsResponseI }> = ({ audit }) => {
   const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
 
   const getSeverityIcon = (level: string): React.ReactElement => {
@@ -72,7 +72,7 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Shared Audit Results</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Shared Analysis Results</h1>
         </div>
       </div>
 
@@ -193,4 +193,4 @@ const AuditResults: React.FC<{ audit: AuditFindingsResponseI }> = ({ audit }) =>
   );
 };
 
-export default AuditResults;
+export default AnalysisResults;

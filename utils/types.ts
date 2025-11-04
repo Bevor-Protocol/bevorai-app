@@ -1,84 +1,28 @@
-import { AuditStatus, FindingLevel, Message, PlanStatusEnum } from "./enums";
-
-export type MessageType = {
-  type: Message;
-  content: string;
-};
-
-export type ModalContextI = {
-  setOpen: React.Dispatch<React.SetStateAction<"modal" | "none">>;
-  setContent: React.Dispatch<React.SetStateAction<React.ReactNode>>;
-};
-
-export type ModalStateI = {
-  show: (content: React.ReactNode) => void;
-  hide: () => void;
-};
-
-export interface ChatContextType {
-  isOpen: boolean;
-  messages: ChatMessageI[];
-  openChat: () => void;
-  closeChat: () => void;
-  sendMessage: (content: string) => Promise<void>;
-  currentAuditId: string | null;
-  setCurrentAuditId: React.Dispatch<React.SetStateAction<string | null>>;
-}
+import { FetchQueryOptions } from "@tanstack/react-query";
+import { AnalysisUpdateMethodEnum, FindingLevel, PlanStatusEnum } from "./enums";
 
 export interface DropdownOption {
   name: string;
   value: string;
 }
 
-export interface StatsResponseI {
-  n_audits: number;
-  n_contracts: number;
-  n_users: number;
-  n_apps: number;
-  findings: { [key: string]: { [key: string]: string[] } };
-}
-
-export interface TimeseriesResponseI {
-  count: number;
-  timeseries: { date: Date; count: number }[];
-}
-
-interface StringIntDict {
-  [key: string]: number;
-}
-
-export interface MultiTimeseriesResponseI {
-  counts: StringIntDict;
-  timeseries: {
-    date: Date;
-    counts: StringIntDict;
-  }[];
-  levels: string[];
-}
-
-export interface FindingSummaryI {
-  n_critical: number;
-  n_high: number;
-  n_medium: number;
-  n_low: number;
-}
-
-export interface AuditObservationI {
-  n: number;
+interface BaseSchema {
   id: string;
   created_at: string;
-  is_public: boolean;
-  code_project_id: string;
-  n_versions: number;
 }
 
-export interface AuditTableResponseI {
+export interface PaginationI {
   more: boolean;
   total_pages: number;
-  results: AuditObservationI[];
 }
 
-export interface FindingI {
+/*  USER   */
+export interface UserSchemaI extends BaseSchema {
+  username: string;
+}
+
+/*  ANALYSES   */
+export interface FindingSchemaI {
   id: string;
   type: string;
   level: FindingLevel;
@@ -93,67 +37,51 @@ export interface FindingI {
   function_id: string;
 }
 
-interface BaseSchema {
+export interface AnalysisStatusSchemaI {
   id: string;
-  created_at: string;
+  status: string;
 }
 
-export interface UserSchemaI extends BaseSchema {
-  total_credits: number;
-  used_credits: number;
-  available_credits: number;
-}
-
-export interface AuditSchemaI extends BaseSchema {
-  status: AuditStatus;
-  logic_version: string;
-  model_version: string;
-  n_findings: number;
+export interface AnalysisSchemaI extends BaseSchema {
+  is_owner: boolean;
   is_public: boolean;
+  name?: string;
+  description?: string;
+  n_versions: number;
+  user: UserSchemaI;
+  code_project_id: string;
+  update_method: AnalysisUpdateMethodEnum;
+  current_code_head?: CodeVersionMappingSchemaI;
+  current_security_head?: AnalysisVersionSchemaI;
+}
+
+export interface AnalysisVersionSchemaI extends BaseSchema {
   code_version_mapping_id: string;
-  code_version: CodeVersionSchema;
+  parent_version_id?: string;
+  version_number: number;
+  scopes: string[];
+  status: string;
+  trigger: "manual_run" | "forked" | "chat" | "manual_edit";
+  is_owner: boolean;
+  children: string[];
+  findings: FindingSchemaI[];
+  is_active_version: boolean;
+  n_findings: number;
+  n_scopes: number;
 }
 
-export interface AuditFindingsResponseI extends AuditSchemaI {
-  findings: FindingI[];
+export interface AnalysisPaginationI extends PaginationI {
+  results: (AnalysisSchemaI & { n: number })[];
 }
 
-export interface UserInfoResponseI extends BaseSchema {
-  total_credits: number;
-  used_credits: number;
-  available_credits: number;
-  teams: TeamSchemaI[];
+export interface AnalysisVersionPaginationI extends PaginationI {
+  results: (AnalysisVersionSchemaI & { n: number })[];
 }
 
-export interface UserTimeseriesResponseI {
-  n_audits: number;
-  n_contracts: number;
-  audit_history: { date: string; count: number }[];
-  contract_history: { date: string; count: number }[];
-}
-
-export interface ContractResponseI {
-  project_id: string;
-  version_id: string;
-}
-
-export interface ContractVersionSourceTrimI extends BaseSchema {
-  path: string;
-  is_imported_dependency: boolean;
-  n_auditable_fcts: number;
-  source_hash_id: string;
-  code_version_id: string;
-}
-
-export interface ContractVersionSourceI {
-  content: string;
-  solc_version: string;
-  content_hash: string;
-  created_at: Date;
-  is_imported_dependency: boolean;
-}
-
-export interface FunctionScopeI extends BaseSchema {
+/*  CODE   */
+export interface FunctionScopeI {
+  id: string;
+  merkle_hash: string;
   name: string;
   is_auditable: boolean;
   is_entry_point: boolean;
@@ -164,19 +92,21 @@ export interface FunctionScopeI extends BaseSchema {
   source_id: string;
 }
 
-export interface ContractScopeI extends BaseSchema {
+export interface ContractScopeI {
+  id: string;
+  merkle_hash: string;
   name: string;
   is_within_scope: boolean;
   src_start_pos: number;
   src_end_pos: number;
-  source_defined_in_id: string;
+  source_id: string;
   functions: FunctionScopeI[];
 }
 
-export interface TreeResponseI extends BaseSchema {
+export interface TreeResponseI {
+  id: string;
   path: string;
   is_imported: boolean;
-  is_known_target: boolean;
   is_within_scope: boolean;
   contracts: ContractScopeI[];
 }
@@ -204,56 +134,6 @@ export interface CreditSyncResponseI {
   credits_removed: number;
 }
 
-export interface AuditStatusResponseI {
-  id: string;
-  status: string;
-}
-
-export interface UserSearchResponseI {
-  id: string;
-  address: string;
-  permissions?: {
-    can_create_api_key: boolean;
-    can_create_app: boolean;
-  };
-}
-
-export interface AppSearchResponseI {
-  id: string;
-  owner_id: string;
-  name: string;
-  type: string;
-  permissions?: {
-    can_create_api_key: boolean;
-    can_create_app: boolean;
-  };
-}
-
-export interface PromptResponseI {
-  id: string;
-  created_at: string;
-  audit_type: string;
-  tag: string;
-  version: string;
-  content: string;
-  is_active: boolean;
-}
-
-export interface AuditWithChildrenResponseI {
-  id: string;
-  created_at: string;
-  status: AuditStatus;
-  project_id: string;
-  version_id: string;
-  level: string;
-  processing_time_seconds: number;
-  logic_version: string;
-  n_findings: number;
-  n_failures: number;
-  markdown: string;
-  findings: FindingI[];
-}
-
 export interface ChatMessageI {
   id: string;
   role: "user" | "system";
@@ -261,27 +141,26 @@ export interface ChatMessageI {
   content: string;
 }
 
-export interface ChatPagination {
-  more: boolean;
-  total_pages: number;
-  results: ChatResponseI[];
+export interface ChatPaginationI extends PaginationI {
+  results: (ChatSchemaI & { n: number })[];
 }
 
-export interface ChatResponseI {
+export interface ChatSchemaI {
   id: string;
   created_at: string;
-  code_version_mapping_id: string;
-  is_visible: boolean;
-  total_messages: number;
   team_id: string;
+  is_visibile: string;
+  total_messages: string;
+  code_project_id: string;
+  user: UserSchemaI;
 }
 
-export interface ChatMessagesResponseI extends ChatResponseI {
+export interface ChatMessagesResponseI extends ChatSchemaI {
   messages: ChatMessageI[];
 }
 
 export interface ChatAttributeI {
-  id: string;
+  merkle_hash: string;
   type:
     | "FunctionDefinition"
     | "ModifierDefinition"
@@ -296,34 +175,31 @@ export interface ChatAttributeI {
   metadata?: string;
 }
 
-export interface ChatWithAuditResponseI extends ChatResponseI {
-  audit: {
-    id: string;
-    created_at: string;
-    status: AuditStatus;
-    version: string;
-    audit_type: string;
-    processing_time_seconds: number;
-    result: string;
-    introduction?: string;
-    scope?: string;
-    conclusiong?: string;
-    contract: {
-      id: string;
-      method: string;
-      address: string;
-      network: string;
-      code: string;
-      is_available: boolean;
-    };
-  };
-}
-
 export interface TeamSchemaI extends BaseSchema {
   name: string;
   is_default: boolean;
-  created_by_user_id: string | null;
+  created_by_user_id: string;
+}
+
+export interface TeamDetailedSchemaI extends TeamSchemaI {
+  created_by_user: UserSchemaI;
+}
+
+export interface TeamOverviewSchemaI extends TeamDetailedSchemaI {
+  n_projects: number;
   role: MemberRoleEnum;
+  users: UserSchemaI[];
+}
+
+export interface ActivitySchemaI extends BaseSchema {
+  id: string;
+  created_at: string;
+  team_id: string;
+  related_id: string;
+  project_id?: string;
+  user: UserSchemaI;
+  method: string;
+  entity_type: string;
 }
 
 export enum MemberRoleEnum {
@@ -373,11 +249,10 @@ export interface CreateProjectBody {
   tags?: string[];
 }
 
-export interface MemberSchema extends BaseSchema {
-  team_id: string;
-  user_id: string;
+export interface MemberSchemaI extends BaseSchema {
   role: MemberRoleEnum;
-  identifier: string;
+  user: UserSchemaI;
+  team: TeamSchemaI;
   can_remove: boolean;
   can_update: boolean;
 }
@@ -389,45 +264,75 @@ export interface MemberInviteSchema extends BaseSchema {
   team: TeamSchemaI;
 }
 
-export interface CodeProjectSchema extends BaseSchema {
-  n: number;
-  team_id: string;
+/* CODE PROJECT */
+export interface CodeProjectSchemaI extends BaseSchema {
   name: string;
   description?: string;
   tags: string[];
+  is_default: boolean;
+  team_id: string;
+  created_by_user_id: string;
+}
+
+export interface CodeProjectDetailedSchemaI extends CodeProjectSchemaI {
   n_versions: number;
-  n_audits: number;
+  n_analyses: number;
+  team: TeamSchemaI;
+  created_by_user: UserSchemaI;
 }
 
-export interface CodeProjectsResponse {
-  more: boolean;
-  total_pages: number;
-  results: CodeProjectSchema[];
+export interface CodeProjectsPaginationI extends PaginationI {
+  results: (CodeProjectDetailedSchemaI & { n: number })[];
 }
 
-export interface InitialUserObject {
-  isAuthenticated: boolean;
-  userId?: string;
-  teams: TeamSchemaI[];
-  projects: CodeProjectSchema[];
+/* CODE VERSION */
+export interface CodeVersionMappingSchemaI extends BaseSchema {
+  code_project_id: string;
+  parent_version_id?: string;
+  version_number: number;
+  user: UserSchemaI;
+  child?: {
+    id: string;
+    created_at: string;
+    version_number: number;
+  };
+  parent?: {
+    id: string;
+    created_at: string;
+    version_number: number;
+  };
+  version: CodeVersionSchemaI;
 }
 
-export interface CodeVersionSchema extends BaseSchema {
-  n: number;
+export interface CodeVersionSchemaI extends BaseSchema {
   network?: string;
   version_method: string;
   version_identifier: string;
   source_type: SourceTypeEnum;
   source_url?: string;
   solc_version?: string;
-  is_code_available: boolean;
 }
 
-export interface CodeVersionsResponseI {
-  more: boolean;
-  total_pages: number;
-  results: CodeVersionSchema[];
+export interface CodeVersionsPaginationI extends PaginationI {
+  results: (CodeVersionMappingSchemaI & { n: number })[];
 }
+
+export interface CodeSourceSchemaI extends BaseSchema {
+  path: string;
+  is_imported_dependency: boolean;
+  n_auditable_fcts: number;
+  source_hash_id: string;
+}
+
+export interface CodeSourceContentSchemaI extends BaseSchema {
+  content: string;
+  solc_version: string;
+  content_hash: string;
+  path: string;
+  is_imported_dependency: boolean;
+}
+
+/*    */
 
 type Permission = "read" | "write" | "none";
 
@@ -466,14 +371,14 @@ interface StripeSeatPricing {
   tiers: StripeSeatTier[];
 }
 
-interface StripeAuditUsage {
+interface StripeAnalysisUsage {
   included: number;
   unit_amount: number;
   billing_scheme: "metered";
 }
 
 interface StripeUsage {
-  audits: StripeAuditUsage;
+  audits: StripeAnalysisUsage;
 }
 
 export interface StripePlanI {
@@ -610,11 +515,52 @@ export interface UpdateSubscriptionRequest {
   price_id: string;
 }
 
+export type ItemType =
+  | "team"
+  | "project"
+  | "code"
+  | "chat"
+  | "analysis"
+  | "analysis_version"
+  | "member";
+
+export interface BreadcrumbItem {
+  route: string;
+  display_name: string;
+  type: ItemType;
+}
+
+export interface BreadcrumbPage {
+  display_name: string;
+  type: ItemType;
+}
+
+export interface BreadcrumbFavorite {
+  display_name: string;
+  type: ItemType;
+  id: string;
+  route: string;
+}
+
+export interface BreadcrumbNav {
+  display_name: string;
+  route: string;
+}
+
+export interface BreadcrumbSchemaI {
+  team_id: string;
+  navs: BreadcrumbNav[];
+  items: BreadcrumbItem[];
+  page: BreadcrumbPage;
+  allow_favorite: boolean;
+  favorite?: BreadcrumbFavorite;
+}
+
 export type HrefProps = {
   teamId?: string;
   projectId?: string;
   versionId?: string;
-  auditId?: string;
+  analysisId?: string;
   chatId?: string;
 };
 
@@ -625,3 +571,16 @@ export type AsyncComponent<P = {}> = AsyncFunctionComponent<P>;
 interface AsyncFunctionComponent<P = {}> {
   (props: P): Promise<React.ReactNode>;
 }
+
+export type BreadcrumbQueryOptions = FetchQueryOptions<
+  BreadcrumbSchemaI,
+  Error,
+  BreadcrumbSchemaI,
+  (
+    | string
+    | {
+        [key: string]: string | undefined;
+      }
+  )[],
+  never
+>;

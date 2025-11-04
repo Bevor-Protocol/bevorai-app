@@ -1,6 +1,6 @@
 "use client";
 
-import { teamActions } from "@/actions/bevor";
+import { dashboardActions } from "@/actions/bevor";
 import TeamsDropdown from "@/components/Dropdown/teams";
 import CreateTeamModal from "@/components/Modal/create-team";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -26,7 +26,7 @@ export const TeamNavigation: React.FC<{
 
   const { data: teams } = useQuery({
     queryKey: ["teams"],
-    queryFn: async () => teamActions.getTeams(),
+    queryFn: async () => dashboardActions.getTeams(),
   });
 
   const team = useMemo(() => {

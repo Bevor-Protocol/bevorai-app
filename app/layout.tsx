@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import QueryProvider from "@/providers/query";
 import { AsyncComponent } from "@/utils/types";
 import { Analytics } from "@vercel/analytics/react";
@@ -15,11 +16,11 @@ const baseURL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 export const metadata: Metadata = {
   metadataBase: new URL(baseURL),
   title: "BevorAI",
-  description: "AI Agent Smart Contract Auditor",
-  keywords: ["AI Agent", "Auditor", "Smart Contract", "web3", "Ethereum", "Solana"],
+  description: "AI Agent Smart Contract Analyzer",
+  keywords: ["AI Agent", "Analyzer", "Smart Contract", "web3", "Ethereum", "Solana"],
   openGraph: {
     title: "BevorAI",
-    description: "AI Agent Smart Contract Auditor",
+    description: "AI Agent Smart Contract Analyzer",
     type: "website",
     url: baseURL,
     siteName: "BevorAI",
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     title: "BevorAI",
-    description: "AI Agent Smart Contract Auditor",
+    description: "AI Agent Smart Contract Analyzer",
     card: "summary_large_image",
     site: "@CertaiK_Agent",
     creator: "@CertaiK_Agent",
@@ -39,10 +40,17 @@ export const metadata: Metadata = {
 const RootLayout: AsyncComponent<{ children: React.ReactNode }> = async ({ children }) => {
   return (
     <html lang="en">
-      <body className={`${figtree.className} antialiased`}>
+      <body className={`${figtree.className} antialiased bg-sidebar`}>
         <QueryProvider>
           {children}
           <Analytics />
+          <Toaster
+            toastOptions={{
+              classNames: {
+                description: "!text-muted-foreground",
+              },
+            }}
+          />
         </QueryProvider>
       </body>
     </html>

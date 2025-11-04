@@ -16,7 +16,7 @@ const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) =
   const router = useRouter();
 
   const acceptInviteMutation = useMutation({
-    mutationFn: async () => teamActions.acceptInvite(invite.id),
+    mutationFn: async () => teamActions.acceptInvite(invite.team.id, invite.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-invites"] });
       // also refresh the breadcrumbs nav.
@@ -26,7 +26,7 @@ const ViewInviteModal: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) =
   });
 
   const rejectInviteMutation = useMutation({
-    mutationFn: async () => teamActions.removeInvite(invite.id),
+    mutationFn: async () => teamActions.removeInvite(invite.team.id, invite.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-invites"] });
     },

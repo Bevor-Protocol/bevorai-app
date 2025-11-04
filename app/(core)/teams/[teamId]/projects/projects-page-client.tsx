@@ -1,53 +1,49 @@
 "use client";
 
 import { projectActions } from "@/actions/bevor";
+import CreateProjectModal from "@/components/Modal/create-project";
 import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { SearchInput } from "@/components/ui/input";
-import { TeamSchemaI } from "@/utils/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useDebouncedState } from "@/hooks/useDebouncedState";
+import { defaultProjectsQuery } from "@/utils/queries";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Search } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 
-interface ProjectsPageClientProps {
-  team: TeamSchemaI;
-}
+export const ProjectCreate: React.FC<{ teamId: string }> = ({ teamId }) => {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="size-4" />
+          Create Project
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <CreateProjectModal teamId={teamId} />
+      </DialogContent>
+    </Dialog>
+  );
+};
 
-const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
-  const [searchQuery, setSearchQuery] = useState({ page_size: "6", name: "", tag: "" });
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState({
-    page_size: "6",
-    name: "",
-    tag: "",
-  });
-  const timerRef = useRef<NodeJS.Timeout>(null);
-
-  // Debounce the search query to prevent excessive API calls
-  useEffect(() => {
-    // Clear any existing timer
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-
-    // Set new timer
-    timerRef.current = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 500);
-
-    return (): void => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [searchQuery]);
+const ProjectsPageClient: React.FC<{
+  teamId: string;
+  query: { [key: string]: string | undefined };
+}> = ({ teamId, query }) => {
+  const [searchQuery, setSearchQuery] = useState(query);
+  const { debouncedState, timerRef } = useDebouncedState(searchQuery);
 
   const {
     data: projects,
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["projects", team.id, debouncedSearchQuery],
-    queryFn: () => projectActions.getProjects(debouncedSearchQuery),
+    queryKey: ["projects", teamId, debouncedState],
+    queryFn: () => projectActions.getProjects(teamId, debouncedState),
     placeholderData: keepPreviousData,
   });
 
@@ -59,10 +55,27 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
     setSearchQuery((prev) => ({ ...prev, tag: value }));
   }, []);
 
+  const handleClearAll = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    setSearchQuery(defaultProjectsQuery());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isAnySearched = useMemo(() => {
+    return Object.entries(searchQuery).some(([k, v]) => {
+      if (k === "page_size" || k === "page" || k === "project_id" || k === "order") {
+        return false;
+      }
+      return v !== null && v !== undefined;
+    });
+  }, [searchQuery]);
+
   const isSearching = useMemo(() => isLoading || isFetching, [isLoading, isFetching]);
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <SearchInput
@@ -77,32 +90,30 @@ const ProjectsPageClient: React.FC<ProjectsPageClientProps> = ({ team }) => {
             value={searchQuery.tag}
             onChange={(e) => handleTag(e.target.value)}
           />
+          {isAnySearched && (
+            <Button variant="ghost" size="sm" onClick={handleClearAll}>
+              Clear All
+            </Button>
+          )}
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {projects &&
-          projects.results.map((project) => (
-            <ProjectElement
-              key={project.id}
-              project={project}
-              teamId={team.id}
-              isDisabled={isSearching}
-            />
+      <ScrollArea className="w-full pb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+          {projects?.results.map((project) => (
+            <ProjectElement key={project.id} project={project} isDisabled={isSearching} />
           ))}
-      </div>
-      {projects &&
-        projects.results.length === 0 &&
-        (debouncedSearchQuery.name || debouncedSearchQuery.tag) && (
-          <div className="text-center py-12">
-            <Search className="w-12 h-12 text-neutral-500 mx-auto mb-4" />
-            <h3 className="text-foreground mb-2">No projects found</h3>
-            <p className="text-muted-foreground">Try adjusting your search terms</p>
-          </div>
-        )}
-      {projects &&
-        projects.results.length === 0 &&
-        !debouncedSearchQuery.name &&
-        !debouncedSearchQuery.tag && <ProjectEmpty centered />}
+        </div>
+      </ScrollArea>
+      {projects && projects.results.length === 0 && (debouncedState.name || debouncedState.tag) && (
+        <div className="text-center py-12">
+          <Search className="w-12 h-12 text-neutral-500 mx-auto mb-4" />
+          <h3 className="text-foreground mb-2">No projects found</h3>
+          <p className="text-muted-foreground">Try adjusting your search terms</p>
+        </div>
+      )}
+      {projects && projects.results.length === 0 && !debouncedState.name && !debouncedState.tag && (
+        <ProjectEmpty centered />
+      )}
     </div>
   );
 };

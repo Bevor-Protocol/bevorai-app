@@ -50,7 +50,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
     return selectedScope.some((scope) => scope.identifier === identifier && scope.level === level);
   };
 
-  const getAuditableCount = (source: TreeResponseI): number => {
+  const getAnalysisableCount = (source: TreeResponseI): number => {
     return source.contracts.reduce(
       (acc, contract) =>
         acc + contract.functions.reduce((acc, func) => acc + Number(func.is_auditable), 0),
@@ -58,7 +58,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
     );
   };
 
-  const getContractAuditableCount = (contract: TreeResponseI["contracts"][0]): number => {
+  const getContractAnalysisableCount = (contract: TreeResponseI["contracts"][0]): number => {
     return contract.functions.reduce((acc, func) => acc + Number(func.is_auditable), 0);
   };
 
@@ -79,19 +79,19 @@ const ContractTree: React.FC<ContractTreeProps> = ({
       {tree
         .sort((a, b) => {
           // Sort by auditable content first, then alphabetically
-          const aHasAuditable = getAuditableCount(a) > 0;
-          const bHasAuditable = getAuditableCount(b) > 0;
+          const aHasAnalysisable = getAnalysisableCount(a) > 0;
+          const bHasAnalysisable = getAnalysisableCount(b) > 0;
 
-          if (aHasAuditable && !bHasAuditable) return -1;
-          if (!aHasAuditable && bHasAuditable) return 1;
+          if (aHasAnalysisable && !bHasAnalysisable) return -1;
+          if (!aHasAnalysisable && bHasAnalysisable) return 1;
           return a.path.localeCompare(b.path);
         })
         .map((source) => {
           const isSourceSelected = isSelected(source.id, "source");
           const isSourceExpanded = expandedSources[source.id] ?? false;
-          const auditableCount = getAuditableCount(source);
+          const auditableCount = getAnalysisableCount(source);
           const scopeCount = getScopeCount(source);
-          const hasAuditableFcts = auditableCount > 0;
+          const hasAnalysisableFcts = auditableCount > 0;
 
           return (
             <div
@@ -106,19 +106,19 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                   isSourceSelected || source.is_within_scope
                     ? "bg-purple-500/10 border-l-4 border-l-purple-500"
                     : "hover:bg-neutral-800/50",
-                  !hasAuditableFcts && "opacity-50 cursor-not-allowed",
+                  !hasAnalysisableFcts && "opacity-50 cursor-not-allowed",
                 )}
                 onClick={() => {
-                  if (!readOnly && hasAuditableFcts && onScopeSelect) {
+                  if (!readOnly && hasAnalysisableFcts && onScopeSelect) {
                     onScopeSelect({ identifier: source.id, level: "source" });
-                  } else if (hasAuditableFcts) {
+                  } else if (hasAnalysisableFcts) {
                     toggleSource(source.id);
                   }
                 }}
               >
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
                   <div className="flex items-center space-x-2 flex-shrink-0">
-                    {hasAuditableFcts ? (
+                    {hasAnalysisableFcts ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -160,13 +160,13 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                     <div className="font-medium text-foreground">{source.contracts.length}</div>
                     <div>Contracts</div>
                   </div>
-                  {hasAuditableFcts && (
+                  {hasAnalysisableFcts && (
                     <div className="text-center min-w-[80px]">
                       <div className="font-medium text-foreground flex items-center justify-center space-x-1">
                         <Shield className="w-3 h-3" />
                         <span>{auditableCount}</span>
                       </div>
-                      <div>Auditable</div>
+                      <div>Analysisable</div>
                     </div>
                   )}
                   {readOnly && (
@@ -190,14 +190,14 @@ const ContractTree: React.FC<ContractTreeProps> = ({
               </div>
 
               {/* Contracts */}
-              {isSourceExpanded && hasAuditableFcts && (
+              {isSourceExpanded && hasAnalysisableFcts && (
                 <div className="border-t border-border bg-neutral-950/30">
                   {source.contracts.map((contract) => {
                     const isContractSelected = isSelected(contract.id, "contract");
                     const isContractExpanded = expandedContracts[contract.id] ?? false;
-                    const contractAuditableCount = getContractAuditableCount(contract);
+                    const contractAnalysisableCount = getContractAnalysisableCount(contract);
                     const contractScopeCount = getContractScopeCount(contract);
-                    const hasAuditableFcts = contractAuditableCount > 0;
+                    const hasAnalysisableFcts = contractAnalysisableCount > 0;
 
                     return (
                       <div key={contract.id} className="border-b border-border/50 last:border-b-0">
@@ -209,19 +209,19 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                             isContractSelected || contract.is_within_scope
                               ? "bg-blue-500/10 border-l-4 border-l-blue-500"
                               : "hover:bg-neutral-800/30",
-                            !hasAuditableFcts && "opacity-50 cursor-not-allowed",
+                            !hasAnalysisableFcts && "opacity-50 cursor-not-allowed",
                           )}
                           onClick={() => {
                             if (!readOnly && onScopeSelect) {
                               onScopeSelect({ identifier: contract.id, level: "contract" });
-                            } else if (hasAuditableFcts) {
+                            } else if (hasAnalysisableFcts) {
                               toggleContract(contract.id);
                             }
                           }}
                         >
                           <div className="flex items-center space-x-3 min-w-0 flex-1">
                             <div className="flex items-center space-x-2 flex-shrink-0">
-                              {hasAuditableFcts && (
+                              {hasAnalysisableFcts && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -256,13 +256,13 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                               </div>
                               <div>Functions</div>
                             </div>
-                            {hasAuditableFcts && (
+                            {hasAnalysisableFcts && (
                               <div className="text-center min-w-[80px]">
                                 <div className="font-medium text-foreground flex items-center justify-center space-x-1">
                                   <Shield className="w-3 h-3" />
-                                  <span>{contractAuditableCount}</span>
+                                  <span>{contractAnalysisableCount}</span>
                                 </div>
-                                <div>Auditable</div>
+                                <div>Analysisable</div>
                               </div>
                             )}
                             {readOnly && (

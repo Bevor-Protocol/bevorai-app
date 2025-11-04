@@ -8,14 +8,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 
 export const AddonRow: React.FC<{
+  teamId: string;
   addon: StripeAddonI;
-}> = ({ addon }) => {
+}> = ({ teamId, addon }) => {
   const queryClient = useQueryClient();
 
   const currentPrice = addon.price / 100;
 
   const checkoutMutation = useMutation({
-    mutationFn: (lookupKey: string) => billingActions.modifySubscription(lookupKey),
+    mutationFn: (lookupKey: string) => billingActions.modifySubscription(teamId, lookupKey),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["addons"],

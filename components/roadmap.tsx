@@ -59,7 +59,7 @@ const Roadmap: React.FC = () => {
         <div className="flex items-start gap-4">
           <Circle className="size-6 text-cyan-400 mt-1 shrink-0" />
           <div>
-            <h3 className="text-xl font-semibold text-foreground">Audit Submission System</h3>
+            <h3 className="text-xl font-semibold text-foreground">Analysis Submission System</h3>
             <p className="text-gray-400">
               Development of a user-friendly platform for submitting smart contracts for audit
             </p>

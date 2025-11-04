@@ -1,7 +1,7 @@
 import { Shield } from "lucide-react";
 import React from "react";
 
-export const AuditEmpty: React.FC<{ centered?: boolean }> = ({ centered = false }) => {
+export const AnalysisEmpty: React.FC<{ centered?: boolean }> = ({ centered = false }) => {
   if (!centered) {
     return (
       <div className="flex flex-col py-4 gap-2">

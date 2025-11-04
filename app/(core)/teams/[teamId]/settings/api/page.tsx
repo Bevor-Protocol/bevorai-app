@@ -1,18 +1,20 @@
-import {
-  ApiKeyCreate,
-  ApiKeyTable,
-} from "@/app/(core)/teams/[teamId]/settings/api/api-key-management-client";
 import Container from "@/components/container";
 import { AsyncComponent } from "@/utils/types";
+import { ApiKeyCreate, ApiKeyTable } from "./api-key-management-client";
 
-const ApiKeyPage: AsyncComponent = async () => {
+interface PageProps {
+  params: Promise<{ teamId: string }>;
+}
+
+const ApiKeyPage: AsyncComponent<PageProps> = async ({ params }) => {
+  const { teamId } = await params;
   return (
     <Container>
       <div className="flex flex-row mb-8 justify-between">
         <h3 className="text-foreground">API Keys</h3>
-        <ApiKeyCreate />
+        <ApiKeyCreate teamId={teamId} />
       </div>
-      <ApiKeyTable />
+      <ApiKeyTable teamId={teamId} />
     </Container>
   );
 };

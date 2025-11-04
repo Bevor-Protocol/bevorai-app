@@ -1,7 +1,7 @@
-import { teamActions, userActions, projectActions, securityAnalysisActions, chatActions, versionActions, billingActions, adminActions, apiKeyActions, tokenActions } from "@/actions";
+import { versionActions } from "@/actions/bevor";
 import {
+  CodeSourceContentSchemaI,
   ContractScopeI,
-  ContractVersionSourceI,
   FunctionScopeI,
   TreeResponseI,
 } from "@/utils/types";
@@ -12,7 +12,7 @@ export type ScopeHookResponse = {
   selectedSource: TreeResponseI | null;
   selectedScope: FunctionScopeI | null;
   selectedScopes: FunctionScopeI[]; // Array of all matching scopes (for inherited functions)
-  sourceResponse: UseQueryResult<ContractVersionSourceI, Error>;
+  sourceResponse: UseQueryResult<CodeSourceContentSchemaI, Error>;
   targets: FunctionScopeI[];
   handleSourceChange: (source: TreeResponseI) => void;
   handleContractChange: (contract: ContractScopeI) => void;
@@ -21,10 +21,12 @@ export type ScopeHookResponse = {
 };
 
 export const useScopeHandler = ({
+  teamId,
   versionId,
   scope,
   sourceTriggerOn = "source",
 }: {
+  teamId: string;
   versionId: string;
   scope: TreeResponseI[];
   sourceTriggerOn?: "source" | "contract" | "function";
@@ -42,8 +44,8 @@ export const useScopeHandler = ({
   const selectedScopeRef = useRef<FunctionScopeI[]>([]);
 
   const sourceResponse = useQuery({
-    queryKey: ["source", selectedSource?.id ?? "", versionId],
-    queryFn: () => teamActions.getContractVersionSource(selectedSource?.id ?? "", versionId),
+    queryKey: ["source", versionId, selectedSource?.id ?? ""],
+    queryFn: () => versionActions.getCodeVersionSource(teamId, versionId, selectedSource?.id ?? ""),
     enabled: !!selectedSource,
   });
 

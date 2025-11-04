@@ -6,30 +6,20 @@ import { billingActions } from "@/actions/bevor";
 import { AddonRow } from "@/components/billing/addon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { QUERY_KEYS } from "@/utils/constants";
 import { PlanStatusEnum } from "@/utils/enums";
-import {
-  MemberRoleEnum,
-  StripeAddonI,
-  StripeSubscriptionI,
-  StripeSubscriptionLimit,
-  TeamSchemaI,
-} from "@/utils/types";
+import { StripeAddonI, StripeSubscriptionI, StripeSubscriptionLimit } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
-interface BillingPageClientProps {
-  team: TeamSchemaI;
-}
-
-const InvoiceNameSection: React.FC = () => {
+const InvoiceNameSection: React.FC<{ teamId: string }> = ({ teamId }) => {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
 
   const { data: customer } = useQuery({
-    queryKey: ["customer"],
-    queryFn: () => billingActions.getCustomer(),
+    queryKey: [QUERY_KEYS.CUSTOMERS, teamId],
+    queryFn: () => billingActions.getCustomer(teamId),
   });
 
   useEffect(() => {
@@ -40,9 +30,9 @@ const InvoiceNameSection: React.FC = () => {
   }, [customer?.name]);
 
   const updateNameMutation = useMutation({
-    mutationFn: (data: { name: string }) => billingActions.updateCustomer(data),
+    mutationFn: (data: { name: string }) => billingActions.updateCustomer(teamId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customer"] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CUSTOMERS, teamId] });
     },
   });
 
@@ -83,14 +73,14 @@ const InvoiceNameSection: React.FC = () => {
   );
 };
 
-const BillingEmailSection: React.FC = () => {
+const BillingEmailSection: React.FC<{ teamId: string }> = ({ teamId }) => {
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
 
   const { data: customer } = useQuery({
-    queryKey: ["customer"],
-    queryFn: () => billingActions.getCustomer(),
+    queryKey: [QUERY_KEYS.CUSTOMERS, teamId],
+    queryFn: () => billingActions.getCustomer(teamId),
   });
 
   useEffect(() => {
@@ -100,7 +90,7 @@ const BillingEmailSection: React.FC = () => {
   }, [customer?.email, email]);
 
   const updateEmailMutation = useMutation({
-    mutationFn: (data: { email: string }) => billingActions.updateCustomer(data),
+    mutationFn: (data: { email: string }) => billingActions.updateCustomer(teamId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer"] });
     },
@@ -159,17 +149,17 @@ const BillingEmailSection: React.FC = () => {
   );
 };
 
-const PaymentMethodSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
+const PaymentMethodSection: React.FC<{ teamId: string }> = ({ teamId }) => {
   const { data: paymentMethod, isLoading: paymentMethodLoading } = useQuery({
-    queryKey: ["payment-method"],
-    queryFn: () => billingActions.getPaymentMethod(),
+    queryKey: [QUERY_KEYS.PAYMENT_METHODS],
+    queryFn: () => billingActions.getPaymentMethod(teamId),
   });
 
   const checkoutMutation = useMutation({
     mutationFn: () =>
-      billingActions.updatePaymentMethod({
-        success_url: `${window.location.origin}/teams/${team.id}/settings/billing?success=true`,
-        cancel_url: `${window.location.origin}/teams/${team.id}/settings/billing?canceled=true`,
+      billingActions.updatePaymentMethod(teamId, {
+        success_url: `${window.location.origin}/teams/${teamId}/settings/billing?success=true`,
+        cancel_url: `${window.location.origin}/teams/${teamId}/settings/billing?canceled=true`,
       }),
     onSuccess: (data) => {
       window.location.href = data.url;
@@ -269,21 +259,21 @@ const PaymentMethodSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
 
 const CurrentSubscription: React.FC<{
   subscription: StripeSubscriptionI;
-  team: TeamSchemaI;
-}> = ({ subscription, team }) => {
+  teamId: string;
+}> = ({ subscription, teamId }) => {
   const queryClient = useQueryClient();
   const isTrial = subscription.plan_status === PlanStatusEnum.TRIALING;
   const isCancelling = subscription.subscription?.cancel_at_period_end;
 
   const unsubscribeMutation = useMutation({
-    mutationFn: async () => billingActions.cancelSubscription(),
+    mutationFn: async () => billingActions.cancelSubscription(teamId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription"] });
     },
   });
 
   const reactivateMutation = useMutation({
-    mutationFn: async () => billingActions.reactivateSubscription(),
+    mutationFn: async () => billingActions.reactivateSubscription(teamId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription"] });
     },
@@ -300,7 +290,7 @@ const CurrentSubscription: React.FC<{
   const getFeatureName = (feature: string): string => {
     switch (feature) {
       case "audit":
-        return "Smart Contract Audits";
+        return "Smart Contract Analyses";
       case "chat":
         return "AI Chat Support";
       case "contract_heavy":
@@ -395,7 +385,7 @@ const CurrentSubscription: React.FC<{
 
         <div className="flex items-center justify-between pt-4 border-t border-border">
           {isTrial ? (
-            <Link href={`/teams/${team.id}/settings/plans`}>
+            <Link href={`/teams/${teamId}/settings/plans`}>
               <Button className="text-sm px-4 py-2">Upgrade Plan</Button>
             </Link>
           ) : isCancelling ? (
@@ -450,10 +440,10 @@ const CurrentSubscription: React.FC<{
   );
 };
 
-const AddonsSection: React.FC = () => {
+const AddonsSection: React.FC<{ teamId: string }> = ({ teamId }) => {
   const { data: addons, isLoading: addonsLoading } = useQuery({
-    queryKey: ["addons"],
-    queryFn: () => billingActions.getAddons(),
+    queryKey: ["addons", teamId],
+    queryFn: () => billingActions.getAddons(teamId),
   });
 
   if (addonsLoading) {
@@ -482,15 +472,15 @@ const AddonsSection: React.FC = () => {
       <h3 className="text-lg font-semibold text-foreground mb-4">Add-ons</h3>
       <div className="space-y-4">
         {addons.map((addon: StripeAddonI) => (
-          <AddonRow key={addon.id} addon={addon} />
+          <AddonRow teamId={teamId} key={addon.id} addon={addon} />
         ))}
       </div>
     </div>
   );
 };
 
-const NoSubscription: React.FC<{ team: TeamSchemaI; subscription?: StripeSubscriptionI }> = ({
-  team,
+const NoSubscription: React.FC<{ teamId: string; subscription?: StripeSubscriptionI }> = ({
+  teamId,
   subscription,
 }) => {
   return (
@@ -508,7 +498,7 @@ const NoSubscription: React.FC<{ team: TeamSchemaI; subscription?: StripeSubscri
       </p>
 
       <div className="flex items-center justify-between pt-4 border-t border-border">
-        <Link href={`/teams/${team.id}/settings/plans`}>
+        <Link href={`/teams/${teamId}/settings/plans`}>
           <Button className="text-sm px-4 py-2">View Plans</Button>
         </Link>
         <div className="flex items-center space-x-3">
@@ -526,27 +516,10 @@ const NoSubscription: React.FC<{ team: TeamSchemaI; subscription?: StripeSubscri
   );
 };
 
-const AccessRestricted: React.FC = () => (
-  <div className="px-6 py-8 bg-neutral-950 min-h-screen">
-    <div className="max-w-7xl mx-auto">
-      <div className="text-center py-12">
-        <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">Access Restricted</h3>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-          Only team owners can manage billing and subscription settings.
-        </p>
-      </div>
-    </div>
-  </div>
-);
-
-const BillingPageClient: React.FC<BillingPageClientProps> = ({ team }) => {
-  const isOwner = team.role === MemberRoleEnum.OWNER;
-
+const BillingPageClient: React.FC<{ teamId: string }> = ({ teamId }) => {
   const { data: subscription } = useQuery({
-    queryKey: ["subscription"],
-    queryFn: () => billingActions.getSubscription(),
-    enabled: isOwner,
+    queryKey: [QUERY_KEYS.SUBSCRIPTIONS, teamId],
+    queryFn: () => billingActions.getSubscription(teamId),
   });
 
   const hasActiveSubscription =
@@ -556,28 +529,26 @@ const BillingPageClient: React.FC<BillingPageClientProps> = ({ team }) => {
     ) ||
       subscription.subscription?.cancel_at_period_end);
 
-  if (!isOwner) {
-    return <AccessRestricted />;
-  }
-
   return (
     <div className="px-6 pb-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {hasActiveSubscription ? (
           <>
-            <CurrentSubscription subscription={subscription} team={team} />
+            <CurrentSubscription subscription={subscription} teamId={teamId} />
             {(subscription?.plan_status === PlanStatusEnum.ACTIVE ||
-              subscription?.subscription?.cancel_at_period_end) && <AddonsSection />}
+              subscription?.subscription?.cancel_at_period_end) && (
+              <AddonsSection teamId={teamId} />
+            )}
           </>
         ) : (
-          <NoSubscription team={team} subscription={subscription} />
+          <NoSubscription teamId={teamId} subscription={subscription} />
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InvoiceNameSection />
-          <BillingEmailSection />
+          <InvoiceNameSection teamId={teamId} />
+          <BillingEmailSection teamId={teamId} />
         </div>
 
-        <PaymentMethodSection team={team} />
+        <PaymentMethodSection teamId={teamId} />
       </div>
     </div>
   );

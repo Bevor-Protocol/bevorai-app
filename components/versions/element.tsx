@@ -1,8 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { formatDate, truncateVersion } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
-import { CodeVersionSchema } from "@/utils/types";
-import { Clock, Code, Network } from "lucide-react";
+import { CodeVersionMappingSchemaI, CodeVersionSchemaI } from "@/utils/types";
+import { Clock, Code, Network, User } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
@@ -34,21 +35,21 @@ export const CodeVersionElementLoader: React.FC = () => {
   );
 };
 
-const VersionBadge: React.FC<{
-  version: CodeVersionSchema;
-  isPreview: boolean;
-}> = ({ version, isPreview }) => {
-  if (!version.solc_version || isPreview) return null;
+export const VersionBadge: React.FC<{
+  versionNumber: number;
+  isPreview?: boolean;
+}> = ({ versionNumber, isPreview = false }) => {
+  if (isPreview) return null;
 
   return (
     <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-900/20 text-blue-400 border border-blue-800/30">
-      Solidity {version.solc_version}
+      v{versionNumber}
     </span>
   );
 };
 
-const VersionMeta: React.FC<{
-  version: CodeVersionSchema;
+export const VersionMeta: React.FC<{
+  version: CodeVersionSchemaI;
 }> = ({ version }) => {
   return (
     <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -67,40 +68,61 @@ const VersionMeta: React.FC<{
   );
 };
 
-export const CodeVersionElement: React.FC<{
-  version: CodeVersionSchema;
-  teamId: string;
-  isPreview?: boolean;
-}> = ({ version, teamId, isPreview = false }) => {
+export const CodeVersionElementBare: React.FC<
+  {
+    version: CodeVersionMappingSchemaI;
+    isPreview?: boolean;
+  } & React.ComponentProps<"div">
+> = ({ version, isPreview = false, className, ...props }) => {
   const versionDisplay = truncateVersion({
-    versionMethod: version.version_method,
-    versionIdentifier: version.version_identifier,
+    versionMethod: version.version.version_method,
+    versionIdentifier: version.version.version_identifier,
   });
 
   return (
-    <Link
-      href={navigation.version.overview({
-        teamId,
-        projectId: version.id, // TODO: fix this.
-        versionId: version.id,
-      })}
-      className="block border border-border hover:border-border-accent transition-all rounded-md p-4"
+    <div
+      className={cn("flex items-start justify-start gap-2 rounded-lg p-4", className)}
+      {...props}
     >
-      <div className="flex items-start justify-start">
-        <div>
-          <Code className="size-4 text-green-foreground" />
+      <Code className="size-4 text-green-foreground mt-2" />
+      <div className="grow space-y-2">
+        <div className="flex justify-between">
+          <p className="font-medium text-foreground truncate text-lg">
+            {version.version.version_method} - {versionDisplay}
+          </p>
+          <VersionBadge versionNumber={version.version_number} isPreview={isPreview} />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <Code className="size-4 text-green-500 flex-shrink-0" />
-            <h3 className="font-medium text-foreground truncate">
-              {version.version_method} - {versionDisplay}
-            </h3>
-            <VersionBadge version={version} isPreview={isPreview} />
+        <div className="flex justify-between">
+          <VersionMeta version={version.version} />
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <User className="size-3" />
+            <span>{version.user.username}</span>
           </div>
-          <VersionMeta version={version} />
         </div>
       </div>
+    </div>
+  );
+};
+
+export const CodeVersionElement: React.FC<{
+  version: CodeVersionMappingSchemaI;
+  teamId: string;
+  isPreview?: boolean;
+  isDisabled?: boolean;
+}> = ({ version, teamId, isPreview = false, isDisabled = false }) => {
+  return (
+    <Link
+      href={navigation.code.overview({
+        teamId,
+        versionId: version.id,
+      })}
+      className={cn(
+        "block border transition-colors rounded-lg",
+        isDisabled ? "cursor-default" : "hover:border-muted-foreground/60 cursor-pointer",
+      )}
+      aria-disabled={isDisabled}
+    >
+      <CodeVersionElementBare version={version} isPreview={isPreview} />
     </Link>
   );
 };

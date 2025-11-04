@@ -2,40 +2,43 @@
 
 import { teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
-import { TeamSchemaI } from "@/utils/types";
+import { QUERY_KEYS } from "@/utils/constants";
+import { MemberRoleEnum, MemberSchemaI, TeamDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Save, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface SettingsPageClientProps {
-  team: TeamSchemaI;
-  isUpdated?: boolean;
+  team: TeamDetailedSchemaI;
+  member: MemberSchemaI;
 }
 
-const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated }) => {
+const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [teamName, setTeamName] = useState(team.name);
   const [showError, setShowError] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(isUpdated);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
 
+  const isOwner = member.role === MemberRoleEnum.OWNER;
+
   const updateTeamMutation = useMutation({
-    mutationFn: async (name: string) => teamActions.updateTeam({ name }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["teams"] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      router.push(`/teams/${data.id}/settings?updated=true`);
+    mutationFn: async (name: string) => teamActions.updateTeam(team.id, { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TEAMS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
+      toast.success("Team updated successfully");
     },
   });
 
   const deleteTeamMutation = useMutation({
-    mutationFn: async () => teamActions.deleteTeam(),
+    mutationFn: async () => teamActions.deleteTeam(team.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teams"] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TEAMS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
       router.push("/teams");
     },
     onError: () => {
@@ -64,15 +67,6 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
     return (): void => clearTimeout(timeout);
   }, [updateTeamMutation.isError]);
 
-  useEffect(() => {
-    if (!isUpdated) return;
-    const timeout = setTimeout(() => {
-      setShowSuccess(false);
-    }, 1500);
-    return (): void => clearTimeout(timeout);
-  }, [isUpdated]);
-
-  const isOwner = team.role === "owner";
   const canDelete = isOwner && !team.is_default;
 
   return (
@@ -92,7 +86,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
           <p className="block text-sm font-medium text-foreground w-16">Your Role</p>
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <User className="size-4" />
-            <span className="capitalize">{team.role}</span>
+            <span className="capitalize">{member.role}</span>
           </div>
         </div>
         {team.is_default && (
@@ -138,7 +132,6 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
           {showError && (
             <p className="text-xs text-red-400">Failed to update team name. Please try again.</p>
           )}
-          {showSuccess && <p className="text-xs text-green-400">Team name updated successfully!</p>}
         </div>
       </form>
 
@@ -150,7 +143,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, isUpdated
             </div>
             <div className="bg-neutral-800/30 border border-neutral-700 rounded-lg p-4">
               <div className="flex items-start space-x-3">
-                <Trash2 className="size-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <Trash2 className="size-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-foreground mb-4">
                     This will permanently delete the team and all associated projects, audits, and

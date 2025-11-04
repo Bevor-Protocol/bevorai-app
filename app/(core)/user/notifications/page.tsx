@@ -1,4 +1,4 @@
-import { userActions } from "@/actions/bevor";
+import { dashboardActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { QueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
@@ -8,7 +8,7 @@ const NotificationsPage: React.FC = async () => {
   const queryClient = new QueryClient();
   const invites = await queryClient.fetchQuery({
     queryKey: ["user-invites"],
-    queryFn: async () => userActions.getUserInvites(),
+    queryFn: async () => dashboardActions.getInvites(),
   });
 
   const hasInvites = (invites.length ?? []) > 0;

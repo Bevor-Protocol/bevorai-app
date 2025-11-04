@@ -1,14 +1,16 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { ContractVersionSourceI } from "@/utils/types";
 import React, { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 
 interface ShikiViewerProps {
   sourceContent: ContractVersionSourceI;
+  className?: string;
 }
 
-const ShikiViewer: React.FC<ShikiViewerProps> = ({ sourceContent }) => {
+const ShikiViewer: React.FC<ShikiViewerProps> = ({ sourceContent, className }) => {
   const [html, setHtml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,18 +59,16 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ sourceContent }) => {
   }
 
   return (
-    <div className="h-full overflow-auto">
-      <div
-        className="shiki-container"
-        dangerouslySetInnerHTML={{ __html: html }}
-        style={{
-          fontFamily:
-            "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace",
-          fontSize: "14px",
-          lineHeight: "1.5",
-        }}
-      />
-    </div>
+    <div
+      className={cn("shiki-container", className)}
+      dangerouslySetInnerHTML={{ __html: html }}
+      style={{
+        fontFamily:
+          "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace",
+        fontSize: "14px",
+        lineHeight: "1.5",
+      }}
+    />
   );
 };
 

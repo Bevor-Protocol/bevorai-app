@@ -32,50 +32,51 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { QUERY_KEYS } from "@/utils/constants";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-export const ApiKeyCreate: React.FC = () => {
+export const ApiKeyCreate: React.FC<{ teamId: string }> = ({ teamId }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button className="text-foreground">
-          <Plus className="size-4 mr-2" />
+          <Plus className="size-4" />
           Create API Key
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <CreateApiKeyModal />
+        <CreateApiKeyModal teamId={teamId} />
       </DialogContent>
     </Dialog>
   );
 };
 
-export const ApiKeyTable: React.FC = () => {
+export const ApiKeyTable: React.FC<{ teamId: string }> = ({ teamId }) => {
   const queryClient = useQueryClient();
   const [showKey, setShowKey] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const { data: apiKeys = [], isLoading } = useQuery({
-    queryKey: ["team-api-keys"],
+    queryKey: [QUERY_KEYS.API_KEYS, teamId],
     queryFn: async () => {
-      return await apiKeyActions.listKeys();
+      return await apiKeyActions.listKeys(teamId);
     },
   });
 
   const regenerateApiKeyMutation = useMutation({
-    mutationFn: async (apiKeyId: string) => apiKeyActions.refreshKey(apiKeyId),
+    mutationFn: async (keyId: string) => apiKeyActions.refreshKey(teamId, keyId),
     onSuccess: () => {
       setShowKey(true);
-      queryClient.invalidateQueries({ queryKey: ["team-api-keys"] });
+      queryClient.invalidateQueries({ queryKey: ["api-keys", teamId] });
     },
   });
 
   const deleteApiKeyMutation = useMutation({
-    mutationFn: async (apiKeyId: string) => apiKeyActions.revokeKey(apiKeyId),
+    mutationFn: async (keyId: string) => apiKeyActions.revokeKey(teamId, keyId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["team-api-keys"] });
+      queryClient.invalidateQueries({ queryKey: ["api-keys", teamId] });
     },
   });
 

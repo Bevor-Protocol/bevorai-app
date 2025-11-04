@@ -1,17 +1,11 @@
 "use client";
 
-import CreateProjectModal from "@/components/Modal/create-project";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { TeamSchemaI } from "@/utils/types";
 import { FileText } from "lucide-react";
 import React from "react";
 
 export const ProjectEmpty: React.FC<{
-  team?: TeamSchemaI;
-  includeCta?: boolean;
   centered?: boolean;
-}> = ({ team, includeCta = false, centered = false }) => {
+}> = ({ centered = false }) => {
   if (!centered) {
     <div className="flex flex-col py-6 gap-2">
       <div className="flex flex-row gap-2 items-center">
@@ -21,16 +15,6 @@ export const ProjectEmpty: React.FC<{
       <p className="text-sm text-neutral-500 pl-8">
         Get started by creating your first security audit project.
       </p>
-      {includeCta && team && (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>Start New Project</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <CreateProjectModal targetTeamId={team.id} />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>;
   }
 
@@ -41,16 +25,6 @@ export const ProjectEmpty: React.FC<{
       <p className="text-sm text-neutral-500 mb-6">
         Get started by creating your first security audit project.
       </p>
-      {includeCta && team && (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>Start New Project</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <CreateProjectModal targetTeamId={team.id} />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 };

@@ -1,9 +1,17 @@
 "use client";
 
-import { userActions } from "@/actions/bevor";
-import { TeamNavigation } from "@/components/Nav/team";
+import { dashboardActions } from "@/actions/bevor";
+import { Pointer } from "@/assets/icons";
+import LucideIcon from "@/components/lucide-icon";
 import { UserNavigation } from "@/components/Nav/user";
+import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Icon } from "@/components/ui/icon";
 import {
   Sidebar,
   SidebarContent,
@@ -17,397 +25,296 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubItem,
-  SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import useLocalStorage, { StarredItem } from "@/hooks/useLocalStorage";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { useLocalStorageState } from "@/providers/localStore";
+import { QUERY_KEYS } from "@/utils/constants";
 import { navigation } from "@/utils/navigation";
 import { HrefProps } from "@/utils/types";
+import { DropdownMenu, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Bell,
-  ChevronDown,
-  Code,
-  Code2,
-  DollarSign,
-  FileText,
-  Home,
-  LayoutDashboard,
-  MessageSquare,
-  Settings,
-  Shield,
-  Users,
-} from "lucide-react";
+import { Inbox, MoreHorizontal, Settings } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import React, { ReactNode } from "react";
+import React, { useEffect, useState } from "react";
 
 interface AppSidebarProps {
   userId: string;
 }
 
-const TeamSidebarItems: React.FC = () => {
-  const pathname = usePathname();
-  const params = useParams<HrefProps>();
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Team Navigation</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.team.overview(params)}
-              tooltip="Overview"
-              size="sm"
-            >
-              <Link href={navigation.team.overview(params)}>
-                <LayoutDashboard />
-                <span>Overview</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.team.projects(params)}
-              tooltip="projects"
-              size="sm"
-            >
-              <Link href={navigation.team.projects(params)}>
-                <Code />
-                <span>Projects</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <Collapsible className="group/collapsible">
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip="settings" size="sm" asChild>
-                  <div>
-                    <Settings className="group-data-[collapsible=icon]:ml-2" />
-                    <span className="truncate">Settings</span>
-                    <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                  </div>
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname == navigation.team.settings.overview(params)}
-                      tooltip="settings - overview"
-                      size="sm"
-                    >
-                      <Link href={navigation.team.settings.overview(params)}>
-                        <Home />
-                        <span>Overview</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname == navigation.team.settings.billing(params)}
-                      tooltip="settings - billing"
-                      size="sm"
-                    >
-                      <Link href={navigation.team.settings.billing(params)}>
-                        <DollarSign />
-                        <span>Billing</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname == navigation.team.settings.api(params)}
-                      tooltip="settings - api"
-                      size="sm"
-                    >
-                      <Link href={navigation.team.settings.api(params)}>
-                        <Code />
-                        <span>API</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname == navigation.team.settings.invoices(params)}
-                      tooltip="settings - invoices"
-                      size="sm"
-                    >
-                      <Link href={navigation.team.settings.invoices(params)}>
-                        <FileText />
-                        <span>Invoices</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname == navigation.team.settings.members(params)}
-                      tooltip="settings - members"
-                      size="sm"
-                    >
-                      <Link href={navigation.team.settings.members(params)}>
-                        <Users />
-                        <span>Members</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuSubItem>
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
-};
-
-const ProjectSidebarItems: React.FC = () => {
-  const pathname = usePathname();
-  const params = useParams<HrefProps>();
-
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Project Navigation</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.project.overview(params)}
-              tooltip="Overview"
-              size="sm"
-            >
-              <Link href={navigation.project.overview(params)}>
-                <LayoutDashboard />
-                <span>Overview</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.project.audits(params)}
-              tooltip="audits"
-              size="sm"
-            >
-              <Link href={navigation.project.audits(params)}>
-                <Shield />
-                <span>Audits</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.project.versions.overview(params)}
-              tooltip="versions"
-              size="sm"
-            >
-              <Link href={navigation.project.versions.overview(params)}>
-                <Code2 />
-                <span>Versions</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.project.chats(params)}
-              tooltip="chats"
-              size="sm"
-            >
-              <Link href={navigation.project.chats(params)}>
-                <MessageSquare />
-                <span>Chats</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.project.settings(params)}
-              tooltip="chats"
-              size="sm"
-            >
-              <Link href={navigation.project.settings(params)}>
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
-};
-
 const StarredSidebarItems: React.FC = () => {
-  const { getItem } = useLocalStorage();
-  const pathname = usePathname();
-
-  const starredItems = getItem("bevor:starred");
-
-  if (!starredItems || starredItems.length === 0) {
-    return null;
-  }
-
-  const getIcon = (item: StarredItem): ReactNode => {
-    if (item.type === "version") {
-      return <Code2 />;
-    }
-    if (item.type === "audit") {
-      return <Shield />;
-    }
-    if (item.type === "chat") {
-      return <MessageSquare />;
-    }
-    return <Code />;
-  };
+  const { state: starredItems } = useLocalStorageState("bevor:starred");
 
   return (
-    <>
-      <SidebarSeparator />
-      <Collapsible className="group/collapsible">
-        <SidebarGroup>
-          <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex items-center justify-between w-full">
-              <span>Favorites</span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {starredItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === item.url}
-                      tooltip={item.label}
-                      size="sm"
-                    >
-                      <Link href={item.url}>
-                        {getIcon(item)}
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </SidebarGroup>
-      </Collapsible>
-    </>
-  );
-};
-
-const UserNavigationItems: React.FC = () => {
-  const pathname = usePathname();
-
-  const invites = useQuery({
-    queryKey: ["user-invites"],
-    queryFn: async () => userActions.getUserInvites(),
-  });
-
-  const hasInvites = (invites.data ?? []).length > 0;
-
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>User Navigation</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.user.overview({})}
-              tooltip="Overview"
-              size="sm"
-            >
-              <Link href={navigation.user.overview({})}>
-                <LayoutDashboard />
-                <span>Overview</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.user.notifications({})}
-              tooltip="audits"
-              size="sm"
-            >
-              <Link href={navigation.user.notifications({})} className="relative">
-                <Bell />
-                {!hasInvites && (
-                  <span className="size-2 top-2.5 left-1.5 bg-red-500 rounded-full absolute"></span>
-                )}
-                <span>Notifications</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === navigation.user.settings({})}
-              tooltip="versions"
-              size="sm"
-            >
-              <Link href={navigation.user.settings({})}>
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
+    <Collapsible className="group/favorites">
+      <SidebarGroup>
+        <SidebarGroupLabel asChild>
+          <CollapsibleTrigger asChild>
+            <SidebarGroupLabel>
+              Favorites
+              <Pointer className="ml-2 transition-transform will-change-transform group-data-[state=open]/favorites:rotate-90" />
+            </SidebarGroupLabel>
+          </CollapsibleTrigger>
+        </SidebarGroupLabel>
+        <CollapsibleContent>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {starredItems?.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton asChild tooltip={item.label}>
+                    <Link href={item.url}>
+                      <LucideIcon assetType={item.type} />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </CollapsibleContent>
+      </SidebarGroup>
+    </Collapsible>
   );
 };
 
 const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
+  const pathname = usePathname();
   const params = useParams<HrefProps>();
+  const isMobile = useIsMobile();
+  const [openTeams, setOpenTeams] = useState<Record<string, boolean>>({});
 
-  const isUserPage = !params.teamId;
-  const isProjectPage = !!params.projectId;
+  const { data: teams = [] } = useQuery({
+    queryKey: [QUERY_KEYS.TEAMS],
+    queryFn: async () => dashboardActions.getTeams(),
+  });
+
+  const { data: invites = [] } = useQuery({
+    queryKey: [QUERY_KEYS.INVITES],
+    queryFn: async () => dashboardActions.getInvites(),
+  });
+
+  // Auto-open team when URL matches
+  useEffect(() => {
+    if (params.teamId) {
+      setOpenTeams((prev) => ({
+        ...prev,
+        [params.teamId as string]: true,
+      }));
+    }
+  }, [params.teamId]);
+
+  const handleTeamToggle = (teamId: string): void => {
+    setOpenTeams((prev) => ({
+      ...prev,
+      [teamId]: !prev[teamId],
+    }));
+  };
 
   return (
     <Sidebar
-      collapsible="icon"
-      className="[&_svg]:text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0"
+      collapsible={isMobile ? "offcanvas" : "none"}
+      className="[&_svg]:text-muted-foreground"
     >
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <TeamNavigation userId={userId} isUserPage={isUserPage} />
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="[&_svg]:text-muted-foreground py-4">
+        <UserNavigation userId={userId} />
       </SidebarHeader>
-      <SidebarContent>
-        {isUserPage && <UserNavigationItems />}
-        {!isUserPage && <TeamSidebarItems />}
-        {isProjectPage && (
-          <>
-            <SidebarSeparator />
-            <ProjectSidebarItems />
-          </>
-        )}
-        <StarredSidebarItems />
+      <SidebarContent className="[&_svg]:text-muted-foreground">
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === navigation.teams.overview({})}
+                  tooltip="Teams"
+                >
+                  <Link href={navigation.teams.overview({})}>
+                    <LucideIcon assetType="team" />
+                    <span>Teams</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === navigation.projects.overview({})}
+                  tooltip="Projects"
+                >
+                  <Link href={navigation.projects.overview({})}>
+                    <LucideIcon assetType="project" />
+                    <span>Projects</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === navigation.user.notifications({})}
+                  tooltip="Inbox"
+                >
+                  <Link href={navigation.user.notifications({})}>
+                    <Inbox />
+                    <span>Inbox</span>
+                    <Badge variant="green" className="ml-auto">
+                      {invites.length}
+                    </Badge>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <Collapsible className="group/teams" defaultOpen>
+            <CollapsibleTrigger asChild>
+              <SidebarGroupLabel>
+                Your Teams
+                <Pointer className="ml-2 transition-transform will-change-transform group-data-[state=open]/teams:rotate-90" />
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {teams.map((team) => (
+                    <Collapsible
+                      key={team.id}
+                      className="group/collapsible-team"
+                      open={openTeams[team.id] || false}
+                      onOpenChange={() => handleTeamToggle(team.id)}
+                    >
+                      <SidebarMenuItem>
+                        <DropdownMenu>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton tooltip={team.name}>
+                              <Icon seed={team.id} size="sm" />
+                              <span className="truncate">{team.name}</span>
+                              <Pointer className="ml-2 transition-transform will-change-transform group-data-[state=open]/collapsible-team:rotate-90" />
+                              <DropdownMenuTrigger asChild>
+                                <MoreHorizontal className="ml-auto text-muted-foreground/50! hover:text-muted-foreground! transition-colors" />
+                              </DropdownMenuTrigger>
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          <DropdownMenuContent align="start" side="right" className="w-56">
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={navigation.team.settings.overview({ teamId: team.id })}
+                                  className="w-full flex relative"
+                                >
+                                  <Settings />
+                                  <span>Team Settings</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={navigation.team.settings.api({ teamId: team.id })}
+                                  className="w-full flex relative"
+                                >
+                                  <Settings />
+                                  <span>API</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={navigation.team.settings.billing({ teamId: team.id })}
+                                  className="w-full flex relative"
+                                >
+                                  <Settings />
+                                  <span>Billing</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={navigation.team.settings.invoices({ teamId: team.id })}
+                                  className="w-full flex relative"
+                                >
+                                  <Settings />
+                                  <span>Invoices</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={navigation.team.members({ teamId: team.id })}
+                                  className="w-full flex relative"
+                                >
+                                  <LucideIcon assetType="member" />
+                                  <span>Members</span>
+                                </Link>
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            <SidebarMenuSubItem>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={
+                                  pathname === navigation.team.projects({ teamId: team.id })
+                                }
+                                tooltip="Projects"
+                              >
+                                <Link href={navigation.team.projects({ teamId: team.id })}>
+                                  <LucideIcon assetType="project" />
+                                  <span>Projects</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={
+                                  pathname === navigation.team.analyses({ teamId: team.id })
+                                }
+                                tooltip="Analyses"
+                              >
+                                <Link href={navigation.team.analyses({ teamId: team.id })}>
+                                  <LucideIcon assetType="analysis" />
+                                  <span>Analyses</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuSubItem>
+                            <SidebarMenuSubItem>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={pathname === navigation.team.chats({ teamId: team.id })}
+                                tooltip="Chats"
+                              >
+                                <Link href={navigation.team.chats({ teamId: team.id })}>
+                                  <LucideIcon assetType="chat" />
+                                  <span>Chats</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuSubItem>
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+        <SidebarGroup>
+          <StarredSidebarItems />
+        </SidebarGroup>
       </SidebarContent>
       <SidebarSeparator />
-      <SidebarFooter>
-        <UserNavigation userId={userId} />
+      <SidebarFooter className="[&_svg]:text-muted-foreground">
+        <div className="h-8 relative">
+          <Image
+            src="/logo.png"
+            alt="company logo"
+            width={611}
+            height={133}
+            className="h-full w-auto object-contain"
+            priority
+          />
+        </div>
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 };

@@ -3,7 +3,7 @@
 import SolidityViewer from "@/components/code-viewer";
 import { ScopeHookResponse, useScopeHandler } from "@/hooks/useScopeHandler";
 import { cn } from "@/lib/utils";
-import { AuditSchemaI, ContractScopeI, FunctionScopeI, TreeResponseI } from "@/utils/types";
+import { AnalysisSchemaI, ContractScopeI, FunctionScopeI, TreeResponseI } from "@/utils/types";
 import {
   ArrowUpRight,
   ChevronDown,
@@ -17,7 +17,8 @@ import React, { useRef, useState } from "react";
 
 interface ScopeOverlayClientProps {
   scope: TreeResponseI[];
-  audit: AuditSchemaI;
+  audit: AnalysisSchemaI;
+  teamId: string;
 }
 
 const getDirectoryPath = (path: string): string => {
@@ -30,10 +31,11 @@ const getFileName = (path: string): string => {
   return parts[parts.length - 1];
 };
 
-const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit }) => {
+const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit, teamId }) => {
   const overlayEnabledRef = useRef<boolean>(true);
   const [, forceUpdate] = useState({});
   const scopeHandler = useScopeHandler({
+    teamId,
     versionId: audit.code_version_mapping_id,
     scope,
     sourceTriggerOn: "function",
@@ -49,7 +51,7 @@ const ScopeOverlayClient: React.FC<ScopeOverlayClientProps> = ({ scope, audit })
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="border border-border rounded-lg p-6">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground mb-2">Audit Scope Overlay</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Analysis Scope Overlay</h1>
             <p className="text-muted-foreground">No source files found for this version.</p>
           </div>
         </div>

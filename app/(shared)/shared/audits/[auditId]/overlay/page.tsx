@@ -1,16 +1,19 @@
-import { securityAnalysisActions } from "@/actions/bevor";
+import { sharedActions } from "@/actions/bevor";
 import { AsyncComponent, TreeResponseI } from "@/utils/types";
 import { Suspense } from "react";
 import ScopeOverlayClient from "./scope-overlay-client";
 
-interface AuditOverlayPageProps {
-  params: Promise<{ auditId: string }>;
+interface AnalysisOverlayPageProps {
+  params: Promise<{ teamId: string; analysisId: string }>;
 }
 
 // Server component for audit overlay data
-const AuditOverlayData: AsyncComponent<{ auditId: string }> = async ({ auditId }) => {
-  const audit = await securityAnalysisActions.getSecurityAnalysis(auditId);
-  const scope = await securityAnalysisActions.getScope(auditId);
+const AnalysisOverlayData: AsyncComponent<{ teamId: string; analysisId: string }> = async ({
+  teamId,
+  analysisId,
+}) => {
+  const audit = await sharedActions.getSecurityAnalysis(analysisId);
+  const scope = await sharedActions.getScope(analysisId);
 
   // Sort scope data on the server
   const sortedScope: TreeResponseI[] = scope
@@ -42,7 +45,7 @@ const AuditOverlayData: AsyncComponent<{ auditId: string }> = async ({ auditId }
 
   return (
     <div className="px-6 py-4 bg-neutral-950 min-h-remaining">
-      <ScopeOverlayClient scope={sortedScope} audit={audit} />
+      <ScopeOverlayClient scope={sortedScope} audit={audit} teamId={teamId} />
     </div>
   );
 };
@@ -63,14 +66,14 @@ const OverlayLoading: React.FC = () => (
   </div>
 );
 
-const AuditOverlayPage: AsyncComponent<AuditOverlayPageProps> = async ({ params }) => {
-  const { auditId } = await params;
+const AnalysisOverlayPage: AsyncComponent<AnalysisOverlayPageProps> = async ({ params }) => {
+  const { teamId, analysisId } = await params;
 
   return (
     <Suspense fallback={<OverlayLoading />}>
-      <AuditOverlayData auditId={auditId} />
+      <AnalysisOverlayData analysisId={analysisId} teamId={teamId} />
     </Suspense>
   );
 };
 
-export default AuditOverlayPage;
+export default AnalysisOverlayPage;

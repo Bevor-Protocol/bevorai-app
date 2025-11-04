@@ -1,113 +1,77 @@
-import {
-  projectActions,
-  securityAnalysisActions,
-  teamActions,
-  versionActions,
-} from "@/actions/bevor";
-import { AuditElement } from "@/components/audits/element";
-import { AuditEmpty } from "@/components/audits/empty";
+import { breadcrumbActions, teamActions } from "@/actions/bevor";
+import ContainerBreadcrumb from "@/components/breadcrumbs";
 import Container from "@/components/container";
-import { ProjectElement } from "@/components/projects/element";
-import { ProjectEmpty } from "@/components/projects/empty";
-import { TeamHeader } from "@/components/team/header";
-import { CodeVersionElement } from "@/components/versions/element";
-import { VersionEmpty } from "@/components/versions/empty";
-import { AsyncComponent, TeamSchemaI } from "@/utils/types";
+import { Icon } from "@/components/ui/icon";
+import { formatDate } from "@/utils/helpers";
+import { AsyncComponent } from "@/utils/types";
+import { Calendar } from "lucide-react";
 import { Suspense } from "react";
+import {
+  AnalysesPreview,
+  ProjectsSection,
+  TeamActivities,
+  TeamMembers,
+  TeamToggle,
+} from "./team-client";
 
 interface TeamPageProps {
   params: Promise<{ teamId: string }>;
 }
 
-const ProjectsSection: AsyncComponent<{
-  team: TeamSchemaI;
-}> = async ({ team }) => {
-  const projects = await projectActions.getProjects({ page_size: "3" });
+const Breadcrumb: AsyncComponent<{ teamId: string }> = async ({ teamId }) => {
+  const breadcrumb = await breadcrumbActions.getTeamBreadcrumb(teamId);
 
-  if (projects.results.length === 0) {
-    return <ProjectEmpty team={team} includeCta={true} />;
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {projects.results.map((project) => (
-        <ProjectElement key={project.id} project={project} teamId={team.id} />
-      ))}
-    </div>
-  );
-};
-
-const VersionsPreview: AsyncComponent<{
-  teamId: string;
-}> = async ({ teamId }) => {
-  const versions = await versionActions.getVersions({ page_size: "3" });
-
-  if (versions.results.length === 0) {
-    return <VersionEmpty />;
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      {versions.results.map((version) => (
-        <CodeVersionElement key={version.id} version={version} teamId={teamId} isPreview />
-      ))}
-    </div>
-  );
-};
-
-const AuditsPreview: AsyncComponent<{
-  teamId: string;
-}> = async ({ teamId }) => {
-  const audits = await securityAnalysisActions.getSecurityAnalyses({ page_size: "3" });
-
-  if (audits.results.length === 0) {
-    return <AuditEmpty />;
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      {audits.results.map((audit) => (
-        <AuditElement key={audit.id} audit={audit} teamId={teamId} />
-      ))}
-    </div>
-  );
+  return <ContainerBreadcrumb breadcrumb={breadcrumb} toggle={<TeamToggle teamId={teamId} />} />;
 };
 
 const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   const { teamId } = await params;
 
-  const team = await teamActions.getTeam();
+  const team = await teamActions.getTeam(teamId);
 
   return (
-    <Container>
-      <TeamHeader title="Overview" subTitle="projects, versions, and security analyses" />
-      <div className="flex flex-col gap-8">
-        <div>
-          <div>
-            <div className="flex items-center gap-4 mb-4">
-              <h2 className="text-foreground">Projects</h2>
+    <Container
+      breadcrumb={
+        <Suspense>
+          <Breadcrumb teamId={teamId} />
+        </Suspense>
+      }
+    >
+      <div className="max-w-5xl m-auto mt-8 lg:mt-16">
+        <div className="flex flex-col gap-6">
+          <h1>{team.name}</h1>
+          <div className="flex flex-row gap-10 items-center">
+            <div className="flex flex-row gap-2 items-center">
+              <div className="text-muted-foreground">Owner:</div>
+              <Icon size="sm" seed={team.created_by_user.id} />
+              <div>{team.created_by_user.username}</div>
             </div>
-            <Suspense>
-              <ProjectsSection team={team} />
-            </Suspense>
+            <div className="flex flex-row gap-2 items-center">
+              <div className="text-muted-foreground">Members:</div>
+              <TeamMembers team={team} />
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col items-start lg:flex-row lg:items-center gap-8">
-          <div className="basis-1/2">
-            <div className="flex items-center gap-4 mb-4">
-              <h3 className="text-foreground">Recent Code Versions</h3>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+            <div className="flex items-center gap-1">
+              <Calendar className="size-4" />
+              <span>{formatDate(team.created_at)}</span>
             </div>
-            <Suspense>
-              <VersionsPreview teamId={teamId} />
-            </Suspense>
           </div>
-          <div className="basis-1/2">
-            <div className="flex items-center gap-4 mb-4">
-              <h3 className="text-foreground">Recent Audits</h3>
+
+          <div className="flex flex-row justify-between gap-10">
+            <div className="basis-1/2">
+              <div>
+                <h3 className="my-6">Recent Projects</h3>
+                <ProjectsSection teamId={teamId} />
+              </div>
+              <div>
+                <h3 className="my-6">Recent Analyses</h3>
+                <AnalysesPreview teamId={teamId} />
+              </div>
             </div>
-            <Suspense>
-              <AuditsPreview teamId={teamId} />
-            </Suspense>
+            <div className="basis-1/2 my-6">
+              <TeamActivities teamId={teamId} />
+            </div>
           </div>
         </div>
       </div>

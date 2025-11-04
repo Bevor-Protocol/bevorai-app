@@ -1,17 +1,17 @@
 import { securityAnalysisActions } from "@/actions/bevor";
 import { AsyncComponent } from "@/utils/types";
 import { notFound } from "next/navigation";
-import AuditResults from "./audit-results";
+import AnalysisResults from "./audit-results";
 
 type Props = {
-  params: Promise<{ teamId: string; projectId: string; auditId: string }>;
+  params: Promise<{ teamId: string; projectId: string; analysisId: string }>;
 };
 
-const AuditResultsPage: AsyncComponent<Props> = async ({ params }) => {
-  const { auditId } = await params;
+const AnalysisResultsPage: AsyncComponent<Props> = async ({ params }) => {
+  const { teamId, analysisId } = await params;
   let audit;
   try {
-    audit = await securityAnalysisActions.getFindings(auditId);
+    audit = await securityAnalysisActions.getFindings(teamId, analysisId);
     if (!audit.is_public) {
       throw new Error("not public");
     }
@@ -21,9 +21,9 @@ const AuditResultsPage: AsyncComponent<Props> = async ({ params }) => {
 
   return (
     <div className="px-6 py-4 bg-neutral-950">
-      <AuditResults audit={audit} />
+      <AnalysisResults audit={audit} />
     </div>
   );
 };
 
-export default AuditResultsPage;
+export default AnalysisResultsPage;

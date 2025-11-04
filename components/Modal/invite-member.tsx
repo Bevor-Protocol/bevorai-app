@@ -29,7 +29,7 @@ interface Invitee {
   role: MemberRoleEnum;
 }
 
-const InviteMemberModal: React.FC<{ teamName: string }> = ({ teamName }) => {
+const InviteMemberModal: React.FC<{ teamId: string }> = ({ teamId }) => {
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -41,10 +41,10 @@ const InviteMemberModal: React.FC<{ teamName: string }> = ({ teamName }) => {
   ]);
 
   const inviteMembersMutation = useMutation({
-    mutationFn: async (params: InviteMemberBody) => teamActions.inviteMembers(params),
+    mutationFn: async (params: InviteMemberBody) => teamActions.inviteMembers(teamId, params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invites"] });
-      queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      queryClient.invalidateQueries({ queryKey: ["invites", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["subscription", teamId] });
     },
   });
 
@@ -92,7 +92,7 @@ const InviteMemberModal: React.FC<{ teamName: string }> = ({ teamName }) => {
           <Users className="size-5 text-blue-400" />
           <DialogTitle>Invite Team Member(s)</DialogTitle>
         </div>
-        <DialogDescription>Send invitations to collaborate on {teamName}</DialogDescription>
+        <DialogDescription>Send invitations to collaborate on this team</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="justify-center flex flex-col gap-2">
         <div className="py-4 space-y-4">

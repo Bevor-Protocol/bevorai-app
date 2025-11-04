@@ -34,12 +34,12 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
 
   const updateProjectMutation = useMutation({
     mutationFn: (data: { name?: string; description?: string; tags?: string }) =>
-      projectActions.updateProject(project.id, data),
+      projectActions.updateProject(teamId, project.id, data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
 
-      if (data.id !== project.id) {
-        router.push(`/teams/${teamId}/projects/${data.id}/settings?updated=true`);
+      if (data) {
+        router.push(`/teams/${teamId}/projects/${project.id}/settings?updated=true`);
       } else {
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 1500);
@@ -48,7 +48,7 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
   });
 
   const deleteProjectMutation = useMutation({
-    mutationFn: async () => projectActions.deleteProject(project.id),
+    mutationFn: async () => projectActions.deleteProject(teamId, project.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       router.push(`/teams/${teamId}/projects`);
@@ -116,10 +116,10 @@ const ProjectSettingsPageClient: React.FC<ProjectSettingsPageClientProps> = ({
           </div>
         </div>
         <div className="flex flex-row gap-8 items-center">
-          <p className="block text-sm font-medium text-foreground w-16">Audits</p>
+          <p className="block text-sm font-medium text-foreground w-16">Analyses</p>
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <File className="size-4" />
-            <span>{project.n_audits}</span>
+            <span>{project.n_analyses}</span>
           </div>
         </div>
         {project.tags.length > 0 && (

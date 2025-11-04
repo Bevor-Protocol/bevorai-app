@@ -14,7 +14,7 @@ import React from "react";
 const getFeatureName = (feature: string): string => {
   switch (feature) {
     case "audit":
-      return "Smart Contract Audits";
+      return "Smart Contract Analyses";
     case "chat":
       return "AI Chat Support";
     case "contract_heavy":
@@ -34,7 +34,7 @@ const PlanCard: React.FC<{
 }> = ({ plan, team }) => {
   const checkoutMutation = useMutation({
     mutationFn: () =>
-      billingActions.createCheckoutSession({
+      billingActions.createCheckoutSession(team.id, {
         success_url: `${window.location.origin}/teams/${team.id}/settings/billing?success=true`,
         cancel_url: `${window.location.origin}/teams/${team.id}/settings/plans?canceled=true`,
       }),
@@ -164,8 +164,8 @@ const PlanCard: React.FC<{
 
 const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   const { data: plans, isLoading: plansLoading } = useQuery({
-    queryKey: ["products"],
-    queryFn: () => billingActions.getProducts(),
+    queryKey: ["products", team.id],
+    queryFn: () => billingActions.getProducts(team.id),
   });
 
   if (plansLoading) {
@@ -194,10 +194,10 @@ const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   );
 };
 
-const AddonsSection: React.FC = () => {
+const AddonsSection: React.FC<{ teamId: string }> = ({ teamId }) => {
   const { data: addons, isLoading: addonsLoading } = useQuery({
     queryKey: ["addons"],
-    queryFn: () => billingActions.getAddons(),
+    queryFn: () => billingActions.getAddons(teamId),
   });
 
   if (addonsLoading) {
@@ -221,7 +221,7 @@ const AddonsSection: React.FC = () => {
   return (
     <div className="space-y-4">
       {addons.map((addon: StripeAddonI) => (
-        <AddonRow key={addon.id} addon={addon} />
+        <AddonRow teamId={teamId} key={addon.id} addon={addon} />
       ))}
     </div>
   );
@@ -257,7 +257,7 @@ const PlansPageClient: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
         </div>
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-foreground mb-6">Optional Add-ons</h2>
-          <AddonsSection />
+          <AddonsSection teamId={team.id} />
         </div>
       </div>
     </div>

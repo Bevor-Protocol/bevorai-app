@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
-import { Children, isValidElement, ReactElement, ReactNode } from "react";
+import { Children, isValidElement, ReactElement, ReactNode, RefAttributes } from "react";
 import { twMerge } from "tailwind-merge";
 
 export const cn = (...inputs: ClassValue[]): string => {
@@ -26,4 +26,40 @@ export const prettyDate = (date: string | Date): string => {
 export const toTitleCase = (str: string): string => {
   // Convert the entire string to lowercase first to handle existing capitalization
   return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+export const mergeButtonRefs = <T extends HTMLButtonElement>(
+  refs: Array<React.RefObject<T> | RefAttributes<T>["ref"]>,
+): React.RefCallback<T> => {
+  return (value) => {
+    for (const ref of refs) {
+      if (typeof ref === "function") {
+        ref(value);
+      } else if (ref != null) {
+        (ref as React.RefObject<T | null>).current = value;
+      }
+    }
+  };
+};
+
+export const buildSearchParams = (
+  query: {
+    [key: string]: string | undefined;
+  },
+  defaults?: {
+    [key: string]: string;
+  },
+): URLSearchParams => {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== "") {
+      params.set(k, v);
+    }
+  });
+
+  Object.entries(defaults ?? {}).forEach(([k, v]) => {
+    params.set(k, v);
+  });
+
+  return params;
 };

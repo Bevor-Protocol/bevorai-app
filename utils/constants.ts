@@ -54,3 +54,21 @@ export const severityColorMap = {
   medium: "var(--color-medium)",
   low: "var(--color-low)",
 };
+
+export const QUERY_KEYS = {
+  ACTIVITIES: "activities",
+  ANALYSES: "analyses",
+  PROJECTS: "project",
+  TEAMS: "teams",
+  CODES: "codes",
+  SECURITY_VERSIONS: "security_versions",
+  MEMBERS: "members",
+  CHATS: "chats",
+  USERS: "users",
+  INVITES: "invites",
+  API_KEYS: "api-keys",
+  CUSTOMERS: "customers",
+  SUBSCRIPTIONS: "subscriptions",
+  PAYMENT_METHODS: "payment-methods",
+  BREADCRUMBS: "breadcrumbs",
+};

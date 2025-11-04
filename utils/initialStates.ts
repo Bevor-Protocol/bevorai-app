@@ -57,7 +57,7 @@ Upload file\n3. Upload folder\n4. Paste code",
       type: Message.SYSTEM,
       content:
         "Before we start, which type of audit do you want?\
-\n\n1. Security Audit\n2. Gas Optimization Audit",
+\n\n1. Security Analysis\n2. Gas Optimization Analysis",
     },
   ],
   [TerminalStep.RESULTS]: [],

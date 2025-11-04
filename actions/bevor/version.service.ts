@@ -1,116 +1,160 @@
 "use server";
 
 import api from "@/lib/api";
+import { buildSearchParams } from "@/lib/utils";
 import {
-  CodeVersionSchema,
-  CodeVersionsResponseI,
-  ContractResponseI,
+  CodeSourceContentSchemaI,
+  CodeSourceSchemaI,
+  CodeVersionMappingSchemaI,
+  CodeVersionsPaginationI,
   ContractSourceResponseI,
-  ContractVersionSourceI,
-  ContractVersionSourceTrimI,
   FunctionChunkResponseI,
   TreeResponseI,
 } from "@/utils/types";
 
-export const contractUploadFolder = async (data: {
-  fileMap: Record<string, File>;
-  projectId: string;
-}): Promise<ContractResponseI> => {
+export const contractUploadFolder = async (
+  teamId: string,
+  projectId: string,
+  fileMap: Record<string, File>,
+): Promise<string> => {
   const formData = new FormData();
-  formData.append("project_id", data.projectId);
-  Object.entries(data.fileMap).forEach(([relativePath, file]) => {
+  formData.append("project_id", projectId);
+  Object.entries(fileMap).forEach(([relativePath, file]) => {
     formData.append("files", file, relativePath);
   });
 
-  return api.post("/versions/create/folder", formData).then((response) => {
-    return response.data;
-  });
-};
-
-export const contractUploadFile = async (data: {
-  file: File;
-  projectId: string;
-}): Promise<ContractResponseI> => {
-  const formData = new FormData();
-  formData.append("files", data.file);
-  formData.append("project_id", data.projectId);
-
-  return api.post("/versions/create/file", formData).then((response) => {
-    return response.data;
-  });
-};
-
-export const contractUploadPaste = async (data: {
-  code: string;
-  projectId: string;
-}): Promise<ContractResponseI> => {
   return api
-    .post("/versions/create/paste", { code: data.code, project_id: data.projectId })
+    .post("/code-versions/create/folder", formData, { headers: { "bevor-team-id": teamId } })
+    .then((response) => {
+      return response.data.id;
+    });
+};
+
+export const contractUploadFile = async (
+  teamId: string,
+  projectId: string,
+  file: File,
+): Promise<string> => {
+  const formData = new FormData();
+  formData.append("files", file);
+  formData.append("project_id", projectId);
+
+  return api
+    .post("/code-versions/create/file", formData, { headers: { "bevor-team-id": teamId } })
+    .then((response) => {
+      return response.data.id;
+    });
+};
+
+export const contractUploadPaste = async (
+  teamId: string,
+  projectId: string,
+  code: string,
+): Promise<string> => {
+  return api
+    .post(
+      "/code-versions/create/paste",
+      { code, project_id: projectId },
+      { headers: { "bevor-team-id": teamId } },
+    )
+    .then((response) => {
+      return response.data.id;
+    });
+};
+
+export const contractUploadScan = async (
+  teamId: string,
+  projectId: string,
+  address: string,
+): Promise<string> => {
+  return api
+    .post(
+      "/code-versions/create/scan",
+      { address, project_id: projectId },
+      { headers: { "bevor-team-id": teamId } },
+    )
+    .then((response) => {
+      return response.data.id;
+    });
+};
+
+export const getCodeVersion = async (
+  teamId: string,
+  versionId: string,
+): Promise<CodeVersionMappingSchemaI> => {
+  return api
+    .get(`/code-versions/${versionId}`, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data;
     });
 };
 
-export const contractUploadScan = async ({
-  address,
-  projectId,
-}: {
-  address: string;
-  projectId: string;
-}): Promise<ContractResponseI> => {
-  return api.post("/versions/create/scan", { address, project_id: projectId }).then((response) => {
-    return response.data;
-  });
-};
-
-export const getContractVersion = async (versionId: string): Promise<CodeVersionSchema> => {
-  return api.get(`/versions/${versionId}`).then((response) => {
-    return response.data;
-  });
-};
-
-export const getContractVersionSources = async (
+export const getCodeVersionSources = async (
+  teamId: string,
   versionId: string,
-): Promise<ContractVersionSourceTrimI[]> => {
-  return api.get(`/versions/${versionId}/sources`).then((response) => {
-    return response.data.results;
-  });
+): Promise<CodeSourceSchemaI[]> => {
+  return api
+    .get(`/code-versions/${versionId}/sources`, { headers: { "bevor-team-id": teamId } })
+    .then((response) => {
+      return response.data.results;
+    });
 };
 
-export const getContractVersionSource = async (
+export const getCodeVersionSource = async (
+  teamId: string,
+  versionId: string,
   sourceId: string,
+): Promise<CodeSourceContentSchemaI> => {
+  return api
+    .get(`/code-versions/${versionId}/sources/${sourceId}`, {
+      headers: { "bevor-team-id": teamId },
+    })
+    .then((response) => {
+      return response.data;
+    });
+};
+
+export const getTree = async (teamId: string, versionId: string): Promise<TreeResponseI[]> => {
+  return api
+    .get(`/code-versions/${versionId}/tree`, { headers: { "bevor-team-id": teamId } })
+    .then((response) => {
+      return response.data.results;
+    });
+};
+
+export const getCodeSources = async (
+  teamId: string,
   versionId: string,
-): Promise<ContractVersionSourceI> => {
-  return api.get(`/versions/${versionId}/sources/${sourceId}`).then((response) => {
-    return response.data;
-  });
+): Promise<ContractSourceResponseI[]> => {
+  return api
+    .get(`/contract/version/${versionId}/sources`, { headers: { "bevor-team-id": teamId } })
+    .then((response) => {
+      return response.data;
+    });
 };
 
-export const getContractTree = async (versionId: string): Promise<TreeResponseI[]> => {
-  return api.get(`/versions/${versionId}/tree`).then((response) => {
-    return response.data.results;
-  });
+export const getFunctionChunk = async (
+  teamId: string,
+  functionId: string,
+): Promise<FunctionChunkResponseI> => {
+  return api
+    .get(`/contract/function/${functionId}`, { headers: { "bevor-team-id": teamId } })
+    .then((response) => {
+      return response.data;
+    });
 };
 
-export const getContractSources = async (versionId: string): Promise<ContractSourceResponseI[]> => {
-  return api.get(`/contract/version/${versionId}/sources`).then((response) => {
-    return response.data;
-  });
-};
+export const getVersions = async (
+  teamId: string,
+  filters: {
+    [key: string]: string | undefined;
+  },
+): Promise<CodeVersionsPaginationI> => {
+  const searchParams = buildSearchParams(filters);
 
-export const getFunctionChunk = async (functionId: string): Promise<FunctionChunkResponseI> => {
-  return api.get(`/contract/function/${functionId}`).then((response) => {
-    return response.data;
-  });
-};
-
-export const getVersions = async (filters: {
-  [key: string]: string;
-}): Promise<CodeVersionsResponseI> => {
-  const searchParams = new URLSearchParams(filters);
-  searchParams.set("page_size", filters.page_size ?? "9");
-
-  return api.get(`/versions?${searchParams.toString()}`).then((response) => {
-    return response.data;
-  });
+  return api
+    .get(`/code-versions?${searchParams.toString()}`, { headers: { "bevor-team-id": teamId } })
+    .then((response) => {
+      return response.data;
+    });
 };

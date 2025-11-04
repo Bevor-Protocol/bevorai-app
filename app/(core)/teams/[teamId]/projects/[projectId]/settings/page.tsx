@@ -14,7 +14,7 @@ const ProjectSettingsPage: AsyncComponent<ProjectSettingsPageProps> = async ({
 }) => {
   const { updated } = await searchParams;
   const { teamId, projectId } = await params;
-  const project = await projectActions.getProject(projectId);
+  const project = await projectActions.getProject(teamId, projectId);
 
   return (
     <Container>

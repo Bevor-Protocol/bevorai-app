@@ -1,6 +1,6 @@
 "use client";
 
-import { userActions } from "@/actions/bevor";
+import { authActions, dashboardActions } from "@/actions/bevor";
 import ViewInviteModal from "@/components/Modal/view-invite";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -21,7 +21,6 @@ import { DialogTrigger } from "@radix-ui/react-dialog";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Bell, ExternalLink, LayoutDashboardIcon, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export const Web3Network: React.FC = () => {
@@ -34,7 +33,7 @@ export const Notifications: React.FC = () => {
 
   const { data: invites } = useSuspenseQuery({
     queryKey: ["user-invites"],
-    queryFn: async () => userActions.getUserInvites(),
+    queryFn: async () => dashboardActions.getInvites(),
   });
 
   const hasInvites = (invites?.length ?? 0) > 0;
@@ -84,7 +83,6 @@ export const Notifications: React.FC = () => {
 
 export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userId, teams }) => {
   const defaultTeam = teams.find((team) => team.is_default);
-  const router = useRouter();
 
   return (
     <DropdownMenu>
@@ -106,7 +104,7 @@ export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ us
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link
-              href={navigation.user.overview({})}
+              href={navigation.user.settings({})}
               className="w-full flex items-center justify-between"
             >
               <span>Settings</span>
@@ -130,8 +128,8 @@ export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ us
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={(): void => {
-              router.push("/logout");
+            onClick={async (): Promise<void> => {
+              await authActions.logout();
             }}
             className="justify-between"
           >

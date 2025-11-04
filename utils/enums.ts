@@ -24,7 +24,7 @@ export enum FindingLevel {
   LOW = "low",
 }
 
-export enum AuditStatus {
+export enum AnalysisStatus {
   WAITING = "waiting",
   PROCESSING = "processing",
   SUCCESS = "success",
@@ -40,4 +40,10 @@ export enum PlanStatusEnum {
   TRIALING = "trialing",
   UNPAID = "unpaid",
   PAUSED = "paused",
+}
+
+export enum AnalysisUpdateMethodEnum {
+  MANUAL = "manual",
+  AUTO_USER = "automatic_for_user",
+  AUTO_ALL = "automatic_for_all",
 }

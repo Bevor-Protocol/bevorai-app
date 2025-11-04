@@ -44,7 +44,7 @@ export const generateSlug = (name: string): string => {
     .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
 };
 
-export const formatDate = (dateString: string): string => {
+export const timeSince = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -57,7 +57,27 @@ export const formatDate = (dateString: string): string => {
   return date.toLocaleDateString();
 };
 
-export const formatNumer = (n: number): string => {
+export const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+export const formatDateLong = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+export const formatNumber = (n: number): string => {
   if (n < 100) {
     return n.toString();
   }

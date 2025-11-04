@@ -90,8 +90,7 @@ const SigninContent: React.FC = () => {
         throw new Error(`Magic link request failed with status ${response.status_code}`);
       }
       setIsMagicLinkSuccess(true);
-    } catch (error) {
-      console.log(error);
+    } catch {
       setIsMagicLinkError(true);
     } finally {
       setIsLoggingIn(false);
@@ -196,7 +195,7 @@ const SignInPage: React.FC = () => {
       </div>
 
       <DottedGlowBackground
-        className="pointer-events-none mask-radial-to-100% lg:mask-radial-to-75% mask-radial-at-top-right lg:mask-radial-at-right top-0 bottom-0 left-0 right-0 lg:right-1/2"
+        className="pointer-events-none mask-radial-to-75% mask-radial-at-top-right lg:mask-radial-at-right top-0 bottom-0 left-0 right-0 lg:right-1/2"
         opacity={0.75}
         gap={10}
         radius={1.6}

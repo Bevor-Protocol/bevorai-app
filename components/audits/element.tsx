@@ -1,18 +1,21 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { VersionBadge } from "@/components/versions/element";
+import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
-import { AuditObservationI } from "@/utils/types";
-import { Clock, Lock, Shield, Unlock } from "lucide-react";
+import { AnalysisSchemaI, AnalysisVersionSchemaI } from "@/utils/types";
+import { Clock, Lock, Shield, Unlock, User } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
-type AuditElementProps = {
-  audit: AuditObservationI;
+type AnalysisElementProps = {
+  analysis: AnalysisSchemaI & { n: number };
   teamId: string;
+  isDisabled?: boolean;
   isPreview?: boolean;
 };
 
-export const AuditElementLoader: React.FC = () => {
+export const AnalysisElementLoader: React.FC = () => {
   return (
     <div className="border border-border rounded-lg p-4">
       <div className="space-y-3">
@@ -44,45 +47,82 @@ export const AuditElementLoader: React.FC = () => {
   );
 };
 
-export const AuditElement: React.FC<AuditElementProps> = ({ audit, teamId }) => {
+export const AnalysisVersionElementBare: React.FC<
+  {
+    analysisVersion: AnalysisVersionSchemaI;
+    isPreview?: boolean;
+  } & React.ComponentProps<"div">
+> = ({ analysisVersion, isPreview = false, className, ...props }) => {
   return (
-    <div className="border border-border hover:border-border-accent transition-all rounded-lg p-4">
-      <Link
-        href={navigation.audit.overview({
-          teamId,
-          projectId: audit.code_project_id,
-          auditId: audit.id,
-        })}
-        className="flex items-center gap-3 flex-1"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Shield className="size-4 text-purple-400" />
-            <div className="flex items-center space-x-3">
-              <h3 className="text-sm font-medium text-foreground">Audit #{audit.id.slice(-8)}</h3>
-              <div className="flex items-center space-x-1 text-xs text-neutral-500">
-                <Clock className="size-3" />
-                <span>{formatDate(audit.created_at)}</span>
-              </div>
+    <div
+      className={cn("flex items-start justify-start gap-2 rounded-lg p-4", className)}
+      {...props}
+    >
+      <Shield className="size-4 text-purple-foreground mt-1.5" />
+      <div className="grow space-y-2">
+        <div className="flex justify-between">
+          <p className="font-medium text-foreground truncate text-lg">
+            v{analysisVersion.id.slice(0, 5) + "..." + analysisVersion.id.slice(-5)}
+          </p>
+          <VersionBadge versionNumber={analysisVersion.version_number} isPreview={isPreview} />
+        </div>
+        <div className="flex justify-between">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>{analysisVersion.n_scopes} scopes</span>
+            <span>{analysisVersion.n_findings} findings</span>
+            <div className="flex items-center gap-1">
+              <Clock className="size-3" />
+              <span>{formatDate(analysisVersion.created_at)}</span>
             </div>
           </div>
-          <div className="size-4">
-            {audit.is_public ? (
-              <Unlock className="size-3 text-green-500" />
-            ) : (
-              <Lock className="size-3 text-purple-400" />
-            )}
-          </div>
         </div>
-        <div className="flex items-center justify-between pl-7">
-          <div className="flex items-center space-x-3">
-            <div className="text-xs text-muted-foreground">
-              {audit.n_versions} version{audit.n_versions !== 1 ? "s" : ""} audited
-            </div>
-          </div>
-          <div className="text-xs text-muted-foreground">Order: {audit.n}</div>
-        </div>
-      </Link>
+      </div>
     </div>
+  );
+};
+
+export const AnalysisElement: React.FC<AnalysisElementProps> = ({
+  analysis,
+  teamId,
+  isDisabled = false,
+}) => {
+  return (
+    <Link
+      href={navigation.analysis.overview({
+        teamId,
+        projectId: analysis.code_project_id,
+        analysisId: analysis.id,
+      })}
+      aria-disabled={isDisabled}
+      className={cn(
+        "block border transition-colors rounded-lg",
+        isDisabled ? "cursor-default" : "hover:border-muted-foreground/60 cursor-pointer",
+      )}
+    >
+      <div className="flex items-start justify-start gap-2 rounded-lg p-4">
+        <div className="grow space-y-2">
+          <div className="flex justify-between">
+            <p className="font-medium text-foreground truncate max-w-1/2">{analysis.name}</p>
+            <div className="size-4">
+              {analysis.is_public ? (
+                <Unlock className="size-3 text-green-500" />
+              ) : (
+                <Lock className="size-3 text-purple-400" />
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="size-3" />
+              <span>{formatDate(analysis.created_at)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <User className="size-3" />
+              <span>{analysis.user.username}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 };
