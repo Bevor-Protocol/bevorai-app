@@ -14,6 +14,8 @@ const baseURL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
   : "http://localhost:3000";
 
+console.log(baseURL);
+
 const CompanyContent: React.FC = () => {
   return (
     <div className="z-10 flex flex-col justify-center items-center w-full text-center gap-6 lg:gap-8 max-w-lg">
@@ -216,4 +218,3 @@ const SignInClient: React.FC<{ hasError: boolean }> = ({ hasError }) => {
 };
 
 export default SignInClient;
-
