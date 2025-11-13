@@ -10,8 +10,8 @@ import Image from "next/image";
 import { stytchClient } from "@/lib/config/stytch";
 import React, { useState } from "react";
 
-const baseURL = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+const baseURL = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`
   : "http://localhost:3000";
 
 console.log(baseURL);

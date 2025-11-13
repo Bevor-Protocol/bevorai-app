@@ -1,3 +1,5 @@
+"use server";
+
 import { AsyncComponent } from "@/utils/types";
 import SignInClient from "./sign-in-client";
 
