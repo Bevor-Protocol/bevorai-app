@@ -80,7 +80,6 @@ const MethodSelection: React.FC<{
           <div
             className={cn(
               "relative overflow-hidden p-6 last:border-r last:border-b group",
-              !method.disabled && "hover:border-neutral-700 cursor-pointer",
               method.disabled && "opacity-60 pointer-events-none",
             )}
             key={ind}

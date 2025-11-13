@@ -99,7 +99,7 @@ export const defaultAnalysisVersionsQuery = (
   page_size: "12",
   user_id: "",
   project_id: "",
-  security_analysis_id: analysisId,
+  analysis_id: analysisId,
   status: "success",
 });
 
@@ -116,6 +116,32 @@ export const extractAnalysisVersionsQuery = (
     project_id: defaultQuery.project_id,
     user_id: params?.user_id,
     status: params?.status,
-    security_analysis_id: defaultQuery.security_analysis_id,
+    analysis_id: defaultQuery.analysis_id,
+  };
+};
+
+export const defaultAnalysisChatsQuery = (
+  analysisId: string,
+): { [key: string]: string | undefined } => ({
+  page: "0",
+  page_size: "12",
+  user_id: "",
+  project_id: "",
+  analysis_id: analysisId,
+});
+
+export const extractAnalysisChatsQuery = (
+  analysisId: string,
+  params: {
+    [key: string]: string;
+  },
+): { [key: string]: string | undefined } => {
+  const defaultQuery = defaultAnalysisChatsQuery(analysisId);
+  return {
+    page_size: params?.page_size ?? defaultQuery.page_size,
+    page: params?.page ?? defaultQuery.page,
+    project_id: defaultQuery.project_id,
+    user_id: params?.user_id,
+    analysis_id: params?.analysis_id,
   };
 };

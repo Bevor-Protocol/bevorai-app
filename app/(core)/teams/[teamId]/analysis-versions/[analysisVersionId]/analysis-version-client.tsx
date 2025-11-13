@@ -1,5 +1,6 @@
 "use client";
 
+import { analysisActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -10,7 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { FindingLevel } from "@/utils/enums";
-import { AnalysisVersionSchemaI } from "@/utils/types";
+import { AnalysisVersionMappingSchemaI, FindingSchemaI } from "@/utils/types";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ChevronDown, GitBranch, Info, Shield, XCircle } from "lucide-react";
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
@@ -45,27 +47,15 @@ const getSeverityColor = (level: FindingLevel): string => {
   }
 };
 
-const getSeverityTextColor = (level: FindingLevel): string => {
-  switch (level.toLowerCase()) {
-    case "critical":
-      return "text-red-400";
-    case "high":
-      return "text-orange-400";
-    case "medium":
-      return "text-yellow-400";
-    case "low":
-      return "text-blue-400";
-    default:
-      return "text-muted-foreground";
-  }
-};
-
-const FINDINGS_PER_PAGE = 10;
-
-const levelOrder = ["critical", "high", "medium", "low"];
+const levelOrder = [
+  FindingLevel.CRITICAL,
+  FindingLevel.HIGH,
+  FindingLevel.MEDIUM,
+  FindingLevel.LOW,
+];
 
 export const Relations: React.FC<{
-  analysisVersion: AnalysisVersionSchemaI;
+  analysisVersion: AnalysisVersionMappingSchemaI;
   teamId: string;
 }> = ({ analysisVersion, teamId }) => {
   return (
@@ -79,12 +69,12 @@ export const Relations: React.FC<{
         <div className="p-2 text-sm">
           <div className="mb-2">
             <span className="font-medium">Parent: </span>
-            {analysisVersion.parent_version_id ? (
+            {analysisVersion.parent ? (
               <Link
-                href={`/teams/${teamId}/analysis-versions/${analysisVersion.parent_version_id}`}
+                href={`/teams/${teamId}/analysis-versions/${analysisVersion.parent.id}`}
                 className="text-blue-400 hover:underline"
               >
-                {analysisVersion.parent_version_id.slice(0, 6)}
+                {analysisVersion.parent.name}
               </Link>
             ) : (
               <span className="text-muted-foreground">none</span>
@@ -95,11 +85,11 @@ export const Relations: React.FC<{
             <span className="font-medium">Children: </span>
             {analysisVersion.children.map((child) => (
               <Link
-                key={child}
-                href={`/teams/${teamId}/analysis-versions/${child}`}
+                key={child.id}
+                href={`/teams/${teamId}/analysis-versions/${child.id}`}
                 className="text-blue-400 hover:underline"
               >
-                {child.slice(0, 6)}
+                {child.name}
               </Link>
             ))}
             {analysisVersion.children.length === 0 && (
@@ -112,38 +102,72 @@ export const Relations: React.FC<{
   );
 };
 
-export const AnalysisVersionClient: React.FC<{ analysisVersion: AnalysisVersionSchemaI }> = ({
-  analysisVersion,
-}) => {
-  const [selectedFinding, setSelectedFinding] = useState<
-    AnalysisVersionSchemaI["findings"][0] | null
-  >(null);
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const allFindings = useMemo(() => analysisVersion.findings || [], [analysisVersion.findings]);
-  const totalPages = Math.ceil(allFindings.length / FINDINGS_PER_PAGE);
-  const startIndex = (currentPage - 1) * FINDINGS_PER_PAGE;
-  const endIndex = startIndex + FINDINGS_PER_PAGE;
-  const paginatedFindings = allFindings.slice(startIndex, endIndex);
-
-  const getFindingsByLevelForPage = (): Record<string, typeof analysisVersion.findings> => {
-    const pageFindingsByLevel: Record<string, typeof analysisVersion.findings> = {};
-
-    paginatedFindings.forEach((finding) => {
-      const level = finding.level.toLowerCase();
-      if (!pageFindingsByLevel[level]) {
-        pageFindingsByLevel[level] = [];
-      }
-      pageFindingsByLevel[level].push(finding);
-    });
-
-    return pageFindingsByLevel;
+type FindingWithScope = FindingSchemaI["findings"][0] & {
+  scope: {
+    id: string;
+    callable: FindingSchemaI["callable"];
   };
+};
 
-  const pageFindingsByLevel = getFindingsByLevelForPage();
+const getFindingsCountByLevel = (
+  findings: FindingSchemaI["findings"],
+): Record<FindingLevel, number> => {
+  const counts = {
+    [FindingLevel.CRITICAL]: 0,
+    [FindingLevel.HIGH]: 0,
+    [FindingLevel.MEDIUM]: 0,
+    [FindingLevel.LOW]: 0,
+  } as Record<FindingLevel, number>;
+
+  findings.forEach((finding) => {
+    if (finding.level in counts) {
+      counts[finding.level as FindingLevel]++;
+    }
+  });
+
+  return counts;
+};
+
+export const AnalysisVersionClient: React.FC<{
+  teamId: string;
+  analysisVersionId: string;
+}> = ({ teamId, analysisVersionId }) => {
+  const [selectedFinding, setSelectedFinding] = useState<FindingWithScope | null>(null);
+
+  const { data: scopes = [] } = useQuery<FindingSchemaI[]>({
+    queryKey: ["findings", analysisVersionId],
+    queryFn: () => analysisActions.getFindings(teamId, analysisVersionId),
+  });
+
+  const allFindings = useMemo(() => {
+    const flattened: FindingWithScope[] = [];
+    scopes.forEach((scope) => {
+      scope.findings.forEach((finding) => {
+        flattened.push({
+          ...finding,
+          scope: {
+            id: scope.id,
+            callable: scope.callable,
+          },
+        });
+      });
+    });
+    return flattened;
+  }, [scopes]);
+
+  const sortedScopes = useMemo(() => {
+    return [...scopes].sort((a, b) => {
+      const aCount = a.findings.length;
+      const bCount = b.findings.length;
+      if (aCount !== bCount) {
+        return bCount - aCount;
+      }
+      return a.callable.name.localeCompare(b.callable.name);
+    });
+  }, [scopes]);
 
   React.useEffect(() => {
-    if (allFindings.length > 0) {
+    if (allFindings.length > 0 && !selectedFinding) {
       for (const level of levelOrder) {
         const firstFinding = allFindings.find((finding) => finding.level === level);
         if (firstFinding) {
@@ -152,7 +176,7 @@ export const AnalysisVersionClient: React.FC<{ analysisVersion: AnalysisVersionS
         }
       }
     }
-  }, [allFindings]);
+  }, [allFindings, selectedFinding]);
 
   return (
     <div className="space-y-6">
@@ -160,87 +184,137 @@ export const AnalysisVersionClient: React.FC<{ analysisVersion: AnalysisVersionS
         <div className="flex items-center gap-2">
           <Shield className="size-5 text-purple-400" />
           <h2 className="text-xl font-semibold">Security Findings</h2>
-          <Badge variant="purple">{analysisVersion.n_findings} findings</Badge>
+          <Badge variant="purple">{allFindings.length} findings</Badge>
         </div>
-
-        {allFindings.length > FINDINGS_PER_PAGE && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>
-              Showing {startIndex + 1}-{Math.min(endIndex, allFindings.length)} of{" "}
-              {allFindings.length}
-            </span>
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 h-[600px]">
         <div className="flex flex-col space-y-4 overflow-y-auto pr-2">
-          {levelOrder.map((level) => {
-            const findings = pageFindingsByLevel[level] || [];
-            return (
-              <Collapsible
-                key={level + String(!!selectedFinding)} // forces update on useEffect of initial mount
-                defaultOpen={selectedFinding?.level === level}
-                className="group"
-              >
-                <div className="space-y-2">
-                  <CollapsibleTrigger
-                    className={cn(
-                      "w-full text-left flex items-center gap-2 p-2 data-[state=open]:[&>svg]:rotate-180",
-                      findings.length > 0 && "rounded-lg hover:bg-accent transition-colors",
-                      getSeverityTextColor(level as FindingLevel),
-                    )}
-                    disabled={!findings.length}
-                  >
-                    {getSeverityIcon(level as FindingLevel)}
-                    <span className="capitalize font-medium">
-                      {level} ({findings.length})
-                    </span>
-                    <ChevronDown className="size-4 ml-auto transition-transform" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="space-y-2 ml-6">
-                      {findings.length === 0 ? (
-                        <div className="text-sm text-muted-foreground py-2">
-                          No {level} findings
-                        </div>
-                      ) : (
-                        findings.map((finding, index) => {
-                          const isSelected = selectedFinding?.id === finding.id;
+          {sortedScopes.length === 0 ? (
+            <div className="text-sm text-muted-foreground py-4 text-center">No scopes found</div>
+          ) : (
+            sortedScopes.map((scope) => {
+              const counts = getFindingsCountByLevel(scope.findings);
+              const totalFindings = scope.findings.length;
+              const hasFindings = totalFindings > 0;
 
-                          return (
-                            <div
-                              key={finding.id || index}
-                              onClick={() => setSelectedFinding(finding)}
-                              className={cn(
-                                "w-full text-left p-2 rounded border transition-all duration-200",
-                                getSeverityColor(finding.level),
-                                isSelected
-                                  ? "border-opacity-60 bg-opacity-10"
-                                  : "hover:bg-opacity-10 hover:border-opacity-40",
-                              )}
-                            >
-                              <div className="flex items-center gap-2">
-                                {getSeverityIcon(finding.level)}
-                                <span className="text-sm font-medium text-foreground truncate">
-                                  {finding.name}
-                                </span>
-                                {finding.is_attested && (
-                                  <span className="text-green-400 font-medium text-xs shrink-0">
-                                    ✓
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })
+              return (
+                <Collapsible
+                  key={scope.id}
+                  defaultOpen={hasFindings && selectedFinding?.scope.id === scope.id}
+                  className="group"
+                >
+                  <div className="space-y-2">
+                    <CollapsibleTrigger
+                      className={cn(
+                        "w-full text-left flex items-start gap-2 p-2 data-[state=open]:[&>svg]:rotate-180",
+                        "rounded-lg hover:bg-accent transition-colors",
                       )}
-                    </div>
-                  </CollapsibleContent>
-                </div>
-              </Collapsible>
-            );
-          })}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-foreground truncate min-w-0 flex-1">
+                            {scope.callable.name}
+                          </div>
+                          {hasFindings ? (
+                            <div className="flex items-center gap-2 shrink-0">
+                              {levelOrder.map((level) => {
+                                const count = counts[level];
+                                if (count === 0) return null;
+                                return (
+                                  <Badge
+                                    key={level}
+                                    variant={
+                                      level === FindingLevel.CRITICAL
+                                        ? "destructive"
+                                        : level === FindingLevel.HIGH
+                                          ? "destructive"
+                                          : level === FindingLevel.MEDIUM
+                                            ? "secondary"
+                                            : "blue"
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {count} {level}
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-muted-foreground shrink-0">
+                              No findings
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground font-mono truncate mt-1">
+                          {scope.callable.signature}
+                        </div>
+                      </div>
+                      <ChevronDown className="size-4 mt-1 transition-transform shrink-0" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="space-y-2 ml-6">
+                        {!hasFindings ? (
+                          <div className="text-sm text-muted-foreground py-2">
+                            No findings in this scope
+                          </div>
+                        ) : (
+                          levelOrder.map((level) => {
+                            const levelFindings = scope.findings.filter((f) => f.level === level);
+                            if (levelFindings.length === 0) return null;
+
+                            return (
+                              <div key={level} className="space-y-2">
+                                <div className="text-xs font-medium text-muted-foreground capitalize">
+                                  {level}
+                                </div>
+                                {levelFindings.map((finding, index) => {
+                                  const findingWithScope: FindingWithScope = {
+                                    ...finding,
+                                    scope: {
+                                      id: scope.id,
+                                      callable: scope.callable,
+                                    },
+                                  };
+                                  const isSelected = selectedFinding?.id === finding.id;
+
+                                  return (
+                                    <div
+                                      key={finding.id || index}
+                                      onClick={() => setSelectedFinding(findingWithScope)}
+                                      className={cn(
+                                        "w-full text-left p-2 rounded border transition-all duration-200",
+                                        getSeverityColor(level),
+                                        isSelected
+                                          ? "border-opacity-60 bg-opacity-10"
+                                          : "hover:bg-opacity-10 hover:border-opacity-40",
+                                      )}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        {getSeverityIcon(level)}
+                                        <span className="text-sm font-medium text-foreground truncate">
+                                          {finding.name}
+                                        </span>
+                                        {finding.metadata?.attested_at && (
+                                          <span className="text-green-400 font-medium text-xs shrink-0">
+                                            ✓
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </div>
+                </Collapsible>
+              );
+            })
+          )}
         </div>
 
         <div className="flex flex-col">
@@ -248,30 +322,40 @@ export const AnalysisVersionClient: React.FC<{ analysisVersion: AnalysisVersionS
             <div
               className={cn(
                 "border rounded-xl p-6",
-                selectedFinding ? getSeverityColor(selectedFinding.level) : "border-border",
+                selectedFinding
+                  ? getSeverityColor(selectedFinding.level.toLowerCase() as FindingLevel)
+                  : "border-border",
               )}
             >
               {selectedFinding ? (
                 <>
                   <div className="flex items-start gap-4 mb-4">
-                    {getSeverityIcon(selectedFinding.level)}
+                    {getSeverityIcon(selectedFinding.level.toLowerCase() as FindingLevel)}
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="text-lg font-semibold text-foreground">
                           {selectedFinding.name}
                         </h3>
-                        {selectedFinding.is_attested && (
+                        {selectedFinding.metadata?.attested_at && (
                           <Badge variant="green" className="ml-4">
                             ✓ Attested
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
                         <span className="capitalize font-medium">
                           {selectedFinding.level} severity
                         </span>
                         <span>•</span>
                         <span>Type: {selectedFinding.type}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        <span className="font-medium">Scope: </span>
+                        <span className="font-mono">{selectedFinding.scope.callable.name}</span>
+                        <span className="mx-2">•</span>
+                        <span className="font-mono text-xs">
+                          {selectedFinding.scope.callable.signature}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -303,11 +387,11 @@ export const AnalysisVersionClient: React.FC<{ analysisVersion: AnalysisVersionS
                     </div>
                   )}
 
-                  {selectedFinding.feedback && (
+                  {selectedFinding.metadata?.feedback && (
                     <div className="space-y-2 mb-6">
                       <h4 className="text-sm font-medium text-foreground">Feedback</h4>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        {selectedFinding.feedback}
+                        {selectedFinding.metadata.feedback}
                       </p>
                     </div>
                   )}
@@ -315,10 +399,17 @@ export const AnalysisVersionClient: React.FC<{ analysisVersion: AnalysisVersionS
                   <div className="pt-4 border-t border-border/50">
                     <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
                       <div>
-                        <span className="font-medium">Function ID:</span>
+                        <span className="font-medium">Scope ID:</span>
                         <br />
                         <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                          {selectedFinding.function_id}
+                          {selectedFinding.scope.id}
+                        </code>
+                      </div>
+                      <div>
+                        <span className="font-medium">Merkle Hash:</span>
+                        <br />
+                        <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                          {selectedFinding.scope.callable.merkle_hash.slice(0, 8)}...
                         </code>
                       </div>
                       <div>
@@ -326,10 +417,12 @@ export const AnalysisVersionClient: React.FC<{ analysisVersion: AnalysisVersionS
                         <br />
                         <span
                           className={
-                            selectedFinding.is_verified ? "text-green-400" : "text-red-400"
+                            selectedFinding.metadata?.is_verified
+                              ? "text-green-400"
+                              : "text-red-400"
                           }
                         >
-                          {selectedFinding.is_verified ? "Yes" : "No"}
+                          {selectedFinding.metadata?.is_verified ? "Yes" : "No"}
                         </span>
                       </div>
                     </div>
@@ -350,48 +443,6 @@ export const AnalysisVersionClient: React.FC<{ analysisVersion: AnalysisVersionS
           </div>
         </div>
       </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-6">
-          <button
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 text-sm border border-border rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-              if (pageNum > totalPages) return null;
-
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={cn(
-                    "px-3 py-1 text-sm border rounded",
-                    currentPage === pageNum
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-border hover:bg-accent",
-                  )}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 text-sm border border-border rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
-      )}
     </div>
   );
 };

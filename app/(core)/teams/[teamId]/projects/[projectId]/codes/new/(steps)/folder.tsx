@@ -24,7 +24,8 @@ const FolderStep: React.FC<{
   teamId: string;
   projectId: string;
   prevStep: () => void;
-}> = ({ prevStep, ...props }) => {
+  onSuccess: () => void;
+}> = ({ prevStep, onSuccess, ...props }) => {
   const [sourceFiles, setSourceFiles] = useState<SourceFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<SourceFile | null>(null);
   const [error, setError] = useState("");
@@ -43,6 +44,7 @@ const FolderStep: React.FC<{
     onError: () => {
       setError("Failed to upload contract folder");
     },
+    onSuccess: () => onSuccess(),
   });
 
   // Initialize CodeMirror

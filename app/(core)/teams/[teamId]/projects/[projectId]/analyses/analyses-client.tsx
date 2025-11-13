@@ -1,6 +1,6 @@
 "use client";
 
-import { projectActions, securityAnalysisActions, teamActions } from "@/actions/bevor";
+import { analysisActions, projectActions, teamActions } from "@/actions/bevor";
 import { AnalysisElement } from "@/components/audits/element";
 import { AnalysisEmpty } from "@/components/audits/empty";
 import CreateAnalysisModal from "@/components/Modal/create-analysis";
@@ -60,7 +60,7 @@ const AnalysesData: React.FC<{
 
   const analysesQuery = useQuery({
     queryKey: [QUERY_KEYS.ANALYSES, teamId, filters],
-    queryFn: () => securityAnalysisActions.getSecurityAnalyses(teamId, filters),
+    queryFn: () => analysisActions.getAnalyses(teamId, filters),
     placeholderData: keepPreviousData,
   });
 

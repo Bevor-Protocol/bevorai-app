@@ -13,21 +13,9 @@ export const createKey = async (
   teamId: string,
   data: CreateKeyBody,
 ): Promise<{ api_key: string }> => {
-  const scopes = Object.entries(data.permissions).map(([k, v]) => {
-    return `${k}.${v}`;
+  return api.post("/auth", data, { headers: { "bevor-team-id": teamId } }).then((response) => {
+    return response.data;
   });
-  return api
-    .post(
-      "/auth",
-      {
-        name: data.name,
-        scopes,
-      },
-      { headers: { "bevor-team-id": teamId } },
-    )
-    .then((response) => {
-      return response.data;
-    });
 };
 
 export const refreshKey = async (teamId: string, keyId: string): Promise<{ api_key: string }> => {

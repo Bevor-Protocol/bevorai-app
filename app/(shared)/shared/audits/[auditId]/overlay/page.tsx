@@ -12,7 +12,7 @@ const AnalysisOverlayData: AsyncComponent<{ teamId: string; analysisId: string }
   teamId,
   analysisId,
 }) => {
-  const audit = await sharedActions.getSecurityAnalysis(analysisId);
+  const audit = await sharedActions.getAnalysis(analysisId);
   const scope = await sharedActions.getScope(analysisId);
 
   // Sort scope data on the server

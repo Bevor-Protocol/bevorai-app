@@ -1,5 +1,6 @@
 "use client";
 
+import { breadcrumbActions } from "@/actions/bevor";
 import LucideIcon from "@/components/lucide-icon";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,7 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLocalStorageState } from "@/providers/localStore";
+import { QUERY_KEYS } from "@/utils/constants";
 import { BreadcrumbSchemaI } from "@/utils/types";
+import { useQuery } from "@tanstack/react-query";
 import { Star } from "lucide-react";
 import Link from "next/link";
 import React, { Fragment } from "react";
@@ -23,16 +26,61 @@ export const BreadcrumbFallback: React.FC = () => {
   return <Skeleton className="h-8 w-40" />;
 };
 
+const breadcrumbFetchers = {
+  team: (teamId: string, _id: string): Promise<BreadcrumbSchemaI> => {
+    void _id;
+    return breadcrumbActions.getTeamBreadcrumb(teamId);
+  },
+  projects: (teamId: string, _id: string): Promise<BreadcrumbSchemaI> => {
+    void _id;
+    return breadcrumbActions.getProjectsBreadcrumb(teamId);
+  },
+  analyses: (teamId: string, _id: string): Promise<BreadcrumbSchemaI> => {
+    void _id;
+    return breadcrumbActions.getAnalysesBreadcrumb(teamId);
+  },
+  project: (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getProjectBreadcrumb(teamId, id),
+  "project-new-code": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getProjectNewCodeBreadcrumb(teamId, id),
+  "project-codes": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getProjectCodesBreadcrumb(teamId, id),
+  "project-analyses": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getProjectAnalysesBreadcrumb(teamId, id),
+  "project-chats": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getProjectChatsBreadcrumb(teamId, id),
+  "code-version": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getCodeVersionBreadcrumb(teamId, id),
+  analysis: (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getAnalysisBreadcrumb(teamId, id),
+  "analysis-versions": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getAnalysisVersionsBreadcrumb(teamId, id),
+  "analysis-version": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getAnalysisVersionBreadcrumb(teamId, id),
+  "analysis-chat": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getAnalysisChatBreadcrumb(teamId, id),
+  chat: (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
+    breadcrumbActions.getChatBreadcrumb(teamId, id),
+};
+
 const ContainerBreadcrumb: React.FC<{
-  breadcrumb: BreadcrumbSchemaI;
+  queryKey: string[];
+  queryType: string;
+  teamId: string;
+  id: string;
   toggle?: React.ReactNode;
-}> = ({ breadcrumb, toggle }) => {
+}> = ({ queryKey, queryType, teamId, id, toggle }) => {
+  const { data: breadcrumb } = useQuery({
+    queryKey: [QUERY_KEYS.BREADCRUMBS, queryType, ...queryKey],
+    queryFn: () => breadcrumbFetchers[queryType as keyof typeof breadcrumbFetchers](teamId, id),
+  });
+
   const { state, addItem, removeItem } = useLocalStorageState("bevor:starred");
 
-  const isFavorite = state?.find((item) => item.id === breadcrumb.favorite?.id);
+  const isFavorite = state?.find((item) => item.id === breadcrumb?.favorite?.id);
 
   const toggleFavorite = React.useCallback(() => {
-    if (!breadcrumb.favorite) return;
+    if (!breadcrumb || !breadcrumb.favorite) return;
     if (isFavorite) {
       removeItem(breadcrumb.favorite.id);
     } else {
@@ -45,6 +93,10 @@ const ContainerBreadcrumb: React.FC<{
       });
     }
   }, [isFavorite, removeItem, addItem, breadcrumb]);
+
+  if (!breadcrumb) {
+    return <div className="flex flex-row gap-2 items-center h-8" />;
+  }
 
   return (
     <div className="flex flex-row gap-2 items-center h-8">

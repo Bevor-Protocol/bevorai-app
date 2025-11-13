@@ -61,7 +61,7 @@ export const QUERY_KEYS = {
   PROJECTS: "project",
   TEAMS: "teams",
   CODES: "codes",
-  SECURITY_VERSIONS: "security_versions",
+  ANALYSIS_VERSION: "analysis_versions",
   MEMBERS: "members",
   CHATS: "chats",
   USERS: "users",

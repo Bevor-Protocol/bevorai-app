@@ -1,48 +1,46 @@
 import ContainerBreadcrumb from "@/components/breadcrumbs";
 import Container from "@/components/container";
-import { extractTeamAnalysesQuery } from "@/utils/queries";
+import { extractAnalysisChatsQuery } from "@/utils/queries";
 import { AsyncComponent } from "@/utils/types";
-import AnalysesData, { AnalysisCreate } from "./analyses-client";
+import ChatsData, { ChatCreate } from "./chats-client";
 
 type ResolvedParams = {
   teamId: string;
+  analysisId: string;
 };
 
-interface ProjectAnalysesPageProps {
+interface ChatsPageProps {
   params: Promise<ResolvedParams>;
   searchParams: Promise<{ [key: string]: string }>;
 }
 
-const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
-  params,
-  searchParams,
-}) => {
+const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const query = extractTeamAnalysesQuery(resolvedSearchParams);
+  const query = extractAnalysisChatsQuery(resolvedParams.analysisId, resolvedSearchParams);
 
   return (
     <Container
       breadcrumb={
         <ContainerBreadcrumb
-          queryKey={[resolvedParams.teamId]}
-          queryType="analyses"
+          queryKey={[resolvedParams.analysisId]}
+          queryType="analysis-chat"
           teamId={resolvedParams.teamId}
-          id=""
+          id={resolvedParams.analysisId}
         />
       }
       className="flex flex-col"
     >
       <div className="flex flex-row mb-8 justify-between">
         <div className="flex flex-row items-center gap-4">
-          <h3 className="text-foreground">Analyses</h3>
+          <h3 className="text-foreground">Chats</h3>
         </div>
-        <AnalysisCreate teamId={resolvedParams.teamId} />
+        <ChatCreate {...resolvedParams} />
       </div>
-      <AnalysesData query={query} {...resolvedParams} />
+      <ChatsData teamId={resolvedParams.teamId} query={query} />
     </Container>
   );
 };
 
-export default TeamAnalysesPage;
+export default ChatsPage;

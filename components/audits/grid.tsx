@@ -1,6 +1,6 @@
 "use client";
 
-import { securityAnalysisActions } from "@/actions/bevor";
+import { analysisActions } from "@/actions/bevor";
 import { AnalysisElement, AnalysisElementLoader } from "@/components/audits/element";
 import { AnalysisEmpty } from "@/components/audits/empty";
 import { QUERY_KEYS } from "@/utils/constants";
@@ -13,7 +13,7 @@ export const AnalysisGrid: React.FC<{ query: Record<string, string>; teamId: str
 }) => {
   const { data: audits, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.SECURITY, teamId, query],
-    queryFn: () => securityAnalysisActions.getSecurityAnalyses(teamId, query),
+    queryFn: () => analysisActions.getAnalyses(teamId, query),
   });
 
   if (!audits || isLoading) {

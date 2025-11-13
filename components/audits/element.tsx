@@ -3,7 +3,7 @@ import { VersionBadge } from "@/components/versions/element";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
-import { AnalysisSchemaI, AnalysisVersionSchemaI } from "@/utils/types";
+import { AnalysisSchemaI, AnalysisVersionMappingSchemaI } from "@/utils/types";
 import { Clock, Lock, Shield, Unlock, User } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -49,7 +49,7 @@ export const AnalysisElementLoader: React.FC = () => {
 
 export const AnalysisVersionElementBare: React.FC<
   {
-    analysisVersion: AnalysisVersionSchemaI;
+    analysisVersion: AnalysisVersionMappingSchemaI;
     isPreview?: boolean;
   } & React.ComponentProps<"div">
 > = ({ analysisVersion, isPreview = false, className, ...props }) => {
@@ -64,12 +64,12 @@ export const AnalysisVersionElementBare: React.FC<
           <p className="font-medium text-foreground truncate text-lg">
             v{analysisVersion.id.slice(0, 5) + "..." + analysisVersion.id.slice(-5)}
           </p>
-          <VersionBadge versionNumber={analysisVersion.version_number} isPreview={isPreview} />
+          <VersionBadge name={analysisVersion.name} isPreview={isPreview} />
         </div>
         <div className="flex justify-between">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span>{analysisVersion.n_scopes} scopes</span>
-            <span>{analysisVersion.n_findings} findings</span>
+            <span>{analysisVersion.version.n_scopes} scopes</span>
+            <span>{analysisVersion.version.n_findings} findings</span>
             <div className="flex items-center gap-1">
               <Clock className="size-3" />
               <span>{formatDate(analysisVersion.created_at)}</span>
@@ -78,6 +78,28 @@ export const AnalysisVersionElementBare: React.FC<
         </div>
       </div>
     </div>
+  );
+};
+
+export const AnalysisVersionElement: React.FC<{
+  teamId: string;
+  analysisVersion: AnalysisVersionMappingSchemaI;
+  isDisabled?: boolean;
+}> = ({ teamId, analysisVersion, isDisabled = false }) => {
+  return (
+    <Link
+      href={navigation.analysisVersions.overview({
+        teamId,
+        analysisVersionId: analysisVersion.id,
+      })}
+      aria-disabled={isDisabled}
+      className={cn(
+        "block border transition-colors rounded-lg",
+        isDisabled ? "cursor-default" : "hover:border-muted-foreground/60 cursor-pointer",
+      )}
+    >
+      <AnalysisVersionElementBare analysisVersion={analysisVersion} />
+    </Link>
   );
 };
 

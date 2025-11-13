@@ -1,34 +1,35 @@
 import ContainerBreadcrumb from "@/components/breadcrumbs";
 import Container from "@/components/container";
 import { AsyncComponent } from "@/utils/types";
-import Steps from "./new-page-client";
+import ChatClient from "./chat-client";
 
-interface ResolvedParams {
+type ResolvedParams = {
   teamId: string;
-  projectId: string;
-}
+  analysisId: string;
+};
 
-interface VersionPageProps {
+interface ChatsPageProps {
   params: Promise<ResolvedParams>;
 }
 
-const NewVersionPage: AsyncComponent<VersionPageProps> = async ({ params }) => {
+const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params }) => {
   const resolvedParams = await params;
 
   return (
     <Container
       breadcrumb={
         <ContainerBreadcrumb
-          queryKey={[resolvedParams.projectId]}
-          queryType="project-new-code"
+          queryKey={[resolvedParams.analysisId]}
+          queryType="analysis-chat"
           teamId={resolvedParams.teamId}
-          id={resolvedParams.projectId}
+          id={resolvedParams.analysisId}
         />
       }
+      className="flex flex-col"
     >
-      <Steps {...resolvedParams} />
+      <ChatClient {...resolvedParams} />
     </Container>
   );
 };
 
-export default NewVersionPage;
+export default ChatsPage;

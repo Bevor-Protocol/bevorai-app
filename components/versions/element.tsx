@@ -36,14 +36,14 @@ export const CodeVersionElementLoader: React.FC = () => {
 };
 
 export const VersionBadge: React.FC<{
-  versionNumber: number;
+  name: string;
   isPreview?: boolean;
-}> = ({ versionNumber, isPreview = false }) => {
+}> = ({ name, isPreview = false }) => {
   if (isPreview) return null;
 
   return (
     <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-900/20 text-blue-400 border border-blue-800/30">
-      v{versionNumber}
+      {name}
     </span>
   );
 };
@@ -90,7 +90,7 @@ export const CodeVersionElementBare: React.FC<
           <p className="font-medium text-foreground truncate text-lg">
             {version.version.version_method} - {versionDisplay}
           </p>
-          <VersionBadge versionNumber={version.version_number} isPreview={isPreview} />
+          <VersionBadge name={version.name} isPreview={isPreview} />
         </div>
         <div className="flex justify-between">
           <VersionMeta version={version.version} />

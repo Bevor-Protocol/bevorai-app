@@ -42,6 +42,10 @@ export const navigation = {
   analysis: {
     overview: (data: HrefProps) => `/teams/${data.teamId}/analyses/${data.analysisId}`,
   },
+  analysisVersions: {
+    overview: (data: HrefProps) =>
+      `/teams/${data.teamId}/analysis-versions/${data.analysisVersionId}`,
+  },
   shared: {
     overview: (data: HrefProps) => `/shared/analyses/${data.analysisId}`,
   },

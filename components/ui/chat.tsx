@@ -1,5 +1,7 @@
+import LucideIcon from "@/components/lucide-icon";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatAttributeI } from "@/utils/types";
+import { cn } from "@/lib/utils";
+import { ChatMessageI, NodeSearchResponseI } from "@/utils/types";
 import {
   AlertTriangle,
   Calendar,
@@ -11,11 +13,13 @@ import {
   Variable,
   Zap,
 } from "lucide-react";
+import React from "react";
+import ReactMarkdown from "react-markdown";
 
 type AutocompleteProps = {
-  attributes: ChatAttributeI[];
+  attributes: NodeSearchResponseI[];
   selectedAutocompleteIndex: number;
-  insertAutocompleteItem: (item: ChatAttributeI) => void;
+  insertAutocompleteItem: (item: NodeSearchResponseI) => void;
 };
 
 const AutoComplete: React.FC<AutocompleteProps> = ({
@@ -31,7 +35,7 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
       <ScrollArea className="h-56">
         {attributes.map((attr, index) => (
           <div
-            key={attr.id}
+            key={attr.merkle_hash + index}
             data-autocomplete-item
             className={`px-3 py-2 cursor-pointer flex items-start space-x-2 rounded ${
               index === selectedAutocompleteIndex
@@ -40,22 +44,22 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
             }`}
             onClick={() => insertAutocompleteItem(attr)}
           >
-            <div className="flex-shrink-0 mt-0.5">
-              {attr.type === "ContractDefinition" ? (
+            <div className="shrink-0 mt-0.5">
+              {attr.node_type === "ContractDefinition" ? (
                 <FileCode className="size-3 text-blue-400" />
-              ) : attr.type === "FunctionDefinition" ? (
+              ) : attr.node_type === "FunctionDefinition" ? (
                 <Code className="size-3 text-green-400" />
-              ) : attr.type === "ModifierDefinition" ? (
+              ) : attr.node_type === "ModifierDefinition" ? (
                 <Shield className="size-3 text-purple-400" />
-              ) : attr.type === "VariableDeclaration" ? (
+              ) : attr.node_type === "VariableDeclaration" ? (
                 <Variable className="size-3 text-yellow-400" />
-              ) : attr.type === "EventDefinition" ? (
+              ) : attr.node_type === "EventDefinition" ? (
                 <Calendar className="size-3 text-orange-400" />
-              ) : attr.type === "StructDefinition" ? (
+              ) : attr.node_type === "StructDefinition" ? (
                 <Package className="size-3 text-cyan-400" />
-              ) : attr.type === "EnumDefinition" ? (
+              ) : attr.node_type === "EnumDefinition" ? (
                 <Hash className="size-3 text-pink-400" />
-              ) : attr.type === "ErrorDefinition" ? (
+              ) : attr.node_type === "ErrorDefinition" ? (
                 <AlertTriangle className="size-3 text-red-400" />
               ) : (
                 <Zap className="size-3 text-gray-400" />
@@ -63,10 +67,10 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
             </div>
             <div className="flex flex-col min-w-0 flex-1">
               <span className="text-xs font-medium truncate">{attr.name}</span>
-              <span className="text-xs text-muted-foreground truncate">{attr.string}</span>
-              {attr.metadata && (
+              <span className="text-xs text-muted-foreground truncate">{attr.path}</span>
+              {attr.signature && (
                 <span className="text-xs text-neutral-500 font-mono break-all">
-                  {attr.metadata}
+                  {attr.signature}
                 </span>
               )}
             </div>
@@ -77,4 +81,54 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
   );
 };
 
-export { AutoComplete };
+const Message: React.FC<
+  React.ComponentProps<"div"> & { role: ChatMessageI["role"]; content: string }
+> = ({ className, role, content, ...props }) => {
+  return (
+    <div
+      className={cn(
+        "text-foreground",
+        role === "user" && "rounded-lg px-2.5 py-1 bg-blue-600 max-w-2xl ml-auto",
+        role === "system" && "max-w-none",
+        className,
+      )}
+      {...props}
+    >
+      <ReactMarkdown className="markdown">{content}</ReactMarkdown>
+    </div>
+  );
+};
+
+const Empty: React.FC<React.ComponentProps<"div">> = ({ className, ...props }) => {
+  return (
+    <div
+      className={cn("flex flex-col items-center justify-center py-8 grow", className)}
+      {...props}
+    />
+  );
+};
+
+const EmptyCta: React.FC<React.ComponentProps<"div">> = ({ className, ...props }) => {
+  return <div className={cn("text-center grow place-content-center", className)} {...props} />;
+};
+
+const EmptyActions: React.FC<React.ComponentProps<"div">> = ({ ...props }) => {
+  return <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full items-end" {...props} />;
+};
+
+const EmptyAction: React.FC<React.ComponentProps<"div">> = ({ children, ...props }) => {
+  return (
+    <div
+      className="border rounded-xl animate-appear transition-all p-4 pr-8 relative leading-relaxed h-full cursor-pointer hover:border-muted-foreground/60"
+      {...props}
+    >
+      <LucideIcon
+        assetType="chat"
+        className="absolute top-2 right-2 text-muted-foreground size-5"
+      />
+      {children}
+    </div>
+  );
+};
+
+export { AutoComplete, Empty, EmptyAction, EmptyActions, EmptyCta, Message };

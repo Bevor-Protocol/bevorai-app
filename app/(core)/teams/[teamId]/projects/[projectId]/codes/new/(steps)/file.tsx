@@ -30,7 +30,8 @@ const FileStep: React.FC<{
   teamId: string;
   projectId: string;
   prevStep: () => void;
-}> = ({ prevStep, ...props }) => {
+  onSuccess: () => void;
+}> = ({ prevStep, onSuccess, ...props }) => {
   const [contractCode, setContractCode] = useState(templateCode);
   const [uploadedFile, setUploadedFile] = useState<SourceFile | null>(null);
   const [error, setError] = useState("");
@@ -50,6 +51,9 @@ const FileStep: React.FC<{
     },
     onError: () => {
       setError("Failed to upload contract");
+    },
+    onSuccess: () => {
+      onSuccess();
     },
   });
 

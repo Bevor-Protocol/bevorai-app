@@ -4,15 +4,17 @@ import api from "@/lib/api";
 import { buildSearchParams } from "@/lib/utils";
 import { AnalysisUpdateMethodEnum } from "@/utils/enums";
 import {
+  AnalysisHeadFullSchemaI,
   AnalysisPaginationI,
   AnalysisSchemaI,
   AnalysisStatusSchemaI,
+  AnalysisVersionMappingSchemaI,
   AnalysisVersionPaginationI,
-  AnalysisVersionSchemaI,
+  FindingSchemaI,
   TreeResponseI,
 } from "@/utils/types";
 
-export const createSecurityAnalysis = async (
+export const createanalysis = async (
   teamId: string,
   data: {
     code_project_id: string;
@@ -24,45 +26,40 @@ export const createSecurityAnalysis = async (
   id: string;
   status: string;
 }> => {
-  return api
-    .post("/security-analyses", data, { headers: { "bevor-team-id": teamId } })
-    .then((response) => {
-      return response.data;
-    });
+  return api.post("/analyses", data, { headers: { "bevor-team-id": teamId } }).then((response) => {
+    return response.data;
+  });
 };
 
-export const createSecurityAnalysisVersion = async (
+export const createanalysisVersion = async (
   teamId: string,
   data: {
-    security_analysis_id: string;
+    analysis_id: string;
     scopes: string[];
     retain_scope?: boolean;
   },
 ): Promise<string> => {
   return api
-    .post("/security-versions", data, { headers: { "bevor-team-id": teamId } })
+    .post("/analysis-versions", data, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data.id;
     });
 };
 
-export const getSecurityAnalysis = async (
-  teamId: string,
-  analysisId: string,
-): Promise<AnalysisSchemaI> => {
+export const getAnalysis = async (teamId: string, analysisId: string): Promise<AnalysisSchemaI> => {
   return api
-    .get(`/security-analyses/${analysisId}`, { headers: { "bevor-team-id": teamId } })
+    .get(`/analyses/${analysisId}`, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data;
     });
 };
 
-export const getFindings = async (
+export const getAnalysisHead = async (
   teamId: string,
   analysisId: string,
-): Promise<AnalysisVersionSchemaI> => {
+): Promise<AnalysisHeadFullSchemaI> => {
   return api
-    .get(`/security-analyses/${analysisId}/findings`, { headers: { "bevor-team-id": teamId } })
+    .get(`/analyses/${analysisId}/head`, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data;
     });
@@ -73,7 +70,7 @@ export const getStatus = async (
   analysisId: string,
 ): Promise<AnalysisStatusSchemaI> => {
   return api
-    .get(`/security-versions/${analysisId}/status`, { headers: { "bevor-team-id": teamId } })
+    .get(`/analysis-versions/${analysisId}/status`, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data;
     });
@@ -88,7 +85,7 @@ export const submitFeedback = async (
   },
 ): Promise<{ success: boolean }> => {
   return api
-    .post(`/security-analyses/${analysisId}/feedback`, data, {
+    .post(`/analyses/${analysisId}/feedback`, data, {
       headers: { "bevor-team-id": teamId },
     })
     .then((response) => {
@@ -96,7 +93,7 @@ export const submitFeedback = async (
     });
 };
 
-export const getSecurityAnalyses = async (
+export const getAnalyses = async (
   teamId: string,
   filters: {
     [key: string]: string | undefined;
@@ -105,18 +102,18 @@ export const getSecurityAnalyses = async (
   const searchParams = buildSearchParams(filters);
 
   return api
-    .get(`/security-analyses?${searchParams.toString()}`, { headers: { "bevor-team-id": teamId } })
+    .get(`/analyses?${searchParams.toString()}`, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data;
     });
 };
 
-export const getSecurityAnalysisVersion = async (
+export const getAnalysisVersion = async (
   teamId: string,
   analysisVersionId: string,
-): Promise<AnalysisVersionSchemaI> => {
+): Promise<AnalysisVersionMappingSchemaI> => {
   return api
-    .get(`/security-versions/${analysisVersionId}`, { headers: { "bevor-team-id": teamId } })
+    .get(`/analysis-versions/${analysisVersionId}`, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data;
     });
@@ -127,7 +124,20 @@ export const getScope = async (
   analysisVersionId: string,
 ): Promise<TreeResponseI[]> => {
   return api
-    .get(`/security-versions/${analysisVersionId}/scope`, { headers: { "bevor-team-id": teamId } })
+    .get(`/analysis-versions/${analysisVersionId}/scope`, { headers: { "bevor-team-id": teamId } })
+    .then((response) => {
+      return response.data.results;
+    });
+};
+
+export const getFindings = async (
+  teamId: string,
+  analysisVersionId: string,
+): Promise<FindingSchemaI[]> => {
+  return api
+    .get(`/analysis-versions/${analysisVersionId}/findings`, {
+      headers: { "bevor-team-id": teamId },
+    })
     .then((response) => {
       return response.data.results;
     });
@@ -135,11 +145,7 @@ export const getScope = async (
 
 export const toggleVisibility = async (teamId: string, analysisId: string): Promise<boolean> => {
   return api
-    .patch(
-      `/security-analyses/${analysisId}/visibility`,
-      {},
-      { headers: { "bevor-team-id": teamId } },
-    )
+    .patch(`/analyses/${analysisId}/visibility`, {}, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data.success;
     });
@@ -152,7 +158,7 @@ export const updateMethod = async (
 ): Promise<boolean> => {
   return api
     .patch(
-      `/security-analyses/${analysisId}/method`,
+      `/analyses/${analysisId}/method`,
       { update_method: method },
       { headers: { "bevor-team-id": teamId } },
     )
@@ -161,7 +167,7 @@ export const updateMethod = async (
     });
 };
 
-export const getSecurityVersions = async (
+export const getAnalysisVersions = async (
   teamId: string,
   filters: {
     [key: string]: string | undefined;
@@ -169,7 +175,7 @@ export const getSecurityVersions = async (
 ): Promise<AnalysisVersionPaginationI> => {
   const searchParams = buildSearchParams(filters);
   return api
-    .get(`/security-versions?${searchParams.toString()}`, { headers: { "bevor-team-id": teamId } })
+    .get(`/analysis-versions?${searchParams.toString()}`, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data;
     });
@@ -179,12 +185,12 @@ export const updateAnalysisHeads = async (
   teamId: string,
   analysisId: string,
   data: {
-    security_analysis_version_id?: string;
+    analysis_version_id?: string;
     code_version_id?: string;
   },
 ): Promise<AnalysisSchemaI> => {
   return api
-    .patch(`/security-analyses/${analysisId}/head`, data, { headers: { "bevor-team-id": teamId } })
+    .patch(`/analyses/${analysisId}/head`, data, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data;
     });
@@ -192,7 +198,7 @@ export const updateAnalysisHeads = async (
 
 export const forkAnalysis = async (teamId: string, versionId: string): Promise<string> => {
   return api
-    .post(`/security-versions/${versionId}/fork`, {}, { headers: { "bevor-team-id": teamId } })
+    .post(`/analysis-versions/${versionId}/fork`, {}, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
       return response.data.id;
     });

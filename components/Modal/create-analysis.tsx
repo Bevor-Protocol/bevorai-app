@@ -1,6 +1,6 @@
 "use client";
 
-import { projectActions, securityAnalysisActions } from "@/actions/bevor";
+import { analysisActions, projectActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import {
   DialogClose,
@@ -21,6 +21,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
+import { QUERY_KEYS } from "@/utils/constants";
 import { CodeProjectSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock, Unlock } from "lucide-react";
@@ -55,9 +56,9 @@ const CreateAnalysisModal: React.FC<{ teamId: string; project?: CodeProjectSchem
       name?: string;
       description?: string;
       is_public?: boolean;
-    }) => securityAnalysisActions.createSecurityAnalysis(teamId, data),
+    }) => analysisActions.createanalysis(teamId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["analyses", teamId] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, teamId] });
     },
   });
 

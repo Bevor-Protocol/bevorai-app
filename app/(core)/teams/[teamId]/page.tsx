@@ -1,11 +1,10 @@
-import { breadcrumbActions, teamActions } from "@/actions/bevor";
+import { teamActions } from "@/actions/bevor";
 import ContainerBreadcrumb from "@/components/breadcrumbs";
 import Container from "@/components/container";
 import { Icon } from "@/components/ui/icon";
 import { formatDate } from "@/utils/helpers";
 import { AsyncComponent } from "@/utils/types";
 import { Calendar } from "lucide-react";
-import { Suspense } from "react";
 import {
   AnalysesPreview,
   ProjectsSection,
@@ -18,12 +17,6 @@ interface TeamPageProps {
   params: Promise<{ teamId: string }>;
 }
 
-const Breadcrumb: AsyncComponent<{ teamId: string }> = async ({ teamId }) => {
-  const breadcrumb = await breadcrumbActions.getTeamBreadcrumb(teamId);
-
-  return <ContainerBreadcrumb breadcrumb={breadcrumb} toggle={<TeamToggle teamId={teamId} />} />;
-};
-
 const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   const { teamId } = await params;
 
@@ -32,9 +25,13 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   return (
     <Container
       breadcrumb={
-        <Suspense>
-          <Breadcrumb teamId={teamId} />
-        </Suspense>
+        <ContainerBreadcrumb
+          queryKey={[teamId]}
+          queryType="team"
+          teamId={teamId}
+          id=""
+          toggle={<TeamToggle teamId={teamId} />}
+        />
       }
     >
       <div className="max-w-5xl m-auto mt-8 lg:mt-16">

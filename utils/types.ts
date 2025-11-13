@@ -21,25 +21,18 @@ export interface UserSchemaI extends BaseSchema {
   username: string;
 }
 
-/*  ANALYSES   */
-export interface FindingSchemaI {
-  id: string;
-  type: string;
-  level: FindingLevel;
-  name: string;
-  explanation: string;
-  recommendation: string;
-  reference: string;
-  feedback?: string;
-  attested_at?: Date;
-  is_attested: boolean;
-  is_verified: boolean;
-  function_id: string;
-}
-
 export interface AnalysisStatusSchemaI {
   id: string;
   status: string;
+  scopes: {
+    id: string;
+    status: "waiting" | "processing" | "success" | "failed" | "partial";
+  }[];
+}
+
+export interface AnalysisHeadSchema {
+  code_version_id?: string;
+  analysis_version_id?: string;
 }
 
 export interface AnalysisSchemaI extends BaseSchema {
@@ -51,23 +44,26 @@ export interface AnalysisSchemaI extends BaseSchema {
   user: UserSchemaI;
   code_project_id: string;
   update_method: AnalysisUpdateMethodEnum;
-  current_code_head?: CodeVersionMappingSchemaI;
-  current_security_head?: AnalysisVersionSchemaI;
+  head: AnalysisHeadSchema;
+}
+
+export interface AnalysisVersionMappingSchemaI extends BaseSchema {
+  name: string;
+  user: UserSchemaI;
+  analysis_id: string;
+  is_active: boolean;
+  is_owner: boolean;
+  trigger: "manual_run" | "chat" | "manual_edit" | "fork" | "merge";
+  parent?: BaseSchema & { name: string };
+  children: (BaseSchema & { name: string })[];
+  version: AnalysisVersionSchemaI;
 }
 
 export interface AnalysisVersionSchemaI extends BaseSchema {
-  code_version_mapping_id: string;
-  parent_version_id?: string;
-  version_number: number;
-  scopes: string[];
-  status: string;
-  trigger: "manual_run" | "forked" | "chat" | "manual_edit";
-  is_owner: boolean;
-  children: string[];
-  findings: FindingSchemaI[];
-  is_active_version: boolean;
+  status: "waiting" | "processing" | "success" | "failed" | "partial";
   n_findings: number;
   n_scopes: number;
+  code_version_id: string;
 }
 
 export interface AnalysisPaginationI extends PaginationI {
@@ -75,9 +71,13 @@ export interface AnalysisPaginationI extends PaginationI {
 }
 
 export interface AnalysisVersionPaginationI extends PaginationI {
-  results: (AnalysisVersionSchemaI & { n: number })[];
+  results: (AnalysisVersionMappingSchemaI & { n: number })[];
 }
 
+export interface AnalysisHeadFullSchemaI extends AnalysisHeadSchema {
+  analysis_version?: AnalysisVersionMappingSchemaI;
+  code_version?: CodeVersionMappingSchemaI;
+}
 /*  CODE   */
 export interface FunctionScopeI {
   id: string;
@@ -109,6 +109,40 @@ export interface TreeResponseI {
   is_imported: boolean;
   is_within_scope: boolean;
   contracts: ContractScopeI[];
+}
+
+export interface FindingSchemaI {
+  id: string;
+  callable: {
+    merkle_hash: string;
+    name: string;
+    signature: string;
+  };
+  findings: {
+    id: string;
+    type: string;
+    level: FindingLevel;
+    name: string;
+    explanation: string;
+    recommendation: string;
+    reference: string;
+    metadata?: {
+      attested_at?: string;
+      is_verified: boolean;
+      feedback?: string;
+    };
+  }[];
+}
+
+export interface NodeSearchResponseI {
+  instance_source_id: string;
+  node_type: string;
+  merkle_hash: string;
+  src_start_pos: number;
+  src_end_pos: number;
+  name: string;
+  signature?: string;
+  path: string;
 }
 
 export interface ContractSourceResponseI extends BaseSchema {
@@ -159,22 +193,6 @@ export interface ChatMessagesResponseI extends ChatSchemaI {
   messages: ChatMessageI[];
 }
 
-export interface ChatAttributeI {
-  merkle_hash: string;
-  type:
-    | "FunctionDefinition"
-    | "ModifierDefinition"
-    | "VariableDeclaration"
-    | "EventDefinition"
-    | "StructDefinition"
-    | "EnumDefinition"
-    | "ErrorDefinition"
-    | "ContractDefinition";
-  name: string;
-  string: string;
-  metadata?: string;
-}
-
 export interface TeamSchemaI extends BaseSchema {
   name: string;
   is_default: boolean;
@@ -217,10 +235,13 @@ export enum SourceTypeEnum {
 
 export interface CreateKeyBody {
   name: string;
-  permissions: {
-    project: "read" | "write" | "none";
-    contract: "read" | "write" | "none";
-    audit: "read" | "write" | "none";
+  scopes: {
+    project: "read" | "write";
+    code: "read" | "write";
+    analysis: "read" | "write";
+    analysis_version: "read" | "write";
+    chat: "read" | "write";
+    user: "read";
   };
 }
 
@@ -287,20 +308,12 @@ export interface CodeProjectsPaginationI extends PaginationI {
 
 /* CODE VERSION */
 export interface CodeVersionMappingSchemaI extends BaseSchema {
+  name: string;
   code_project_id: string;
   parent_version_id?: string;
-  version_number: number;
   user: UserSchemaI;
-  child?: {
-    id: string;
-    created_at: string;
-    version_number: number;
-  };
-  parent?: {
-    id: string;
-    created_at: string;
-    version_number: number;
-  };
+  child?: BaseSchema & { name: string };
+  parent?: BaseSchema & { name: string };
   version: CodeVersionSchemaI;
 }
 
@@ -562,6 +575,7 @@ export type HrefProps = {
   versionId?: string;
   analysisId?: string;
   chatId?: string;
+  analysisVersionId?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

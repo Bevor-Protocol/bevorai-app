@@ -4,18 +4,19 @@ import { chatActions } from "@/actions/bevor";
 
 import { Button } from "@/components/ui/button";
 import * as Chat from "@/components/ui/chat";
+import { Loader } from "@/components/ui/loader";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { QUERY_KEYS } from "@/utils/constants";
-import { ChatAttributeI, ChatMessageI } from "@/utils/types";
+import { ChatMessageI, NodeSearchResponseI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Cog, Lightbulb, MessageSquare, Send } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import { ChevronDown, Cog, Lightbulb, Send } from "lucide-react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 interface ChatInterfaceProps {
-  chatId: string;
+  chatId: string | null;
   teamId: string;
-  projectId: string;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) => {
@@ -36,14 +37,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
 
   const { data: chatData, isLoading: chatLoading } = useQuery({
     queryKey: [QUERY_KEYS.CHATS, teamId, chatId],
-    queryFn: () => chatActions.getChat(teamId, chatId),
+    queryFn: () => chatActions.getChat(teamId, chatId!),
+    enabled: !!chatId,
   });
 
   const [messages, setMessages] = useState<ChatMessageI[]>([]);
 
+  const TEXTAREA_MAX_HEIGHT = 264;
+
   const { data: chatAttributes } = useQuery({
     queryKey: ["chatAttributes", teamId, chatId],
-    queryFn: () => chatActions.getChatAttributes(teamId, chatId),
+    queryFn: () => chatActions.getChatAttributes(teamId, chatId!),
     enabled: !!chatId,
   });
 
@@ -57,6 +61,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const adjustTextareaHeight = (): void => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    const nextHeight = Math.min(textarea.scrollHeight, TEXTAREA_MAX_HEIGHT);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > TEXTAREA_MAX_HEIGHT ? "auto" : "hidden";
+  };
+
   const checkScrollPosition = (): void => {
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
@@ -64,6 +77,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
       setShowScrollToBottom(!isAtBottom);
     }
   };
+
+  useLayoutEffect(() => {
+    adjustTextareaHeight();
+  }, [inputValue]);
 
   useEffect(() => {
     scrollToBottom();
@@ -77,13 +94,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
     }
   }, []);
 
-  const sendMessage = async (): Promise<void> => {
-    if (!inputValue.trim()) return;
+  const sendMessage = async (message: string): Promise<void> => {
+    if (!message.trim()) return;
 
     const userMessage: ChatMessageI = {
       id: Date.now().toString(),
       role: "user",
-      content: inputValue.trim(),
+      content: message.trim(),
       timestamp: new Date().toISOString(),
     };
 
@@ -102,7 +119,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: inputValue.trim(),
+          message: message.trim(),
           chatId,
           attributes: Array.from(selectedAttributeIds),
         }),
@@ -185,13 +202,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     if (inputValue.trim() && !isLoading) {
-      sendMessage();
+      sendMessage(inputValue.trim());
     }
   };
 
   const filteredAttributes =
     chatAttributes?.filter((attr) =>
-      attr.string.toLowerCase().includes(autocompleteQuery.toLowerCase()),
+      attr.name.toLowerCase().includes(autocompleteQuery.toLowerCase()),
     ) || [];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
@@ -210,7 +227,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
           const name = match.slice(1, -1); // Remove backticks
           const matchingAttr = chatAttributes?.find((attr) => attr.name === name);
           if (matchingAttr) {
-            currentAttributeIds.add(matchingAttr.id);
+            currentAttributeIds.add(matchingAttr.merkle_hash);
           }
         });
       }
@@ -234,9 +251,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
     } else {
       setShowAutocomplete(false);
     }
+
+    adjustTextareaHeight();
   };
 
-  const insertAutocompleteItem = (item: ChatAttributeI): void => {
+  const insertAutocompleteItem = (item: NodeSearchResponseI): void => {
     const cursorPosition = textareaRef.current?.selectionStart || 0;
     const textBeforeCursor = inputValue.substring(0, cursorPosition);
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
@@ -248,7 +267,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
 
       setInputValue(newValue);
       setShowAutocomplete(false);
-      setSelectedAttributeIds((prev) => new Set([...prev, item.id]));
+      setSelectedAttributeIds((prev) => new Set([...prev, item.merkle_hash]));
 
       setTimeout(() => {
         const newCursorPos = beforeAt.length + `\`${item.name}\``.length + 1;
@@ -305,118 +324,120 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ teamId, chatId }) 
     } else if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (inputValue.trim() && !isLoading) {
-        sendMessage();
+        sendMessage(inputValue.trim());
       }
     }
   };
 
-  if (chatLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-muted-foreground">Loading chat...</div>
-      </div>
-    );
-  }
+  const handleDefaultMessage = (text: string): void => {
+    sendMessage(text);
+  };
 
   return (
-    <div className="flex flex-col h-full bg-neutral-950">
-      <div className="flex-1 overflow-y-auto p-3" ref={messagesContainerRef}>
-        <div className="space-y-4">
-          {messages.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
-                <MessageSquare className="w-10 h-10 text-neutral-600 mx-auto mb-3" />
-                <h3 className="text-sm font-medium text-foreground mb-1">Start a conversation</h3>
-                <p className="text-xs text-neutral-500">Ask questions about your code</p>
+    <div className="flex flex-col bg-background max-w-3xl m-auto grow min-h-0 w-full">
+      {chatLoading ||
+        (!chatData && (
+          <div className="flex items-center justify-center h-full">
+            <Loader className="size-6" />
+          </div>
+        ))}
+      {messages.length === 0 && !!chatData && (
+        <Chat.Empty>
+          <Chat.EmptyCta>
+            <p className="text-2xl font-medium mb-1">Start a conversation</p>
+            <p className="text-lg text-muted-foreground">
+              Ask questions about your code & analyses
+            </p>
+          </Chat.EmptyCta>
+          <Chat.EmptyActions>
+            {[
+              "What is the name of this contract?",
+              "Which variables does the constructor initialize?",
+            ].map((text, ind) => (
+              <Chat.EmptyAction onClick={() => handleDefaultMessage(text)} key={ind}>
+                {text}
+              </Chat.EmptyAction>
+            ))}
+          </Chat.EmptyActions>
+        </Chat.Empty>
+      )}
+      {messages.length > 0 && (
+        <ScrollArea className="p-3 min-h-0 h-full" ref={messagesContainerRef}>
+          <div className="flex flex-col gap-4 h-full">
+            {messages.map((message) => (
+              <Chat.Message role={message.role} content={message.content} key={message.id} />
+            ))}
+
+            {isAwaitingResponse && (
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <div className="size-2 bg-neutral-400 rounded-full animate-pulse"></div>
+                <span className="text-xs">Waiting for response...</span>
               </div>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <div key={message.id}>
-                {message.role === "user" ? (
-                  <div className="flex justify-end">
-                    <div className="max-w-[85%] rounded-lg p-2.5 bg-blue-600 text-foreground">
-                      <div className="prose prose-sm prose-invert max-w-none">
-                        <ReactMarkdown className="markdown">{message.content}</ReactMarkdown>
-                      </div>
-                    </div>
+            )}
+
+            {streamedContent && (
+              <div>
+                {currentEventType === "text" ? (
+                  <div className="max-w-none text-foreground">
+                    <ReactMarkdown className="markdown">{streamedContent + buffer}</ReactMarkdown>
                   </div>
                 ) : (
-                  <div className="prose prose-sm prose-invert max-w-none text-foreground">
-                    <ReactMarkdown className="markdown">{message.content}</ReactMarkdown>
+                  <div className="flex items-center space-x-2 text-foreground">
+                    {currentEventType === "tool-call" && (
+                      <Cog className="size-3 text-blue-400 animate-spin" />
+                    )}
+                    {currentEventType === "thinking" && (
+                      <Lightbulb className="size-3 text-yellow-400 animate-pulse" />
+                    )}
+                    <span className="text-sm">{streamedContent}</span>
                   </div>
                 )}
               </div>
-            ))
-          )}
-
-          {isAwaitingResponse && (
-            <div className="flex items-center space-x-2 text-muted-foreground">
-              <div className="size-2 bg-neutral-400 rounded-full animate-pulse"></div>
-              <span className="text-xs">Waiting for response...</span>
-            </div>
-          )}
-
-          {streamedContent && (
-            <div>
-              {currentEventType === "text" ? (
-                <div className="prose prose-sm prose-invert max-w-none text-foreground">
-                  <ReactMarkdown className="markdown">{streamedContent + buffer}</ReactMarkdown>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2 text-foreground">
-                  {currentEventType === "tool-call" && (
-                    <Cog className="size-3 text-blue-400 animate-spin" />
-                  )}
-                  {currentEventType === "thinking" && (
-                    <Lightbulb className="size-3 text-yellow-400 animate-pulse" />
-                  )}
-                  <span className="text-xs">{streamedContent}</span>
-                </div>
-              )}
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      <div className="p-2.5 border-t border-border">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <div className="flex-1 relative">
-            <Textarea
-              ref={textareaRef}
-              value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message... (use @ for autocomplete)"
-              className="flex-1 min-h-24 max-h-48 w-full resize-none"
-            />
-
-            {showAutocomplete && filteredAttributes.length > 0 && (
-              <Chat.AutoComplete
-                attributes={filteredAttributes}
-                selectedAutocompleteIndex={selectedAutocompleteIndex}
-                insertAutocompleteItem={insertAutocompleteItem}
-              />
             )}
-            {showScrollToBottom && (
-              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-10 bg-blue-600 rounded-full">
-                <Button onClick={scrollToBottom} size="sm" className="rounded-full shadow-lg">
-                  <ChevronDown className="size-3" />
-                </Button>
-              </div>
-            )}
+            <div ref={messagesEndRef} />
           </div>
-          <Button
-            type="submit"
-            disabled={!inputValue.trim() || isLoading}
-            size="sm"
-            className="px-3"
-          >
-            <Send className="size-3.5" />
-          </Button>
-        </form>
-      </div>
+        </ScrollArea>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 relative">
+        <div className="rounded-3xl border bg-card p-2 shadow-sm">
+          <Textarea
+            ref={textareaRef}
+            rows={1}
+            value={inputValue}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Message Bevor..."
+            className="flex-1 max-h-[264px] p-2 resize-none border-0 bg-transparent! leading-6 text-foreground focus-visible:outline-none focus-visible:ring-0 scrollbar-thin"
+          />
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              disabled={!inputValue.trim() || isLoading}
+              size="icon"
+              className="size-8 rounded-full"
+            >
+              <Send className="size-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {showAutocomplete && filteredAttributes.length > 0 && (
+          <Chat.AutoComplete
+            attributes={filteredAttributes}
+            selectedAutocompleteIndex={selectedAutocompleteIndex}
+            insertAutocompleteItem={insertAutocompleteItem}
+          />
+        )}
+
+        {showScrollToBottom && (
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10">
+            <Button onClick={scrollToBottom} size="sm" className="rounded-full shadow-lg">
+              <ChevronDown className="size-3" />
+            </Button>
+          </div>
+        )}
+      </form>
     </div>
   );
 };

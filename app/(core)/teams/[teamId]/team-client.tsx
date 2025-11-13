@@ -1,6 +1,6 @@
 "use client";
 
-import { activityActions, projectActions, securityAnalysisActions } from "@/actions/bevor";
+import { activityActions, analysisActions, projectActions } from "@/actions/bevor";
 import ActivityList from "@/components/activity";
 import { AnalysisElement } from "@/components/audits/element";
 import { AnalysisEmpty } from "@/components/audits/empty";
@@ -139,7 +139,7 @@ export const AnalysesPreview: React.FC<{
 }> = ({ teamId }) => {
   const { data: analyses, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.ANALYSES, { page_size: "3" }],
-    queryFn: async () => securityAnalysisActions.getSecurityAnalyses(teamId, { page_size: "3" }),
+    queryFn: async () => analysisActions.getAnalyses(teamId, { page_size: "3" }),
   });
 
   if (analyses?.results.length === 0) {

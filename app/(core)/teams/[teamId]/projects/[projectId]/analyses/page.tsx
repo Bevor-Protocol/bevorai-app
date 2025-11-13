@@ -1,10 +1,8 @@
-import { breadcrumbActions } from "@/actions/bevor";
+import { teamActions } from "@/actions/bevor";
 import ContainerBreadcrumb from "@/components/breadcrumbs";
 import Container from "@/components/container";
-import { QUERY_KEYS } from "@/utils/constants";
 import { extractAnalysesQuery } from "@/utils/queries";
 import { AsyncComponent } from "@/utils/types";
-import { QueryClient } from "@tanstack/react-query";
 import AnalysesData, { AnalysisCreate } from "./analyses-client";
 
 type ResolvedParams = {
@@ -21,22 +19,23 @@ const ProjectAnalysesPage: AsyncComponent<PageProps> = async ({ params, searchPa
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const query = extractAnalysesQuery(resolvedParams.projectId, resolvedSearchParams);
+  const currentUser = await teamActions.getCurrentMember(resolvedParams.teamId);
 
-  const queryClient = new QueryClient();
-
-  const breadcrumb = await queryClient.fetchQuery({
-    queryKey: [QUERY_KEYS.SECURITY_VERSIONS, resolvedParams.teamId, query],
-    queryFn: () =>
-      breadcrumbActions.getProjectAnalysesBreadcrumb(
-        resolvedParams.teamId,
-        resolvedParams.projectId,
-      ),
+  const query = extractAnalysesQuery(resolvedParams.projectId, {
+    user_id: currentUser.user.id,
+    ...resolvedSearchParams,
   });
 
   return (
     <Container
-      breadcrumb={<ContainerBreadcrumb breadcrumb={breadcrumb} />}
+      breadcrumb={
+        <ContainerBreadcrumb
+          queryKey={[resolvedParams.projectId]}
+          queryType="project-analyses"
+          teamId={resolvedParams.teamId}
+          id={resolvedParams.projectId}
+        />
+      }
       className="flex flex-col"
     >
       <div className="flex flex-row mb-8 justify-between">

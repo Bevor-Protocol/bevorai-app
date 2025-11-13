@@ -1,7 +1,8 @@
 "use client";
 
-import { securityAnalysisActions } from "@/actions/bevor";
+import { analysisActions } from "@/actions/bevor";
 import { Pagination } from "@/components/pagination";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenuContent,
@@ -26,10 +27,11 @@ import {
   BotMessageSquare,
   Eye,
   GitBranch,
+  GitMerge,
   MoreHorizontal,
   PencilRuler,
   Pin,
-  User,
+  Play,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -37,30 +39,36 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 
 const getTriggerIcon = (
-  trigger: "manual_run" | "forked" | "chat" | "manual_edit",
+  trigger: "manual_run" | "chat" | "manual_edit" | "fork" | "merge",
 ): React.ReactElement => {
   switch (trigger) {
     case "manual_run":
-      return <User />;
-    case "forked":
+      return <Play />;
+    case "fork":
       return <GitBranch />;
     case "chat":
       return <BotMessageSquare />;
     case "manual_edit":
       return <PencilRuler />;
+    case "merge":
+      return <GitMerge />;
   }
 };
 
-const getTriggerCopy = (trigger: "manual_run" | "forked" | "chat" | "manual_edit"): string => {
+const getTriggerCopy = (
+  trigger: "manual_run" | "chat" | "manual_edit" | "fork" | "merge",
+): string => {
   switch (trigger) {
     case "manual_run":
       return "manual run";
-    case "forked":
+    case "fork":
       return "fork";
     case "chat":
       return "chat";
     case "manual_edit":
       return "edit";
+    case "merge":
+      return "merge";
   }
 };
 
@@ -72,8 +80,8 @@ const AnalysisVersionsData: React.FC<{
   const [filters, setFilters] = useState(query);
 
   const versionsQuery = useQuery({
-    queryKey: [QUERY_KEYS.SECURITY_VERSIONS, teamId, filters],
-    queryFn: () => securityAnalysisActions.getSecurityVersions(teamId, filters),
+    queryKey: [QUERY_KEYS.ANALYSIS_VERSION, teamId, filters],
+    queryFn: () => analysisActions.getAnalysisVersions(teamId, filters),
   });
 
   return (
@@ -99,11 +107,11 @@ const AnalysisVersionsDisplay: React.FC<{
 
   const updateSecurityHeadMutation = useMutation({
     mutationFn: async (securityVersionId: string) =>
-      securityAnalysisActions.updateAnalysisHeads(teamId, analysisId, {
-        security_analysis_version_id: securityVersionId,
+      analysisActions.updateAnalysisHeads(teamId, analysisId, {
+        analysis_version_id: securityVersionId,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SECURITY_VERSIONS, teamId] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSIS_VERSION, teamId] });
       toast.success("Pinned", {
         description: "This version was set as your default version",
         icon: <Pin className="size-4" />,
@@ -113,9 +121,9 @@ const AnalysisVersionsDisplay: React.FC<{
 
   const forkSecurityMutation = useMutation({
     mutationFn: async (securityVersionId: string) =>
-      securityAnalysisActions.forkAnalysis(teamId, securityVersionId),
+      analysisActions.forkAnalysis(teamId, securityVersionId),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SECURITY_VERSIONS, teamId] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSIS_VERSION, teamId] });
       toast.success("Version was forked", {
         description: "A new analysis was created for you",
         action: {
@@ -134,7 +142,7 @@ const AnalysisVersionsDisplay: React.FC<{
       <TableHeader>
         <TableRow>
           <TableHead>Version</TableHead>
-          <TableHead>Is Active</TableHead>
+          <TableHead>Active</TableHead>
           <TableHead># Functions in Scope</TableHead>
           <TableHead># Findings</TableHead>
           <TableHead>Method</TableHead>
@@ -148,13 +156,21 @@ const AnalysisVersionsDisplay: React.FC<{
       >
         {data?.results.map((version) => (
           <TableRow key={version.id}>
-            <TableCell className="font-medium">{version.version_number}</TableCell>
-            <TableCell>{String(version.is_active_version)}</TableCell>
-            <TableCell>{version.n_scopes}</TableCell>
-            <TableCell>{version.n_findings}</TableCell>
-            <TableCell className="[&>svg]:size-4 flex gap-2 items-center">
-              {getTriggerIcon(version.trigger)}
-              {getTriggerCopy(version.trigger)}
+            <TableCell className="font-medium">{version.name}</TableCell>
+            <TableCell>
+              {version.is_active ? (
+                <Badge variant="green">active</Badge>
+              ) : (
+                <Badge variant="outline">inactive</Badge>
+              )}
+            </TableCell>
+            <TableCell>{version.version.n_scopes}</TableCell>
+            <TableCell>{version.version.n_findings}</TableCell>
+            <TableCell>
+              <div className="[&>svg]:size-4 flex gap-2 items-center">
+                {getTriggerIcon(version.trigger)}
+                {getTriggerCopy(version.trigger)}
+              </div>
             </TableCell>
             <TableCell className="text-muted-foreground">
               {formatDateLong(version.created_at)}
@@ -173,7 +189,7 @@ const AnalysisVersionsDisplay: React.FC<{
                       View
                     </Link>
                   </DropdownMenuItem>
-                  {version.is_owner && !version.is_active_version && (
+                  {version.is_owner && !version.is_active && (
                     <DropdownMenuItem onClick={() => updateSecurityHeadMutation.mutate(version.id)}>
                       <Pin />
                       Set as Current Version

@@ -1,24 +1,35 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ContractVersionSourceI } from "@/utils/types";
-import React, { useEffect, useState } from "react";
+import { useCode } from "@/providers/code";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { codeToHtml } from "shiki";
 
 interface ShikiViewerProps {
-  sourceContent: ContractVersionSourceI;
   className?: string;
 }
 
-const ShikiViewer: React.FC<ShikiViewerProps> = ({ sourceContent, className }) => {
+const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
   const [html, setHtml] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    positions,
+    sourceQuery,
+    clearHighlight,
+    applyHighlight,
+    scrollToElement,
+    htmlLoaded,
+    setHtmlLoaded,
+  } = useCode();
+  const lastHtmlRef = useRef<string>("");
+  const lastSourceIdRef = useRef<string | null>(null);
+  const codeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const highlightCode = async (): Promise<void> => {
+      if (!sourceQuery.data) return;
       try {
-        setIsLoading(true);
-        const result = await codeToHtml(sourceContent.content, {
+        setHtmlLoaded(false);
+        const result = await codeToHtml(sourceQuery.data.content, {
           lang: "solidity",
           theme: "github-dark",
           colorReplacements: {},
@@ -41,35 +52,57 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ sourceContent, className }) =
         setHtml(result);
       } catch (error) {
         console.error("Error highlighting code:", error);
-        setHtml(`<pre><code>${sourceContent.content}</code></pre>`);
-      } finally {
-        setIsLoading(false);
+        setHtml(`<pre><code>${sourceQuery.data.content}</code></pre>`);
       }
     };
-
+    if (!sourceQuery.data) return;
     highlightCode();
-  }, [sourceContent.content]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sourceQuery.data, setHtmlLoaded]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-border"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    // CodeProvider state updates cause a re-render. Since the className updates are not done
+    // via JSX, we lose the class information when ANYTHING changes since we're just rendering an html string.
+    // Doing this prevents that from happening.
+    if (!html || !codeRef.current) return;
+    codeRef.current.innerHTML = html;
+    setHtmlLoaded(true);
+  }, [html, setHtmlLoaded]);
+
+  useLayoutEffect(() => {
+    // on html changes, we need to wait for the paint in order to apply class changes.
+    if (!positions || !htmlLoaded || !html) return;
+
+    const htmlChanged = lastHtmlRef.current !== html;
+    const sourceId = sourceQuery.data?.id ?? null;
+    const sourceChanged = lastSourceIdRef.current !== sourceId;
+
+    applyHighlight(positions);
+
+    if (!sourceChanged || htmlChanged) {
+      scrollToElement(positions);
+    }
+
+    lastHtmlRef.current = html;
+    lastSourceIdRef.current = sourceId;
+  }, [html, htmlLoaded, positions, applyHighlight, scrollToElement, sourceQuery.data?.id]);
 
   return (
-    <div
-      className={cn("shiki-container", className)}
-      dangerouslySetInnerHTML={{ __html: html }}
-      style={{
-        fontFamily:
-          "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace",
-        fontSize: "14px",
-        lineHeight: "1.5",
-      }}
-    />
+    <div className="relative flex-1">
+      {!htmlLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-border" />
+        </div>
+      )}
+      <div
+        ref={codeRef}
+        className={cn("shiki-container", className, !htmlLoaded && "opacity-0")}
+        onClick={clearHighlight}
+      />
+    </div>
   );
 };
 
+// I don't love this, but otherwise search triggers re-renders, which wipes any
+// class adjustments we made to the inner HTML.
 export default ShikiViewer;

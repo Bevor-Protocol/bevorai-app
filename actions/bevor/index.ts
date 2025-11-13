@@ -1,4 +1,5 @@
 export * as activityActions from "./activity.service";
+export * as analysisActions from "./analysis.service";
 export * as apiKeyActions from "./api-key.service";
 export * as authActions from "./auth.service";
 export * as billingActions from "./billing.service";
@@ -6,7 +7,6 @@ export * as breadcrumbActions from "./breadcrumb.service";
 export * as chatActions from "./chat.service";
 export * as dashboardActions from "./dashboard.service";
 export * as projectActions from "./project.service";
-export * as securityAnalysisActions from "./security-analysis.service";
 export * as sharedActions from "./shared.service";
 export * as teamActions from "./team.service";
 export * as tokenActions from "./token.service";

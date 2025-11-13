@@ -51,7 +51,7 @@ export const deleteProject = async (teamId: string, projectId: string): Promise<
 export const updateProject = async (
   teamId: string,
   projectId: string,
-  data: { name?: string; description?: string; tags?: string },
+  data: { name?: string; description?: string; tags?: string[] },
 ): Promise<boolean> => {
   return api
     .patch(`/projects/${projectId}`, data, { headers: { "bevor-team-id": teamId } })

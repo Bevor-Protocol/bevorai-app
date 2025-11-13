@@ -1,5 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { QUERY_KEYS } from "@/utils/constants";
+import { useQueryClient } from "@tanstack/react-query";
 import { MoveLeft } from "lucide-react";
 import * as React from "react";
 import ContractAdressStep from "./(steps)/address";
@@ -10,6 +12,7 @@ import MethodSelection from "./(steps)/method";
 const steps = ["Code Method", "Code Submission", "Submission"];
 
 const Steps: React.FC<{ teamId: string; projectId: string }> = (props) => {
+  const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = React.useState(1);
   const [method, setMethod] = React.useState<string | null>(null);
 
@@ -25,6 +28,11 @@ const Steps: React.FC<{ teamId: string; projectId: string }> = (props) => {
     }
   };
 
+  const onSuccess = (): void => {
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, "code-head"] });
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, "analysis-head"] });
+  };
+
   return (
     <div className="w-full">
       {currentStep === 2 && (
@@ -35,10 +43,14 @@ const Steps: React.FC<{ teamId: string; projectId: string }> = (props) => {
       )}
       {currentStep === 1 && <MethodSelection setMethod={setMethod} nextStep={nextStep} />}
       {currentStep === 2 && method === "scan" && (
-        <ContractAdressStep {...props} prevStep={prevStep} />
+        <ContractAdressStep {...props} prevStep={prevStep} onSuccess={onSuccess} />
       )}
-      {currentStep === 2 && method === "file" && <FileStep {...props} prevStep={prevStep} />}
-      {currentStep === 2 && method === "folder" && <FolderStep {...props} prevStep={prevStep} />}
+      {currentStep === 2 && method === "file" && (
+        <FileStep {...props} prevStep={prevStep} onSuccess={onSuccess} />
+      )}
+      {currentStep === 2 && method === "folder" && (
+        <FolderStep {...props} prevStep={prevStep} onSuccess={onSuccess} />
+      )}
     </div>
   );
 };

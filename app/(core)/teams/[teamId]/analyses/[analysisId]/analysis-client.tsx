@@ -1,7 +1,7 @@
 "use client";
 
-import { securityAnalysisActions, versionActions } from "@/actions/bevor";
-import { AnalysisVersionElementBare } from "@/components/audits/element";
+import { analysisActions, versionActions } from "@/actions/bevor";
+import { AnalysisElementLoader, AnalysisVersionElement } from "@/components/audits/element";
 import LucideIcon from "@/components/lucide-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CodeVersionElementBare } from "@/components/versions/element";
+import {
+  CodeVersionElement,
+  CodeVersionElementBare,
+  CodeVersionElementLoader,
+} from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { cn } from "@/lib/utils";
@@ -52,8 +56,9 @@ import { AnalysisUpdateMethodEnum } from "@/utils/enums";
 import { navigation } from "@/utils/navigation";
 import { AnalysisSchemaI } from "@/utils/types";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, Lock, MoreHorizontal, RefreshCcw, Unlock } from "lucide-react";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { Check, Copy, Lock, MoreHorizontal, Plus, RefreshCcw, Unlock } from "lucide-react";
+import Link from "next/link";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
@@ -79,6 +84,36 @@ const getBody = (method: AnalysisUpdateMethodEnum): string => {
   }
 };
 
+export const AnalysisChat: React.FC<{ analysisId: string; teamId: string }> = ({
+  analysisId,
+  teamId,
+}) => {
+  const { data: analysis } = useSuspenseQuery({
+    queryKey: [QUERY_KEYS.ANALYSES, analysisId],
+    queryFn: () => analysisActions.getAnalysis(teamId, analysisId),
+  });
+
+  console.log(analysis);
+
+  if (!analysis.head.code_version_id) {
+    return (
+      <Button disabled variant="outline">
+        <LucideIcon assetType="chat" />
+        Upload/set a code version to Chat
+      </Button>
+    );
+  }
+
+  return (
+    <Button asChild>
+      <Link href={`/teams/${teamId}/analyses/${analysisId}/chat`}>
+        <LucideIcon assetType="chat" />
+        Chat
+      </Link>
+    </Button>
+  );
+};
+
 export const AnalysisOptions: React.FC<{ teamId: string; analysisId: string }> = ({
   teamId,
   analysisId,
@@ -90,11 +125,11 @@ export const AnalysisOptions: React.FC<{ teamId: string; analysisId: string }> =
 
   const { data: analysis } = useQuery({
     queryKey: [QUERY_KEYS.ANALYSES, analysisId],
-    queryFn: async () => securityAnalysisActions.getSecurityAnalysis(teamId, analysisId),
+    queryFn: async () => analysisActions.getAnalysis(teamId, analysisId),
   });
 
   const visibilityMutation = useMutation({
-    mutationFn: async () => securityAnalysisActions.toggleVisibility(teamId, analysisId),
+    mutationFn: async () => analysisActions.toggleVisibility(teamId, analysisId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, analysisId] });
       toast.success("Visibility updated", {
@@ -122,33 +157,41 @@ export const AnalysisOptions: React.FC<{ teamId: string; analysisId: string }> =
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[200px]">
+        <DropdownMenuContent align="end" className="whitespace-nowrap">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={handleToggle} disabled={!analysis?.is_owner}>
-              Make {analysis?.is_public ? "private" : "public"}
+              Toggle Visibility
               <DropdownMenuShortcut>
                 {analysis?.is_public ? <Lock /> : <Unlock />}
               </DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setAction("update_method")}>
-              Change update method...
+              Update method
               <DropdownMenuShortcut>
                 <RefreshCcw />
               </DropdownMenuShortcut>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/teams/${teamId}/analyses/${analysis!.id}/versions/new`}>
+                New Analysis Version
+                <DropdownMenuShortcut>
+                  <Plus />
+                </DropdownMenuShortcut>
+              </Link>
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel>Current Versions</DropdownMenuLabel>
+          <DropdownMenuLabel>Heads</DropdownMenuLabel>
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => setAction("update_code")}>
-              Update code version...
+              Code version
               <DropdownMenuShortcut>
                 <LucideIcon assetType="code" />
               </DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setAction("update_analysis")}>
-              Update security version...
+              Analysis version
               <DropdownMenuShortcut>
                 <LucideIcon assetType="analysis_version" />
               </DropdownMenuShortcut>
@@ -192,9 +235,9 @@ const UpdateMethodDialog: React.FC<
 
   const updateMethodMutation = useMutation({
     mutationFn: async (method: AnalysisUpdateMethodEnum) =>
-      securityAnalysisActions.updateMethod(teamId, analysis.id, method),
+      analysisActions.updateMethod(teamId, analysis.id, method),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SECURITY_VERSIONS, analysis.id] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSIS_VERSION, analysis.id] });
       toast.success("Update Successful", {
         description: "You changed how code versions are pinned to this analysis",
       });
@@ -262,7 +305,7 @@ export const CodeVersionUpdateDialog: React.FC<
 > = ({ teamId, analysis, ...props }) => {
   const queryClient = useQueryClient();
   const [selectedCodeVersion, setSelectedCodeVersion] = useState<string | undefined>(
-    analysis.current_code_head?.id,
+    analysis.head.analysis_version_id,
   );
 
   const { data: codeVersions } = useQuery({
@@ -277,7 +320,7 @@ export const CodeVersionUpdateDialog: React.FC<
 
   const updateCodeHeadMutation = useMutation({
     mutationFn: async (codeVersionId: string) =>
-      securityAnalysisActions.updateAnalysisHeads(teamId, analysis.id, {
+      analysisActions.updateAnalysisHeads(teamId, analysis.id, {
         code_version_id: codeVersionId,
       }),
     onSuccess: () => {
@@ -294,7 +337,7 @@ export const CodeVersionUpdateDialog: React.FC<
   });
 
   const handleUpdate = (): void => {
-    if (!selectedCodeVersion || selectedCodeVersion === analysis.current_code_head?.id) return;
+    if (!selectedCodeVersion || selectedCodeVersion === analysis.head.code_version_id) return;
     updateCodeHeadMutation.mutate(selectedCodeVersion);
     if (props.onOpenChange) {
       props.onOpenChange(false);
@@ -318,8 +361,7 @@ export const CodeVersionUpdateDialog: React.FC<
               <CodeVersionElementBare
                 className={cn(
                   "border p-2 text-xs hover:border-muted-foreground/60 transition-colors",
-                  version.id === analysis.current_code_head?.version.id &&
-                    "border-muted-foreground",
+                  version.id === analysis.head.code_version_id && "border-muted-foreground",
                   version.id === selectedCodeVersion && "border-muted-foreground",
                 )}
                 key={ind}
@@ -354,9 +396,9 @@ export const SecurityVersionUpdateDialog: React.FC<
   const [selectedSecurityVersion, setSelectedSecurityVersion] = useState<string>("");
 
   const { data: securityVersions } = useQuery({
-    queryKey: [QUERY_KEYS.SECURITY_VERSIONS, "list", analysis.id],
+    queryKey: [QUERY_KEYS.ANALYSIS_VERSION, "list", analysis.id],
     queryFn: () =>
-      securityAnalysisActions.getSecurityVersions(teamId, {
+      analysisActions.getAnalysisVersions(teamId, {
         analysis_id: analysis.id,
         page_size: "50",
       }),
@@ -365,8 +407,8 @@ export const SecurityVersionUpdateDialog: React.FC<
 
   const updateSecurityHeadMutation = useMutation({
     mutationFn: async (securityVersionId: string) =>
-      securityAnalysisActions.updateAnalysisHeads(teamId, analysis.id, {
-        security_analysis_version_id: securityVersionId,
+      analysisActions.updateAnalysisHeads(teamId, analysis.id, {
+        analysis_version_id: securityVersionId,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, analysis.id] });
@@ -391,65 +433,63 @@ export const SecurityVersionUpdateDialog: React.FC<
 
   return (
     <Dialog {...props}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="min-h-1/2 grid-rows-[auto_1fr_auto]">
         <DialogHeader>
           <DialogTitle>Update Security Version Head</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="max-h-96 overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Version</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>ID</TableHead>
+        <div className="justify-start max-h-96 overflow-y-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Version</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>ID</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {securityVersions?.results?.map((version) => (
+                <TableRow
+                  key={version.id}
+                  className={`cursor-pointer transition-colors ${
+                    selectedSecurityVersion === version.id ? "bg-blue-50" : "hover:bg-gray-50"
+                  }`}
+                  onClick={() => setSelectedSecurityVersion(version.id)}
+                >
+                  <TableCell className="font-medium">Version {version.name}</TableCell>
+                  <TableCell>{new Date(version.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        version.version.status === "success"
+                          ? "bg-green-100 text-green-800"
+                          : version.version.status === "processing"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {version.version.status}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{version.id}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {securityVersions?.results?.map((version) => (
-                  <TableRow
-                    key={version.id}
-                    className={`cursor-pointer transition-colors ${
-                      selectedSecurityVersion === version.id ? "bg-blue-50" : "hover:bg-gray-50"
-                    }`}
-                    onClick={() => setSelectedSecurityVersion(version.id)}
-                  >
-                    <TableCell className="font-medium">Version {version.version_number}</TableCell>
-                    <TableCell>{new Date(version.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          version.status === "success"
-                            ? "bg-green-100 text-green-800"
-                            : version.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {version.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{version.id}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button
-              type="submit"
-              onClick={handleUpdate}
-              disabled={updateSecurityHeadMutation.isPending || !selectedSecurityVersion}
-            >
-              {updateSecurityHeadMutation.isPending ? "Updating..." : "Update Security Head"}
-            </Button>
-          </DialogFooter>
+              ))}
+            </TableBody>
+          </Table>
         </div>
+
+        <DialogFooter className="items-end">
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button
+            type="submit"
+            onClick={handleUpdate}
+            disabled={updateSecurityHeadMutation.isPending || !selectedSecurityVersion}
+          >
+            {updateSecurityHeadMutation.isPending ? "Updating..." : "Update Security Head"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -463,7 +503,7 @@ export const AnalysisUnlock: React.FC<{ teamId: string; analysisId: string }> = 
 
   const { data: analysis, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.ANALYSES, analysisId],
-    queryFn: async () => securityAnalysisActions.getSecurityAnalysis(teamId, analysisId),
+    queryFn: async () => analysisActions.getAnalysis(teamId, analysisId),
   });
 
   const handleCopy = (): void => {
@@ -499,7 +539,7 @@ export const AnalysisUpdateMethod: React.FC<{ teamId: string; analysisId: string
 }) => {
   const { data: analysis, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.ANALYSES, analysisId],
-    queryFn: async () => securityAnalysisActions.getSecurityAnalysis(teamId, analysisId),
+    queryFn: async () => analysisActions.getAnalysis(teamId, analysisId),
   });
 
   if (isLoading || !analysis) {
@@ -509,52 +549,42 @@ export const AnalysisUpdateMethod: React.FC<{ teamId: string; analysisId: string
   return <Badge variant="outline">{getHeader(analysis.update_method)}</Badge>;
 };
 
-const AnalysisClient: React.FC<{ teamId: string; analysisId: string }> = ({
+export const AnalysisCodeHead: React.FC<{ teamId: string; analysisId: string }> = ({
   teamId,
   analysisId,
 }) => {
-  const { data: analysis } = useQuery({
-    queryKey: [QUERY_KEYS.ANALYSES, analysisId],
-    queryFn: async () => securityAnalysisActions.getSecurityAnalysis(teamId, analysisId),
+  const { data: analysis, isLoading } = useQuery({
+    queryKey: [QUERY_KEYS.ANALYSES, "code-head", analysisId],
+    queryFn: async () => analysisActions.getAnalysisHead(teamId, analysisId),
   });
 
-  if (!analysis) {
-    return null;
+  if (!analysis || isLoading) {
+    return <CodeVersionElementLoader />;
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium">Current Code Version</h3>
-          </div>
-          {analysis.current_code_head ? (
-            <CodeVersionElementBare
-              className="border text-xs"
-              version={analysis.current_code_head}
-            />
-          ) : (
-            <div className="text-sm text-muted-foreground">No code version head set</div>
-          )}
-        </div>
+  if (analysis.code_version) {
+    return <CodeVersionElement version={analysis.code_version} teamId={teamId} />;
+  }
 
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium">Current Security Version</h3>
-          </div>
-          {analysis.current_security_head ? (
-            <AnalysisVersionElementBare
-              className="border text-sm"
-              analysisVersion={analysis.current_security_head}
-            />
-          ) : (
-            <div className="text-sm text-muted-foreground">No security version head set</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="text-sm text-muted-foreground">No code version head set</div>;
 };
 
-export default AnalysisClient;
+export const AnalysisSecurityHead: React.FC<{ teamId: string; analysisId: string }> = ({
+  teamId,
+  analysisId,
+}) => {
+  const { data: analysis, isLoading } = useQuery({
+    queryKey: [QUERY_KEYS.ANALYSES, "analysis-head", analysisId],
+    queryFn: async () => analysisActions.getAnalysisHead(teamId, analysisId),
+  });
+
+  if (!analysis || isLoading) {
+    return <AnalysisElementLoader />;
+  }
+
+  if (analysis.analysis_version) {
+    return <AnalysisVersionElement teamId={teamId} analysisVersion={analysis.analysis_version} />;
+  }
+
+  return <div className="text-sm text-muted-foreground">No security version head set</div>;
+};

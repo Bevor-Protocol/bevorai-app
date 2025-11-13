@@ -13,7 +13,8 @@ const ContractAddressStep: React.FC<{
   teamId: string;
   projectId: string;
   prevStep: () => void;
-}> = ({ prevStep, ...props }) => {
+  onSuccess: () => void;
+}> = ({ prevStep, onSuccess, ...props }) => {
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
 
@@ -24,6 +25,7 @@ const ContractAddressStep: React.FC<{
       console.log(err.message);
       setError("something went wrong");
     },
+    onSuccess: () => onSuccess(),
   });
 
   const handleSubmit = (e: React.FormEvent): void => {

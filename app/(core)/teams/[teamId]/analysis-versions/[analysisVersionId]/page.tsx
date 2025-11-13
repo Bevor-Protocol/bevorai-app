@@ -1,10 +1,8 @@
-import { breadcrumbActions, securityAnalysisActions } from "@/actions/bevor";
+import { analysisActions } from "@/actions/bevor";
 import ContainerBreadcrumb from "@/components/breadcrumbs";
 import Container from "@/components/container";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getQueryClient } from "@/lib/config/query";
-import { QUERY_KEYS } from "@/utils/constants";
 import { formatDate } from "@/utils/helpers";
 import { AsyncComponent } from "@/utils/types";
 import { Calendar, Clock, Shield, Users } from "lucide-react";
@@ -35,41 +33,39 @@ const getTriggerIcon = (trigger: string): React.ReactElement => {
 };
 
 const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
-  const queryClient = getQueryClient();
   const resolvedParams = await params;
 
-  const [analysisVersion, breadcrumbs] = await Promise.all([
-    securityAnalysisActions.getSecurityAnalysisVersion(
-      resolvedParams.teamId,
-      resolvedParams.analysisVersionId,
-    ),
-    queryClient.fetchQuery({
-      queryKey: [QUERY_KEYS.BREADCRUMBS, resolvedParams.analysisVersionId],
-      queryFn: async () =>
-        breadcrumbActions.getSecurityAnalysisVersionBreadcrumb(
-          resolvedParams.teamId,
-          resolvedParams.analysisVersionId,
-        ),
-    }),
-  ]);
+  const analysisVersion = await analysisActions.getAnalysisVersion(
+    resolvedParams.teamId,
+    resolvedParams.analysisVersionId,
+  );
 
   return (
-    <Container breadcrumb={<ContainerBreadcrumb breadcrumb={breadcrumbs} />}>
+    <Container
+      breadcrumb={
+        <ContainerBreadcrumb
+          queryKey={[resolvedParams.analysisVersionId]}
+          queryType="analysis-version"
+          teamId={resolvedParams.teamId}
+          id={resolvedParams.analysisVersionId}
+        />
+      }
+    >
       <ScrollArea className="h-[calc(100svh-(42px+14px+21px))] pr-2">
         <div className="space-y-8">
           <div className="space-y-6">
             <div className="flex flex-row items-center justify-between">
               <div className="space-y-2">
                 <h1 className="text-2xl font-bold text-foreground">
-                  Analysis Version v{analysisVersion.version_number}
+                  Analysis Version {analysisVersion.name}
                 </h1>
-                {analysisVersion.is_active_version && (
+              </div>
+              <div className="flex gap-6">
+                {analysisVersion.is_active && (
                   <Badge variant="green" className="w-fit">
                     Active Version
                   </Badge>
                 )}
-              </div>
-              <div className="flex gap-6">
                 <div className="flex items-center space-x-1 text-sm text-muted-foreground">
                   <Calendar className="size-4" />
                   <span>Created {formatDate(analysisVersion.created_at)}</span>
@@ -92,18 +88,25 @@ const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
                   <Shield className="size-4 text-purple-400" />
                   <span className="text-sm font-medium text-foreground">Functions in Scope</span>
                 </div>
-                <p className="text-2xl font-bold text-foreground">{analysisVersion.n_scopes}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {analysisVersion.version.n_scopes}
+                </p>
               </div>
               <div className="bg-card border border-border rounded-lg p-4">
                 <div className="flex items-center space-x-2 mb-2">
                   <Shield className="size-4 text-orange-400" />
                   <span className="text-sm font-medium text-foreground">Findings</span>
                 </div>
-                <p className="text-2xl font-bold text-foreground">{analysisVersion.n_findings}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {analysisVersion.version.n_findings}
+                </p>
               </div>
             </div>
           </div>
-          <AnalysisVersionClient analysisVersion={analysisVersion} />
+          <AnalysisVersionClient
+            teamId={resolvedParams.teamId}
+            analysisVersionId={resolvedParams.analysisVersionId}
+          />
         </div>
       </ScrollArea>
     </Container>

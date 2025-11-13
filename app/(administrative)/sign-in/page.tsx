@@ -8,7 +8,12 @@ import { Chrome, Github } from "lucide-react";
 import Image from "next/image";
 
 import { stytchClient } from "@/lib/config/stytch";
+import { useSearchParams } from "next/navigation";
 import React, { useState } from "react";
+
+const baseURL = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
 
 const CompanyContent: React.FC = () => {
   return (
@@ -28,6 +33,7 @@ const CompanyContent: React.FC = () => {
 };
 
 const SigninContent: React.FC = () => {
+  const searchParams = useSearchParams();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isError, setIsError] = useState(false);
   const [email, setEmail] = useState("");
@@ -39,13 +45,13 @@ const SigninContent: React.FC = () => {
     setIsLoggingIn(true);
     if (provider === "google") {
       stytchClient.oauth.google.start({
-        login_redirect_url: "http://localhost:3000/api/auth/callback",
-        signup_redirect_url: "http://localhost:3000/api/auth/callback",
+        login_redirect_url: `${baseURL}/api/auth/callback`,
+        signup_redirect_url: `${baseURL}/api/auth/callback`,
       });
     } else {
       stytchClient.oauth.github.start({
-        login_redirect_url: "http://localhost:3000/api/auth/callback",
-        signup_redirect_url: "http://localhost:3000/api/auth/callback",
+        login_redirect_url: `${baseURL}/api/auth/callback`,
+        signup_redirect_url: `${baseURL}/api/auth/callback`,
       });
     }
   };
@@ -80,9 +86,9 @@ const SigninContent: React.FC = () => {
 
     try {
       const response = await stytchClient.magicLinks.email.loginOrCreate(email, {
-        login_magic_link_url: "http://localhost:3000/api/auth/callback",
+        login_magic_link_url: `${baseURL}/api/auth/callback`,
         login_expiration_minutes: 10,
-        signup_magic_link_url: "http://localhost:3000/api/auth/callback",
+        signup_magic_link_url: `${baseURL}/api/auth/callback`,
         signup_expiration_minutes: 10,
       });
 
@@ -166,13 +172,13 @@ const SigninContent: React.FC = () => {
       </form>
 
       {isMagicLinkError && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-destructive text-sm">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-destructive text-sm text-center">
           Failed to send magic link. Please try again.
         </div>
       )}
 
-      {isError && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-destructive text-sm">
+      {(isError || searchParams.get("error")) && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-destructive text-sm text-center">
           Authentication failed. Please try again.
         </div>
       )}

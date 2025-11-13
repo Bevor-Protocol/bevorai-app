@@ -18,7 +18,7 @@ const entityTypeToAssetType: Record<string, ItemType> = {
   project: "project",
   team: "team",
   analysis: "analysis",
-  analysis_version: "analysis",
+  analysis_version: "analysis_version",
   chat: "chat",
   member: "member",
 };
@@ -44,6 +44,11 @@ const getEntityRoute = (activity: ActivitySchemaI): string => {
       return navigation.code.overview({ teamId: team_id, versionId: related_id });
     case "analysis":
       return navigation.analysis.overview({ teamId: team_id, analysisId: related_id });
+    case "analysis_version":
+      return navigation.analysisVersions.overview({
+        teamId: team_id,
+        analysisVersionId: related_id,
+      });
     case "team":
       return navigation.team.overview({ teamId: team_id });
     case "chat":

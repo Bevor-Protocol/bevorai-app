@@ -41,7 +41,7 @@ const ContainerBreadcrumb: React.FC<{ teamId: string; version: CodeVersionMappin
         id: version.id,
         type: "code",
         teamId,
-        label: version.version_number.toString(),
+        label: version.name,
         url: navigation.code.overview({ teamId, versionId: version.id }),
       });
     }
@@ -94,7 +94,7 @@ const ContainerBreadcrumb: React.FC<{ teamId: string; version: CodeVersionMappin
           <BreadcrumbItem>
             <BreadcrumbPage className="flex flex-row gap-2 items-center">
               <LucideIcon assetType="code" className="size-4" />
-              {`v${version.version_number}`}
+              {version.name}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>

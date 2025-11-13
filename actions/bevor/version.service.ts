@@ -7,8 +7,7 @@ import {
   CodeSourceSchemaI,
   CodeVersionMappingSchemaI,
   CodeVersionsPaginationI,
-  ContractSourceResponseI,
-  FunctionChunkResponseI,
+  NodeSearchResponseI,
   TreeResponseI,
 } from "@/utils/types";
 
@@ -54,7 +53,7 @@ export const contractUploadPaste = async (
   return api
     .post(
       "/code-versions/create/paste",
-      { code, project_id: projectId },
+      { content: code, project_id: projectId },
       { headers: { "bevor-team-id": teamId } },
     )
     .then((response) => {
@@ -122,25 +121,17 @@ export const getTree = async (teamId: string, versionId: string): Promise<TreeRe
     });
 };
 
-export const getCodeSources = async (
+export const searchNodes = async (
   teamId: string,
   versionId: string,
-): Promise<ContractSourceResponseI[]> => {
+  data: {
+    name: string;
+  },
+): Promise<NodeSearchResponseI[]> => {
   return api
-    .get(`/contract/version/${versionId}/sources`, { headers: { "bevor-team-id": teamId } })
+    .post(`/code-versions/${versionId}/search`, data, { headers: { "bevor-team-id": teamId } })
     .then((response) => {
-      return response.data;
-    });
-};
-
-export const getFunctionChunk = async (
-  teamId: string,
-  functionId: string,
-): Promise<FunctionChunkResponseI> => {
-  return api
-    .get(`/contract/function/${functionId}`, { headers: { "bevor-team-id": teamId } })
-    .then((response) => {
-      return response.data;
+      return response.data.results;
     });
 };
 

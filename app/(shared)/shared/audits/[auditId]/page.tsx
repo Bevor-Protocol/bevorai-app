@@ -1,4 +1,4 @@
-import { securityAnalysisActions } from "@/actions/bevor";
+import { analysisActions } from "@/actions/bevor";
 import { AsyncComponent } from "@/utils/types";
 import { notFound } from "next/navigation";
 import AnalysisResults from "./audit-results";
@@ -11,7 +11,7 @@ const AnalysisResultsPage: AsyncComponent<Props> = async ({ params }) => {
   const { teamId, analysisId } = await params;
   let audit;
   try {
-    audit = await securityAnalysisActions.getFindings(teamId, analysisId);
+    audit = await analysisActions.getFindings(teamId, analysisId);
     if (!audit.is_public) {
       throw new Error("not public");
     }

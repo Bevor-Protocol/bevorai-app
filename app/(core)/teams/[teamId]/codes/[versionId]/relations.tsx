@@ -30,7 +30,7 @@ const Relations: React.FC<{
                 href={`/teams/${teamId}/codes/${version.parent.id}`}
                 className="text-blue-400 hover:underline"
               >
-                Version {version.parent.version_number}
+                Version {version.parent.name}
               </Link>
             ) : (
               <span className="text-muted-foreground">none</span>
@@ -44,7 +44,7 @@ const Relations: React.FC<{
                 href={`/teams/${teamId}/codes/${version.child.id}`}
                 className="text-blue-400 hover:underline"
               >
-                Version {version.child.version_number}
+                Version {version.child.name}
               </Link>
             ) : (
               <span className="text-muted-foreground">none</span>
