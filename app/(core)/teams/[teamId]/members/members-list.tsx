@@ -41,20 +41,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toTitleCase } from "@/lib/utils";
-import { MemberRoleEnum, MemberSchema } from "@/utils/types";
+import { MemberRoleEnum, MemberSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
 import React, { useState } from "react";
 
 interface MembersListProps {
   teamId: string;
-  members: MemberSchema[];
+  members: MemberSchemaI[];
   isLoading: boolean;
 }
 
 const MembersList: React.FC<MembersListProps> = ({ teamId, members, isLoading }) => {
   const queryClient = useQueryClient();
-  const [selectedMember, setSelectedMember] = useState<MemberSchema | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberSchemaI | null>(null);
   const [selectedAction, setSelectedAction] = useState<"leave" | "remove" | "update" | null>(null);
   const [selectedRole, setSelectedRole] = useState<MemberRoleEnum>(MemberRoleEnum.MEMBER);
 
@@ -88,7 +88,7 @@ const MembersList: React.FC<MembersListProps> = ({ teamId, members, isLoading })
     });
   };
 
-  const handleAction = (member: MemberSchema, action: "leave" | "remove" | "update"): void => {
+  const handleAction = (member: MemberSchemaI, action: "leave" | "remove" | "update"): void => {
     setSelectedMember(member);
     setSelectedRole(member.role);
     setSelectedAction(action);

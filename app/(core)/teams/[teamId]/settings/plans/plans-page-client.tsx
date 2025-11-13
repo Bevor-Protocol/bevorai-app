@@ -6,7 +6,7 @@ import { billingActions } from "@/actions/bevor";
 import { AddonRow } from "@/components/billing/addon";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { MemberRoleEnum, StripeAddonI, StripePlanI, TeamSchemaI } from "@/utils/types";
+import { StripeAddonI, StripePlanI, TeamSchemaI } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Info, Lock } from "lucide-react";
 import React from "react";
@@ -227,7 +227,7 @@ const AddonsSection: React.FC<{ teamId: string }> = ({ teamId }) => {
   );
 };
 
-const AccessRestricted: React.FC = () => (
+export const AccessRestricted: React.FC = () => (
   <div className="px-6 py-8 bg-neutral-950 min-h-screen">
     <div className="max-w-7xl mx-auto">
       <div className="text-center py-12">
@@ -242,12 +242,6 @@ const AccessRestricted: React.FC = () => (
 );
 
 const PlansPageClient: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
-  const isOwner = team?.role === MemberRoleEnum.OWNER;
-
-  if (!isOwner) {
-    return <AccessRestricted />;
-  }
-
   return (
     <div className="px-6 pb-8 bg-neutral-950 min-h-screen">
       <div className="max-w-7xl mx-auto">

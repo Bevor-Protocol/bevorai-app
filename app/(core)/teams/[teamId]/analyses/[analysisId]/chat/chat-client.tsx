@@ -1,7 +1,7 @@
 "use client";
 
 import { chatActions } from "@/actions/bevor";
-import { ChatInterface } from "@/app/(core)/teams/[teamId]/chats/[chatId]/chat-interface";
+import { ChatInterface } from "@/app/(core)/teams/[teamId]/analyses/[analysisId]/chat/chat-interface";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
