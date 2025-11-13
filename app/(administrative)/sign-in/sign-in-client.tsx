@@ -10,12 +10,6 @@ import Image from "next/image";
 import { stytchClient } from "@/lib/config/stytch";
 import React, { useState } from "react";
 
-const baseURL = process.env.NEXT_PUBLIC_VERCEL_URL
-  ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-  : "http://localhost:3000";
-
-console.log(baseURL);
-
 const CompanyContent: React.FC = () => {
   return (
     <div className="z-10 flex flex-col justify-center items-center w-full text-center gap-6 lg:gap-8 max-w-lg">
@@ -40,6 +34,12 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
   const [isEmailError, setIsEmailError] = useState(false);
   const [isMagicLinkSuccess, setIsMagicLinkSuccess] = useState(false);
   const [isMagicLinkError, setIsMagicLinkError] = useState(false);
+
+  const baseURL =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  console.log(baseURL);
 
   const handleOAuthLogin = (provider: "google" | "github"): void => {
     setIsLoggingIn(true);
