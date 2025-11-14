@@ -21,13 +21,15 @@ const TeamProjectsPage: AsyncComponent<PageProps> = async ({ params, searchParam
         <ContainerBreadcrumb queryKey={[teamId]} queryType="projects" teamId={teamId} id="" />
       }
     >
-      <div className="flex flex-row mb-8 justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h3 className="text-foreground">Projects</h3>
+      <div className="max-w-5xl m-auto mt-8 lg:mt-16">
+        <div className="flex flex-row mb-8 justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <h3 className="text-foreground">Projects</h3>
+          </div>
+          <ProjectCreate teamId={teamId} />
         </div>
-        <ProjectCreate teamId={teamId} />
+        <ProjectsPageClient teamId={teamId} query={query} />
       </div>
-      <ProjectsPageClient teamId={teamId} query={query} />
     </Container>
   );
 };

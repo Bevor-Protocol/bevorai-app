@@ -4,6 +4,7 @@ import {
   Box,
   Code2,
   Search,
+  Settings,
   Shield,
   SquareUser,
   User,
@@ -18,6 +19,7 @@ const ASSET_ICON_MAP: Record<ItemType, LucideIconType> = {
   team: SquareUser,
   member: User,
   analysis_version: Search,
+  settings: Settings,
 };
 
 export const getIcon = (type: ItemType): LucideIconType => {

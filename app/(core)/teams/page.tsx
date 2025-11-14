@@ -7,14 +7,16 @@ import { TeamCreate, TeamsCount, TeamsTable } from "./teams-client";
 const TeamsPage: AsyncComponent = async () => {
   return (
     <Container>
-      <div className="flex flex-row mb-8 justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h3 className="text-foreground">Teams</h3>
-          <TeamsCount />
+      <div className="max-w-5xl m-auto mt-8 lg:mt-16">
+        <div className="flex flex-row mb-8 justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <h3 className="text-foreground">Teams</h3>
+            <TeamsCount />
+          </div>
+          <TeamCreate />
         </div>
-        <TeamCreate />
+        <TeamsTable />
       </div>
-      <TeamsTable />
     </Container>
   );
 };

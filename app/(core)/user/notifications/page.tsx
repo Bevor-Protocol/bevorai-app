@@ -15,8 +15,8 @@ const NotificationsPage: React.FC = async () => {
 
   return (
     <Container>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="max-w-5xl m-auto mt-8 lg:mt-16">
+        <div className="flex items-center justify-between my-6">
           <div className="flex items-center gap-3">
             <Bell className="h-6 w-6" />
             <h1 className="text-2xl font-bold">Notifications</h1>

@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import {
@@ -34,15 +35,11 @@ import { navigation } from "@/utils/navigation";
 import { HrefProps } from "@/utils/types";
 import { DropdownMenu, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
-import { Inbox, MoreHorizontal, Settings } from "lucide-react";
+import { Code, DollarSign, File, Files, Inbox, MoreHorizontal, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
-
-interface AppSidebarProps {
-  userId: string;
-}
 
 const StarredSidebarItems: React.FC = () => {
   const { state: starredItems } = useLocalStorageState("bevor:starred");
@@ -79,7 +76,7 @@ const StarredSidebarItems: React.FC = () => {
   );
 };
 
-const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
+const AppSidebar: React.FC = () => {
   const pathname = usePathname();
   const params = useParams<HrefProps>();
   const isMobile = useIsMobile();
@@ -93,6 +90,11 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
   const { data: invites = [] } = useQuery({
     queryKey: [QUERY_KEYS.INVITES],
     queryFn: async () => dashboardActions.getInvites(),
+  });
+
+  const { data: user } = useQuery({
+    queryKey: [QUERY_KEYS.USERS],
+    queryFn: () => dashboardActions.getUser(),
   });
 
   // Auto-open team when URL matches
@@ -118,7 +120,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
       className="[&_svg]:text-muted-foreground"
     >
       <SidebarHeader className="[&_svg]:text-muted-foreground py-4">
-        <UserNavigation userId={userId} />
+        <UserNavigation user={user} />
       </SidebarHeader>
       <SidebarContent className="[&_svg]:text-muted-foreground">
         <SidebarGroup>
@@ -157,7 +159,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
                   <Link href={navigation.user.notifications({})}>
                     <Inbox />
                     <span>Inbox</span>
-                    <Badge variant="green" className="ml-auto">
+                    <Badge variant="green" className="ml-auto" size="sm">
                       {invites.length}
                     </Badge>
                   </Link>
@@ -197,6 +199,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
                             </SidebarMenuButton>
                           </CollapsibleTrigger>
                           <DropdownMenuContent align="start" side="right" className="w-56">
+                            <DropdownMenuLabel>Settings</DropdownMenuLabel>
                             <DropdownMenuGroup>
                               <DropdownMenuItem asChild>
                                 <Link
@@ -212,7 +215,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
                                   href={navigation.team.settings.api({ teamId: team.id })}
                                   className="w-full flex relative"
                                 >
-                                  <Settings />
+                                  <Code />
                                   <span>API</span>
                                 </Link>
                               </DropdownMenuItem>
@@ -221,8 +224,17 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
                                   href={navigation.team.settings.billing({ teamId: team.id })}
                                   className="w-full flex relative"
                                 >
-                                  <Settings />
+                                  <DollarSign />
                                   <span>Billing</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={navigation.team.settings.plans({ teamId: team.id })}
+                                  className="w-full flex relative"
+                                >
+                                  <Files />
+                                  <span>Plans</span>
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
@@ -230,7 +242,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ userId }) => {
                                   href={navigation.team.settings.invoices({ teamId: team.id })}
                                   className="w-full flex relative"
                                 >
-                                  <Settings />
+                                  <File />
                                   <span>Invoices</span>
                                 </Link>
                               </DropdownMenuItem>

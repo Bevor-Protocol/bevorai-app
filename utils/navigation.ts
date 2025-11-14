@@ -27,6 +27,7 @@ export const navigation = {
       billing: (data: HrefProps) => `/teams/${data.teamId}/settings/billing`,
       api: (data: HrefProps) => `/teams/${data.teamId}/settings/api`,
       invoices: (data: HrefProps) => `/teams/${data.teamId}/settings/invoices`,
+      plans: (data: HrefProps) => `/teams/${data.teamId}/settings/plans`,
     },
   },
   project: {

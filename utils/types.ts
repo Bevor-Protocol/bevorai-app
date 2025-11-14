@@ -21,6 +21,11 @@ export interface UserSchemaI extends BaseSchema {
   username: string;
 }
 
+export interface UserDetailedSchemaI extends UserSchemaI {
+  email?: string;
+  wallet?: string;
+}
+
 export interface AnalysisStatusSchemaI {
   id: string;
   status: string;
@@ -535,7 +540,8 @@ export type ItemType =
   | "chat"
   | "analysis"
   | "analysis_version"
-  | "member";
+  | "member"
+  | "settings";
 
 export interface BreadcrumbItem {
   route: string;

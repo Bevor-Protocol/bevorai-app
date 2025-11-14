@@ -1,7 +1,11 @@
 "use client";
 
 import { analysisActions, versionActions } from "@/actions/bevor";
-import { AnalysisElementLoader, AnalysisVersionElement } from "@/components/audits/element";
+import {
+  AnalysisElementLoader,
+  AnalysisVersionElement,
+  AnalysisVersionElementBare,
+} from "@/components/audits/element";
 import LucideIcon from "@/components/lucide-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,14 +39,6 @@ import {
 } from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   CodeVersionElement,
   CodeVersionElementBare,
@@ -305,7 +301,7 @@ export const CodeVersionUpdateDialog: React.FC<
 > = ({ teamId, analysis, ...props }) => {
   const queryClient = useQueryClient();
   const [selectedCodeVersion, setSelectedCodeVersion] = useState<string | undefined>(
-    analysis.head.analysis_version_id,
+    analysis.head.code_version_id,
   );
 
   const { data: codeVersions } = useQuery({
@@ -361,9 +357,9 @@ export const CodeVersionUpdateDialog: React.FC<
             {codeVersions?.results.map((version, ind) => (
               <CodeVersionElementBare
                 className={cn(
-                  "border p-2 text-xs hover:border-muted-foreground/60 transition-colors",
-                  version.id === analysis.head.code_version_id && "border-muted-foreground",
-                  version.id === selectedCodeVersion && "border-muted-foreground",
+                  "border p-2 text-xs transition-colors border-muted-foreground/60",
+                  selectedCodeVersion === version.id && "border-ring",
+                  selectedCodeVersion !== version.id && "hover:border-muted-foreground",
                 )}
                 key={ind}
                 onClick={() => setSelectedCodeVersion(version.id)}
@@ -394,9 +390,11 @@ export const SecurityVersionUpdateDialog: React.FC<
   { analysis: AnalysisSchemaI; teamId: string } & React.ComponentProps<typeof DialogPrimitive.Root>
 > = ({ teamId, analysis, ...props }) => {
   const queryClient = useQueryClient();
-  const [selectedSecurityVersion, setSelectedSecurityVersion] = useState<string>("");
+  const [selectedVersion, setSelectedVersion] = useState<string | undefined>(
+    analysis.head.analysis_version_id,
+  );
 
-  const { data: securityVersions } = useQuery({
+  const { data: analysisVersions } = useQuery({
     queryKey: [QUERY_KEYS.ANALYSIS_VERSION, "list", analysis.id],
     queryFn: () =>
       analysisActions.getAnalysisVersions(teamId, {
@@ -428,8 +426,8 @@ export const SecurityVersionUpdateDialog: React.FC<
   });
 
   const handleUpdate = (): void => {
-    if (!selectedSecurityVersion) return;
-    updateSecurityHeadMutation.mutate(selectedSecurityVersion);
+    if (!selectedVersion || selectedVersion == analysis.head.analysis_version_id) return;
+    updateSecurityHeadMutation.mutate(selectedVersion);
     if (props.onOpenChange) {
       props.onOpenChange(false);
     }
@@ -440,48 +438,28 @@ export const SecurityVersionUpdateDialog: React.FC<
       <DialogContent className="min-h-1/2 grid-rows-[auto_1fr_auto]">
         <DialogHeader>
           <DialogTitle>Update Security Version Head</DialogTitle>
+          <DialogDescription>
+            Updating the analysis version head will make it so subsequent analyses are branched from
+            this, and new chats will default to using this version. You can update it whenever.
+          </DialogDescription>
         </DialogHeader>
-        <div className="justify-start max-h-96 overflow-y-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Version</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>ID</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {securityVersions?.results?.map((version) => (
-                <TableRow
-                  key={version.id}
-                  className={`cursor-pointer transition-colors ${
-                    selectedSecurityVersion === version.id ? "bg-blue-50" : "hover:bg-gray-50"
-                  }`}
-                  onClick={() => setSelectedSecurityVersion(version.id)}
-                >
-                  <TableCell className="font-medium">Version {version.name}</TableCell>
-                  <TableCell>{new Date(version.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        version.version.status === "success"
-                          ? "bg-green-100 text-green-800"
-                          : version.version.status === "processing"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {version.version.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{version.id}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="justify-start">
+          <div className="flex flex-col gap-2 text-xs">
+            {analysisVersions?.results.map((version, ind) => (
+              <AnalysisVersionElementBare
+                className={cn(
+                  "border p-2 text-xs transition-colors border-muted-foreground/60",
+                  selectedVersion === version.id && "border-ring",
+                  selectedVersion !== version.id && "hover:border-muted-foreground",
+                )}
+                key={ind}
+                onClick={() => setSelectedVersion(version.id)}
+                analysisVersion={version}
+              />
+            ))}
+          </div>
+          {analysisVersions?.results.length === 0 && <VersionEmpty centered />}
         </div>
-
         <DialogFooter className="items-end">
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
@@ -489,7 +467,7 @@ export const SecurityVersionUpdateDialog: React.FC<
           <Button
             type="submit"
             onClick={handleUpdate}
-            disabled={updateSecurityHeadMutation.isPending || !selectedSecurityVersion}
+            disabled={updateSecurityHeadMutation.isPending || !selectedVersion}
           >
             {updateSecurityHeadMutation.isPending ? "Updating..." : "Update Security Head"}
           </Button>

@@ -22,7 +22,7 @@ const badgeVariants = cva(
       },
       size: {
         default: "px-2 py-0.5 text-sm rounded-sm",
-        sm: "px-2 py-0.5 text-sm rounded-sm",
+        sm: "px-2 py-0.5 text-xs rounded-sm",
         sharp: "px-2 py-1 text-base rounded-xs",
         round: "px-2 py-1 text-sm rounded-lg",
       },

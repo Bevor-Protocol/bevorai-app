@@ -162,7 +162,7 @@ const PlanCard: React.FC<{
   );
 };
 
-const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
+export const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: ["products", team.id],
     queryFn: () => billingActions.getProducts(team.id),
@@ -194,7 +194,7 @@ const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   );
 };
 
-const AddonsSection: React.FC<{ teamId: string }> = ({ teamId }) => {
+export const AddonsSection: React.FC<{ teamId: string }> = ({ teamId }) => {
   const { data: addons, isLoading: addonsLoading } = useQuery({
     queryKey: ["addons"],
     queryFn: () => billingActions.getAddons(teamId),
@@ -240,22 +240,3 @@ export const AccessRestricted: React.FC = () => (
     </div>
   </div>
 );
-
-const PlansPageClient: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
-  return (
-    <div className="px-6 pb-8 bg-neutral-950 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-12">
-          <h2 className="text-xl font-semibold text-foreground mb-6">Available Plans</h2>
-          <PlansSection team={team} />
-        </div>
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-foreground mb-6">Optional Add-ons</h2>
-          <AddonsSection teamId={team.id} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default PlansPageClient;

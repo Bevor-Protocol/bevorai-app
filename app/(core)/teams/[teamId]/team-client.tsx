@@ -23,7 +23,7 @@ import { QUERY_KEYS } from "@/utils/constants";
 import { navigation } from "@/utils/navigation";
 import { TeamOverviewSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { Code, DollarSign, File, MoreHorizontal, Settings } from "lucide-react";
+import { Code, DollarSign, File, Files, MoreHorizontal, Settings } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
@@ -54,6 +54,12 @@ export const TeamToggle: React.FC<{ teamId: string }> = ({ teamId }) => {
             <Link href={navigation.team.settings.billing({ teamId: teamId })}>
               <span>Billing</span>
               <DollarSign />
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="[&_svg]:ml-auto">
+            <Link href={navigation.team.settings.plans({ teamId: teamId })}>
+              <span>Plans</span>
+              <Files />
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="[&_svg]:ml-auto">

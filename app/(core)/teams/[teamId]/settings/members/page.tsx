@@ -1,6 +1,7 @@
 "use server";
 
 import { billingActions, teamActions } from "@/actions/bevor";
+import ContainerBreadcrumb from "@/components/breadcrumbs";
 import Container from "@/components/container";
 import { getQueryClient } from "@/lib/config/query";
 import { AsyncComponent } from "@/utils/types";
@@ -35,21 +36,27 @@ const MembersPage: AsyncComponent<PageProps> = async ({ params }) => {
   ]);
 
   return (
-    <Container>
-      <div className="flex flex-row mb-8 justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h3 className="text-foreground">Members</h3>
+    <Container
+      breadcrumb={
+        <ContainerBreadcrumb queryKey={[teamId]} queryType="team-settings" teamId={teamId} id="" />
+      }
+    >
+      <div className="max-w-5xl m-auto mt-8 lg:mt-16">
+        <div className="flex flex-row mb-8 justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <h3 className="text-foreground">Members</h3>
+            <HydrationBoundary state={dehydrate(queryClient)}>
+              <MembersCount teamId={teamId} />
+            </HydrationBoundary>
+          </div>
           <HydrationBoundary state={dehydrate(queryClient)}>
-            <MembersCount teamId={teamId} />
+            <MemberCreate teamId={teamId} />
           </HydrationBoundary>
         </div>
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <MemberCreate teamId={teamId} />
+          <MembersTabs teamId={teamId} />
         </HydrationBoundary>
       </div>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <MembersTabs teamId={teamId} />
-      </HydrationBoundary>
     </Container>
   );
 };

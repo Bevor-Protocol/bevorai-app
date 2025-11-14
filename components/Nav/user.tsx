@@ -1,31 +1,28 @@
 "use client";
 
-import { authActions, dashboardActions } from "@/actions/bevor";
+import { authActions } from "@/actions/bevor";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { QUERY_KEYS } from "@/utils/constants";
+import { trimAddress } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { UserDetailedSchemaI } from "@/utils/types";
+import { useMutation } from "@tanstack/react-query";
 import { ChevronsUpDown, ExternalLink, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
 export const UserNavigation: React.FC<{
-  userId: string;
-}> = ({ userId }) => {
-  const { data: user } = useQuery({
-    queryKey: [QUERY_KEYS.USERS],
-    queryFn: () => dashboardActions.getUser(),
-  });
-
+  user: UserDetailedSchemaI | null | undefined;
+}> = ({ user }) => {
   const logoutMutation = useMutation({
     mutationFn: async () => authActions.logout(),
   });
@@ -36,17 +33,25 @@ export const UserNavigation: React.FC<{
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg">
-              <Icon
-                size="md"
-                shape="block"
-                seed={userId}
-                className="group-data-[collapsible=icon]:ml-[3px]"
-              />
-              <span>{user?.username}</span>
+              <div className="flex gap-2 items-center">
+                <Icon
+                  size="md"
+                  shape="block"
+                  seed={user?.id}
+                  className="group-data-[collapsible=icon]:ml-[3px] shrink-0"
+                />
+                <div>
+                  <span className="block">{user?.username}</span>
+                  <span className="block text-muted-foreground text-xs truncate">
+                    {user?.email ?? trimAddress(user?.wallet) ?? ""}
+                  </span>
+                </div>
+              </div>
               <ChevronsUpDown className="size-5! text-muted-foreground ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" side="right" className="w-56">
+            <DropdownMenuLabel>Account</DropdownMenuLabel>
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link
@@ -59,7 +64,6 @@ export const UserNavigation: React.FC<{
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link

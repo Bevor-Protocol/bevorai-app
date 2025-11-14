@@ -31,6 +31,10 @@ const breadcrumbFetchers = {
     void _id;
     return breadcrumbActions.getTeamBreadcrumb(teamId);
   },
+  "team-settings": (teamId: string, _id: string): Promise<BreadcrumbSchemaI> => {
+    void _id;
+    return breadcrumbActions.getTeamSettingsBreadcrumb(teamId);
+  },
   projects: (teamId: string, _id: string): Promise<BreadcrumbSchemaI> => {
     void _id;
     return breadcrumbActions.getProjectsBreadcrumb(teamId);

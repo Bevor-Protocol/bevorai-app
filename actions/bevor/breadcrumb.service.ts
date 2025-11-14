@@ -9,6 +9,14 @@ export const getTeamBreadcrumb = async (teamId: string): Promise<BreadcrumbSchem
   });
 };
 
+export const getTeamSettingsBreadcrumb = async (teamId: string): Promise<BreadcrumbSchemaI> => {
+  return api
+    .get("/breadcrumbs/team/settings", { headers: { "bevor-team-id": teamId } })
+    .then((response) => {
+      return response.data;
+    });
+};
+
 export const getProjectsBreadcrumb = async (teamId: string): Promise<BreadcrumbSchemaI> => {
   return api
     .get("/breadcrumbs/projects", { headers: { "bevor-team-id": teamId } })

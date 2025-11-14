@@ -1,7 +1,10 @@
 "use client";
 
 import { teamActions } from "@/actions/bevor";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { QUERY_KEYS } from "@/utils/constants";
 import { MemberRoleEnum, MemberSchemaI, TeamDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -92,11 +95,9 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
         {team.is_default && (
           <div className="flex flex-row gap-8 items-center">
             <p className="block text-sm font-medium text-foreground w-16">Type</p>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded text-xs">
-                Default Team
-              </span>
-            </div>
+            <Badge variant="blue" size="sm">
+              Default Team
+            </Badge>
           </div>
         )}
       </div>
@@ -104,13 +105,12 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
       <form className="flex flex-col gap-4" onSubmit={handleSave}>
         <div className="flex flex-row flex-wrap items-end gap-x-4 gap-y-2">
           <div className="grow min-w-52 max-w-80">
-            <label className="block font-medium text-foreground mb-2">Team Name</label>
-            <input
+            <Label className="mb-2">Team Name</Label>
+            <Input
               type="text"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               disabled={!isOwner}
-              className="w-full h-10 px-3 border border-neutral-700 text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Enter team name"
             />
           </div>
@@ -118,10 +118,9 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
             <Button
               type="submit"
               disabled={updateTeamMutation.isPending || updateTeamMutation.isSuccess}
-              className="h-10 px-4"
             >
-              <Save className="size-4 mr-2" />
-              {updateTeamMutation.isPending ? "Saving..." : "Save Changes"}
+              <Save />
+              {updateTeamMutation.isPending ? "Saving..." : "Save"}
             </Button>
           )}
         </div>

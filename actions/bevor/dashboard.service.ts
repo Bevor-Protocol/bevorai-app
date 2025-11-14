@@ -6,14 +6,14 @@ import {
   MemberInviteSchema,
   TeamDetailedSchemaI,
   TeamOverviewSchemaI,
-  UserSchemaI,
+  UserDetailedSchemaI,
 } from "@/utils/types";
 
 /*
 Dashboard-specific actions, that span teams
 */
 
-export const getUser = async (): Promise<UserSchemaI | null> => {
+export const getUser = async (): Promise<UserDetailedSchemaI | null> => {
   return api
     .get("/dashboard/user")
     .then((response) => {
