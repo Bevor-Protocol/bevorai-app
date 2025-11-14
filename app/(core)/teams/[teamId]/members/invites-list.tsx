@@ -63,7 +63,7 @@ const InvitesList: React.FC<InvitesListProps> = ({ teamId, invites, isLoading })
   });
 
   const removeInviteMutation = useMutation({
-    mutationFn: async (inviteId: string) => teamActions.removeInvite(teamId, inviteId),
+    mutationFn: async (inviteId: string) => teamActions.removeInvite(inviteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invites", teamId] });
       queryClient.invalidateQueries({ queryKey: ["subscription", teamId] });
