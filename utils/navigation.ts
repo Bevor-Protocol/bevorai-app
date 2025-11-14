@@ -13,21 +13,18 @@ export const navigation = {
   projects: {
     overview: (data: HrefProps) => "/projects",
   },
-  members: {
-    overview: (data: HrefProps) => "/members",
-  },
   team: {
     overview: (data: HrefProps) => `/teams/${data.teamId}`,
     projects: (data: HrefProps) => `/teams/${data.teamId}/projects`,
     analyses: (data: HrefProps) => `/teams/${data.teamId}/analyses`,
     chats: (data: HrefProps) => `/teams/${data.teamId}/chats`,
-    members: (data: HrefProps) => `/teams/${data.teamId}/members`,
     settings: {
       overview: (data: HrefProps) => `/teams/${data.teamId}/settings`,
       billing: (data: HrefProps) => `/teams/${data.teamId}/settings/billing`,
       api: (data: HrefProps) => `/teams/${data.teamId}/settings/api`,
       invoices: (data: HrefProps) => `/teams/${data.teamId}/settings/invoices`,
       plans: (data: HrefProps) => `/teams/${data.teamId}/settings/plans`,
+      members: (data: HrefProps) => `/teams/${data.teamId}/settings/members`,
     },
   },
   project: {

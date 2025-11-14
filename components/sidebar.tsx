@@ -248,7 +248,7 @@ const AppSidebar: React.FC = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={navigation.team.members({ teamId: team.id })}
+                                  href={navigation.team.settings.members({ teamId: team.id })}
                                   className="w-full flex relative"
                                 >
                                   <LucideIcon assetType="member" />

@@ -55,7 +55,7 @@ const getEntityRoute = (activity: ActivitySchemaI): string => {
       // TODO: fix for chat.
       return navigation.team.overview({ teamId: team_id, analysisId: related_id });
     case "member":
-      return navigation.team.members({ teamId: team_id });
+      return navigation.team.settings.members({ teamId: team_id });
     default:
       return "#";
   }

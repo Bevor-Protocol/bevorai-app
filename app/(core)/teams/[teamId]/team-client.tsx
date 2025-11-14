@@ -69,7 +69,7 @@ export const TeamToggle: React.FC<{ teamId: string }> = ({ teamId }) => {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="[&_svg]:ml-auto">
-            <Link href={navigation.team.members({ teamId: teamId })}>
+            <Link href={navigation.team.settings.members({ teamId: teamId })}>
               <span>Members</span>
               <LucideIcon assetType="member" />
             </Link>
