@@ -25,7 +25,7 @@ const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
   const [showModal, setShowModal] = useState(false);
 
   const acceptInviteMutation = useMutation({
-    mutationFn: async () => teamActions.acceptInvite(invite.team.id, invite.id),
+    mutationFn: async () => teamActions.acceptInvite(invite.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-invites"] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TEAMS] });
@@ -35,7 +35,7 @@ const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
   });
 
   const rejectInviteMutation = useMutation({
-    mutationFn: async () => teamActions.removeInvite(invite.team.id, invite.id),
+    mutationFn: async () => teamActions.removeInvite(invite.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-invites"] });
       setShowModal(false);

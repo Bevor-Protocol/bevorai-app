@@ -50,12 +50,10 @@ export const inviteMembers = async (teamId: string, data: InviteMemberBody): Pro
   });
 };
 
-export const removeInvite = async (teamId: string, inviteId: string): Promise<boolean> => {
-  return api
-    .delete(`/invites/${inviteId}`, { headers: { "bevor-team-id": teamId } })
-    .then((response) => {
-      return response.data.success;
-    });
+export const removeInvite = async (inviteId: string): Promise<boolean> => {
+  return api.delete(`/invites/${inviteId}`).then((response) => {
+    return response.data.success;
+  });
 };
 
 export const updateInvite = async (
@@ -70,12 +68,10 @@ export const updateInvite = async (
     });
 };
 
-export const acceptInvite = async (teamId: string, inviteId: string): Promise<string> => {
-  return api
-    .post(`/invites/${inviteId}`, {}, { headers: { "bevor-team-id": teamId } })
-    .then((response) => {
-      return response.data.id;
-    });
+export const acceptInvite = async (inviteId: string): Promise<string> => {
+  return api.post(`/invites/${inviteId}`, {}).then((response) => {
+    return response.data.id;
+  });
 };
 
 export const updateMember = async (

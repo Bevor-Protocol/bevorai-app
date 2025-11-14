@@ -1,9 +1,6 @@
 "use client";
 
-import { authActions, dashboardActions } from "@/actions/bevor";
-import ViewInviteModal from "@/components/Modal/view-invite";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { authActions } from "@/actions/bevor";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,71 +12,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { navigation } from "@/utils/navigation";
-import { MemberInviteSchema, TeamSchemaI } from "@/utils/types";
+import { TeamSchemaI } from "@/utils/types";
 // Removed Privy wallet dependency
-import { DialogTrigger } from "@radix-ui/react-dialog";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Bell, ExternalLink, LayoutDashboardIcon, LogOut, Settings } from "lucide-react";
+import { ExternalLink, LayoutDashboardIcon, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
-
-export const Web3Network: React.FC = () => {
-  // Wallet functionality removed - using Stytch for authentication only
-  return <></>;
-};
-
-export const Notifications: React.FC = () => {
-  const [inviteUse, setInviteUse] = useState<MemberInviteSchema | null>(null);
-
-  const { data: invites } = useSuspenseQuery({
-    queryKey: ["user-invites"],
-    queryFn: async () => dashboardActions.getInvites(),
-  });
-
-  const hasInvites = (invites?.length ?? 0) > 0;
-
-  return (
-    <Dialog>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Bell className="h-4" />
-            {hasInvites && (
-              <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full flex items-center justify-center" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          {invites?.map((invite) => (
-            <DialogTrigger key={invite.id} asChild>
-              <DropdownMenuItem onClick={() => setInviteUse(invite)}>
-                <Icon size="sm" seed={invite.team.id} className="text-blue-400 mt-1" />
-                <div className="flex-1">
-                  <p className="text-sm text-foreground">
-                    You&apos;ve been added to a team: {invite.team.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(invite.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </DropdownMenuItem>
-            </DialogTrigger>
-          ))}
-          {invites.length === 0 && (
-            <DropdownMenuItem disabled className="text-sm text-muted-foreground justify-center">
-              No team invites
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      {!!inviteUse && (
-        <DialogContent>
-          <ViewInviteModal invite={inviteUse} />
-        </DialogContent>
-      )}
-    </Dialog>
-  );
-};
+import React from "react";
 
 export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userId, teams }) => {
   const defaultTeam = teams.find((team) => team.is_default);
