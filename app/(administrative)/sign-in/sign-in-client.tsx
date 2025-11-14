@@ -39,7 +39,6 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
     typeof window !== "undefined"
       ? window.location.origin
       : process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  console.log(baseURL);
 
   const handleOAuthLogin = (provider: "google" | "github"): void => {
     setIsLoggingIn(true);
@@ -136,6 +135,7 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
               onChange={handleEmailChange}
               autoComplete="off"
               aria-invalid={isEmailError}
+              className="bg-background"
             />
             {isEmailError && (
               <FieldError className="absolute -bottom-5 left-0 right-0">
