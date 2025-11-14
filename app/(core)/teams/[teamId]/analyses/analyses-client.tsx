@@ -1,8 +1,8 @@
 "use client";
 
 import { analysisActions, teamActions } from "@/actions/bevor";
-import { AnalysisElement } from "@/components/audits/element";
-import { AnalysisEmpty } from "@/components/audits/empty";
+import { AnalysisElement } from "@/components/analysis/element";
+import { AnalysisEmpty } from "@/components/analysis/empty";
 import CreateAnalysisModal from "@/components/Modal/create-analysis";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";

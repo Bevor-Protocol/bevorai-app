@@ -5,7 +5,7 @@ import {
   AnalysisElementLoader,
   AnalysisVersionElement,
   AnalysisVersionElementBare,
-} from "@/components/audits/element";
+} from "@/components/analysis/element";
 import LucideIcon from "@/components/lucide-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

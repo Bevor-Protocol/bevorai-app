@@ -83,7 +83,7 @@ const CodeVersionsData: React.FC<{
         setIsSearching={setIsSearching}
       />
       <ScrollArea className={cn("w-full pb-4 grow", isSearching && "opacity-75")}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
           {versionsQuery.data?.results.map((version, ind) => (
             <CodeVersionElement
               key={version.id + String(ind)}
@@ -95,7 +95,7 @@ const CodeVersionsData: React.FC<{
         </div>
         {versionsQuery.data && versionsQuery.data.results.length === 0 && isAnySearched && (
           <div className="text-center py-12">
-            <Search className="w-12 h-12 text-neutral-500 mx-auto mb-4" />
+            <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-foreground mb-2">No code versions found</h3>
             <p className="text-muted-foreground">Try adjusting your search terms</p>
           </div>

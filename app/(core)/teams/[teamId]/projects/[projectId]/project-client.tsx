@@ -2,8 +2,8 @@
 
 import { activityActions, analysisActions, projectActions } from "@/actions/bevor";
 import ActivityList from "@/components/activity";
-import { AnalysisElement } from "@/components/audits/element";
-import { AnalysisEmpty } from "@/components/audits/empty";
+import { AnalysisElement } from "@/components/analysis/element";
+import { AnalysisEmpty } from "@/components/analysis/empty";
 import LucideIcon from "@/components/lucide-icon";
 import CreateAnalysisModal from "@/components/Modal/create-analysis";
 import {
@@ -41,11 +41,11 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { QUERY_KEYS } from "@/utils/constants";
-import { formatDate } from "@/utils/helpers";
+import { formatDate, formatNumber } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
 import { CodeProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Calendar, Edit, File, GitBranch, MoreHorizontal, Tag, Trash } from "lucide-react";
+import { Calendar, Edit, MoreHorizontal, Tag, Trash } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -141,7 +141,14 @@ const projectFormSchema = z.object({
   description: z.string().optional(),
   tags: z
     .string()
-    .transform((value) => value.split(",").map((s) => s.trim()))
+    .optional()
+    .transform((value) => {
+      if (!value || value.trim() === "") return [];
+      return value
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+    })
     .pipe(z.array(z.string())),
 });
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -363,13 +370,13 @@ const ProjectClient: React.FC<{ teamId: string; projectId: string }> = ({ teamId
           <Calendar className="size-4" />
           <span>{formatDate(project.created_at)}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <GitBranch className="size-4" />
-          <span>{project.n_versions} versions</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <File className="size-4" />
-          <span>{project.n_analyses} analyses</span>
+        <div className="flex flex-row gap-1 shrink-0">
+          <Badge variant="blue" size="sm">
+            {formatNumber(project.n_codes)} codes
+          </Badge>
+          <Badge variant="green" size="sm">
+            {formatNumber(project.n_analyses)} analyses
+          </Badge>
         </div>
       </div>
       {project.description && (

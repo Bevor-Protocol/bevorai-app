@@ -74,9 +74,9 @@ export const ProjectsTable: React.FC<{
         </div>
       </div>
       <ScrollArea className="w-full pb-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
           {projects?.results.map((project) => (
-            <ProjectElement key={project.id} project={project} isDisabled={isSearching} />
+            <ProjectElement key={project.id} project={project} isDisabled={isSearching} showTeam />
           ))}
         </div>
       </ScrollArea>
@@ -84,7 +84,7 @@ export const ProjectsTable: React.FC<{
         projects.results.length === 0 &&
         (debouncedSearchQuery.name || debouncedSearchQuery.tag) && (
           <div className="text-center py-12">
-            <Search className="w-12 h-12 text-neutral-500 mx-auto mb-4" />
+            <Search className="size-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-foreground mb-2">No projects found</h3>
             <p className="text-muted-foreground">Try adjusting your search terms</p>
           </div>

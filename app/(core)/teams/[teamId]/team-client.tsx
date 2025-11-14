@@ -2,10 +2,10 @@
 
 import { activityActions, analysisActions, projectActions } from "@/actions/bevor";
 import ActivityList from "@/components/activity";
-import { AnalysisElement } from "@/components/audits/element";
-import { AnalysisEmpty } from "@/components/audits/empty";
+import { AnalysisElement } from "@/components/analysis/element";
+import { AnalysisEmpty } from "@/components/analysis/empty";
 import LucideIcon from "@/components/lucide-icon";
-import { ProjectSimpleElement } from "@/components/projects/element";
+import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
 import { Button } from "@/components/ui/button";
 import {
@@ -133,7 +133,7 @@ export const ProjectsSection: React.FC<{
   return (
     <div className="flex flex-col gap-3">
       {projects?.results.map((project) => (
-        <ProjectSimpleElement key={project.id} project={project} />
+        <ProjectElement key={project.id} project={project} />
       ))}
       {isLoading && [0, 1].map((ind) => <Skeleton key={ind} className="w-full h-56" />)}
     </div>

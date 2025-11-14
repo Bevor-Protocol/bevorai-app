@@ -79,8 +79,8 @@ const MethodSelection: React.FC<{
         {versionMethods.map((method, ind) => (
           <div
             className={cn(
-              "relative overflow-hidden p-6 last:border-r last:border-b group",
-              method.disabled && "opacity-60 pointer-events-none",
+              "relative overflow-hidden p-6 last:border-r last:border-b group cursor-pointer",
+              method.disabled && "opacity-60 pointer-events-none cursor-default",
             )}
             key={ind}
             onClick={() => handleSelection(method)}

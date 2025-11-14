@@ -19,7 +19,7 @@ const CodeClient: React.FC<{
   return (
     <ScrollArea className="h-full" viewportRef={scrollRef}>
       <div className="grid pb-4 lg:pt-4 pr-2" style={{ gridTemplateColumns: "250px 1fr" }}>
-        <h3>Code Version {version.name}</h3>
+        <h3>{version.inferred_name}</h3>
         <div className="flex justify-between gap-10">
           <NodeSearch
             teamId={teamId}

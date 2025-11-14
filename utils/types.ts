@@ -301,7 +301,7 @@ export interface CodeProjectSchemaI extends BaseSchema {
 }
 
 export interface CodeProjectDetailedSchemaI extends CodeProjectSchemaI {
-  n_versions: number;
+  n_codes: number;
   n_analyses: number;
   team: TeamSchemaI;
   created_by_user: UserSchemaI;
@@ -313,7 +313,8 @@ export interface CodeProjectsPaginationI extends PaginationI {
 
 /* CODE VERSION */
 export interface CodeVersionMappingSchemaI extends BaseSchema {
-  name: string;
+  name?: string;
+  inferred_name: string;
   code_project_id: string;
   parent_version_id?: string;
   user: UserSchemaI;
@@ -324,7 +325,7 @@ export interface CodeVersionMappingSchemaI extends BaseSchema {
 
 export interface CodeVersionSchemaI extends BaseSchema {
   network?: string;
-  version_method: string;
+  version_method: "tag" | "commit" | "hash" | "address";
   version_identifier: string;
   source_type: SourceTypeEnum;
   source_url?: string;

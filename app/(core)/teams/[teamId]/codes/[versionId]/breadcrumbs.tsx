@@ -41,7 +41,7 @@ const ContainerBreadcrumb: React.FC<{ teamId: string; version: CodeVersionMappin
         id: version.id,
         type: "code",
         teamId,
-        label: version.name,
+        label: version.inferred_name,
         url: navigation.code.overview({ teamId, versionId: version.id }),
       });
     }

@@ -256,12 +256,23 @@ const FileStep: React.FC<{
         </div>
         <Button
           type="submit"
-          disabled={activeTab === "upload" ? !uploadedFile : !contractCode.trim()}
+          disabled={
+            (activeTab === "upload" ? !uploadedFile : !contractCode.trim()) || mutation.isPending
+          }
           className="min-w-40"
           onClick={handleSubmit}
         >
-          <span>Create Version</span>
-          <ArrowRight className="size-4" />
+          {mutation.isPending ? (
+            <>
+              <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span>Processing...</span>
+            </>
+          ) : (
+            <>
+              <span>Submit</span>
+              <ArrowRight className="size-4" />
+            </>
+          )}
         </Button>
       </div>
 

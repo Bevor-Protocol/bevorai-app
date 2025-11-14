@@ -1,9 +1,10 @@
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { formatDate, truncateVersion } from "@/utils/helpers";
+import { formatDate, trimAddress } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
-import { CodeVersionMappingSchemaI, CodeVersionSchemaI } from "@/utils/types";
-import { Clock, Code, Network, User } from "lucide-react";
+import { CodeVersionMappingSchemaI, CodeVersionSchemaI, SourceTypeEnum } from "@/utils/types";
+import { Clock, Code, ExternalLink, Network } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
@@ -35,19 +36,6 @@ export const CodeVersionElementLoader: React.FC = () => {
   );
 };
 
-export const VersionBadge: React.FC<{
-  name: string;
-  isPreview?: boolean;
-}> = ({ name, isPreview = false }) => {
-  if (isPreview) return null;
-
-  return (
-    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-900/20 text-blue-400 border border-blue-800/30">
-      {name}
-    </span>
-  );
-};
-
 export const VersionMeta: React.FC<{
   version: CodeVersionSchemaI;
 }> = ({ version }) => {
@@ -71,32 +59,62 @@ export const VersionMeta: React.FC<{
 export const CodeVersionElementBare: React.FC<
   {
     version: CodeVersionMappingSchemaI;
-    isPreview?: boolean;
   } & React.ComponentProps<"div">
-> = ({ version, isPreview = false, className, ...props }) => {
-  const versionDisplay = truncateVersion({
-    versionMethod: version.version.version_method,
-    versionIdentifier: version.version.version_identifier,
-  });
+> = ({ version, className, ...props }) => {
+  const isScanMethod = version.version.source_type === SourceTypeEnum.SCAN;
+  const isRepoMethod = version.version.source_type === SourceTypeEnum.REPOSITORY;
+
+  const formatVersionIdentifier = (): string => {
+    if (version.version.version_method === "tag") {
+      return version.version.version_identifier;
+    }
+    if (version.version.version_method === "address") {
+      return trimAddress(version.version.version_identifier);
+    }
+    return version.version.version_identifier.slice(0, 7) + "...";
+  };
 
   return (
     <div
       className={cn("flex items-start justify-start gap-2 rounded-lg p-4", className)}
       {...props}
     >
-      <Code className="size-4 text-green-foreground mt-2" />
+      <Code className="size-4 text-green-foreground mt-1.5" />
       <div className="grow space-y-2">
         <div className="flex justify-between">
-          <p className="font-medium text-foreground truncate text-lg">
-            {version.version.version_method} - {versionDisplay}
-          </p>
-          <VersionBadge name={version.name} isPreview={isPreview} />
+          <p className="font-medium text-foreground truncate text-lg">{version.inferred_name}</p>
         </div>
         <div className="flex justify-between">
-          <VersionMeta version={version.version} />
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <User className="size-3" />
-            <span>{version.user.username}</span>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            {isScanMethod && version.version.network && (
+              <div className="flex items-center gap-1">
+                <Network className="size-3" />
+                <span>{version.version.network}</span>
+              </div>
+            )}
+            <span className="capitalize">{version.version.source_type}</span>
+            <Badge variant="outline" size="sm" className="font-mono text-xs">
+              {formatVersionIdentifier()}
+            </Badge>
+            {version.version.solc_version && (
+              <span className="font-mono text-xs">{version.version.solc_version}</span>
+            )}
+            {isRepoMethod && version.version.source_url && (
+              <a
+                href={version.version.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 hover:text-foreground transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="size-3" />
+                <span>Source</span>
+              </a>
+            )}
+            <div className="flex items-center gap-1">
+              <Clock className="size-3" />
+              <span>{formatDate(version.created_at)}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -107,9 +125,8 @@ export const CodeVersionElementBare: React.FC<
 export const CodeVersionElement: React.FC<{
   version: CodeVersionMappingSchemaI;
   teamId: string;
-  isPreview?: boolean;
   isDisabled?: boolean;
-}> = ({ version, teamId, isPreview = false, isDisabled = false }) => {
+}> = ({ version, teamId, isDisabled = false }) => {
   return (
     <Link
       href={navigation.code.overview({
@@ -122,7 +139,7 @@ export const CodeVersionElement: React.FC<{
       )}
       aria-disabled={isDisabled}
     >
-      <CodeVersionElementBare version={version} isPreview={isPreview} />
+      <CodeVersionElementBare version={version} />
     </Link>
   );
 };

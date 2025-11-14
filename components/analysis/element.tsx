@@ -1,5 +1,4 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { VersionBadge } from "@/components/versions/element";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
@@ -52,7 +51,7 @@ export const AnalysisVersionElementBare: React.FC<
     analysisVersion: AnalysisVersionMappingSchemaI;
     isPreview?: boolean;
   } & React.ComponentProps<"div">
-> = ({ analysisVersion, isPreview = false, className, ...props }) => {
+> = ({ analysisVersion, className, ...props }) => {
   return (
     <div
       className={cn("flex items-start justify-start gap-2 rounded-lg p-4", className)}
@@ -64,7 +63,6 @@ export const AnalysisVersionElementBare: React.FC<
           <p className="font-medium text-foreground truncate text-lg">
             v{analysisVersion.id.slice(0, 5) + "..." + analysisVersion.id.slice(-5)}
           </p>
-          <VersionBadge name={analysisVersion.name} isPreview={isPreview} />
         </div>
         <div className="flex justify-between">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">

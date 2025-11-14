@@ -31,6 +31,7 @@ const Steps: React.FC<{ teamId: string; projectId: string }> = (props) => {
   const onSuccess = (): void => {
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, "code-head"] });
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, "analysis-head"] });
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CODES, props.teamId] });
   };
 
   return (
