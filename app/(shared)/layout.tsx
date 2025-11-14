@@ -1,24 +1,10 @@
 import { dashboardActions } from "@/actions/bevor";
-import { Notifications, Profile } from "@/components/header";
+import { Profile } from "@/components/header";
 import { cn } from "@/lib/utils";
 import { AsyncComponent, TeamSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { cookies } from "next/headers";
 import Image from "next/image";
-
-const NotificationHydration: AsyncComponent = async () => {
-  const queryClient = new QueryClient();
-  await queryClient.fetchQuery({
-    queryKey: ["user-invites"],
-    queryFn: () => dashboardActions.getInvites(),
-  });
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <Notifications />
-    </HydrationBoundary>
-  );
-};
 
 const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children }) => {
   const queryClient = new QueryClient();
@@ -49,7 +35,6 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
         </div>
         {!!currentUser && (
           <div className="gap-4 items-center relative flex">
-            <NotificationHydration />
             <HydrationBoundary state={dehydrate(queryClient)}>
               <Profile userId={currentUser.id} teams={teams} />
             </HydrationBoundary>
