@@ -34,8 +34,6 @@ const BillingPage: AsyncComponent<PageProps> = async ({ params }) => {
       </div>
     </Container>
   );
-
-  return <BillingPageClient teamId={teamId} />;
 };
 
 export default BillingPage;
