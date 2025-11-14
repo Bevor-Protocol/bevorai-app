@@ -325,6 +325,7 @@ export const CodeVersionUpdateDialog: React.FC<
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, analysis.id] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, "code-head", analysis.id] });
       toast.success("Update Successful", {
         description: "You updated the current code version that following analyses use",
       });
@@ -412,6 +413,9 @@ export const SecurityVersionUpdateDialog: React.FC<
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, analysis.id] });
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.ANALYSES, "analysis-head", analysis.id],
+      });
       toast.success("Update Successful", {
         description: "You updated the current security version",
       });

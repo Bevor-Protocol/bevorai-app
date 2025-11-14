@@ -135,7 +135,7 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
               onChange={handleEmailChange}
               autoComplete="off"
               aria-invalid={isEmailError}
-              className="bg-background"
+              className="bg-background!"
             />
             {isEmailError && (
               <FieldError className="absolute -bottom-5 left-0 right-0">
@@ -188,19 +188,19 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
 const SignInClient: React.FC<{ hasError: boolean }> = ({ hasError }) => {
   return (
     <div className="h-svh flex flex-col items-center lg:flex-row">
-      <div className="hidden lg:flex lg:w-1/2 bg-background relative items-center justify-center min-h-[50vh] lg:min-h-0">
+      <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center min-h-[50vh] lg:min-h-0 z-5">
         <CompanyContent />
       </div>
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-6 lg:p-8 bg-background min-h-[50vh] lg:min-h-0">
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-6 lg:p-8 bg-background min-h-[50vh] lg:min-h-0 z-5">
         <SigninContent hasError={hasError} />
       </div>
-      <div className="flex flex-col gap-8 lg:hidden items-center size-full justify-center px-8">
+      <div className="flex flex-col gap-8 lg:hidden items-center size-full justify-center px-8 z-5">
         <CompanyContent />
         <SigninContent hasError={hasError} />
       </div>
 
       <DottedGlowBackground
-        className="pointer-events-none mask-radial-to-75% mask-radial-at-top-right lg:mask-radial-at-right top-0 bottom-0 left-0 right-0 lg:right-1/2"
+        className="pointer-events-none mask-radial-to-75% mask-radial-at-top-right lg:mask-radial-at-right top-0 bottom-0 left-0 right-0 lg:right-1/2 z-1"
         opacity={0.75}
         gap={10}
         radius={1.6}

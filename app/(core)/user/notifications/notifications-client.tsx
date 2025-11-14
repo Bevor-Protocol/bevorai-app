@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
+import { QUERY_KEYS } from "@/utils/constants";
 import { MemberInviteSchema } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Calendar, Users } from "lucide-react";
@@ -27,8 +28,8 @@ const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
     mutationFn: async () => teamActions.acceptInvite(invite.team.id, invite.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-invites"] });
-      queryClient.invalidateQueries({ queryKey: ["teams"] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TEAMS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
       setShowModal(false);
     },
   });
