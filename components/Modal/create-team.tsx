@@ -1,35 +1,37 @@
 "use client";
 
 import { teamActions } from "@/actions/bevor";
+import LucideIcon from "@/components/lucide-icon";
 import { Button } from "@/components/ui/button";
 import { DialogClose, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { navigation } from "@/utils/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const CreateTeamModal: React.FC = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [teamName, setTeamName] = useState("");
 
-  const { mutate, error, isSuccess, data, isPending } = useMutation({
+  const { mutate, error, isSuccess, isPending } = useMutation({
     mutationFn: async (data: { name: string }) => teamActions.createTeam(data),
+    onSuccess: ({ id, toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+
+      toast.success("Team created", {
+        action: {
+          label: "View",
+          onClick: () => router.push(`/teams/${id}`),
+        },
+        icon: <LucideIcon assetType="team" />,
+      });
+    },
   });
-
-  useEffect(() => {
-    if (!isSuccess || !data) return;
-    queryClient.invalidateQueries({ queryKey: ["teams"] });
-    const timeout = setTimeout(() => {
-      // Refresh the page to get updated team list and redirect to the new team
-      router.push(navigation.team.overview({ teamId: data }));
-    }, 1000);
-
-    return (): void => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, data]);
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();

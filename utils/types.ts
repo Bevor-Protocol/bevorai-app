@@ -1,5 +1,5 @@
 import { FetchQueryOptions } from "@tanstack/react-query";
-import { AnalysisUpdateMethodEnum, FindingLevel, PlanStatusEnum } from "./enums";
+import { FindingLevel, PlanStatusEnum } from "./enums";
 
 export interface DropdownOption {
   name: string;
@@ -28,14 +28,16 @@ export interface UserDetailedSchemaI extends UserSchemaI {
 
 export interface AnalysisStatusSchemaI {
   id: string;
-  status: string;
+  status: "waiting" | "processing" | "success" | "failed" | "partial";
   scopes: {
     id: string;
+    n_findings: number;
     status: "waiting" | "processing" | "success" | "failed" | "partial";
+    callable: CallableSchemaI;
   }[];
 }
 
-export interface AnalysisHeadSchema {
+export interface HeadSchema {
   code_version_id?: string;
   analysis_version_id?: string;
 }
@@ -46,10 +48,8 @@ export interface AnalysisSchemaI extends BaseSchema {
   name?: string;
   description?: string;
   n_versions: number;
+  project_id: string;
   user: UserSchemaI;
-  code_project_id: string;
-  update_method: AnalysisUpdateMethodEnum;
-  head: AnalysisHeadSchema;
 }
 
 export interface AnalysisVersionMappingSchemaI extends BaseSchema {
@@ -79,7 +79,7 @@ export interface AnalysisVersionPaginationI extends PaginationI {
   results: (AnalysisVersionMappingSchemaI & { n: number })[];
 }
 
-export interface AnalysisHeadFullSchemaI extends AnalysisHeadSchema {
+export interface HeadFullSchemaI extends HeadSchema {
   analysis_version?: AnalysisVersionMappingSchemaI;
   code_version?: CodeVersionMappingSchemaI;
 }
@@ -116,13 +116,15 @@ export interface TreeResponseI {
   contracts: ContractScopeI[];
 }
 
+interface CallableSchemaI {
+  merkle_hash: string;
+  name: string;
+  signature: string;
+}
+
 export interface FindingSchemaI {
   id: string;
-  callable: {
-    merkle_hash: string;
-    name: string;
-    signature: string;
-  };
+  callable: CallableSchemaI;
   findings: {
     id: string;
     type: string;
@@ -190,15 +192,17 @@ export interface ChatSchemaI {
   team_id: string;
   is_visibile: string;
   total_messages: string;
-  code_project_id: string;
+  project_id: string;
   user: UserSchemaI;
 }
 
 export interface ChatMessagesResponseI extends ChatSchemaI {
   messages: ChatMessageI[];
+  head: HeadSchema;
 }
 
 export interface TeamSchemaI extends BaseSchema {
+  slug: string;
   name: string;
   is_default: boolean;
   created_by_user_id: string;
@@ -291,8 +295,9 @@ export interface MemberInviteSchema extends BaseSchema {
 }
 
 /* CODE PROJECT */
-export interface CodeProjectSchemaI extends BaseSchema {
+export interface ProjectSchemaI extends BaseSchema {
   name: string;
+  slug: string;
   description?: string;
   tags: string[];
   is_default: boolean;
@@ -300,22 +305,22 @@ export interface CodeProjectSchemaI extends BaseSchema {
   created_by_user_id: string;
 }
 
-export interface CodeProjectDetailedSchemaI extends CodeProjectSchemaI {
+export interface ProjectDetailedSchemaI extends ProjectSchemaI {
   n_codes: number;
   n_analyses: number;
   team: TeamSchemaI;
   created_by_user: UserSchemaI;
 }
 
-export interface CodeProjectsPaginationI extends PaginationI {
-  results: (CodeProjectDetailedSchemaI & { n: number })[];
+export interface ProjectsPaginationI extends PaginationI {
+  results: (ProjectDetailedSchemaI & { n: number })[];
 }
 
 /* CODE VERSION */
 export interface CodeVersionMappingSchemaI extends BaseSchema {
   name?: string;
   inferred_name: string;
-  code_project_id: string;
+  project_id: string;
   parent_version_id?: string;
   user: UserSchemaI;
   child?: BaseSchema & { name: string };
@@ -334,6 +339,11 @@ export interface CodeVersionSchemaI extends BaseSchema {
 
 export interface CodeVersionsPaginationI extends PaginationI {
   results: (CodeVersionMappingSchemaI & { n: number })[];
+}
+
+export interface RecentCodeVersionSchemaI {
+  is_any_code: boolean;
+  code_version?: CodeVersionMappingSchemaI;
 }
 
 export interface CodeSourceSchemaI extends BaseSchema {
@@ -568,7 +578,7 @@ export interface BreadcrumbNav {
 }
 
 export interface BreadcrumbSchemaI {
-  team_id: string;
+  team_slug: string;
   navs: BreadcrumbNav[];
   items: BreadcrumbItem[];
   page: BreadcrumbPage;
@@ -577,9 +587,9 @@ export interface BreadcrumbSchemaI {
 }
 
 export type HrefProps = {
-  teamId?: string;
-  projectId?: string;
-  versionId?: string;
+  teamSlug?: string;
+  projectSlug?: string;
+  codeId?: string;
   analysisId?: string;
   chatId?: string;
   analysisVersionId?: string;

@@ -3,27 +3,24 @@ import { billingActions } from "@/actions/bevor";
 
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { generateQueryKey } from "@/utils/constants";
 import { StripeAddonI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 
 export const AddonRow: React.FC<{
-  teamId: string;
+  teamSlug: string;
   addon: StripeAddonI;
-}> = ({ teamId, addon }) => {
+}> = ({ teamSlug, addon }) => {
   const queryClient = useQueryClient();
 
   const currentPrice = addon.price / 100;
 
   const checkoutMutation = useMutation({
-    mutationFn: (lookupKey: string) => billingActions.modifySubscription(teamId, lookupKey),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["addons"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["subscription"],
-      });
+    mutationFn: (lookupKey: string) => billingActions.modifySubscription(teamSlug, lookupKey),
+    onSuccess: (data) => {
+      const queryKey = generateQueryKey.subscription(teamSlug);
+      queryClient.setQueryData(queryKey, data);
     },
   });
 

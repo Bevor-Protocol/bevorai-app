@@ -12,6 +12,7 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { generateQueryKey } from "@/utils/constants";
 import { HrefProps } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronsUpDown } from "lucide-react";
@@ -25,14 +26,14 @@ export const TeamNavigation: React.FC<{
   const params = useParams<HrefProps>();
 
   const { data: teams } = useQuery({
-    queryKey: ["teams"],
+    queryKey: generateQueryKey.teams(),
     queryFn: async () => dashboardActions.getTeams(),
   });
 
   const team = useMemo(() => {
-    if (!teams || !params.teamId) return;
-    return teams.find((team) => team.id === params.teamId);
-  }, [teams, params.teamId]);
+    if (!teams || !params.teamSlug) return;
+    return teams.find((team) => team.id === params.teamSlug);
+  }, [teams, params.teamSlug]);
 
   return (
     <Dialog>
@@ -45,7 +46,7 @@ export const TeamNavigation: React.FC<{
                   size="md"
                   shape="block"
                   seed={userId}
-                  className="group-data-[collapsible=icon]:ml-[1px]"
+                  className="group-data-[collapsible=icon]:ml-px"
                 />
               )}
               {!isUserPage && (
@@ -53,7 +54,7 @@ export const TeamNavigation: React.FC<{
                   size="md"
                   shape="block"
                   seed={team?.id}
-                  className="group-data-[collapsible=icon]:ml-[1px]"
+                  className="group-data-[collapsible=icon]:ml-px"
                 />
               )}
               <div>

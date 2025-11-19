@@ -8,7 +8,7 @@ type localStorageKeys = "bevor:starred";
 export interface StarredItem {
   id: string;
   type: ItemType;
-  teamId: string;
+  teamSlug: string;
   label: string;
   url: string;
 }

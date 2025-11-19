@@ -5,7 +5,7 @@ import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
 import { SearchInput } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { QUERY_KEYS } from "@/utils/constants";
+import { generateQueryKey } from "@/utils/constants";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -41,7 +41,7 @@ export const ProjectsTable: React.FC<{
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: [QUERY_KEYS.PROJECTS, "overview", debouncedSearchQuery],
+    queryKey: generateQueryKey.allProjects(debouncedSearchQuery),
     queryFn: async () => dashboardActions.getAllProjects(debouncedSearchQuery),
   });
 

@@ -39,23 +39,23 @@ const getEntityRoute = (activity: ActivitySchemaI): string => {
 
   switch (entity_type) {
     case "project":
-      return navigation.project.overview({ teamId: team_id, projectId: project_id });
+      return navigation.project.overview({ teamSlug: team_id, projectSlug: project_id });
     case "code_version":
-      return navigation.code.overview({ teamId: team_id, versionId: related_id });
+      return navigation.code.overview({ teamSlug: team_id, codeId: related_id });
     case "analysis":
-      return navigation.analysis.overview({ teamId: team_id, analysisId: related_id });
+      return navigation.analysis.overview({ teamSlug: team_id, analysisId: related_id });
     case "analysis_version":
       return navigation.analysisVersions.overview({
-        teamId: team_id,
+        teamSlug: team_id,
         analysisVersionId: related_id,
       });
     case "team":
-      return navigation.team.overview({ teamId: team_id });
+      return navigation.team.overview({ teamSlug: team_id });
     case "chat":
       // TODO: fix for chat.
-      return navigation.team.overview({ teamId: team_id, analysisId: related_id });
+      return navigation.team.overview({ teamSlug: team_id, analysisId: related_id });
     case "member":
-      return navigation.team.settings.members({ teamId: team_id });
+      return navigation.team.settings.members({ teamSlug: team_id });
     default:
       return "#";
   }

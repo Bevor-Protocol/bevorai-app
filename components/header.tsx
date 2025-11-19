@@ -32,7 +32,7 @@ export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ us
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
             <Link
-              href={navigation.team.overview({ teamId: defaultTeam?.id })}
+              href={navigation.team.overview({ teamSlug: defaultTeam?.id })}
               className="w-full flex items-center justify-between"
             >
               <span>Dashboard</span>

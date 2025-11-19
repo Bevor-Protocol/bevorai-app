@@ -1,6 +1,7 @@
 "use client";
 
-import { versionActions } from "@/actions/bevor";
+import { codeActions } from "@/actions/bevor";
+import { generateQueryKey } from "@/utils/constants";
 import { CodeSourceContentSchemaI } from "@/utils/types";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import React, {
@@ -23,6 +24,8 @@ interface CodeContextValue {
   applyHighlight: ({ start, end }: { start: number; end: number }) => void;
   scrollToElement: ({ start, end }: { start: number; end: number }) => void;
   clearHighlight: () => void;
+  codeVersionId: string | null;
+  setCodeVersionId: React.Dispatch<React.SetStateAction<string | null>>;
   scrollRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   isSticky: boolean;
@@ -38,10 +41,11 @@ const CodeContext = createContext<CodeContextValue | undefined>(undefined);
 
 export const CodeProvider: React.FC<{
   children: React.ReactNode;
-  teamId: string;
-  versionId: string;
+  teamSlug: string;
+  codeId: string | null;
   initialSourceId: string | null;
-}> = ({ children, initialSourceId, teamId, versionId }) => {
+}> = ({ children, initialSourceId, teamSlug, codeId }) => {
+  const [codeVersionId, setCodeVersionId] = useState(codeId);
   const [positions, setPositions] = useState<{ start: number; end: number } | undefined>(undefined);
   const [htmlLoaded, setHtmlLoaded] = useState(true);
   const [sourceId, setSourceId] = useState<string | null>(initialSourceId);
@@ -50,9 +54,9 @@ export const CodeProvider: React.FC<{
   const containerRef = useRef<HTMLDivElement>(null!); // thing that should stick to top (code holder)
 
   const sourceQuery = useQuery({
-    queryKey: ["source", versionId, sourceId ?? ""],
-    queryFn: () => versionActions.getCodeVersionSource(teamId, versionId, sourceId ?? ""),
-    enabled: !!sourceId,
+    queryKey: generateQueryKey.codeSource(codeVersionId ?? "", sourceId ?? ""),
+    queryFn: () => codeActions.getCodeVersionSource(teamSlug, codeVersionId ?? "", sourceId ?? ""),
+    enabled: !!sourceId && !!codeVersionId,
     placeholderData: keepPreviousData,
     staleTime: Infinity,
   });
@@ -76,7 +80,7 @@ export const CodeProvider: React.FC<{
     return (): void => {
       scrollElement.removeEventListener("scroll", updateStickyState);
     };
-  }, []);
+  }, [codeVersionId]);
 
   const handleSourceChange = useCallback(
     (newSourceId: string, positions?: { start: number; end: number }): void => {
@@ -115,7 +119,6 @@ export const CodeProvider: React.FC<{
   }, []);
 
   const clearHighlight = useCallback((): void => {
-    console.log("CLEAR");
     document.querySelectorAll("[data-token]").forEach((span) => {
       const element = span as HTMLElement;
       element.classList.remove("dim");
@@ -178,6 +181,8 @@ export const CodeProvider: React.FC<{
       containerRef,
       isSticky,
       handleSourceChange,
+      codeVersionId,
+      setCodeVersionId,
       sourceQuery: {
         data: sourceQuery.data,
         isLoading: sourceQuery.isLoading,
@@ -192,6 +197,8 @@ export const CodeProvider: React.FC<{
       clearHighlight,
       handleSourceChange,
       scrollToElement,
+      codeVersionId,
+      setCodeVersionId,
       isSticky,
       scrollRef,
       containerRef,

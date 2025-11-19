@@ -1,6 +1,6 @@
 "use client";
 
-import { teamActions } from "@/actions/bevor";
+import { dashboardActions, teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,15 +10,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
-import { QUERY_KEYS } from "@/utils/constants";
+import { generateQueryKey } from "@/utils/constants";
 import { MemberInviteSchema } from "@/utils/types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Calendar, Users } from "lucide-react";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { Bell, Calendar } from "lucide-react";
 import { useState } from "react";
-
-interface NotificationsClientProps {
-  invites: MemberInviteSchema[];
-}
 
 const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
   const queryClient = useQueryClient();
@@ -26,18 +22,20 @@ const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
 
   const acceptInviteMutation = useMutation({
     mutationFn: async () => teamActions.acceptInvite(invite.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-invites"] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TEAMS] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
       setShowModal(false);
     },
   });
 
   const rejectInviteMutation = useMutation({
-    mutationFn: async () => teamActions.removeInvite(invite.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-invites"] });
+    mutationFn: async () => teamActions.removeInvite(invite.team.id, invite.id),
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
       setShowModal(false);
     },
   });
@@ -52,17 +50,6 @@ const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
         onClick={() => setShowModal(true)}
       >
         <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-              <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold">Team Invitation</h3>
-              <p className="text-sm text-muted-foreground">
-                You&apos;ve been invited to join a team
-              </p>
-            </div>
-          </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="h-3 w-3" />
             {new Date(invite.created_at).toLocaleDateString()}
@@ -138,7 +125,12 @@ const InviteCard: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
   );
 };
 
-const NotificationsClient: React.FC<NotificationsClientProps> = ({ invites }) => {
+const NotificationsClient: React.FC = () => {
+  const { data: invites = [] } = useSuspenseQuery({
+    queryKey: generateQueryKey.userInvites(),
+    queryFn: async () => dashboardActions.getInvites(),
+  });
+
   return (
     <div className="space-y-4">
       {invites.map((invite) => (

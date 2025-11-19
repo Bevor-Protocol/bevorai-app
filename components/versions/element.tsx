@@ -56,6 +56,54 @@ export const VersionMeta: React.FC<{
   );
 };
 
+export const CodeVersionElementCompact: React.FC<
+  {
+    version: CodeVersionMappingSchemaI;
+  } & React.ComponentProps<"div">
+> = ({ version, className, ...props }) => {
+  const isScanMethod = version.version.source_type === SourceTypeEnum.SCAN;
+
+  const formatVersionIdentifier = (): string => {
+    if (version.version.version_method === "tag") {
+      return version.version.version_identifier.length > 20
+        ? version.version.version_identifier.slice(0, 20) + "..."
+        : version.version.version_identifier;
+    }
+    if (version.version.version_method === "address") {
+      return trimAddress(version.version.version_identifier);
+    }
+    return version.version.version_identifier.slice(0, 7) + "...";
+  };
+
+  return (
+    <div className={cn("flex items-center gap-2 py-2 px-3", className)} {...props}>
+      <Code className="size-3.5 text-green-400 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-sm truncate">{version.inferred_name}</p>
+          {isScanMethod && version.version.network && (
+            <Badge variant="outline" size="sm" className="shrink-0 text-xs">
+              {version.version.network}
+            </Badge>
+          )}
+          <Badge variant="outline" size="sm" className="font-mono text-xs shrink-0">
+            {formatVersionIdentifier()}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+          <span className="capitalize">{version.version.source_type}</span>
+          {version.version.solc_version && (
+            <>
+              <span>•</span>
+              <span className="font-mono">{version.version.solc_version}</span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const CodeVersionElementBare: React.FC<
   {
     version: CodeVersionMappingSchemaI;
@@ -124,14 +172,14 @@ export const CodeVersionElementBare: React.FC<
 
 export const CodeVersionElement: React.FC<{
   version: CodeVersionMappingSchemaI;
-  teamId: string;
+  teamSlug: string;
   isDisabled?: boolean;
-}> = ({ version, teamId, isDisabled = false }) => {
+}> = ({ version, teamSlug, isDisabled = false }) => {
   return (
     <Link
       href={navigation.code.overview({
-        teamId,
-        versionId: version.id,
+        teamSlug,
+        codeId: version.id,
       })}
       className={cn(
         "block border transition-colors rounded-lg",

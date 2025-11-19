@@ -9,7 +9,7 @@ import React from "react";
 
 type AnalysisElementProps = {
   analysis: AnalysisSchemaI & { n: number };
-  teamId: string;
+  teamSlug: string;
   isDisabled?: boolean;
   isPreview?: boolean;
 };
@@ -40,6 +40,30 @@ export const AnalysisElementLoader: React.FC = () => {
             <Skeleton className="w-8 h-3" />
           </div>
           <Skeleton className="w-24 h-3" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const AnalysisVersionElementCompact: React.FC<
+  {
+    analysisVersion: AnalysisVersionMappingSchemaI;
+  } & React.ComponentProps<"div">
+> = ({ analysisVersion, className, ...props }) => {
+  return (
+    <div className={cn("flex items-center gap-2 py-2 px-3", className)} {...props}>
+      <Shield className="size-3.5 text-purple-400 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-sm font-mono">
+            v{analysisVersion.id.slice(0, 6)}...{analysisVersion.id.slice(-4)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+          <span>{analysisVersion.version.n_scopes} scopes</span>
+          <span>•</span>
+          <span>{analysisVersion.version.n_findings} findings</span>
         </div>
       </div>
     </div>
@@ -80,14 +104,14 @@ export const AnalysisVersionElementBare: React.FC<
 };
 
 export const AnalysisVersionElement: React.FC<{
-  teamId: string;
+  teamSlug: string;
   analysisVersion: AnalysisVersionMappingSchemaI;
   isDisabled?: boolean;
-}> = ({ teamId, analysisVersion, isDisabled = false }) => {
+}> = ({ teamSlug, analysisVersion, isDisabled = false }) => {
   return (
     <Link
       href={navigation.analysisVersions.overview({
-        teamId,
+        teamSlug,
         analysisVersionId: analysisVersion.id,
       })}
       aria-disabled={isDisabled}
@@ -101,16 +125,52 @@ export const AnalysisVersionElement: React.FC<{
   );
 };
 
+export const AnalysisElementBare: React.FC<
+  {
+    analysis: AnalysisSchemaI;
+  } & React.ComponentProps<"div">
+> = ({ analysis, className, ...props }) => {
+  return (
+    <div
+      className={cn("flex items-start justify-start gap-2 rounded-lg p-4", className)}
+      {...props}
+    >
+      <div className="grow space-y-2">
+        <div className="flex justify-between">
+          <p className="font-medium text-foreground truncate max-w-1/2">{analysis.name}</p>
+          <div className="size-4">
+            {analysis.is_public ? (
+              <Unlock className="size-3 text-green-500" />
+            ) : (
+              <Lock className="size-3 text-purple-400" />
+            )}
+          </div>
+        </div>
+        <div className="flex justify-between text-sm text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Clock className="size-3" />
+            <span>{formatDate(analysis.created_at)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <User className="size-3" />
+            <span>{analysis.user.username}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const AnalysisElement: React.FC<AnalysisElementProps> = ({
   analysis,
-  teamId,
+  teamSlug,
   isDisabled = false,
 }) => {
   return (
     <Link
       href={navigation.analysis.overview({
-        teamId,
-        projectId: analysis.code_project_id,
+        teamSlug,
+        projectSlug: analysis.project_id,
         analysisId: analysis.id,
       })}
       aria-disabled={isDisabled}
@@ -119,30 +179,7 @@ export const AnalysisElement: React.FC<AnalysisElementProps> = ({
         isDisabled ? "cursor-default" : "hover:border-muted-foreground/60 cursor-pointer",
       )}
     >
-      <div className="flex items-start justify-start gap-2 rounded-lg p-4">
-        <div className="grow space-y-2">
-          <div className="flex justify-between">
-            <p className="font-medium text-foreground truncate max-w-1/2">{analysis.name}</p>
-            <div className="size-4">
-              {analysis.is_public ? (
-                <Unlock className="size-3 text-green-500" />
-              ) : (
-                <Lock className="size-3 text-purple-400" />
-              )}
-            </div>
-          </div>
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Clock className="size-3" />
-              <span>{formatDate(analysis.created_at)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <User className="size-3" />
-              <span>{analysis.user.username}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AnalysisElementBare analysis={analysis} />
     </Link>
   );
 };

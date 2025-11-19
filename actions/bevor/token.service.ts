@@ -31,3 +31,9 @@ export const revokeAllTokens = async (): Promise<boolean> => {
     return response.data.boolean;
   });
 };
+
+export const issueSSEToken = async (): Promise<string> => {
+  return api.post("/events/auth", {}).then((response) => {
+    return response.data.id;
+  });
+};

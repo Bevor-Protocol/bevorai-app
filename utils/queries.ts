@@ -17,11 +17,11 @@ export const extractProjectsQuery = (params: {
   };
 };
 
-export const defaultCodesQuery = (projectId: string): { [key: string]: string | undefined } => ({
+export const defaultCodesQuery = (projectSlug: string): { [key: string]: string | undefined } => ({
   page_size: "12",
   page: "0",
   order: "desc",
-  project_id: projectId,
+  project_id: projectSlug,
   user_id: "",
   method: "",
   network: "",
@@ -29,12 +29,12 @@ export const defaultCodesQuery = (projectId: string): { [key: string]: string | 
 });
 
 export const extractCodesQuery = (
-  projectId: string,
+  projectSlug: string,
   params: {
     [key: string]: string;
   },
 ): { [key: string]: string | undefined } => {
-  const defaultQuery = defaultCodesQuery(projectId);
+  const defaultQuery = defaultCodesQuery(projectSlug);
   return {
     page_size: params?.page_size ?? defaultQuery.page_size,
     page: params?.page ?? defaultQuery.page,
@@ -47,25 +47,27 @@ export const extractCodesQuery = (
   };
 };
 
-export const defaultAnalysesQuery = (projectId: string): { [key: string]: string | undefined } => ({
+export const defaultAnalysesQuery = (
+  projectSlug: string,
+): { [key: string]: string | undefined } => ({
   page: "0",
   page_size: "12",
   user_id: "",
-  project_id: projectId,
+  project_slug: projectSlug,
   name: "",
 });
 
 export const extractAnalysesQuery = (
-  projectId: string,
+  projectSlug: string,
   params: {
     [key: string]: string;
   },
 ): { [key: string]: string | undefined } => {
-  const defaultQuery = defaultAnalysesQuery(projectId);
+  const defaultQuery = defaultAnalysesQuery(projectSlug);
   return {
     page_size: params?.page_size ?? defaultQuery.page_size,
     page: params?.page ?? defaultQuery.page,
-    project_id: defaultQuery.project_id,
+    project_slug: defaultQuery.project_slug,
     user_id: params?.user_id,
     name: params?.name,
   };
@@ -142,6 +144,6 @@ export const extractAnalysisChatsQuery = (
     page: params?.page ?? defaultQuery.page,
     project_id: defaultQuery.project_id,
     user_id: params?.user_id,
-    analysis_id: params?.analysis_id,
+    analysis_id: defaultQuery.analysis_id,
   };
 };

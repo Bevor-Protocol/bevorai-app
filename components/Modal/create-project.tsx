@@ -5,39 +5,49 @@ import { Button } from "@/components/ui/button";
 import { DialogClose, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CreateProjectFormValues, createProjectSchema } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Code } from "lucide-react";
 import React, { useState } from "react";
 
-const CreateProjectModal: React.FC<{ teamId: string }> = ({ teamId }) => {
+const CreateProjectModal: React.FC<{
+  teamSlug: string;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}> = ({ teamSlug, setOpen }) => {
   const queryClient = useQueryClient();
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const createProjectMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string; tags?: string[] }) =>
-      projectActions.createProject(teamId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    mutationFn: async (data: CreateProjectFormValues) =>
+      projectActions.createProject(teamSlug, data),
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+      setOpen(false);
     },
   });
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    setError(null);
 
-    const projectData = {
+    const parsed = createProjectSchema.safeParse({
       name: projectName,
-      ...(description && { description }),
-      ...(tags && {
-        tags: tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-      }),
-    };
+      description: description || undefined,
+      tags: tags || undefined,
+    });
 
-    await createProjectMutation.mutate(projectData);
+    if (!parsed.success) {
+      const message = parsed.error.issues[0]?.message ?? "Please review the form and try again.";
+      setError(message);
+      return;
+    }
+
+    createProjectMutation.mutate(parsed.data);
   };
 
   return (
@@ -92,11 +102,9 @@ const CreateProjectModal: React.FC<{ teamId: string }> = ({ teamId }) => {
             <p className="text-xs text-neutral-500">Example: defi, ethereum, security</p>
           </div>
 
+          {error && <p className="text-sm text-red-400">{error}</p>}
           {createProjectMutation.error && (
             <p className="text-sm text-red-400">{createProjectMutation.error.message}</p>
-          )}
-          {createProjectMutation.isSuccess && (
-            <p className="text-sm text-green-400">Project successfully created</p>
           )}
         </div>
         <div className="flex justify-between pt-4 border-t border-border">

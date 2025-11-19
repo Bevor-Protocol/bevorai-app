@@ -18,7 +18,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Key } from "lucide-react";
 import React, { useState } from "react";
 
-const CreateApiKeyModal: React.FC<{ teamId: string }> = ({ teamId }) => {
+const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const queryClient = useQueryClient();
   const [showKey, setShowKey] = useState(false);
 
@@ -35,10 +35,12 @@ const CreateApiKeyModal: React.FC<{ teamId: string }> = ({ teamId }) => {
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async (data: CreateKeyBody) => apiKeyActions.createKey(teamId, data),
-    onSuccess: () => {
+    mutationFn: async (data: CreateKeyBody) => apiKeyActions.createKey(teamSlug, data),
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
       setShowKey(true);
-      queryClient.invalidateQueries({ queryKey: ["api-keys", teamId] });
     },
   });
 

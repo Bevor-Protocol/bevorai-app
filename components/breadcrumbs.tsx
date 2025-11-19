@@ -26,57 +26,76 @@ export const BreadcrumbFallback: React.FC = () => {
   return <Skeleton className="h-8 w-40" />;
 };
 
-const breadcrumbFetchers = {
-  team: (teamId: string, _id: string): Promise<BreadcrumbSchemaI> => {
-    void _id;
-    return breadcrumbActions.getTeamBreadcrumb(teamId);
+type QueryType =
+  | "team"
+  | "team-settings"
+  | "projects"
+  | "analyses"
+  | "project"
+  | "project-new-code"
+  | "project-codes"
+  | "project-analyses"
+  | "code-version"
+  | "analysis"
+  | "analysis-versions"
+  | "analysis-new-version"
+  | "analysis-version"
+  | "analysis-chat"
+  | "chat";
+
+type BreadcrumbKey = Record<
+  QueryType,
+  (teamSlug: string, id: string) => Promise<BreadcrumbSchemaI>
+>;
+
+const breadcrumbFetchers: BreadcrumbKey = {
+  team: (teamSlug: string, id: string) => {
+    void id;
+    return breadcrumbActions.getTeamBreadcrumb(teamSlug);
   },
-  "team-settings": (teamId: string, _id: string): Promise<BreadcrumbSchemaI> => {
-    void _id;
-    return breadcrumbActions.getTeamSettingsBreadcrumb(teamId);
+  "team-settings": (teamSlug: string, id: string) => {
+    void id;
+    return breadcrumbActions.getTeamSettingsBreadcrumb(teamSlug);
   },
-  projects: (teamId: string, _id: string): Promise<BreadcrumbSchemaI> => {
-    void _id;
-    return breadcrumbActions.getProjectsBreadcrumb(teamId);
+  projects: (teamSlug: string, id: string) => {
+    void id;
+    return breadcrumbActions.getProjectsBreadcrumb(teamSlug);
   },
-  analyses: (teamId: string, _id: string): Promise<BreadcrumbSchemaI> => {
-    void _id;
-    return breadcrumbActions.getAnalysesBreadcrumb(teamId);
+  analyses: (teamSlug: string, id: string) => {
+    void id;
+    return breadcrumbActions.getAnalysesBreadcrumb(teamSlug);
   },
-  project: (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getProjectBreadcrumb(teamId, id),
-  "project-new-code": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getProjectNewCodeBreadcrumb(teamId, id),
-  "project-codes": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getProjectCodesBreadcrumb(teamId, id),
-  "project-analyses": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getProjectAnalysesBreadcrumb(teamId, id),
-  "project-chats": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getProjectChatsBreadcrumb(teamId, id),
-  "code-version": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getCodeVersionBreadcrumb(teamId, id),
-  analysis: (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getAnalysisBreadcrumb(teamId, id),
-  "analysis-versions": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getAnalysisVersionsBreadcrumb(teamId, id),
-  "analysis-version": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getAnalysisVersionBreadcrumb(teamId, id),
-  "analysis-chat": (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getAnalysisChatBreadcrumb(teamId, id),
-  chat: (teamId: string, id: string): Promise<BreadcrumbSchemaI> =>
-    breadcrumbActions.getChatBreadcrumb(teamId, id),
+  project: (teamSlug: string, id: string) => breadcrumbActions.getProjectBreadcrumb(teamSlug, id),
+  "project-new-code": (teamSlug: string, id: string) =>
+    breadcrumbActions.getProjectNewCodeBreadcrumb(teamSlug, id),
+  "project-codes": (teamSlug: string, id: string) =>
+    breadcrumbActions.getProjectCodesBreadcrumb(teamSlug, id),
+  "project-analyses": (teamSlug: string, id: string) =>
+    breadcrumbActions.getProjectAnalysesBreadcrumb(teamSlug, id),
+  "code-version": (teamSlug: string, id: string) =>
+    breadcrumbActions.getCodeVersionBreadcrumb(teamSlug, id),
+  analysis: (teamSlug: string, id: string) => breadcrumbActions.getAnalysisBreadcrumb(teamSlug, id),
+  "analysis-versions": (teamSlug: string, id: string) =>
+    breadcrumbActions.getAnalysisVersionsBreadcrumb(teamSlug, id),
+  "analysis-new-version": (teamSlug: string, id: string) =>
+    breadcrumbActions.getAnalysisNewVersionBreadcrumb(teamSlug, id),
+  "analysis-version": (teamSlug: string, id: string) =>
+    breadcrumbActions.getAnalysisVersionBreadcrumb(teamSlug, id),
+  "analysis-chat": (teamSlug: string, id: string) =>
+    breadcrumbActions.getAnalysisChatBreadcrumb(teamSlug, id),
+  chat: (teamSlug: string, id: string) => breadcrumbActions.getChatBreadcrumb(teamSlug, id),
 };
 
 const ContainerBreadcrumb: React.FC<{
   queryKey: string[];
-  queryType: string;
-  teamId: string;
+  queryType: QueryType;
+  teamSlug: string;
   id: string;
   toggle?: React.ReactNode;
-}> = ({ queryKey, queryType, teamId, id, toggle }) => {
+}> = ({ queryKey, queryType, teamSlug, id, toggle }) => {
   const { data: breadcrumb } = useQuery({
     queryKey: [QUERY_KEYS.BREADCRUMBS, queryType, ...queryKey],
-    queryFn: () => breadcrumbFetchers[queryType as keyof typeof breadcrumbFetchers](teamId, id),
+    queryFn: () => breadcrumbFetchers[queryType as keyof typeof breadcrumbFetchers](teamSlug, id),
   });
 
   const { state, addItem, removeItem } = useLocalStorageState("bevor:starred");
@@ -91,7 +110,7 @@ const ContainerBreadcrumb: React.FC<{
       addItem({
         id: breadcrumb.favorite.id,
         type: breadcrumb.favorite.type,
-        teamId: breadcrumb.team_id,
+        teamSlug: breadcrumb.team_slug,
         label: breadcrumb.favorite.display_name,
         url: breadcrumb.favorite.route,
       });

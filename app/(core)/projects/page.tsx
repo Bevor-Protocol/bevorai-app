@@ -3,7 +3,7 @@
 import { dashboardActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { getQueryClient } from "@/lib/config/query";
-import { QUERY_KEYS } from "@/utils/constants";
+import { generateQueryKey } from "@/utils/constants";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { ProjectsTable } from "./projects-client";
@@ -18,7 +18,7 @@ const ProjectsPage: AsyncComponent = async () => {
   };
 
   await queryClient.fetchQuery({
-    queryKey: [QUERY_KEYS.PROJECTS, "overview", projectQuery],
+    queryKey: generateQueryKey.allProjects(projectQuery),
     queryFn: async () => dashboardActions.getAllProjects(projectQuery),
   });
 

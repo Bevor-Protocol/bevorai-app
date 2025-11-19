@@ -15,7 +15,7 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
 
     response.cookies.delete("bevor-token");
     response.cookies.delete("bevor-refresh-token");
-    response.cookies.delete("bevor-team-id");
+    response.cookies.delete("bevor-team-slug");
 
     return response;
   } catch (error) {

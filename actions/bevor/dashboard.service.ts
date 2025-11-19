@@ -1,17 +1,21 @@
 "use server";
 
 import api from "@/lib/api";
+import { generateQueryKey } from "@/utils/constants";
 import {
-  CodeProjectsPaginationI,
   MemberInviteSchema,
+  ProjectsPaginationI,
   TeamDetailedSchemaI,
   TeamOverviewSchemaI,
   UserDetailedSchemaI,
 } from "@/utils/types";
+import { QueryKey } from "@tanstack/react-query";
 
 /*
 Dashboard-specific actions, that span teams
 */
+
+export const getBaseUrl = async (): Promise<string> => process.env.API_URL!;
 
 export const getUser = async (): Promise<UserDetailedSchemaI | null> => {
   return api
@@ -22,9 +26,12 @@ export const getUser = async (): Promise<UserDetailedSchemaI | null> => {
     .catch(() => null);
 };
 
-export const updateUser = async (data: { username: string }): Promise<boolean> => {
-  return api.post("/dashboard/user", data).then((response) => {
-    return response.data.success;
+export const updateUser = async (data: {
+  username: string;
+}): Promise<{ toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [generateQueryKey.currentUser()];
+  return api.post("/dashboard/user", data).then(() => {
+    return { toInvalidate };
   });
 };
 
@@ -36,7 +43,7 @@ export const getInvites = async (): Promise<MemberInviteSchema[]> => {
 
 export const getAllProjects = async (filters: {
   [key: string]: string;
-}): Promise<CodeProjectsPaginationI> => {
+}): Promise<ProjectsPaginationI> => {
   const searchParams = new URLSearchParams(filters);
   searchParams.set("page_size", filters.page_size ?? "9");
 

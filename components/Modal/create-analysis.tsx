@@ -21,16 +21,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
-import { QUERY_KEYS } from "@/utils/constants";
-import { CodeProjectSchemaI } from "@/utils/types";
+import { generateQueryKey } from "@/utils/constants";
+import { ProjectSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock, Unlock } from "lucide-react";
 import React, { useState } from "react";
 
-const CreateAnalysisModal: React.FC<{ teamId: string; project?: CodeProjectSchemaI }> = ({
-  teamId,
-  project,
-}) => {
+const CreateAnalysisModal: React.FC<{
+  teamSlug: string;
+  project?: ProjectSchemaI;
+  onSuccess?: (analysisId: string) => void;
+}> = ({ teamSlug, project, onSuccess }) => {
   const queryClient = useQueryClient();
   const [projectIdUse, setProjectIdUse] = useState<string | undefined>(project?.id);
   const [name, setName] = useState("");
@@ -45,20 +46,23 @@ const CreateAnalysisModal: React.FC<{ teamId: string; project?: CodeProjectSchem
 
   // Fetch this only if the project is not provided. We'll hardcord the provided project otherwise.
   const { data: projects } = useQuery({
-    queryKey: ["projects", teamId, projectQuery],
-    queryFn: async () => projectActions.getProjects(teamId, projectQuery),
+    queryKey: generateQueryKey.projects(teamSlug, projectQuery),
+    queryFn: async () => projectActions.getProjects(teamSlug, projectQuery),
     enabled: !project,
   });
 
   const createAnalysisMutation = useMutation({
     mutationFn: async (data: {
-      code_project_id: string;
+      project_id: string;
       name?: string;
       description?: string;
       is_public?: boolean;
-    }) => analysisActions.createanalysis(teamId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES, teamId] });
+    }) => analysisActions.createAnalysis(teamSlug, data),
+    onSuccess: ({ id, toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+      onSuccess?.(id);
     },
   });
 
@@ -67,7 +71,7 @@ const CreateAnalysisModal: React.FC<{ teamId: string; project?: CodeProjectSchem
     if (!projectIdUse) return;
 
     const projectData = {
-      code_project_id: projectIdUse,
+      project_id: projectIdUse,
       ...(name && { name }),
       ...(description && { description }),
       ...(isPublic && {

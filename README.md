@@ -43,7 +43,7 @@ The billing system has been implemented with the following features:
 
 ### Frontend Components
 
-- **Billing Page**: Located at `app/teams/[teamId]/settings/billing/billing-page-client.tsx`
+- **Billing Page**: Located at `app/teams/[teamSlug]/settings/billing/billing-page-client.tsx`
 - **Role-based Access**: Only team owners can access billing functionality
 - **Email Collection**: Users must provide an email to create a Stripe customer before subscribing
 - **Subscription Plans**: Displays plans with monthly/annual pricing and audit limits
@@ -62,7 +62,7 @@ Response: { results: SubscriptionPlan[] }
 #### 2. Get Team Billing Info
 
 ```
-GET /billing/teams/{teamId}
+GET /billing/teams/{teamSlug}
 Response: BillingInfo
 ```
 

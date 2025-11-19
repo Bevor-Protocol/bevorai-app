@@ -1,6 +1,7 @@
 import { dashboardActions } from "@/actions/bevor";
 import { Profile } from "@/components/header";
 import { cn } from "@/lib/utils";
+import { generateQueryKey } from "@/utils/constants";
 import { AsyncComponent, TeamSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { cookies } from "next/headers";
@@ -15,7 +16,7 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
   if (sessionToken) {
     currentUser = await dashboardActions.getUser();
     teams = await queryClient.fetchQuery({
-      queryKey: ["teams"],
+      queryKey: generateQueryKey.teams(),
       queryFn: () => dashboardActions.getTeams(),
     });
   }

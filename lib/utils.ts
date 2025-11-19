@@ -52,7 +52,7 @@ export const buildSearchParams = (
 ): URLSearchParams => {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && v !== "") {
+    if (v) {
       params.set(k, v);
     }
   });

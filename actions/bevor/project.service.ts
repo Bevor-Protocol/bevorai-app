@@ -2,60 +2,91 @@
 
 import api from "@/lib/api";
 import { buildSearchParams } from "@/lib/utils";
+import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import {
-  CodeProjectDetailedSchemaI,
-  CodeProjectsPaginationI,
   CreateProjectBody,
+  ProjectDetailedSchemaI,
+  ProjectsPaginationI,
+  RecentCodeVersionSchemaI,
 } from "@/utils/types";
+import { QueryKey } from "@tanstack/react-query";
 
-export const createProject = async (teamId: string, data: CreateProjectBody): Promise<string> => {
-  return api.post("/projects", data, { headers: { "bevor-team-id": teamId } }).then((response) => {
-    return response.data.id;
-  });
+export const createProject = async (
+  teamSlug: string,
+  data: CreateProjectBody,
+): Promise<{
+  id: string;
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [[QUERY_KEYS.PROJECTS]];
+  return api
+    .post("/projects", data, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return {
+        id: response.data.id,
+        toInvalidate,
+      };
+    });
 };
 
 export const getProjects = async (
-  teamId: string,
+  teamSlug: string,
   filters: {
     [key: string]: string | undefined;
   },
-): Promise<CodeProjectsPaginationI> => {
+): Promise<ProjectsPaginationI> => {
   const searchParams = buildSearchParams(filters);
 
   return api
-    .get(`/projects?${searchParams.toString()}`, { headers: { "bevor-team-id": teamId } })
+    .get(`/projects?${searchParams.toString()}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
 export const getProject = async (
-  teamId: string,
-  projectId: string,
-): Promise<CodeProjectDetailedSchemaI> => {
+  teamSlug: string,
+  projectSlug: string,
+): Promise<ProjectDetailedSchemaI> => {
   return api
-    .get(`/projects/${projectId}`, { headers: { "bevor-team-id": teamId } })
+    .get(`/projects/${projectSlug}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
-export const deleteProject = async (teamId: string, projectId: string): Promise<boolean> => {
+export const deleteProject = async (
+  teamSlug: string,
+  projectSlug: string,
+): Promise<{ toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [[QUERY_KEYS.PROJECTS]];
   return api
-    .delete(`/projects/${projectId}`, { headers: { "bevor-team-id": teamId } })
-    .then((response) => {
-      return response.data.success;
+    .delete(`/projects/${projectSlug}`, { headers: { "bevor-team-slug": teamSlug } })
+    .then(() => {
+      return { toInvalidate };
     });
 };
 
 export const updateProject = async (
-  teamId: string,
-  projectId: string,
+  teamSlug: string,
+  projectSlug: string,
   data: { name?: string; description?: string; tags?: string[] },
-): Promise<boolean> => {
+): Promise<{ toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [generateQueryKey.project(projectSlug)];
   return api
-    .patch(`/projects/${projectId}`, data, { headers: { "bevor-team-id": teamId } })
+    .patch(`/projects/${projectSlug}`, data, { headers: { "bevor-team-slug": teamSlug } })
+    .then(() => {
+      return { toInvalidate };
+    });
+};
+
+export const getRecentCode = async (
+  teamSlug: string,
+  projectSlug: string,
+): Promise<RecentCodeVersionSchemaI> => {
+  return api
+    .get(`/projects/${projectSlug}/recent-code`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data.success;
+      return response.data;
     });
 };

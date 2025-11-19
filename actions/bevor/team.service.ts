@@ -1,6 +1,7 @@
 "use server";
 
 import api from "@/lib/api";
+import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import {
   CreateTeamBody,
   InviteMemberBody,
@@ -10,98 +11,163 @@ import {
   UpdateMemberBody,
   UpdateTeamBody,
 } from "@/utils/types";
+import { QueryKey } from "@tanstack/react-query";
 import { cookies } from "next/headers";
 
-export const createTeam = async (data: CreateTeamBody): Promise<string> => {
+export const createTeam = async (
+  data: CreateTeamBody,
+): Promise<{ id: string; toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [[QUERY_KEYS.TEAMS]];
   return api.post("/teams", data).then((response) => {
-    return response.data.id;
+    return {
+      id: response.data.id,
+      toInvalidate,
+    };
   });
 };
 
-export const getTeam = async (teamId: string): Promise<TeamOverviewSchemaI> => {
-  return api.get("/teams", { headers: { "bevor-team-id": teamId } }).then((response) => {
+export const getTeam = async (teamSlug: string): Promise<TeamOverviewSchemaI> => {
+  return api.get("/teams", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
     return response.data;
   });
 };
 
-export const deleteTeam = async (teamId: string): Promise<boolean> => {
+export const deleteTeam = async (
+  teamSlug: string,
+): Promise<{
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [[QUERY_KEYS.TEAMS], [QUERY_KEYS.PROJECTS]];
   const cookieStore = await cookies();
-  return api.delete("/teams", { headers: { "bevor-team-id": teamId } }).then((response) => {
+  return api.delete("/teams", { headers: { "bevor-team-slug": teamSlug } }).then(() => {
     cookieStore.delete("bevor-recent-team");
-    return response.data.success;
+    return { toInvalidate };
   });
 };
 
-export const updateTeam = async (teamId: string, data: UpdateTeamBody): Promise<boolean> => {
-  return api.patch("/teams", data, { headers: { "bevor-team-id": teamId } }).then((response) => {
-    return response.data.success;
+export const updateTeam = async (
+  teamSlug: string,
+  data: UpdateTeamBody,
+): Promise<{
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [[QUERY_KEYS.TEAMS], [QUERY_KEYS.PROJECTS]];
+
+  return api.patch("/teams", data, { headers: { "bevor-team-slug": teamSlug } }).then(() => {
+    return { toInvalidate };
   });
 };
 
-export const getInvites = async (teamId: string): Promise<MemberInviteSchema[]> => {
-  return api.get("/invites", { headers: { "bevor-team-id": teamId } }).then((response) => {
+export const getInvites = async (teamSlug: string): Promise<MemberInviteSchema[]> => {
+  return api.get("/invites", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
     return response.data.results;
   });
 };
 
-export const inviteMembers = async (teamId: string, data: InviteMemberBody): Promise<boolean> => {
-  return api.post("/invites", data, { headers: { "bevor-team-id": teamId } }).then((response) => {
-    return response.data.success;
+export const inviteMembers = async (
+  teamSlug: string,
+  data: InviteMemberBody,
+): Promise<{ toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [
+    generateQueryKey.invites(teamSlug),
+    generateQueryKey.subscription(teamSlug),
+  ];
+  return api.post("/invites", data, { headers: { "bevor-team-slug": teamSlug } }).then(() => {
+    return { toInvalidate };
   });
 };
 
-export const removeInvite = async (inviteId: string): Promise<boolean> => {
-  return api.delete(`/invites/${inviteId}`).then((response) => {
-    return response.data.success;
+export const removeInvite = async (
+  teamSlug: string,
+  inviteId: string,
+): Promise<{
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [
+    generateQueryKey.invites(teamSlug),
+    generateQueryKey.subscription(teamSlug),
+  ];
+  return api.delete(`/invites/${inviteId}`).then(() => {
+    return { toInvalidate };
   });
 };
 
 export const updateInvite = async (
-  teamId: string,
+  teamSlug: string,
   inviteId: string,
   data: UpdateMemberBody,
-): Promise<boolean> => {
+): Promise<{
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [generateQueryKey.invites(teamSlug)];
   return api
-    .patch(`/invites/${inviteId}`, data, { headers: { "bevor-team-id": teamId } })
-    .then((response) => {
-      return response.data.success;
+    .patch(`/invites/${inviteId}`, data, { headers: { "bevor-team-slug": teamSlug } })
+    .then(() => {
+      return { toInvalidate };
     });
 };
 
-export const acceptInvite = async (inviteId: string): Promise<string> => {
+export const acceptInvite = async (
+  inviteId: string,
+): Promise<{
+  id: string;
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [
+    generateQueryKey.userInvites(),
+    generateQueryKey.teams(),
+    [QUERY_KEYS.PROJECTS],
+  ];
   return api.post(`/invites/${inviteId}`, {}).then((response) => {
-    return response.data.id;
+    return {
+      id: response.data.id,
+      toInvalidate,
+    };
   });
 };
 
 export const updateMember = async (
-  teamId: string,
+  teamSlug: string,
   memberId: string,
   data: UpdateMemberBody,
-): Promise<boolean> => {
+): Promise<{
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [generateQueryKey.members(teamSlug)];
   return api
-    .patch(`/members/${memberId}`, data, { headers: { "bevor-team-id": teamId } })
-    .then((response) => {
-      return response.data.success;
+    .patch(`/members/${memberId}`, data, { headers: { "bevor-team-slug": teamSlug } })
+    .then(() => {
+      return { toInvalidate };
     });
 };
 
-export const removeMember = async (teamId: string, memberId: string): Promise<boolean> => {
+export const removeMember = async (
+  teamSlug: string,
+  memberId: string,
+): Promise<{
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [
+    generateQueryKey.members(teamSlug),
+    generateQueryKey.subscription(teamSlug),
+  ];
   return api
-    .delete(`/members/${memberId}`, { headers: { "bevor-team-id": teamId } })
-    .then((response) => {
-      return response.data.success;
+    .delete(`/members/${memberId}`, { headers: { "bevor-team-slug": teamSlug } })
+    .then(() => {
+      return { toInvalidate };
     });
 };
 
-export const getMembers = async (teamId: string): Promise<MemberSchemaI[]> => {
-  return api.get("/members", { headers: { "bevor-team-id": teamId } }).then((response) => {
+export const getMembers = async (teamSlug: string): Promise<MemberSchemaI[]> => {
+  return api.get("/members", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
     return response.data.results;
   });
 };
 
-export const getCurrentMember = async (teamId: string): Promise<MemberSchemaI> => {
-  return api.get("/members/current", { headers: { "bevor-team-id": teamId } }).then((response) => {
-    return response.data;
-  });
+export const getCurrentMember = async (teamSlug: string): Promise<MemberSchemaI> => {
+  return api
+    .get("/members/current", { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return response.data;
+    });
 };

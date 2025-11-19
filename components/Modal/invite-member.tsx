@@ -29,7 +29,7 @@ interface Invitee {
   role: MemberRoleEnum;
 }
 
-const InviteMemberModal: React.FC<{ teamId: string }> = ({ teamId }) => {
+const InviteMemberModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -41,10 +41,11 @@ const InviteMemberModal: React.FC<{ teamId: string }> = ({ teamId }) => {
   ]);
 
   const inviteMembersMutation = useMutation({
-    mutationFn: async (params: InviteMemberBody) => teamActions.inviteMembers(teamId, params),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invites", teamId] });
-      queryClient.invalidateQueries({ queryKey: ["subscription", teamId] });
+    mutationFn: async (params: InviteMemberBody) => teamActions.inviteMembers(teamSlug, params),
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
     },
   });
 

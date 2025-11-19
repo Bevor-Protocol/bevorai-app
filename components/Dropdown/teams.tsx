@@ -23,9 +23,9 @@ const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
   const [teamFilter, setTeamFilter] = useState("");
 
   const team = useMemo(() => {
-    if (!teams || !params.teamId) return;
-    return teams.find((team) => team.id === params.teamId);
-  }, [teams, params.teamId]);
+    if (!teams || !params.teamSlug) return;
+    return teams.find((team) => team.id === params.teamSlug);
+  }, [teams, params.teamSlug]);
 
   useEffect(() => {
     if (!teamFilter) {
@@ -39,10 +39,10 @@ const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
   }, [teams, teamFilter]);
 
   const newRoute = (teamItem: TeamSchemaI): string => {
-    if (!params.teamId || params.analysisId || params.chatId || params.versionId) {
-      return navigation.team.overview({ teamId: teamItem.id });
+    if (!params.teamSlug || params.analysisId || params.chatId || params.codeId) {
+      return navigation.team.overview({ teamSlug: teamItem.id });
     }
-    return pathname.replace(params.teamId, teamItem.id);
+    return pathname.replace(params.teamSlug, teamItem.id);
   };
 
   return (

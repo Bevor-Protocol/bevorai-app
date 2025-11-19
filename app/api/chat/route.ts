@@ -8,7 +8,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     const { message, chatId, attributes } = await req.json();
 
     const sessionToken = req.cookies.get("bevor-token")?.value;
-    const teamId = req.cookies.get("bevor-team-id")?.value;
+    const teamSlug = req.cookies.get("bevor-team-slug")?.value;
 
     if (!sessionToken) {
       throw new Error("invalidate token");
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest): Promise<Response> {
             {
               headers: {
                 Authorization: `Bearer ${sessionToken}`,
-                "Bevor-Team-Id": teamId,
+                "Bevor-Team-Id": teamSlug,
               },
             },
           );

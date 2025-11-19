@@ -3,54 +3,56 @@
 import api from "@/lib/api";
 import { BreadcrumbSchemaI } from "@/utils/types";
 
-export const getTeamBreadcrumb = async (teamId: string): Promise<BreadcrumbSchemaI> => {
-  return api.get("/breadcrumbs/team", { headers: { "bevor-team-id": teamId } }).then((response) => {
-    return response.data;
-  });
-};
-
-export const getTeamSettingsBreadcrumb = async (teamId: string): Promise<BreadcrumbSchemaI> => {
+export const getTeamBreadcrumb = async (teamSlug: string): Promise<BreadcrumbSchemaI> => {
   return api
-    .get("/breadcrumbs/team/settings", { headers: { "bevor-team-id": teamId } })
+    .get("/breadcrumbs/team", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
-export const getProjectsBreadcrumb = async (teamId: string): Promise<BreadcrumbSchemaI> => {
+export const getTeamSettingsBreadcrumb = async (teamSlug: string): Promise<BreadcrumbSchemaI> => {
   return api
-    .get("/breadcrumbs/projects", { headers: { "bevor-team-id": teamId } })
+    .get("/breadcrumbs/team/settings", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
-export const getAnalysesBreadcrumb = async (teamId: string): Promise<BreadcrumbSchemaI> => {
+export const getProjectsBreadcrumb = async (teamSlug: string): Promise<BreadcrumbSchemaI> => {
   return api
-    .get("/breadcrumbs/analyses", { headers: { "bevor-team-id": teamId } })
+    .get("/breadcrumbs/projects", { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return response.data;
+    });
+};
+
+export const getAnalysesBreadcrumb = async (teamSlug: string): Promise<BreadcrumbSchemaI> => {
+  return api
+    .get("/breadcrumbs/analyses", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
 export const getProjectBreadcrumb = async (
-  teamId: string,
-  projectId: string,
+  teamSlug: string,
+  projectSlug: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
-    .get(`/breadcrumbs/projects/${projectId}`, { headers: { "bevor-team-id": teamId } })
+    .get(`/breadcrumbs/projects/${projectSlug}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
 export const getProjectNewCodeBreadcrumb = async (
-  teamId: string,
-  projectId: string,
+  teamSlug: string,
+  projectSlug: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
-    .get(`/breadcrumbs/projects/${projectId}/code-versions/new`, {
-      headers: { "bevor-team-id": teamId },
+    .get(`/breadcrumbs/projects/${projectSlug}/code-versions/new`, {
+      headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
       return response.data;
@@ -58,12 +60,12 @@ export const getProjectNewCodeBreadcrumb = async (
 };
 
 export const getProjectCodesBreadcrumb = async (
-  teamId: string,
-  projectId: string,
+  teamSlug: string,
+  projectSlug: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
-    .get(`/breadcrumbs/projects/${projectId}/code-versions`, {
-      headers: { "bevor-team-id": teamId },
+    .get(`/breadcrumbs/projects/${projectSlug}/code-versions`, {
+      headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
       return response.data;
@@ -71,12 +73,12 @@ export const getProjectCodesBreadcrumb = async (
 };
 
 export const getProjectAnalysesBreadcrumb = async (
-  teamId: string,
-  projectId: string,
+  teamSlug: string,
+  projectSlug: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
-    .get(`/breadcrumbs/projects/${projectId}/analyses`, {
-      headers: { "bevor-team-id": teamId },
+    .get(`/breadcrumbs/projects/${projectSlug}/analyses`, {
+      headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
       return response.data;
@@ -84,34 +86,36 @@ export const getProjectAnalysesBreadcrumb = async (
 };
 
 export const getProjectChatsBreadcrumb = async (
-  teamId: string,
-  projectId: string,
+  teamSlug: string,
+  projectSlug: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
-    .get(`/breadcrumbs/projects/${projectId}/chats`, { headers: { "bevor-team-id": teamId } })
+    .get(`/breadcrumbs/projects/${projectSlug}/chats`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
 export const getCodeVersionBreadcrumb = async (
-  teamId: string,
+  teamSlug: string,
   codeVersionId: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
-    .get(`/breadcrumbs/code-versions/${codeVersionId}`, { headers: { "bevor-team-id": teamId } })
+    .get(`/breadcrumbs/code-versions/${codeVersionId}`, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
     .then((response) => {
       return response.data;
     });
 };
 
 export const getAnalysisBreadcrumb = async (
-  teamId: string,
+  teamSlug: string,
   analysisId: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
     .get(`/breadcrumbs/analyses/${analysisId}`, {
-      headers: { "bevor-team-id": teamId },
+      headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
       return response.data;
@@ -119,12 +123,12 @@ export const getAnalysisBreadcrumb = async (
 };
 
 export const getAnalysisVersionsBreadcrumb = async (
-  teamId: string,
+  teamSlug: string,
   analysisId: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
     .get(`/breadcrumbs/analyses/${analysisId}/analysis-versions`, {
-      headers: { "bevor-team-id": teamId },
+      headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
       return response.data;
@@ -132,12 +136,25 @@ export const getAnalysisVersionsBreadcrumb = async (
 };
 
 export const getAnalysisVersionBreadcrumb = async (
-  teamId: string,
+  teamSlug: string,
   analysisVersionId: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
     .get(`/breadcrumbs/analysis-versions/${analysisVersionId}`, {
-      headers: { "bevor-team-id": teamId },
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then((response) => {
+      return response.data;
+    });
+};
+
+export const getAnalysisNewVersionBreadcrumb = async (
+  teamSlug: string,
+  analysisId: string,
+): Promise<BreadcrumbSchemaI> => {
+  return api
+    .get(`/breadcrumbs/analyses/${analysisId}/analysis-versions/new`, {
+      headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
       return response.data;
@@ -145,12 +162,12 @@ export const getAnalysisVersionBreadcrumb = async (
 };
 
 export const getAnalysisChatBreadcrumb = async (
-  teamId: string,
+  teamSlug: string,
   analysisId: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
     .get(`/breadcrumbs/analyses/${analysisId}/chat`, {
-      headers: { "bevor-team-id": teamId },
+      headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
       return response.data;
@@ -158,11 +175,11 @@ export const getAnalysisChatBreadcrumb = async (
 };
 
 export const getChatBreadcrumb = async (
-  teamId: string,
+  teamSlug: string,
   chatId: string,
 ): Promise<BreadcrumbSchemaI> => {
   return api
-    .get(`/breadcrumbs/chats/${chatId}`, { headers: { "bevor-team-id": teamId } })
+    .get(`/breadcrumbs/chats/${chatId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });

@@ -71,7 +71,7 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
   if (pathname.startsWith("/teams")) {
     const segments = pathname.split("/").filter(Boolean);
     if (segments.length > 1) {
-      response.cookies.set("bevor-team-id", segments[1]);
+      response.cookies.set("bevor-team-slug", segments[1]);
     }
   }
 

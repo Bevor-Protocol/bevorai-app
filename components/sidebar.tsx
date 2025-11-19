@@ -29,8 +29,9 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useSSE } from "@/hooks/useSSE";
 import { useLocalStorageState } from "@/providers/localStore";
-import { QUERY_KEYS } from "@/utils/constants";
+import { generateQueryKey } from "@/utils/constants";
 import { navigation } from "@/utils/navigation";
 import { HrefProps } from "@/utils/types";
 import { DropdownMenu, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
@@ -83,34 +84,45 @@ const AppSidebar: React.FC = () => {
   const [openTeams, setOpenTeams] = useState<Record<string, boolean>>({});
 
   const { data: teams = [] } = useQuery({
-    queryKey: [QUERY_KEYS.TEAMS],
+    queryKey: generateQueryKey.teams(),
     queryFn: async () => dashboardActions.getTeams(),
   });
 
-  const { data: invites = [] } = useQuery({
-    queryKey: [QUERY_KEYS.INVITES],
+  const { data: invites = [], refetch } = useQuery({
+    queryKey: generateQueryKey.userInvites(),
     queryFn: async () => dashboardActions.getInvites(),
   });
 
   const { data: user } = useQuery({
-    queryKey: [QUERY_KEYS.USERS],
+    queryKey: generateQueryKey.currentUser(),
     queryFn: () => dashboardActions.getUser(),
+  });
+
+  useSSE({
+    url: "/user",
+    autoConnect: true,
+    eventTypes: ["invites"],
+    onMessage: (message) => {
+      console.log(message);
+      refetch();
+    },
+    onOpen: () => console.log("OPEN"),
   });
 
   // Auto-open team when URL matches
   useEffect(() => {
-    if (params.teamId) {
+    if (params.teamSlug) {
       setOpenTeams((prev) => ({
         ...prev,
-        [params.teamId as string]: true,
+        [params.teamSlug as string]: true,
       }));
     }
-  }, [params.teamId]);
+  }, [params.teamSlug]);
 
-  const handleTeamToggle = (teamId: string): void => {
+  const handleTeamToggle = (teamSlug: string): void => {
     setOpenTeams((prev) => ({
       ...prev,
-      [teamId]: !prev[teamId],
+      [teamSlug]: !prev[teamSlug],
     }));
   };
 
@@ -203,7 +215,7 @@ const AppSidebar: React.FC = () => {
                             <DropdownMenuGroup>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={navigation.team.settings.overview({ teamId: team.id })}
+                                  href={navigation.team.settings.overview({ teamSlug: team.id })}
                                   className="w-full flex relative"
                                 >
                                   <Settings />
@@ -212,7 +224,7 @@ const AppSidebar: React.FC = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={navigation.team.settings.api({ teamId: team.id })}
+                                  href={navigation.team.settings.api({ teamSlug: team.id })}
                                   className="w-full flex relative"
                                 >
                                   <Code />
@@ -221,7 +233,7 @@ const AppSidebar: React.FC = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={navigation.team.settings.billing({ teamId: team.id })}
+                                  href={navigation.team.settings.billing({ teamSlug: team.id })}
                                   className="w-full flex relative"
                                 >
                                   <DollarSign />
@@ -230,7 +242,7 @@ const AppSidebar: React.FC = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={navigation.team.settings.plans({ teamId: team.id })}
+                                  href={navigation.team.settings.plans({ teamSlug: team.id })}
                                   className="w-full flex relative"
                                 >
                                   <Files />
@@ -239,7 +251,7 @@ const AppSidebar: React.FC = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={navigation.team.settings.invoices({ teamId: team.id })}
+                                  href={navigation.team.settings.invoices({ teamSlug: team.id })}
                                   className="w-full flex relative"
                                 >
                                   <File />
@@ -248,7 +260,7 @@ const AppSidebar: React.FC = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={navigation.team.settings.members({ teamId: team.id })}
+                                  href={navigation.team.settings.members({ teamSlug: team.id })}
                                   className="w-full flex relative"
                                 >
                                   <LucideIcon assetType="member" />
@@ -264,11 +276,11 @@ const AppSidebar: React.FC = () => {
                               <SidebarMenuButton
                                 asChild
                                 isActive={
-                                  pathname === navigation.team.projects({ teamId: team.id })
+                                  pathname === navigation.team.projects({ teamSlug: team.id })
                                 }
                                 tooltip="Projects"
                               >
-                                <Link href={navigation.team.projects({ teamId: team.id })}>
+                                <Link href={navigation.team.projects({ teamSlug: team.id })}>
                                   <LucideIcon assetType="project" />
                                   <span>Projects</span>
                                 </Link>
@@ -278,23 +290,23 @@ const AppSidebar: React.FC = () => {
                               <SidebarMenuButton
                                 asChild
                                 isActive={
-                                  pathname === navigation.team.analyses({ teamId: team.id })
+                                  pathname === navigation.team.analyses({ teamSlug: team.id })
                                 }
-                                tooltip="Analyses"
+                                tooltip="Analysis Threads"
                               >
-                                <Link href={navigation.team.analyses({ teamId: team.id })}>
+                                <Link href={navigation.team.analyses({ teamSlug: team.id })}>
                                   <LucideIcon assetType="analysis" />
-                                  <span>Analyses</span>
+                                  <span>Analysis Threads</span>
                                 </Link>
                               </SidebarMenuButton>
                             </SidebarMenuSubItem>
                             <SidebarMenuSubItem>
                               <SidebarMenuButton
                                 asChild
-                                isActive={pathname === navigation.team.chats({ teamId: team.id })}
+                                isActive={pathname === navigation.team.chats({ teamSlug: team.id })}
                                 tooltip="Chats"
                               >
-                                <Link href={navigation.team.chats({ teamId: team.id })}>
+                                <Link href={navigation.team.chats({ teamSlug: team.id })}>
                                   <LucideIcon assetType="chat" />
                                   <span>Chats</span>
                                 </Link>

@@ -4,6 +4,7 @@ import { dashboardActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { generateQueryKey } from "@/utils/constants";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit2, Save, X } from "lucide-react";
 import { useState } from "react";
@@ -14,15 +15,17 @@ export const ProfileClient: React.FC = () => {
   const [username, setUsername] = useState("");
 
   const { data: user, isLoading } = useQuery({
-    queryKey: ["user"],
+    queryKey: generateQueryKey.currentUser(),
     queryFn: async () => dashboardActions.getUser(),
   });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (newUsername: string) =>
       dashboardActions.updateUser({ username: newUsername }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
       setIsEditing(false);
     },
   });

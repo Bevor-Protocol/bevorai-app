@@ -1,0 +1,172 @@
+"use client";
+
+import { analysisActions, projectActions } from "@/actions/bevor";
+import CreateAnalysisModal from "@/components/Modal/create-analysis";
+import { AnalysisElementBare } from "@/components/analysis/element";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { generateQueryKey } from "@/utils/constants";
+import { extractTeamAnalysesQuery } from "@/utils/queries";
+import { CodeVersionMappingSchemaI, UserDetailedSchemaI } from "@/utils/types";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Shield } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+const CreateAnalysisVersionButton: React.FC<{
+  teamSlug: string;
+  version: CodeVersionMappingSchemaI;
+  user: UserDetailedSchemaI;
+}> = ({ teamSlug, version, user }) => {
+  const [open, setOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
+
+  const { data: project } = useQuery({
+    queryKey: generateQueryKey.project(version.project_id),
+    queryFn: () => projectActions.getProject(teamSlug, version.project_id),
+  });
+
+  const analysesQuery = extractTeamAnalysesQuery({
+    project_id: version.project_id,
+    user_id: user.id,
+  });
+
+  const { data: analyses, refetch } = useQuery({
+    queryKey: generateQueryKey.analyses(teamSlug, analysesQuery),
+    queryFn: () => analysisActions.getAnalyses(teamSlug, analysesQuery),
+  });
+
+  const handleAnalysisCreated = (analysisId: string): void => {
+    setCreateDialogOpen(false);
+    refetch();
+    setSelectedAnalysisId(analysisId);
+  };
+
+  const hasAnalyses = analyses && analyses.results.length > 0;
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+          setSelectedAnalysisId(null);
+        }
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="ml-4">
+          <Shield className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Select Analysis Thread</DialogTitle>
+          <DialogDescription>
+            Choose an existing analysis thread to continue, or create a new thread for this code
+            version
+          </DialogDescription>
+        </DialogHeader>
+        {hasAnalyses ? (
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Continue an existing analysis thread:
+              </p>
+              <ScrollArea className="max-h-[300px]">
+                <div className="space-y-2">
+                  {analyses.results.map((analysis) => (
+                    <div
+                      key={analysis.id}
+                      onClick={() => setSelectedAnalysisId(analysis.id)}
+                      className={cn(
+                        "rounded-lg border transition-colors",
+                        selectedAnalysisId === analysis.id
+                          ? "border-primary bg-accent"
+                          : "hover:border-muted-foreground/60",
+                      )}
+                    >
+                      <AnalysisElementBare analysis={analysis} />
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+            <Separator />
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-muted-foreground">
+                Or start a new analysis thread for this code version:
+              </p>
+              {project && (
+                <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <Plus className="size-4" />
+                      Create New Analysis Thread
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <CreateAnalysisModal
+                      teamSlug={teamSlug}
+                      project={project}
+                      onSuccess={handleAnalysisCreated}
+                    />
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button disabled={!selectedAnalysisId} asChild>
+                <Link
+                  href={`/teams/${teamSlug}/analyses/${selectedAnalysisId}/versions/new?codeVersionId=${version.id}`}
+                  aria-disabled={!selectedAnalysisId}
+                >
+                  Continue with Selected Thread
+                </Link>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              You don&apos;t have any analysis threads in this project. Create one to get started.
+            </p>
+            {project && (
+              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="size-4" />
+                    Create Analysis Thread
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <CreateAnalysisModal
+                    teamSlug={teamSlug}
+                    project={project}
+                    onSuccess={handleAnalysisCreated}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default CreateAnalysisVersionButton;

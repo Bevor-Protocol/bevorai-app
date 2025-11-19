@@ -1,29 +1,4 @@
-import { TerminalStep } from "./enums";
-
-export const stepText = {
-  [TerminalStep.INITIAL]: "audit method",
-  [TerminalStep.INPUT_ADDRESS]: "audit address",
-  [TerminalStep.INPUT_PASTE]: "paste audit",
-  [TerminalStep.INPUT_UPLOAD]: "upload contract file",
-  [TerminalStep.INPUT_FOLDER]: "upload contracts folder",
-  [TerminalStep.AUDIT_TYPE]: "audit type",
-  [TerminalStep.RESULTS]: "results",
-  [TerminalStep.INPUT_AGENT]: "Input Agent",
-  [TerminalStep.SCOPE_DEFINITION]: "scope",
-};
-
-export const ChainPresets: Record<number, string> = {
-  // Base
-  8453: "/base.svg",
-  // Sepolia
-  11155111: "/base.svg",
-  // Localhost
-  1337: "/unknown.svg",
-  // anvil
-  31337: "/unknown.svg",
-  // Default
-  99999: "/unknown.svg",
-};
+import { QueryKey } from "@tanstack/react-query";
 
 export const NetworkToNameMapper = {
   eth: "ETH Mainnet",
@@ -34,17 +9,6 @@ export const NetworkToNameMapper = {
   bsc_test: "Binance testnet",
   polygon_amoy: "Polygon testnet",
   base_sepolia: "Base Sepolia testnet",
-};
-
-export const BlockExplorerMapper = {
-  eth: "https://etherscan.io",
-  bsc: "https://bscscan.com",
-  polygon: "https://polygonscan.com",
-  base: "https://basescan.org",
-  eth_sepolia: "https://sepolia.etherscan.io",
-  bsc_test: "https://testnet.bscscan.com",
-  polygon_amoy: "https://amoy.polygonscan.com",
-  base_sepolia: "https://sepolia.basescan.org",
 };
 
 // CSS custom properties for use with Tailwind
@@ -58,10 +22,10 @@ export const severityColorMap = {
 export const QUERY_KEYS = {
   ACTIVITIES: "activities",
   ANALYSES: "analyses",
-  PROJECTS: "project",
+  PROJECTS: "projects",
   TEAMS: "teams",
   CODES: "codes",
-  ANALYSIS_VERSION: "analysis_versions",
+  ANALYSIS_VERSIONS: "analysis_versions",
   MEMBERS: "members",
   CHATS: "chats",
   USERS: "users",
@@ -70,5 +34,114 @@ export const QUERY_KEYS = {
   CUSTOMERS: "customers",
   SUBSCRIPTIONS: "subscriptions",
   PAYMENT_METHODS: "payment-methods",
+  ADD_ONS: "add-ons",
+  PRODUCTS: "products",
   BREADCRUMBS: "breadcrumbs",
+};
+
+export const generateQueryKey = {
+  projectActivities: (projectSlug: string): QueryKey => [
+    QUERY_KEYS.ACTIVITIES,
+    "project",
+    projectSlug,
+  ],
+  teamActivities: (teamSlug: string): QueryKey => [QUERY_KEYS.ACTIVITIES, "team", teamSlug],
+
+  team: (teamSlug: string): QueryKey => [QUERY_KEYS.TEAMS, teamSlug],
+  teams: (): QueryKey => [QUERY_KEYS.TEAMS],
+  teamsOverview: (): QueryKey => [QUERY_KEYS.TEAMS, "overview"],
+
+  allProjects: (filter: { [key: string]: string | undefined }): QueryKey => [
+    QUERY_KEYS.PROJECTS,
+    filter,
+  ],
+  projects: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
+    QUERY_KEYS.PROJECTS,
+    teamSlug,
+    filter,
+  ],
+  project: (projectSlug: string): QueryKey => [QUERY_KEYS.PROJECTS, projectSlug],
+  projectRecentCode: (projectSlug: string): QueryKey => [
+    QUERY_KEYS.PROJECTS,
+    projectSlug,
+    "recent-code",
+  ],
+
+  apiKeys: (teamSlug: string): QueryKey => [QUERY_KEYS.API_KEYS, teamSlug],
+  invites: (teamSlug: string): QueryKey => [QUERY_KEYS.INVITES, teamSlug],
+  userInvites: (): QueryKey => [QUERY_KEYS.INVITES, "user"],
+  members: (teamSlug: string): QueryKey => [QUERY_KEYS.MEMBERS, teamSlug],
+
+  currentUser: (): QueryKey => [QUERY_KEYS.USERS],
+  currentMember: (teamSlug: string): QueryKey => [QUERY_KEYS.MEMBERS, "current", teamSlug],
+
+  code: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId],
+  codeNodes: (codeId: string, filter: { name: string }): QueryKey => [
+    QUERY_KEYS.CODES,
+    codeId,
+    "nodes",
+    filter,
+  ],
+  codeSource: (codeId: string, sourceId: string): QueryKey => [
+    QUERY_KEYS.CODES,
+    codeId,
+    "source",
+    sourceId,
+  ],
+  codeTree: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "tree"],
+  codes: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
+    QUERY_KEYS.CODES,
+    teamSlug,
+    filter,
+  ],
+
+  chat: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId],
+  chatHead: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "head"],
+  chatAttributes: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "attributes"],
+  chats: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
+    QUERY_KEYS.CHATS,
+    teamSlug,
+    filter,
+  ],
+
+  analysis: (analysisId: string): QueryKey => [QUERY_KEYS.ANALYSES, analysisId],
+  analyses: (teamSlug: string, filter?: { [key: string]: string | undefined }): QueryKey => [
+    QUERY_KEYS.ANALYSES,
+    teamSlug,
+    filter,
+  ],
+
+  analysisHead: (analysisId: string): QueryKey => [QUERY_KEYS.ANALYSES, analysisId, "head"],
+
+  analysisVersionRecent: (analysisId: string): QueryKey => [
+    QUERY_KEYS.ANALYSES,
+    analysisId,
+    "recent",
+  ],
+  analysisVersion: (analysisVersionId: string): QueryKey => [
+    QUERY_KEYS.ANALYSIS_VERSIONS,
+    analysisVersionId,
+  ],
+  analysisVersionStatus: (analysisVersionId: string): QueryKey => [
+    QUERY_KEYS.ANALYSIS_VERSIONS,
+    analysisVersionId,
+    "status",
+  ],
+  analysisVersionFindings: (analysisVersionId: string): QueryKey => [
+    QUERY_KEYS.ANALYSIS_VERSIONS,
+    analysisVersionId,
+    "findings",
+  ],
+
+  analysisVersions: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
+    QUERY_KEYS.ANALYSIS_VERSIONS,
+    teamSlug,
+    filter,
+  ],
+
+  subscription: (teamSlug: string): QueryKey => [QUERY_KEYS.SUBSCRIPTIONS, teamSlug],
+  addons: (teamSlug: string): QueryKey => [QUERY_KEYS.ADD_ONS, teamSlug],
+  customer: (teamSlug: string): QueryKey => [QUERY_KEYS.CUSTOMERS, teamSlug],
+  paymentMethods: (teamSlug: string): QueryKey => [QUERY_KEYS.PAYMENT_METHODS, teamSlug],
+  products: (teamSlug: string): QueryKey => [QUERY_KEYS.PRODUCTS, teamSlug],
 };

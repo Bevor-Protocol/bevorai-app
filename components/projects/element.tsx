@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDate, formatNumber } from "@/utils/helpers";
 import { navigation } from "@/utils/navigation";
-import { CodeProjectDetailedSchemaI } from "@/utils/types";
+import { ProjectDetailedSchemaI } from "@/utils/types";
 import { Clock, User } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -41,14 +41,14 @@ export const ProjectElementLoader: React.FC = () => {
 };
 
 export const ProjectElement: React.FC<{
-  project: CodeProjectDetailedSchemaI;
+  project: ProjectDetailedSchemaI;
   showTeam?: boolean;
   isDisabled?: boolean;
 }> = ({ project, showTeam = false, isDisabled = false }) => {
   return (
     <Link
       key={project.id}
-      href={navigation.project.overview({ teamId: project.team.id, projectId: project.id })}
+      href={navigation.project.overview({ teamSlug: project.team.slug, projectSlug: project.slug })}
       aria-disabled={isDisabled}
       className={cn(
         "block border transition-colors rounded-lg",

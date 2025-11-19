@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { QUERY_KEYS } from "@/utils/constants";
+import { generateQueryKey } from "@/utils/constants";
 import { navigation } from "@/utils/navigation";
 import { MemberRoleEnum, TeamOverviewSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 
 export const TeamsCount: React.FC = () => {
   const { data: teams = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.TEAMS, "overview"],
+    queryKey: generateQueryKey.teams(),
     queryFn: () => dashboardActions.getTeamsOverview(),
   });
 
@@ -60,7 +60,7 @@ export const TeamCreate: React.FC = () => {
 export const TeamsTable: React.FC = () => {
   const router = useRouter();
   const { data: teams = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.TEAMS, "overview"],
+    queryKey: generateQueryKey.teamsOverview(),
     queryFn: () => dashboardActions.getTeamsOverview(),
   });
 
@@ -121,7 +121,7 @@ export const TeamsTable: React.FC = () => {
           {teams.map((team) => (
             <TableRow
               key={team.id}
-              onClick={() => router.push(navigation.team.overview({ teamId: team.id }))}
+              onClick={() => router.push(navigation.team.overview({ teamSlug: team.slug }))}
             >
               <TableCell>
                 <Icon size="sm" seed={team.id} />
