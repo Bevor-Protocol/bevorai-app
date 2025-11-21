@@ -10,15 +10,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSSE } from "@/hooks/useSSE";
 import { cn } from "@/lib/utils";
-import { generateQueryKey } from "@/utils/constants";
 import { formatDate, trimAddress } from "@/utils/helpers";
 import { CodeMappingSchemaI, CodeVersionSchemaI, SourceTypeEnum } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Clock, Code, ExternalLink, MessageSquare, MoreHorizontal, Network, RotateCw, Upload } from "lucide-react";
+import {
+  Clock,
+  Code,
+  ExternalLink,
+  MessageSquare,
+  MoreHorizontal,
+  Network,
+  RotateCw,
+  Upload,
+} from "lucide-react";
 import Link from "next/link";
-import React, { useRef } from "react";
+import React from "react";
 import { toast } from "sonner";
 
 export const CodeVersionElementLoader: React.FC = () => {
@@ -122,51 +129,13 @@ const CodeVersionActions: React.FC<{
   teamSlug: string;
 }> = ({ version, teamSlug }) => {
   const queryClient = useQueryClient();
-  const sseToastId = useRef<string | number | undefined>(undefined);
-
-  const { connect } = useSSE({
-    autoConnect: false,
-    eventTypes: ["code_versions"],
-    onMessage: (message) => {
-      let parsed: string;
-      try {
-        parsed = JSON.parse(message.data);
-      } catch {
-        parsed = message.data;
-      }
-
-      if (parsed === "pending" || parsed === "embedding") {
-        if (!sseToastId.current) {
-          sseToastId.current = toast.loading("Retrying post-processing...");
-        } else {
-          toast.loading("Retrying post-processing...", {
-            id: sseToastId.current,
-          });
-        }
-      } else if (parsed === "embedded") {
-        toast.success("Post-processing successful", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-        queryClient.invalidateQueries({ queryKey: generateQueryKey.codes(teamSlug) });
-      } else if (parsed === "failed") {
-        toast.error("Post-processing failed", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      }
-    },
-  });
 
   const retryMutation = useMutation({
     mutationFn: async () => codeActions.retryEmbedding(teamSlug, version.id),
-    onSuccess: ({ id, toInvalidate }) => {
+    onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
-      if (id) {
-        connect(`/code-versions/${id}`);
-      }
     },
     onError: () => {
       toast.error("Failed to retry processing");
@@ -308,9 +277,7 @@ export const CodeVersionElementBare: React.FC<
       <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">
         {version.version.solc_version || ""}
       </span>
-      <div className="flex items-center justify-center">
-        {getEmbeddingStatusBadge()}
-      </div>
+      <div className="flex items-center justify-center">{getEmbeddingStatusBadge()}</div>
       {isRepoMethod && version.version.source_url ? (
         <a
           href={version.version.source_url}
