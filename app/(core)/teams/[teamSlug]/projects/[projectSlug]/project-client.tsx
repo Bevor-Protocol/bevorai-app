@@ -69,11 +69,11 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm">
-            <MoreHorizontal />
+          <Button variant="outline" size="sm">
+            <MoreHorizontal className="size-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
+        <DropdownMenuContent align="end">
           <DropdownMenuGroup>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem className="[&_svg]:ml-auto" asChild>
@@ -142,18 +142,22 @@ const ProjectEditDialog: React.FC<{
   teamSlug: string;
   project: ProjectDetailedSchemaI;
 }> = ({ open, onOpenChange, teamSlug, project }) => {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
   const updateMutation = useMutation({
     mutationFn: (data: ProjectFormValues) =>
-      projectActions.updateProject(teamSlug, project.id, data),
-    onSuccess: ({ toInvalidate }) => {
+      projectActions.updateProject(teamSlug, project.slug, data),
+    onSuccess: ({ project: refreshedProject, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
       onOpenChange(false);
       toast.success("Update successful");
+      if (refreshedProject.slug !== project.slug) {
+        router.push(`/teams/${teamSlug}/projects/${refreshedProject.slug}`);
+      }
     },
   });
 
@@ -309,7 +313,7 @@ export const ProjectActivities: React.FC<{ teamSlug: string; projectSlug: string
     eventTypes: ["activities"],
   });
 
-  return <ActivityList activities={activities} className="w-fit mx-auto" />;
+  return <ActivityList activities={activities} />;
 };
 
 export const AnalysesPreview: React.FC<{
@@ -346,19 +350,29 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
   });
 
   return (
-    <>
-      <h1>{project.name}</h1>
-      <div className="flex flex-row gap-2 items-center">
-        <div className="text-muted-foreground">Owner:</div>
-        <Icon size="sm" seed={project.created_by_user.id} />
-        <div>{project.created_by_user.username}</div>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-3xl font-semibold tracking-tight">{project.name}</h1>
+          <ProjectToggle teamSlug={teamSlug} projectSlug={projectSlug} />
+        </div>
+        <div className="flex flex-row gap-2 items-center text-sm text-muted-foreground">
+          <span>Owner:</span>
+          <Icon size="sm" seed={project.created_by_user.id} />
+          <span>{project.created_by_user.username}</span>
+        </div>
       </div>
-      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-        <div className="flex items-center gap-1">
+      {project.description && (
+        <p className="text-base text-muted-foreground leading-relaxed max-w-2xl">
+          {project.description}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Calendar className="size-4" />
           <span>{formatDate(project.created_at)}</span>
         </div>
-        <div className="flex flex-row gap-1 shrink-0">
+        <div className="flex flex-row gap-2">
           <Badge variant="blue" size="sm">
             {formatNumber(project.n_codes)} codes
           </Badge>
@@ -367,20 +381,17 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
           </Badge>
         </div>
       </div>
-      {project.description && (
-        <div className="my-2">
-          <p className="text-lg leading-relaxed">{project.description}</p>
+      {project.tags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {project.tags.map((tag, index) => (
+            <Badge key={index} variant="outline" size="sm">
+              <Tag className="size-3" />
+              <span>{tag}</span>
+            </Badge>
+          ))}
         </div>
       )}
-      <div className="flex items-center gap-1">
-        {project.tags.map((tag, index) => (
-          <Badge key={index} variant="outline">
-            <Tag className="w-2 h-2" />
-            <span>{tag}</span>
-          </Badge>
-        ))}
-      </div>
-    </>
+    </div>
   );
 };
 

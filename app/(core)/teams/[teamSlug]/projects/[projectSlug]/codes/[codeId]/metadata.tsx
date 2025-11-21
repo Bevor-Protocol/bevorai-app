@@ -5,7 +5,7 @@ import { formatDate, truncateVersion } from "@/utils/helpers";
 import { DefaultAnalysisThreadsQuery } from "@/utils/query-params";
 import { CodeMappingSchemaI } from "@/utils/types";
 import { Calendar, ExternalLink, Network } from "lucide-react";
-import CreateAnalysisVersionButton from "./create-analysis-version-button";
+import CodeVersionMenu from "./code-version-menu";
 import Relations from "./relations";
 
 const CodeMetadata: React.FC<{
@@ -56,7 +56,7 @@ const CodeMetadata: React.FC<{
           </div>
 
           <Relations version={version} teamSlug={teamSlug} />
-          <CreateAnalysisVersionButton
+          <CodeVersionMenu
             version={version}
             teamSlug={teamSlug}
             projectSlug={projectSlug}

@@ -178,7 +178,7 @@ const ContainerBreadcrumb: React.FC<{
                     <SlashIcon className="-rotate-25" />
                   </BreadcrumbSeparator>
                   <BreadcrumbItem>
-                    <LucideIcon assetType="code" className="size-4" />
+                    <LucideIcon assetType="code" className="size-4 text-green-foreground" />
                     {codeId}
                   </BreadcrumbItem>
                 </>
@@ -190,7 +190,7 @@ const ContainerBreadcrumb: React.FC<{
                   </BreadcrumbSeparator>
 
                   <BreadcrumbItem>
-                    <LucideIcon assetType="analysis" className="size-4" />
+                    <LucideIcon assetType="analysis" className="size-4 text-purple-foreground" />
                     {analysisId}
                   </BreadcrumbItem>
                 </>
@@ -201,7 +201,10 @@ const ContainerBreadcrumb: React.FC<{
                     <SlashIcon className="-rotate-25" />
                   </BreadcrumbSeparator>
                   <BreadcrumbItem>
-                    <LucideIcon assetType="analysis_version" className="size-4" />
+                    <LucideIcon
+                      assetType="analysis_version"
+                      className="size-4 text-muted-foreground"
+                    />
                     {analysisVersionId}
                   </BreadcrumbItem>
                 </>

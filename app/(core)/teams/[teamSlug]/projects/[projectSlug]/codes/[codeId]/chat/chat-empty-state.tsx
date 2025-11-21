@@ -13,7 +13,7 @@ export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({ onSendMessage })
       <div className="flex-1 flex items-center justify-center">
         <Chat.EmptyCta>
           <p className="text-2xl font-medium mb-1">Start a conversation</p>
-          <p className="text-lg text-muted-foreground">Ask questions about your code & analyses</p>
+          <p className="text-lg text-muted-foreground">Ask questions about this code</p>
         </Chat.EmptyCta>
       </div>
       <div className="pb-4">

@@ -2,6 +2,7 @@
 
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
+import { useSSE } from "@/hooks/useSSE";
 import { cn } from "@/lib/utils";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
@@ -33,6 +34,36 @@ const FolderStep: React.FC<{
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const toastId = useRef<string | number>(undefined);
+  const sseToastId = useRef<string | number | undefined>(undefined);
+
+  const { connect } = useSSE({
+    autoConnect: false,
+    eventTypes: ["code_versions"],
+    onMessage: (message) => {
+      let parsed: string;
+      try {
+        parsed = JSON.parse(message.data);
+      } catch {
+        parsed = message.data;
+      }
+
+      if (parsed === "pending" || parsed === "embedding") {
+        sseToastId.current = toast.loading("Post-processing code...");
+      }
+
+      if (parsed === "embedded") {
+        toast.success("Post-processing successful", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+      } else if (parsed === "failed") {
+        toast.error("Post-processing failed", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+      }
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async (files: SourceFile[]) => {
@@ -43,23 +74,29 @@ const FolderStep: React.FC<{
       return codeActions.contractUploadFolder(project.team.slug, project.slug, fileMap);
     },
     onMutate: () => {
+      setError("");
       toastId.current = toast.loading("Uploading and parsing code...");
     },
     onError: () => {
       toast.dismiss(toastId.current);
+      setError("something went wrong");
     },
-    onSuccess: ({ toInvalidate }) => {
+    onSuccess: ({ id, status, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
       toast.success("Successfully uploaded code", {
         id: toastId.current,
       });
+
+      if (status === "embedding" || status === "pending") {
+        connect(`/code-versions/${id}`);
+      }
     },
   });
 
   useEffect(() => {
-    if (!editorRef.current || !selectedFile || mutation.isError || mutation.isSuccess) return;
+    if (!editorRef.current || !selectedFile || mutation.isPending || mutation.data) return;
     if (viewRef.current) {
       viewRef.current.destroy();
     }
@@ -78,9 +115,7 @@ const FolderStep: React.FC<{
         viewRef.current = null;
       }
     };
-    // as we reset mutation, without these in the dependency array, this wouldn't fire otherwise
-    // and the code view will be empty
-  }, [selectedFile, mutation.isError, mutation.isSuccess]);
+  }, [selectedFile, mutation.isPending, mutation.data]);
 
   const processFiles = useCallback(async (files: File[] | FileList) => {
     const validFiles: SourceFile[] = [];
@@ -184,7 +219,7 @@ const FolderStep: React.FC<{
           </div>
           <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
           <p className="text-muted-foreground">
-            Your contract has been uploaded and is ready for audit.
+            Your contract has been uploaded and is ready for analysis.
           </p>
           <Button asChild className="mt-4">
             <Link

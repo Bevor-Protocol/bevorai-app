@@ -4,6 +4,7 @@ import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSSE } from "@/hooks/useSSE";
 import { cn } from "@/lib/utils";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
@@ -40,6 +41,36 @@ const FileStep: React.FC<{
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const toastId = useRef<string | number>(undefined);
+  const sseToastId = useRef<string | number | undefined>(undefined);
+
+  const { connect } = useSSE({
+    autoConnect: false,
+    eventTypes: ["code_versions"],
+    onMessage: (message) => {
+      let parsed: string;
+      try {
+        parsed = JSON.parse(message.data);
+      } catch {
+        parsed = message.data;
+      }
+
+      if (parsed === "pending" || parsed === "embedding") {
+        sseToastId.current = toast.loading("Post-processing code...");
+      }
+
+      if (parsed === "embedded") {
+        toast.success("Post-processing successful", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+      } else if (parsed === "failed") {
+        toast.error("Post-processing failed", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+      }
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async (data: { code?: string; file?: File }) => {
@@ -51,26 +82,29 @@ const FileStep: React.FC<{
       throw new Error("No file or code provided");
     },
     onMutate: () => {
+      setError("");
       toastId.current = toast.loading("Uploading and parsing code...");
     },
     onError: () => {
       toast.dismiss(toastId.current);
-      // ideally pass compiler errors along.
       setError("something went wrong");
     },
-    onSuccess: ({ toInvalidate }) => {
+    onSuccess: ({ id, status, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
       toast.success("Successfully uploaded code", {
         id: toastId.current,
       });
+
+      if (status === "embedding" || status === "pending") {
+        connect(`/code-versions/${id}`);
+      }
     },
   });
 
-  // Initialize CodeMirror
   useEffect(() => {
-    if (!editorRef.current || mutation.isError || mutation.isSuccess) return;
+    if (!editorRef.current || mutation.isPending || mutation.data) return;
     if (viewRef.current) {
       viewRef.current.destroy();
     }
@@ -98,8 +132,7 @@ const FileStep: React.FC<{
         viewRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, uploadedFile, mutation.isError, mutation.isSuccess]);
+  }, [activeTab, uploadedFile, contractCode, mutation.isPending, mutation.data]);
 
   const handleFileUpload = useCallback(async (file: File): Promise<void> => {
     if (!file.name.endsWith(".sol") && !file.name.endsWith(".js") && !file.name.endsWith(".ts")) {
@@ -215,7 +248,7 @@ const FileStep: React.FC<{
           </div>
           <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
           <p className="text-muted-foreground">
-            Your contract has been uploaded and is ready for audit.
+            Your contract has been uploaded and is ready for analysis.
           </p>
           <Button asChild className="mt-4">
             <Link
@@ -264,9 +297,7 @@ const FileStep: React.FC<{
         </div>
         <Button
           type="submit"
-          disabled={
-            (activeTab === "upload" ? !uploadedFile : !contractCode.trim()) || mutation.isPending
-          }
+          disabled={activeTab === "upload" ? !uploadedFile : !contractCode.trim()}
           className="min-w-40"
           onClick={handleSubmit}
         >
@@ -278,18 +309,12 @@ const FileStep: React.FC<{
       <Tabs onValueChange={handleToggle} defaultValue="upload">
         <div className="flex flex-row justify-between items-center">
           <TabsList>
-            <TabsTrigger value="upload" disabled={mutation.isPending}>
-              Upload
-            </TabsTrigger>
-            <TabsTrigger value="paste" disabled={mutation.isPending}>
-              Write
-            </TabsTrigger>
+            <TabsTrigger value="upload">Upload</TabsTrigger>
+            <TabsTrigger value="paste">Write</TabsTrigger>
           </TabsList>
           <Button
             variant="outline"
-            disabled={
-              (activeTab == "upload" ? !uploadedFile : !contractCode.trim()) || mutation.isPending
-            }
+            disabled={activeTab == "upload" ? !uploadedFile : !contractCode.trim()}
             onClick={clearContent}
           >
             <X className="size-3" />

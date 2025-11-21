@@ -3,6 +3,7 @@
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSSE } from "@/hooks/useSSE";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, Globe, XCircle } from "lucide-react";
@@ -14,26 +15,62 @@ const ContractAddressStep: React.FC<{
   project: ProjectDetailedSchemaI;
 }> = ({ project }) => {
   const queryClient = useQueryClient();
-  const toastId = useRef<string | number>(undefined);
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
+  const toastId = useRef<string | number>(undefined);
+  const sseToastId = useRef<string | number | undefined>(undefined);
+
+  const { connect } = useSSE({
+    autoConnect: false,
+    eventTypes: ["code_versions"],
+    onMessage: (message) => {
+      let parsed: string;
+      try {
+        parsed = JSON.parse(message.data);
+      } catch {
+        parsed = message.data;
+      }
+
+      if (parsed === "pending" || parsed === "embedding") {
+        sseToastId.current = toast.loading("Post-processing code...");
+      }
+
+      if (parsed === "embedded") {
+        toast.success("Post-processing successful", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+      } else if (parsed === "failed") {
+        toast.error("Post-processing failed", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+      }
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async (address: string) =>
       codeActions.contractUploadScan(project.team.slug, project.id, address),
     onMutate: () => {
+      setError("");
       toastId.current = toast.loading("Uploading and parsing code...");
     },
     onError: () => {
       toast.dismiss(toastId.current);
-      // ideally pass compiler errors along.
       setError("something went wrong");
     },
-    onSuccess: ({ toInvalidate }) => {
+    onSuccess: ({ id, status, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
-      toast.dismiss(toastId.current);
+      toast.success("Successfully uploaded code", {
+        id: toastId.current,
+      });
+
+      if (status === "embedding" || status === "pending") {
+        connect(`/code-versions/${id}`);
+      }
     },
   });
 
@@ -64,7 +101,7 @@ const ContractAddressStep: React.FC<{
           </div>
           <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
           <p className="text-muted-foreground">
-            Your contract has been uploaded and is ready for audit.
+            Your contract has been uploaded and is ready for analysis.
           </p>
           <Button asChild className="mt-4">
             <Link

@@ -54,16 +54,19 @@ const getEntityRoute = (activity: ActivitySchemaI): string => {
   }
 };
 
-const ActivityList: React.FC<{ activities: ActivitySchemaI[]; className?: string }> = ({
-  activities,
-  className,
-}) => {
+const ActivityList: React.FC<{
+  activities: ActivitySchemaI[];
+  className?: string;
+  showHeader?: boolean;
+}> = ({ activities, className, showHeader = true }) => {
   return (
     <div className={className}>
-      <div className="flex items-center gap-2 mb-4">
-        <Activity className="size-5" />
-        <h2 className="font-semibold">Recent Activity</h2>
-      </div>
+      {showHeader && (
+        <div className="flex items-center gap-2 mb-4">
+          <Activity className="size-4" />
+          <h3 className="text-lg font-semibold">Recent Activity</h3>
+        </div>
+      )}
       <div>
         {activities.map((activity) => {
           const methodText = methodMap[activity.method] || activity.method;

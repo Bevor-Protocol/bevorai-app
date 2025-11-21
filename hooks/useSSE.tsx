@@ -17,7 +17,7 @@ export interface UseSSEOptions {
 }
 
 export interface UseSSEReturn {
-  connect: () => void;
+  connect: (url?: string) => void;
   disconnect: () => void;
   isConnected: boolean;
   isConnecting: boolean;
@@ -26,7 +26,7 @@ export interface UseSSEReturn {
 
 export const useSSE = (options: UseSSEOptions = {}): UseSSEReturn => {
   const {
-    url = "",
+    url: defaultUrl = "",
     onMessage,
     onError,
     onOpen,
@@ -53,73 +53,79 @@ export const useSSE = (options: UseSSEOptions = {}): UseSSEReturn => {
     callbacksRef.current = { onMessage, onError, onOpen, onClose };
   }, [onMessage, onError, onOpen, onClose]);
 
-  const connectRef = useRef<(() => void) | null>(null);
+  const connectRef = useRef<((url?: string) => void) | null>(null);
   const disconnectRef = useRef<(() => void) | null>(null);
 
-  const connect = useCallback(async (): Promise<void> => {
-    if (!baseUrl) return;
-    const useEventSource = method === "GET" && !body;
+  const connect = useCallback(
+    async (url?: string): Promise<void> => {
+      if (!baseUrl) return;
 
-    if (useEventSource && eventSourceRef.current) return;
-    if (!useEventSource && abortControllerRef.current) return;
+      const targetUrl = url ?? defaultUrl ?? "";
+      const useEventSource = method === "GET" && !body;
 
-    setIsConnecting(true);
-    setError(null);
+      if (useEventSource && eventSourceRef.current) return;
+      if (!useEventSource && abortControllerRef.current) return;
 
-    const token = await tokenActions.issueSSEToken();
+      setIsConnecting(true);
+      setError(null);
 
-    const fullURL = `${baseUrl}${url}?token=${token}`;
+      const token = await tokenActions.issueSSEToken();
 
-    const eventSource = new EventSource(fullURL, {
-      withCredentials: true,
-    });
-    eventSourceRef.current = eventSource;
+      const fullURL = `${baseUrl}${targetUrl}?token=${token}`;
 
-    eventSource.onopen = (): void => {
-      setIsConnected(true);
-      setIsConnecting(false);
-      callbacksRef.current.onOpen?.();
-    };
+      const eventSource = new EventSource(fullURL, {
+        withCredentials: true,
+      });
+      eventSourceRef.current = eventSource;
 
-    eventSource.onerror = (err): void => {
-      if (eventSource.readyState === EventSource.CLOSED) {
+      eventSource.onopen = (): void => {
+        setIsConnected(true);
+        setIsConnecting(false);
+        callbacksRef.current.onOpen?.();
+      };
+
+      eventSource.onerror = (err): void => {
         if (eventSourceRef.current) {
           eventSourceRef.current.close();
           eventSourceRef.current = null;
         }
         setIsConnected(false);
         setIsConnecting(false);
+        callbacksRef.current.onError?.(err);
         callbacksRef.current.onClose?.();
         return;
-      }
-
-      setIsConnecting(false);
-      setError(err);
-      callbacksRef.current.onError?.(err);
-    };
-
-    const handleMessage = (event: MessageEvent): void => {
-      callbacksRef.current.onMessage?.(event);
-
-      if (event.data === "done" && eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-        setIsConnected(false);
-        setIsConnecting(false);
-        callbacksRef.current.onClose?.();
-      }
-    };
-
-    eventSource.onmessage = handleMessage;
-
-    eventTypes.forEach((eventType) => {
-      const listener = (event: MessageEvent): void => {
-        callbacksRef.current.onMessage?.(event);
       };
-      eventSource.addEventListener(eventType, listener);
-      eventListenersRef.current.set(eventType, listener);
-    });
-  }, [method, body, eventTypes, url, baseUrl]);
+
+      const handleMessage = (event: MessageEvent): void => {
+        callbacksRef.current.onMessage?.(event);
+        let parsed;
+        try {
+          parsed = JSON.parse(event.data);
+        } catch {
+          parsed = event.data;
+        }
+
+        if (parsed === "done") {
+          eventSourceRef.current?.close();
+          eventSourceRef.current = null;
+          setIsConnected(false);
+          setIsConnecting(false);
+          callbacksRef.current.onClose?.();
+        }
+      };
+
+      eventSource.onmessage = handleMessage;
+
+      eventTypes.forEach((eventType) => {
+        const listener = (event: MessageEvent): void => {
+          callbacksRef.current.onMessage?.(event);
+        };
+        eventSource.addEventListener(eventType, listener);
+        eventListenersRef.current.set(eventType, listener);
+      });
+    },
+    [method, body, eventTypes, defaultUrl, baseUrl],
+  );
 
   const disconnect = useCallback((): void => {
     if (eventSourceRef.current) {

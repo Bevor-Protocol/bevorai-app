@@ -1,11 +1,25 @@
+"use client";
+
+import { codeActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSSE } from "@/hooks/useSSE";
 import { cn } from "@/lib/utils";
+import { generateQueryKey } from "@/utils/constants";
 import { formatDate, trimAddress } from "@/utils/helpers";
 import { CodeMappingSchemaI, CodeVersionSchemaI, SourceTypeEnum } from "@/utils/types";
-import { Clock, Code, ExternalLink, Network } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Clock, Code, ExternalLink, MessageSquare, MoreHorizontal, Network, RotateCw, Upload } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import React, { useRef } from "react";
+import { toast } from "sonner";
 
 export const CodeVersionElementLoader: React.FC = () => {
   return (
@@ -103,11 +117,122 @@ export const CodeVersionElementCompact: React.FC<
   );
 };
 
+const CodeVersionActions: React.FC<{
+  version: CodeMappingSchemaI;
+  teamSlug: string;
+}> = ({ version, teamSlug }) => {
+  const queryClient = useQueryClient();
+  const sseToastId = useRef<string | number | undefined>(undefined);
+
+  const { connect } = useSSE({
+    autoConnect: false,
+    eventTypes: ["code_versions"],
+    onMessage: (message) => {
+      let parsed: string;
+      try {
+        parsed = JSON.parse(message.data);
+      } catch {
+        parsed = message.data;
+      }
+
+      if (parsed === "pending" || parsed === "embedding") {
+        if (!sseToastId.current) {
+          sseToastId.current = toast.loading("Retrying post-processing...");
+        } else {
+          toast.loading("Retrying post-processing...", {
+            id: sseToastId.current,
+          });
+        }
+      } else if (parsed === "embedded") {
+        toast.success("Post-processing successful", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+        queryClient.invalidateQueries({ queryKey: generateQueryKey.codes(teamSlug) });
+      } else if (parsed === "failed") {
+        toast.error("Post-processing failed", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+      }
+    },
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: async () => codeActions.retryEmbedding(teamSlug, version.id),
+    onSuccess: ({ id, toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+      if (id) {
+        connect(`/code-versions/${id}`);
+      }
+    },
+    onError: () => {
+      toast.error("Failed to retry processing");
+    },
+  });
+
+  const chatPath = `/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.id}/chat`;
+  const uploadNewerPath = `/teams/${teamSlug}/projects/${version.project_slug}/codes/new?parentId=${version.id}`;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        asChild
+        onClick={(e: React.MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <MoreHorizontal className="size-4 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+        {version.version.embedding_status === "failed" && (
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              retryMutation.mutate();
+            }}
+            disabled={retryMutation.isPending}
+          >
+            <RotateCw className="size-4" />
+            Retry
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem asChild>
+          <Link href={uploadNewerPath} onClick={(e) => e.stopPropagation()}>
+            <Upload className="size-4" />
+            Upload newer version
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href={chatPath} onClick={(e) => e.stopPropagation()}>
+            <MessageSquare className="size-4" />
+            Chat
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 export const CodeVersionElementBare: React.FC<
   {
     version: CodeMappingSchemaI;
+    teamSlug: string;
   } & React.ComponentProps<"div">
-> = ({ version, className, ...props }) => {
+> = ({ version, teamSlug, className, ...props }) => {
   const isScanMethod = version.version.source_type === SourceTypeEnum.SCAN;
   const isRepoMethod = version.version.source_type === SourceTypeEnum.REPOSITORY;
 
@@ -121,10 +246,41 @@ export const CodeVersionElementBare: React.FC<
     return version.version.version_identifier.slice(0, 7) + "...";
   };
 
+  const getEmbeddingStatusBadge = (): React.ReactNode => {
+    switch (version.version.embedding_status) {
+      case "embedded":
+        return (
+          <Badge variant="green" size="sm" className="shrink-0">
+            Processed
+          </Badge>
+        );
+      case "embedding":
+        return (
+          <Badge variant="blue" size="sm" className="shrink-0">
+            Processing
+          </Badge>
+        );
+      case "pending":
+        return (
+          <Badge variant="outline" size="sm" className="shrink-0">
+            Pending
+          </Badge>
+        );
+      case "failed":
+        return (
+          <Badge variant="destructive" size="sm" className="shrink-0">
+            Failed
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div
       className={cn(
-        "grid grid-cols-[24px_1fr_100px_80px_120px_80px_80px_160px] items-center gap-4 py-3 px-4 border rounded-lg",
+        "grid grid-cols-[24px_1fr_100px_80px_120px_80px_100px_80px_160px_40px] items-center gap-4 py-3 px-4 border rounded-lg",
         className,
       )}
       {...props}
@@ -152,6 +308,9 @@ export const CodeVersionElementBare: React.FC<
       <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">
         {version.version.solc_version || ""}
       </span>
+      <div className="flex items-center justify-center">
+        {getEmbeddingStatusBadge()}
+      </div>
       {isRepoMethod && version.version.source_url ? (
         <a
           href={version.version.source_url}
@@ -169,6 +328,9 @@ export const CodeVersionElementBare: React.FC<
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
         <Clock className="size-3" />
         <span>{formatDate(version.created_at)}</span>
+      </div>
+      <div className="flex items-center justify-center">
+        <CodeVersionActions version={version} teamSlug={teamSlug} />
       </div>
     </div>
   );
@@ -188,7 +350,7 @@ export const CodeVersionElement: React.FC<{
       )}
       aria-disabled={isDisabled}
     >
-      <CodeVersionElementBare version={version} />
+      <CodeVersionElementBare version={version} teamSlug={teamSlug} />
     </Link>
   );
 };

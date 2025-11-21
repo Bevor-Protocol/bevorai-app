@@ -117,7 +117,8 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
       // If we got here, they're already logged in → redirect them away
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {
-        return NextResponse.redirect(new URL(`/teams/${lastTeam}`, request.url));
+        console.log(lastTeam);
+        return NextResponse.redirect(new URL(`/teams/${lastTeam.value}`, request.url));
       } else {
         return NextResponse.redirect(new URL("/teams", request.url));
       }

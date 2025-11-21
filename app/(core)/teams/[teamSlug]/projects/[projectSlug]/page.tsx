@@ -26,19 +26,17 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Container subnav={<ProjectSubnav />}>
-        <div className="max-w-5xl m-auto mt-8 lg:mt-16">
-          <div className="flex flex-col gap-6">
-            <ProjectClient teamSlug={teamSlug} projectSlug={projectSlug} />
-            <div className="flex flex-row justify-between gap-10">
-              <div className="basis-1/2">
-                <div>
-                  <h3 className="my-6">Recent Analysis Threads</h3>
-                  <AnalysesPreview teamSlug={teamSlug} projectSlug={projectSlug} />
-                </div>
+        <div className="max-w-7xl mx-auto py-8">
+          <ProjectClient teamSlug={teamSlug} projectSlug={projectSlug} />
+          <div className="py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
+            <div className="min-w-0 space-y-8">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Recent Analysis Threads</h3>
+                <AnalysesPreview teamSlug={teamSlug} projectSlug={projectSlug} />
               </div>
-              <div className="basis-1/2 my-6">
-                <ProjectActivities teamSlug={teamSlug} projectSlug={projectSlug} />
-              </div>
+            </div>
+            <div className="min-w-0">
+              <ProjectActivities teamSlug={teamSlug} projectSlug={projectSlug} />
             </div>
           </div>
         </div>

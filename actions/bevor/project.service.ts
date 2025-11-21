@@ -71,12 +71,12 @@ export const updateProject = async (
   teamSlug: string,
   projectSlug: string,
   data: { name?: string; description?: string; tags?: string[] },
-): Promise<{ toInvalidate: QueryKey[] }> => {
-  const toInvalidate = [generateQueryKey.project(projectSlug)];
+): Promise<{ project: ProjectDetailedSchemaI; toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [generateQueryKey.project(projectSlug), generateQueryKey.allProjects()];
   return api
     .patch(`/projects/${projectSlug}`, data, { headers: { "bevor-team-slug": teamSlug } })
-    .then(() => {
-      return { toInvalidate };
+    .then((response) => {
+      return { project: response.data, toInvalidate };
     });
 };
 

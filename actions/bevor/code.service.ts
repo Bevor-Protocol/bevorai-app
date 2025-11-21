@@ -4,6 +4,7 @@ import api from "@/lib/api";
 import { QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import {
+  CodeCreateSchemaI,
   CodeMappingSchemaI,
   CodeSourceContentSchemaI,
   CodeSourceSchemaI,
@@ -17,10 +18,11 @@ export const contractUploadFolder = async (
   teamSlug: string,
   projectId: string,
   fileMap: Record<string, File>,
-): Promise<{
-  id: string;
-  toInvalidate: QueryKey[];
-}> => {
+): Promise<
+  CodeCreateSchemaI & {
+    toInvalidate: QueryKey[];
+  }
+> => {
   // we won't know which heads are updated. Just invalidate all analyses.
   const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
@@ -34,7 +36,7 @@ export const contractUploadFolder = async (
     .post("/code-versions/create/folder", formData, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return {
-        id: response.data.id,
+        ...response.data,
         toInvalidate,
       };
     });
@@ -44,10 +46,11 @@ export const contractUploadFile = async (
   teamSlug: string,
   projectId: string,
   file: File,
-): Promise<{
-  id: string;
-  toInvalidate: QueryKey[];
-}> => {
+): Promise<
+  CodeCreateSchemaI & {
+    toInvalidate: QueryKey[];
+  }
+> => {
   // we won't know which heads are updated. Just invalidate all analyses.
   const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
@@ -59,7 +62,7 @@ export const contractUploadFile = async (
     .post("/code-versions/create/file", formData, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return {
-        id: response.data.id,
+        ...response.data,
         toInvalidate,
       };
     });
@@ -69,10 +72,11 @@ export const contractUploadPaste = async (
   teamSlug: string,
   projectId: string,
   code: string,
-): Promise<{
-  id: string;
-  toInvalidate: QueryKey[];
-}> => {
+): Promise<
+  CodeCreateSchemaI & {
+    toInvalidate: QueryKey[];
+  }
+> => {
   // we won't know which heads are updated. Just invalidate all analyses.
   const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
   return api
@@ -83,7 +87,7 @@ export const contractUploadPaste = async (
     )
     .then((response) => {
       return {
-        id: response.data.id,
+        ...response.data,
         toInvalidate,
       };
     });
@@ -93,10 +97,11 @@ export const contractUploadScan = async (
   teamSlug: string,
   projectId: string,
   address: string,
-): Promise<{
-  id: string;
-  toInvalidate: QueryKey[];
-}> => {
+): Promise<
+  CodeCreateSchemaI & {
+    toInvalidate: QueryKey[];
+  }
+> => {
   // we won't know which heads are updated. Just invalidate all analyses.
   const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
   return api
@@ -107,7 +112,7 @@ export const contractUploadScan = async (
     )
     .then((response) => {
       return {
-        id: response.data.id,
+        ...response.data,
         toInvalidate,
       };
     });
@@ -183,5 +188,24 @@ export const getVersions = async (
     .get(`/code-versions?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
+    });
+};
+
+export const retryEmbedding = async (
+  teamSlug: string,
+  codeId: string,
+): Promise<
+  CodeCreateSchemaI & {
+    toInvalidate: QueryKey[];
+  }
+> => {
+  const toInvalidate = [[QUERY_KEYS.CODES, teamSlug]];
+  return api
+    .post(`/code-versions/${codeId}/retry`, {}, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return {
+        ...response.data,
+        toInvalidate,
+      };
     });
 };

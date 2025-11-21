@@ -18,7 +18,7 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
 
   return (
     <Container subnav={<TeamSubnav />}>
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto py-8">
         <div className="border-b pb-6">
           <h1 className="text-2xl font-semibold mb-2">{team.name}</h1>
           <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
@@ -37,7 +37,7 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
             </div>
           </div>
         </div>
-        <div className="px-6 py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
+        <div className="py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
           <div className="min-w-0 space-y-8">
             <div>
               <h3 className="text-lg font-semibold mb-4">Projects</h3>

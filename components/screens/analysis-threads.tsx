@@ -68,7 +68,6 @@ export const AnalysisThreadsView: React.FC<{
         isAnySearched={isAnySearched}
         handleClear={handleClear}
       />
-      
       {hasResults && (
         <>
           <div className="grid grid-cols-1 gap-3">

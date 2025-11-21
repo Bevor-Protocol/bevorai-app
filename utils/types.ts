@@ -331,6 +331,11 @@ export interface ProjectsPaginationI extends PaginationI {
 }
 
 /* CODE VERSION */
+export interface CodeCreateSchemaI {
+  id: string;
+  status: "pending" | "embedding" | "embedded" | "failed";
+}
+
 export interface CodeMappingSchemaI extends BaseSchema {
   name?: string;
   inferred_name: string;
@@ -350,6 +355,7 @@ export interface CodeVersionSchemaI extends BaseSchema {
   source_type: SourceTypeEnum;
   source_url?: string;
   solc_version?: string;
+  embedding_status: "pending" | "embedded" | "embedding" | "failed";
 }
 
 export interface CodeVersionsPaginationI extends PaginationI {
