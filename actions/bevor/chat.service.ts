@@ -1,11 +1,12 @@
 "use server";
 
 import api from "@/lib/api";
-import { buildSearchParams } from "@/lib/utils";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
+import { buildSearchParams } from "@/utils/query-params";
 import { CreateChatFormValues } from "@/utils/schema";
 import {
-  ChatMessagesResponseI,
+  ChatFullSchemaI,
+  ChatMessageI,
   ChatPaginationI,
   HeadFullSchemaI,
   NodeSearchResponseI,
@@ -30,21 +31,32 @@ export const initiateChat = async (
 
 export const getChats = async (
   teamSlug: string,
-  filters: { [key: string]: string | undefined },
+  filters: { [key: string]: string },
 ): Promise<ChatPaginationI> => {
   const searchParams = buildSearchParams(filters);
   return api
-    .get(`/chats?${searchParams.toString()}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/chats?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
-export const getChat = async (teamSlug: string, chatId: string): Promise<ChatMessagesResponseI> => {
+export const getChat = async (teamSlug: string, chatId: string): Promise<ChatFullSchemaI> => {
   return api
     .get(`/chats/${chatId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
+    });
+};
+
+export const getChatMessages = async (
+  teamSlug: string,
+  chatId: string,
+): Promise<ChatMessageI[]> => {
+  return api
+    .get(`/chats/${chatId}/messages`, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return response.data.results;
     });
 };
 

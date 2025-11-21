@@ -1,13 +1,10 @@
-import { teamActions } from "@/actions/bevor";
-import ContainerBreadcrumb from "@/components/breadcrumbs";
+import { dashboardActions } from "@/actions/bevor";
 import Container from "@/components/container";
-import { Button } from "@/components/ui/button";
-import { navigation } from "@/utils/navigation";
-import { extractCodesQuery } from "@/utils/queries";
+import { CodeVersionsView } from "@/components/screens/code-versions";
+import ProjectSubnav from "@/components/subnav/project";
+import { DefaultCodesQuery, extractCodesQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
-import { Plus } from "lucide-react";
-import Link from "next/link";
-import CodeVersionsData from "./codes-page-client";
+import { CodesToggle } from "./codes-client";
 
 interface ResolvedParams {
   teamSlug: string;
@@ -23,35 +20,38 @@ const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params, s
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const currentUser = await teamActions.getCurrentMember(resolvedParams.teamSlug);
+  const currentUser = await dashboardActions.getUser();
 
-  const query = extractCodesQuery(resolvedParams.projectSlug, {
-    user_id: currentUser.user.id,
+  const initialQuery = extractCodesQuery({
     ...resolvedSearchParams,
+    project_slug: resolvedParams.projectSlug,
+    user_id: currentUser?.id ?? "",
   });
 
+  const defaultQuery = { ...DefaultCodesQuery, project_slug: resolvedParams.projectSlug };
+
   return (
-    <Container
-      breadcrumb={
-        <ContainerBreadcrumb
-          queryKey={[resolvedParams.projectSlug]}
-          queryType="project-codes"
-          teamSlug={resolvedParams.teamSlug}
-          id={resolvedParams.projectSlug}
-        />
-      }
-      className="flex flex-col"
-    >
-      <div className="flex flex-row mb-8 justify-between">
-        <h3 className="text-foreground">Code Versions</h3>
-        <Button className="text-foreground" asChild>
-          <Link href={navigation.code.new({ ...resolvedParams })}>
-            <Plus className="size-4" />
-            New Code
-          </Link>
-        </Button>
+    <Container subnav={<ProjectSubnav />}>
+      <div className="max-w-7xl mx-auto">
+        <div className="border-b">
+          <div className="px-6 py-6 flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold mb-1">Code Versions</h1>
+              <p className="text-sm text-muted-foreground">
+                Uploaded code versions for analysis and auditing
+              </p>
+            </div>
+            <CodesToggle {...resolvedParams} />
+          </div>
+        </div>
+        <div className="px-6 py-6">
+          <CodeVersionsView
+            {...resolvedParams}
+            initialQuery={initialQuery}
+            defaultQuery={defaultQuery}
+          />
+        </div>
       </div>
-      <CodeVersionsData query={query} {...resolvedParams} />
     </Container>
   );
 };

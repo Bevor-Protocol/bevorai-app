@@ -32,14 +32,6 @@ import { Icon } from "@/components/ui/icon";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { toTitleCase } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
 import { MemberRoleEnum, MemberSchemaI } from "@/utils/types";
@@ -221,103 +213,73 @@ const MembersList: React.FC<MembersListProps> = ({ teamSlug, members, isLoading 
         </AlertDialogContent>
       </AlertDialog>
       <ScrollArea className="w-full pb-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-icon-sm" />
-              <TableHead className="w-[65%]">Member</TableHead>
-              <TableHead className="w-[10%]">Role</TableHead>
-              <TableHead className="w-[10%]">Status</TableHead>
-              <TableHead className="w-[10%]">Joined</TableHead>
-              <TableHead className="text-right w-[5%]" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading &&
-              [0, 1, 2].map((ind) => (
-                <TableRow key={ind}>
-                  <TableCell>
-                    <Skeleton className="size-icon-sm rounded-full" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-8" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-8" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-8" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-8" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-8" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            {members?.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell>
-                  <div className="flex items-center">
-                    <Icon size="sm" seed={member.user.id} />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {member.user.username}
-                  {member.user.id === currentMember.user.id && (
-                    <Badge variant="purple" className="ml-4">
-                      You
-                    </Badge>
-                  )}
-                </TableCell>
-
-                <TableCell>
-                  <Badge variant={member.role === MemberRoleEnum.MEMBER ? "green" : "blue"}>
-                    {toTitleCase(member.role)}
-                  </Badge>
-                </TableCell>
-                <TableCell>active</TableCell>
-                <TableCell>{formatDate(member.created_at)}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      asChild
-                      disabled={!member.can_update && !member.can_remove}
-                    >
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {member.can_update && (
-                        <DropdownMenuItem onClick={() => handleAction(member, "update")}>
-                          Update Role
-                        </DropdownMenuItem>
-                      )}
-                      {member.can_remove && currentMember.id === member.id && (
-                        <DropdownMenuItem
-                          onClick={() => handleAction(member, "leave")}
-                          variant="destructive"
-                        >
-                          Leave Team
-                        </DropdownMenuItem>
-                      )}
-                      {member.can_remove && currentMember.id !== member.id && (
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => handleAction(member, "remove")}
-                        >
-                          Remove Member
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
+        <div className="space-y-2">
+          {isLoading &&
+            [0, 1, 2].map((ind) => (
+              <div key={ind} className="flex items-center gap-4 p-3 border rounded-lg">
+                <Skeleton className="size-icon-sm rounded-full" />
+                <Skeleton className="h-5 flex-1" />
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-8 w-8" />
+              </div>
             ))}
-          </TableBody>
-        </Table>
+          {members?.map((member) => (
+            <div key={member.id} className="flex items-center gap-4 p-3 border rounded-lg">
+              <div className="flex items-center">
+                <Icon size="sm" seed={member.user.id} />
+              </div>
+              <div className="flex items-center gap-2 flex-1">
+                <span>{member.user.username}</span>
+                {member.user.id === currentMember.user.id && (
+                  <Badge variant="purple" size="sm">
+                    You
+                  </Badge>
+                )}
+              </div>
+              <Badge variant={member.role === MemberRoleEnum.MEMBER ? "green" : "blue"} size="sm">
+                {toTitleCase(member.role)}
+              </Badge>
+              <span className="text-sm text-muted-foreground w-24">
+                {formatDate(member.created_at)}
+              </span>
+              {member.can_update || member.can_remove ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <MoreHorizontal />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {member.can_update && (
+                      <DropdownMenuItem onClick={() => handleAction(member, "update")}>
+                        Update Role
+                      </DropdownMenuItem>
+                    )}
+                    {member.can_remove && currentMember.id === member.id && (
+                      <DropdownMenuItem
+                        onClick={() => handleAction(member, "leave")}
+                        variant="destructive"
+                      >
+                        Leave Team
+                      </DropdownMenuItem>
+                    )}
+                    {member.can_remove && currentMember.id !== member.id && (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => handleAction(member, "remove")}
+                      >
+                        Remove Member
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="h-8 w-8" />
+              )}
+            </div>
+          ))}
+        </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </>

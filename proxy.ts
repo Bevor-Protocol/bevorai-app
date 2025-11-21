@@ -71,7 +71,7 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
   if (pathname.startsWith("/teams")) {
     const segments = pathname.split("/").filter(Boolean);
     if (segments.length > 1) {
-      response.cookies.set("bevor-team-slug", segments[1]);
+      response.cookies.set("bevor-recent-team", segments[1]);
     }
   }
 
@@ -87,7 +87,6 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.data) {
-          console.log(err.response.data);
           switch (err.response.data.code) {
             case "invalid_team_membership": {
               // either attempting access to a team they don't belong to, or the slug was changed

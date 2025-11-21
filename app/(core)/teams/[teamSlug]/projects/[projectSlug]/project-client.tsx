@@ -43,7 +43,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSSE } from "@/hooks/useSSE";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
-import { navigation } from "@/utils/navigation";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -78,7 +77,7 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
           <DropdownMenuGroup>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem className="[&_svg]:ml-auto" asChild>
-              <Link href={navigation.code.new({ teamSlug, projectSlug })}>
+              <Link href={`/teams/${teamSlug}/projects/${projectSlug}/codes/new`}>
                 Upload new code
                 <LucideIcon assetType="code" />
               </Link>

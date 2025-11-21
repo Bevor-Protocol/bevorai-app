@@ -15,7 +15,7 @@ export const getProjectActivities = async (
   const searchParams = new URLSearchParams();
   searchParams.set("project_slug", projectSlug);
   return api
-    .get(`/activities?${searchParams.toString()}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/activities?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data.results;
     });

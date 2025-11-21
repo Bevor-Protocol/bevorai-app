@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
 import { FindingLevel } from "@/utils/enums";
-import { AnalysisVersionMappingSchemaI, FindingSchemaI } from "@/utils/types";
+import { AnalysisMappingSchemaI, FindingSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ChevronDown, GitBranch, Info, Shield, XCircle } from "lucide-react";
 import Link from "next/link";
@@ -56,7 +56,7 @@ const levelOrder = [
 ];
 
 export const Relations: React.FC<{
-  analysisVersion: AnalysisVersionMappingSchemaI;
+  analysisVersion: AnalysisMappingSchemaI;
   teamSlug: string;
 }> = ({ analysisVersion, teamSlug }) => {
   return (
@@ -131,7 +131,7 @@ const getFindingsCountByLevel = (
 
 export const AnalysisVersionClient: React.FC<{
   teamSlug: string;
-  analysisVersion: AnalysisVersionMappingSchemaI;
+  analysisVersion: AnalysisMappingSchemaI;
 }> = ({ teamSlug, analysisVersion }) => {
   const [selectedFinding, setSelectedFinding] = useState<FindingWithScope | null>(null);
 
@@ -205,7 +205,7 @@ export const AnalysisVersionClient: React.FC<{
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <div className="font-medium text-foreground truncate min-w-0 flex-1">
+                        <div className="font-medium  truncate min-w-0 flex-1">
                           {scope.callable.name}
                         </div>
                         {hasFindings ? (
@@ -282,7 +282,7 @@ export const AnalysisVersionClient: React.FC<{
                                   >
                                     <div className="flex items-center gap-2">
                                       {getSeverityIcon(level)}
-                                      <span className="text-sm font-medium text-foreground truncate">
+                                      <span className="text-sm font-medium  truncate">
                                         {finding.name}
                                       </span>
                                       {finding.metadata?.attested_at && (
@@ -322,9 +322,7 @@ export const AnalysisVersionClient: React.FC<{
                   {getSeverityIcon(selectedFinding.level.toLowerCase() as FindingLevel)}
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-foreground">
-                        {selectedFinding.name}
-                      </h3>
+                      <h3 className="text-lg font-semibold ">{selectedFinding.name}</h3>
                       {selectedFinding.metadata?.attested_at && (
                         <Badge variant="green" className="ml-4">
                           ✓ Attested
@@ -351,7 +349,7 @@ export const AnalysisVersionClient: React.FC<{
 
                 {selectedFinding.explanation && (
                   <div className="space-y-2 mb-6">
-                    <h4 className="text-sm font-medium text-foreground">Description</h4>
+                    <h4 className="text-sm font-medium ">Description</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {selectedFinding.explanation}
                     </p>
@@ -360,7 +358,7 @@ export const AnalysisVersionClient: React.FC<{
 
                 {selectedFinding.recommendation && (
                   <div className="space-y-2 mb-6">
-                    <h4 className="text-sm font-medium text-foreground">Recommendation</h4>
+                    <h4 className="text-sm font-medium ">Recommendation</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {selectedFinding.recommendation}
                     </p>
@@ -369,7 +367,7 @@ export const AnalysisVersionClient: React.FC<{
 
                 {selectedFinding.reference && (
                   <div className="space-y-2 mb-6">
-                    <h4 className="text-sm font-medium text-foreground">Reference</h4>
+                    <h4 className="text-sm font-medium ">Reference</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {selectedFinding.reference}
                     </p>
@@ -378,7 +376,7 @@ export const AnalysisVersionClient: React.FC<{
 
                 {selectedFinding.metadata?.feedback && (
                   <div className="space-y-2 mb-6">
-                    <h4 className="text-sm font-medium text-foreground">Feedback</h4>
+                    <h4 className="text-sm font-medium ">Feedback</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {selectedFinding.metadata.feedback}
                     </p>
@@ -419,7 +417,7 @@ export const AnalysisVersionClient: React.FC<{
               <div className="flex items-center justify-center text-center py-12">
                 <div>
                   <Shield className="size-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">No Findings</h3>
+                  <h3 className="text-lg font-medium  mb-2">No Findings</h3>
                   <p className="text-muted-foreground">
                     This analysis version has no security findings.
                   </p>

@@ -117,7 +117,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                 }}
               >
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
-                  <div className="flex items-center space-x-2 flex-shrink-0">
+                  <div className="flex items-center space-x-2 shrink-0">
                     {hasAnalysisableFcts ? (
                       <button
                         onClick={(e) => {
@@ -143,12 +143,12 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs font-medium text-purple-400 uppercase tracking-wide flex-shrink-0">
+                      <span className="text-xs font-medium text-purple-400 uppercase tracking-wide shrink-0">
                         Source
                       </span>
-                      <span className="font-medium text-foreground truncate">{source.path}</span>
+                      <span className="font-medium  truncate">{source.path}</span>
                       {source.is_imported && (
-                        <span className="px-2 py-0.5 bg-neutral-700 text-xs text-foreground rounded flex-shrink-0">
+                        <span className="px-2 py-0.5 bg-neutral-700 text-xs  rounded shrink-0">
                           Imported
                         </span>
                       )}
@@ -157,12 +157,12 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                 </div>
                 <div className="flex items-center space-x-6 text-xs text-muted-foreground">
                   <div className="text-center min-w-[80px]">
-                    <div className="font-medium text-foreground">{source.contracts.length}</div>
+                    <div className="font-medium ">{source.contracts.length}</div>
                     <div>Contracts</div>
                   </div>
                   {hasAnalysisableFcts && (
                     <div className="text-center min-w-[80px]">
-                      <div className="font-medium text-foreground flex items-center justify-center space-x-1">
+                      <div className="font-medium  flex items-center justify-center space-x-1">
                         <Shield className="w-3 h-3" />
                         <span>{auditableCount}</span>
                       </div>
@@ -171,7 +171,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                   )}
                   {readOnly && (
                     <div className="text-center min-w-[80px]">
-                      <div className="font-medium text-foreground flex items-center justify-center space-x-1">
+                      <div className="font-medium  flex items-center justify-center space-x-1">
                         <Eye className="w-3 h-3" />
                         <span>{scopeCount}</span>
                       </div>
@@ -179,7 +179,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="flex items-center space-x-2 flex-shrink-0">
+                <div className="flex items-center space-x-2 shrink-0">
                   {!readOnly && isSourceSelected && (
                     <div className="w-2 h-2 bg-purple-500 rounded-full" />
                   )}
@@ -220,7 +220,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                           }}
                         >
                           <div className="flex items-center space-x-3 min-w-0 flex-1">
-                            <div className="flex items-center space-x-2 flex-shrink-0">
+                            <div className="flex items-center space-x-2 shrink-0">
                               {hasAnalysisableFcts && (
                                 <button
                                   onClick={(e) => {
@@ -240,25 +240,21 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center space-x-2">
-                                <span className="text-xs font-medium text-blue-400 uppercase tracking-wide flex-shrink-0">
+                                <span className="text-xs font-medium text-blue-400 uppercase tracking-wide shrink-0">
                                   Contract
                                 </span>
-                                <span className="font-medium text-foreground truncate">
-                                  {contract.name}
-                                </span>
+                                <span className="font-medium  truncate">{contract.name}</span>
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center space-x-6 text-xs text-muted-foreground">
                             <div className="text-center min-w-[80px]">
-                              <div className="font-medium text-foreground">
-                                {contract.functions.length}
-                              </div>
+                              <div className="font-medium ">{contract.functions.length}</div>
                               <div>Functions</div>
                             </div>
                             {hasAnalysisableFcts && (
                               <div className="text-center min-w-[80px]">
-                                <div className="font-medium text-foreground flex items-center justify-center space-x-1">
+                                <div className="font-medium  flex items-center justify-center space-x-1">
                                   <Shield className="w-3 h-3" />
                                   <span>{contractAnalysisableCount}</span>
                                 </div>
@@ -267,7 +263,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                             )}
                             {readOnly && (
                               <div className="text-center min-w-[80px]">
-                                <div className="font-medium text-foreground flex items-center justify-center space-x-1">
+                                <div className="font-medium  flex items-center justify-center space-x-1">
                                   <Eye className="w-3 h-3" />
                                   <span>{contractScopeCount}</span>
                                 </div>
@@ -275,7 +271,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                               </div>
                             )}
                           </div>
-                          <div className="flex items-center space-x-2 flex-shrink-0">
+                          <div className="flex items-center space-x-2 shrink-0">
                             {!readOnly && isContractSelected && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full" />
                             )}
@@ -308,27 +304,25 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                                     }
                                   >
                                     <div className="flex items-center space-x-3 min-w-0 flex-1">
-                                      <Zap className="size-4 text-yellow-400 flex-shrink-0" />
+                                      <Zap className="size-4 text-yellow-400 shrink-0" />
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center space-x-2">
-                                          <span className="text-xs font-medium text-green-400 uppercase tracking-wide flex-shrink-0">
+                                          <span className="text-xs font-medium text-green-400 uppercase tracking-wide shrink-0">
                                             Function
                                           </span>
-                                          <span className="font-medium text-foreground truncate">
-                                            {func.name}
-                                          </span>
+                                          <span className="font-medium  truncate">{func.name}</span>
                                         </div>
                                       </div>
                                     </div>
                                     <div className="flex items-center space-x-6 text-xs text-muted-foreground">
                                       <div className="text-center min-w-[80px]">
-                                        <div className="font-medium text-foreground">
+                                        <div className="font-medium ">
                                           {func.is_override ? "Yes" : "No"}
                                         </div>
                                         <div>Override</div>
                                       </div>
                                     </div>
-                                    <div className="flex items-center space-x-2 flex-shrink-0">
+                                    <div className="flex items-center space-x-2 shrink-0">
                                       {!readOnly && isFunctionSelected && (
                                         <div className="w-2 h-2 bg-green-500 rounded-full" />
                                       )}

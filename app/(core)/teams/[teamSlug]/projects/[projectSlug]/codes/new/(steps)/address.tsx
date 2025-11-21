@@ -3,7 +3,7 @@
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { navigation } from "@/utils/navigation";
+import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, Globe, XCircle } from "lucide-react";
 import Link from "next/link";
@@ -11,10 +11,8 @@ import React, { useRef, useState } from "react";
 import { toast } from "sonner";
 
 const ContractAddressStep: React.FC<{
-  teamSlug: string;
-  projectSlug: string;
-  prevStep: () => void;
-}> = ({ ...props }) => {
+  project: ProjectDetailedSchemaI;
+}> = ({ project }) => {
   const queryClient = useQueryClient();
   const toastId = useRef<string | number>(undefined);
   const [address, setAddress] = useState("");
@@ -22,7 +20,7 @@ const ContractAddressStep: React.FC<{
 
   const mutation = useMutation({
     mutationFn: async (address: string) =>
-      codeActions.contractUploadScan(props.teamSlug, props.projectSlug, address),
+      codeActions.contractUploadScan(project.team.slug, project.id, address),
     onMutate: () => {
       toastId.current = toast.loading("Uploading and parsing code...");
     },
@@ -64,16 +62,13 @@ const ContractAddressStep: React.FC<{
           <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
             <CheckCircle className="size-8 text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Version Created Successfully!</h2>
+          <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
           <p className="text-muted-foreground">
             Your contract has been uploaded and is ready for audit.
           </p>
           <Button asChild className="mt-4">
             <Link
-              href={navigation.code.overview({
-                teamSlug: props.teamSlug,
-                codeId: mutation.data.id,
-              })}
+              href={`/teams/${project.team.slug}/projects/${project.slug}/codes/${mutation.data.id}`}
             >
               View Version
             </Link>
@@ -90,7 +85,7 @@ const ContractAddressStep: React.FC<{
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
             <XCircle className="size-8 text-red-400" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Upload Failed</h2>
+          <h2 className="text-2xl font-bold ">Upload Failed</h2>
           <p className="text-muted-foreground">
             There was an error processing your contract. Please try again.
           </p>
@@ -109,7 +104,7 @@ const ContractAddressStep: React.FC<{
       <div className="text-left space-y-2">
         <div className="flex flex-row gap-4 justify-start items-center">
           <Globe className="size-6 text-purple-400" />
-          <h2 className="text-2xl font-bold text-foreground">Explorer Scan</h2>
+          <h2 className="text-2xl font-bold ">Explorer Scan</h2>
         </div>
         <p className="text-muted-foreground">
           Enter a deployed, verified contract address to analyze
@@ -118,7 +113,7 @@ const ContractAddressStep: React.FC<{
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="address" className="text-sm font-medium text-foreground hidden">
+          <label htmlFor="address" className="text-sm font-medium  hidden">
             Contract Address
           </label>
           <div className="flex flex-row gap-4 flex-wrap">

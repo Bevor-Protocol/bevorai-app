@@ -1,5 +1,6 @@
-import ContainerBreadcrumb from "@/components/breadcrumbs";
+import { projectActions } from "@/actions/bevor";
 import Container from "@/components/container";
+import ProjectSubnav from "@/components/subnav/project";
 import { AsyncComponent } from "@/utils/types";
 import Steps from "./new-page-client";
 
@@ -15,18 +16,14 @@ interface VersionPageProps {
 const NewVersionPage: AsyncComponent<VersionPageProps> = async ({ params }) => {
   const resolvedParams = await params;
 
+  const project = await projectActions.getProject(
+    resolvedParams.teamSlug,
+    resolvedParams.projectSlug,
+  );
+
   return (
-    <Container
-      breadcrumb={
-        <ContainerBreadcrumb
-          queryKey={[resolvedParams.projectSlug]}
-          queryType="project-new-code"
-          teamSlug={resolvedParams.teamSlug}
-          id={resolvedParams.projectSlug}
-        />
-      }
-    >
-      <Steps {...resolvedParams} />
+    <Container subnav={<ProjectSubnav />}>
+      <Steps project={project} />
     </Container>
   );
 };

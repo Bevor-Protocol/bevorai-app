@@ -19,7 +19,7 @@ const ShowApiKeyModal: React.FC<ShowApiKeyModalProps> = ({ apiKey }) => {
   const { isCopied, copy } = useCopyToClipboard();
 
   return (
-    <div>
+    <>
       <DialogHeader>
         <div className="inline-flex gap-2 items-center">
           <AlertTriangle className="size-5 text-yellow-400 mt-0.5" />
@@ -30,15 +30,13 @@ const ShowApiKeyModal: React.FC<ShowApiKeyModalProps> = ({ apiKey }) => {
           securely.
         </DialogDescription>
       </DialogHeader>
-      <div className="border border-neutral-700 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <code className="text-sm font-mono text-foreground break-all">{apiKey}</code>
-          <div
-            onClick={() => copy(apiKey)}
-            className="p-2 border border-border rounded cursor-pointer"
-          >
-            {isCopied ? <Check className="size-4 text-green-400" /> : <Copy className="size-4" />}
-          </div>
+      <div className="border rounded-lg flex items-center justify-between p-2 overflow-hidden">
+        <code className="text-xs font-mono truncate">{apiKey}</code>
+        <div
+          onClick={() => copy(apiKey)}
+          className="p-2 border border-border rounded cursor-pointer"
+        >
+          {isCopied ? <Check className="size-4 text-green-400" /> : <Copy className="size-4" />}
         </div>
       </div>
       <DialogFooter>
@@ -46,7 +44,7 @@ const ShowApiKeyModal: React.FC<ShowApiKeyModalProps> = ({ apiKey }) => {
           <Button>Done</Button>
         </DialogClose>
       </DialogFooter>
-    </div>
+    </>
   );
 };
 

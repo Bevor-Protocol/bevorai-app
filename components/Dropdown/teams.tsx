@@ -5,7 +5,6 @@ import { DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { SearchInput } from "@/components/ui/input";
-import { navigation } from "@/utils/navigation";
 import { HrefProps, TeamSchemaI } from "@/utils/types";
 import { Check, PlusCircle } from "lucide-react";
 import Link from "next/link";
@@ -40,7 +39,7 @@ const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
 
   const newRoute = (teamItem: TeamSchemaI): string => {
     if (!params.teamSlug || params.analysisId || params.chatId || params.codeId) {
-      return navigation.team.overview({ teamSlug: teamItem.id });
+      return `/teams/${params.teamSlug}`;
     }
     return pathname.replace(params.teamSlug, teamItem.id);
   };
@@ -59,7 +58,7 @@ const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
             <DropdownMenuItem key={teamItem.id} asChild>
               <Link href={newRoute(teamItem)}>
                 <div className="flex items-center gap-3 w-full">
-                  <Icon size="sm" seed={teamItem.id} className="size-4 flex-shrink-0" />
+                  <Icon size="sm" seed={teamItem.id} className="size-4 shrink-0" />
                   <span className="truncate text-ellipsis flex-1">{teamItem.name}</span>
                 </div>
                 {team?.id === teamItem.id && <Check className="size-3" />}

@@ -1,25 +1,17 @@
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import React from "react";
 
 type Props = {
   children: React.ReactNode;
-  breadcrumb?: React.ReactNode;
+  subnav?: React.ReactNode;
   className?: string;
 };
 
-const Container: React.FC<Props> = ({ children, breadcrumb, className }) => {
+const Container: React.FC<Props> = ({ children, subnav, className }) => {
   return (
-    <main className="h-svh bg-background flex flex-col size-full grow">
-      <header className="w-full flex items-center justify-between h-header min-h-header">
-        <div className="flex items-center w-full pr-6 pl-10 gap-4">
-          <SidebarTrigger className="inline-flex md:hidden" />
-          {breadcrumb}
-        </div>
-      </header>
-      <div className={cn("pr-6 pl-10 py-6 grow overflow-x-hidden max-w-screen", className)}>
-        {children}
-      </div>
+    <main className="min-h-[calc(100svh-(var(--spacing-header)))] bg-background flex flex-col size-full grow relative">
+      {subnav}
+      <div className={cn("py-6 grow max-w-screen relative", className)}>{children}</div>
     </main>
   );
 };

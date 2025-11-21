@@ -26,7 +26,6 @@ interface CodeContextValue {
   clearHighlight: () => void;
   codeVersionId: string | null;
   setCodeVersionId: React.Dispatch<React.SetStateAction<string | null>>;
-  scrollRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   isSticky: boolean;
   handleSourceChange: (sourceId: string, positions?: { start: number; end: number }) => void;
@@ -50,7 +49,6 @@ export const CodeProvider: React.FC<{
   const [htmlLoaded, setHtmlLoaded] = useState(true);
   const [sourceId, setSourceId] = useState<string | null>(initialSourceId);
   const [isSticky, setIsSticky] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null!); // scrollArea
   const containerRef = useRef<HTMLDivElement>(null!); // thing that should stick to top (code holder)
 
   const sourceQuery = useQuery({
@@ -62,24 +60,20 @@ export const CodeProvider: React.FC<{
   });
 
   useEffect(() => {
-    if (!scrollRef.current || !containerRef.current) return;
+    if (!containerRef.current) return;
+    const sentinelEl = document.getElementById("code-header");
+    const codeEl = document.getElementById("code-holder");
+    if (!sentinelEl || !codeEl) return;
 
-    const scrollElement = scrollRef.current;
-    const fullHolder = scrollElement.firstChild;
-    if (!fullHolder) return;
-
-    const updateStickyState = (): void => {
-      const toTop = (fullHolder as HTMLElement).clientHeight - containerRef.current.clientHeight;
-      setIsSticky(scrollElement.scrollTop >= toTop);
+    const inferSticky = (): void => {
+      const sentinelBottom = sentinelEl.getBoundingClientRect().bottom;
+      const codeTop = codeEl.getBoundingClientRect().top;
+      setIsSticky(codeTop < sentinelBottom);
     };
 
-    updateStickyState();
+    window.addEventListener("scroll", inferSticky);
 
-    scrollRef.current.addEventListener("scroll", updateStickyState);
-
-    return (): void => {
-      scrollElement.removeEventListener("scroll", updateStickyState);
-    };
+    return (): void => window.removeEventListener("scroll", inferSticky);
   }, [codeVersionId]);
 
   const handleSourceChange = useCallback(
@@ -89,15 +83,18 @@ export const CodeProvider: React.FC<{
       setHtmlLoaded(false);
       setSourceId(newSourceId);
       if (!positions) {
-        if (!scrollRef.current || !containerRef.current) return;
+        if (!containerRef.current) return;
+        const codeEl = document.getElementById("code-holder");
+        if (!codeEl) return;
+        const codeTop = codeEl.getBoundingClientRect().top;
+        if (codeTop > 80) return;
+        const scrollTop = window.scrollY || window.pageYOffset;
+        const targetScroll = scrollTop + codeTop - 80;
 
-        const fullHolder = scrollRef.current.firstChild;
-        if (!fullHolder) return;
-
-        const toTop = (fullHolder as HTMLElement).clientHeight - containerRef.current.clientHeight;
-        if (scrollRef.current.scrollTop > toTop) {
-          scrollRef.current.scrollTop = toTop;
-        }
+        window.scrollTo({
+          top: targetScroll,
+          behavior: "instant", // optional: smooth scrolling
+        });
       }
     },
     [sourceId],
@@ -127,9 +124,8 @@ export const CodeProvider: React.FC<{
   }, []);
 
   const scrollToElement = useCallback(({ start, end }: { start: number; end: number }): void => {
-    if (!scrollRef.current || !containerRef.current) return;
-    const fullHolder = scrollRef.current.firstChild;
-    if (!fullHolder) return;
+    if (!containerRef.current) return;
+    const containerTop = containerRef.current.getBoundingClientRect().top;
 
     const elements = document.querySelectorAll("[data-token]");
 
@@ -145,8 +141,7 @@ export const CodeProvider: React.FC<{
           const lineNum = lineElement.dataset.line;
           if (!linesSeen.has(lineNum)) {
             const lineRect = lineElement.getBoundingClientRect();
-            const scrollRect = scrollRef.current!.getBoundingClientRect();
-            const relativeTop = lineRect.top - scrollRect.top + scrollRef.current!.scrollTop;
+            const relativeTop = lineRect.top - containerTop + window.scrollY;
             linePositions.push(relativeTop);
             linesSeen.add(lineNum);
           }
@@ -157,10 +152,9 @@ export const CodeProvider: React.FC<{
     if (linePositions.length === 0) return;
 
     const meanPos = linePositions.reduce((sum, pos) => sum + pos, 0) / linePositions.length;
-    const scrollContainerHeight = scrollRef.current.clientHeight;
-    const scrollPosition = meanPos - scrollContainerHeight / 2;
+    const scrollPosition = meanPos - window.innerHeight / 2;
 
-    scrollRef.current.scrollTo({
+    window.scrollTo({
       top: Math.max(0, scrollPosition),
       behavior: "smooth",
     });
@@ -177,7 +171,6 @@ export const CodeProvider: React.FC<{
       scrollToElement,
       sourceId,
       setSourceId,
-      scrollRef,
       containerRef,
       isSticky,
       handleSourceChange,
@@ -200,7 +193,6 @@ export const CodeProvider: React.FC<{
       codeVersionId,
       setCodeVersionId,
       isSticky,
-      scrollRef,
       containerRef,
       sourceQuery.data,
       sourceQuery.isLoading,

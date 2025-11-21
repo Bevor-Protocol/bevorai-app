@@ -29,7 +29,7 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
 }) => {
   return (
     <div
-      className="absolute bottom-full mb-2 left-0 right-0 z-50 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl"
+      className="absolute bottom-full mb-2 left-0 right-0 z-50 bg-accent border rounded-lg shadow-xl"
       data-autocomplete-dropdown
     >
       <ScrollArea className="h-56">
@@ -38,9 +38,7 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
             key={attr.merkle_hash + index}
             data-autocomplete-item
             className={`px-3 py-2 cursor-pointer flex items-start space-x-2 rounded ${
-              index === selectedAutocompleteIndex
-                ? "bg-neutral-700 text-foreground"
-                : "hover:bg-neutral-800 text-foreground"
+              index === selectedAutocompleteIndex ? "bg-neutral-700" : "hover:bg-neutral-800"
             }`}
             onClick={() => insertAutocompleteItem(attr)}
           >
@@ -87,7 +85,6 @@ const Message: React.FC<
   return (
     <div
       className={cn(
-        "text-foreground",
         role === "user" && "rounded-lg px-2.5 py-1 bg-blue-600 max-w-2xl ml-auto",
         role === "system" && "max-w-none",
         className,

@@ -1,9 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/helpers";
-import { navigation } from "@/utils/navigation";
-import { AnalysisSchemaI, AnalysisVersionMappingSchemaI } from "@/utils/types";
-import { Clock, Lock, Shield, Unlock, User } from "lucide-react";
+import { AnalysisMappingSchemaI, AnalysisSchemaI } from "@/utils/types";
+import { BrickWallShieldIcon, Clock, Lock, Shield, Unlock, User } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
@@ -48,7 +47,7 @@ export const AnalysisElementLoader: React.FC = () => {
 
 export const AnalysisVersionElementCompact: React.FC<
   {
-    analysisVersion: AnalysisVersionMappingSchemaI;
+    analysisVersion: AnalysisMappingSchemaI;
   } & React.ComponentProps<"div">
 > = ({ analysisVersion, className, ...props }) => {
   return (
@@ -72,7 +71,7 @@ export const AnalysisVersionElementCompact: React.FC<
 
 export const AnalysisVersionElementBare: React.FC<
   {
-    analysisVersion: AnalysisVersionMappingSchemaI;
+    analysisVersion: AnalysisMappingSchemaI;
     isPreview?: boolean;
   } & React.ComponentProps<"div">
 > = ({ analysisVersion, className, ...props }) => {
@@ -84,7 +83,7 @@ export const AnalysisVersionElementBare: React.FC<
       <Shield className="size-4 text-purple-foreground mt-1.5" />
       <div className="grow space-y-2">
         <div className="flex justify-between">
-          <p className="font-medium text-foreground truncate text-lg">
+          <p className="font-medium truncate text-lg">
             v{analysisVersion.id.slice(0, 5) + "..." + analysisVersion.id.slice(-5)}
           </p>
         </div>
@@ -105,15 +104,13 @@ export const AnalysisVersionElementBare: React.FC<
 
 export const AnalysisVersionElement: React.FC<{
   teamSlug: string;
-  analysisVersion: AnalysisVersionMappingSchemaI;
+  projectSlug: string;
+  analysisVersion: AnalysisMappingSchemaI;
   isDisabled?: boolean;
-}> = ({ teamSlug, analysisVersion, isDisabled = false }) => {
+}> = ({ teamSlug, projectSlug, analysisVersion, isDisabled = false }) => {
   return (
     <Link
-      href={navigation.analysisVersions.overview({
-        teamSlug,
-        analysisVersionId: analysisVersion.id,
-      })}
+      href={`/teams/${teamSlug}/projects/${projectSlug}/analysis-thread/`}
       aria-disabled={isDisabled}
       className={cn(
         "block border transition-colors rounded-lg",
@@ -132,31 +129,29 @@ export const AnalysisElementBare: React.FC<
 > = ({ analysis, className, ...props }) => {
   return (
     <div
-      className={cn("flex items-start justify-start gap-2 rounded-lg p-4", className)}
+      className={cn(
+        "grid grid-cols-[1fr_140px_160px_24px] items-center gap-4 py-3 px-4 border rounded-lg",
+        className,
+      )}
       {...props}
     >
-      <div className="grow space-y-2">
-        <div className="flex justify-between">
-          <p className="font-medium text-foreground truncate max-w-1/2">{analysis.name}</p>
-          <div className="size-4">
-            {analysis.is_public ? (
-              <Unlock className="size-3 text-green-500" />
-            ) : (
-              <Lock className="size-3 text-purple-400" />
-            )}
-          </div>
-        </div>
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Clock className="size-3" />
-            <span>{formatDate(analysis.created_at)}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <User className="size-3" />
-            <span>{analysis.user.username}</span>
-          </div>
-        </div>
+      <div className="min-w-0 flex items-center gap-2">
+        <BrickWallShieldIcon className="size-4 shrink-0" />
+        <h3 className="text-sm font-medium truncate">{analysis.name || "Untitled"}</h3>
       </div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+        <User className="size-3" />
+        <span>{analysis.user.username}</span>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+        <Clock className="size-3" />
+        <span>{formatDate(analysis.created_at)}</span>
+      </div>
+      {analysis.is_public ? (
+        <Unlock className="size-4 text-green-500" />
+      ) : (
+        <Lock className="size-4 text-purple-400" />
+      )}
     </div>
   );
 };
@@ -168,15 +163,11 @@ export const AnalysisElement: React.FC<AnalysisElementProps> = ({
 }) => {
   return (
     <Link
-      href={navigation.analysis.overview({
-        teamSlug,
-        projectSlug: analysis.project_id,
-        analysisId: analysis.id,
-      })}
+      href={`/teams/${teamSlug}/projects/${analysis.project_slug}/analysis-threads/${analysis.id}`}
       aria-disabled={isDisabled}
       className={cn(
-        "block border transition-colors rounded-lg",
-        isDisabled ? "cursor-default" : "hover:border-muted-foreground/60 cursor-pointer",
+        "block transition-colors",
+        isDisabled ? "cursor-default opacity-50" : "hover:bg-accent/50 cursor-pointer",
       )}
     >
       <AnalysisElementBare analysis={analysis} />

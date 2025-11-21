@@ -51,10 +51,9 @@ export const createAnalysisVersionSchema = z
 export type CreateAnalysisVersionFormValues = z.infer<typeof createAnalysisVersionSchema>;
 
 export const createChatSchema = z.object({
-  analysis_id: z.string().min(1, "Analysis ID is required"),
   code_version_id: z.string().optional(),
-  analysis_version_id: z.string().optional(),
-  is_code_only: z.boolean().optional().default(false),
+  analysis_node_id: z.string().optional(),
+  chat_type: z.enum(["code", "analysis"]),
 });
 
 export type CreateChatFormValues = z.infer<typeof createChatSchema>;

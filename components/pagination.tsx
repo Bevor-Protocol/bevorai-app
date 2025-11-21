@@ -6,40 +6,47 @@ import { PaginationI } from "@/utils/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React from "react";
 
+/*
+Generic pagination pattern.
+*/
 export const Pagination: React.FC<{
-  filters: { [key: string]: string | undefined };
-  setFilters: React.Dispatch<React.SetStateAction<{ [key: string]: string | undefined }>>;
-  results: PaginationI;
+  handlePage: (page: number) => void;
+  results?: PaginationI;
   className?: string;
-}> = ({ filters, setFilters, results, className }) => {
-  // generic pagination. Rely on server-side + query params
-  const currentPage = parseInt(filters.page ?? "0");
+}> = ({ handlePage, results, className }) => {
+  const currentPage = results?.page ?? 0;
   const prevPage = currentPage > 0 ? currentPage - 1 : 0;
   const nextPage = currentPage + 1;
 
-  const totalPages = results.total_pages || 1;
-  const hasMore = results.more || false;
+  const totalPages = results?.total_pages || 1;
+  const hasMore = results?.more || false;
 
-  const handlePrev = (): void => {
-    setFilters((prev) => ({ ...prev, page: prevPage.toString() }));
-  };
-
-  const handleNext = (): void => {
-    setFilters((prev) => ({ ...prev, page: nextPage.toString() }));
-  };
+  if (!results || totalPages <= 1) {
+    return null;
+  }
 
   return (
-    <div className={cn("flex items-center justify-center", className)}>
-      <div className="grid items-center gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-        <Button variant="outline" disabled={currentPage === 0} onClick={handlePrev}>
+    <div className={cn("flex items-center justify-between border-t pt-4", className)}>
+      <div className="text-sm text-muted-foreground">
+        Page {currentPage + 1} of {totalPages}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          disabled={currentPage === 0} 
+          onClick={() => handlePage(prevPage)}
+        >
           <ChevronLeft className="size-4" />
-          <span>Previous</span>
+          Previous
         </Button>
-        <span className="text-sm text-muted-foreground text-center">
-          Page {currentPage + 1} of {totalPages}
-        </span>
-        <Button variant="outline" disabled={!hasMore} onClick={handleNext}>
-          <span>Next</span>
+        <Button 
+          variant="outline" 
+          size="sm"
+          disabled={!hasMore} 
+          onClick={() => handlePage(nextPage)}
+        >
+          Next
           <ChevronRight className="size-4" />
         </Button>
       </div>

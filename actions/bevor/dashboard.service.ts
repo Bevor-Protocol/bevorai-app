@@ -41,13 +41,8 @@ export const getInvites = async (): Promise<MemberInviteSchema[]> => {
   });
 };
 
-export const getAllProjects = async (filters: {
-  [key: string]: string;
-}): Promise<ProjectsPaginationI> => {
-  const searchParams = new URLSearchParams(filters);
-  searchParams.set("page_size", filters.page_size ?? "9");
-
-  return api.get(`/dashboard/projects?${searchParams.toString()}`).then((response) => {
+export const getAllProjects = async (): Promise<ProjectsPaginationI> => {
+  return api.get("/dashboard/projects").then((response) => {
     return response.data;
   });
 };

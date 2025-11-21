@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { navigation } from "@/utils/navigation";
+import { ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { solidity } from "@replit/codemirror-lang-solidity";
@@ -28,10 +28,8 @@ interface SourceFile {
 }
 
 const FileStep: React.FC<{
-  teamSlug: string;
-  projectSlug: string;
-  prevStep: () => void;
-}> = ({ ...props }) => {
+  project: ProjectDetailedSchemaI;
+}> = ({ project }) => {
   const queryClient = useQueryClient();
 
   const [contractCode, setContractCode] = useState(templateCode);
@@ -46,9 +44,9 @@ const FileStep: React.FC<{
   const mutation = useMutation({
     mutationFn: async (data: { code?: string; file?: File }) => {
       if (data.file) {
-        return codeActions.contractUploadFile(props.teamSlug, props.projectSlug, data.file);
+        return codeActions.contractUploadFile(project.team.slug, project.id, data.file);
       } else if (data.code) {
-        return codeActions.contractUploadPaste(props.teamSlug, props.projectSlug, data.code);
+        return codeActions.contractUploadPaste(project.team.slug, project.id, data.code);
       }
       throw new Error("No file or code provided");
     },
@@ -215,16 +213,13 @@ const FileStep: React.FC<{
           <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
             <CheckCircle className="size-8 text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Version Created Successfully!</h2>
+          <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
           <p className="text-muted-foreground">
             Your contract has been uploaded and is ready for audit.
           </p>
           <Button asChild className="mt-4">
             <Link
-              href={navigation.code.overview({
-                teamSlug: props.teamSlug,
-                codeId: mutation.data.id,
-              })}
+              href={`/teams/${project.team.slug}/projects/${project.slug}/codes/${mutation.data.id}`}
             >
               View Version
             </Link>
@@ -241,7 +236,7 @@ const FileStep: React.FC<{
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
             <XCircle className="size-8 text-red-400" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Upload Failed</h2>
+          <h2 className="text-2xl font-bold ">Upload Failed</h2>
           <p className="text-muted-foreground">
             There was an error processing your contract. Please try again.
           </p>
@@ -261,7 +256,7 @@ const FileStep: React.FC<{
         <div className="text-left space-y-2">
           <div className="flex flex-row gap-4 justify-start items-center">
             <Upload className="size-6 text-blue-400" />
-            <h2 className="text-2xl font-bold text-foreground">Smart Contract File</h2>
+            <h2 className="text-2xl font-bold ">Smart Contract File</h2>
           </div>
           <p className="text-muted-foreground">
             Write, paste, or upload your Solidity contract code below
@@ -320,7 +315,7 @@ const FileStep: React.FC<{
                     <Upload className="size-6 text-muted-foreground" />
                   </div>
                   <div className="text-center">
-                    <h3 className="text-lg font-medium text-foreground mb-2">Upload files here</h3>
+                    <h3 className="text-lg font-medium  mb-2">Upload files here</h3>
                     <p className="text-muted-foreground mb-4">
                       Click here or drag and drop to upload .sol files
                     </p>

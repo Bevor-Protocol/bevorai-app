@@ -1,12 +1,12 @@
 "use server";
 
 import api from "@/lib/api";
-import { buildSearchParams } from "@/lib/utils";
 import { QUERY_KEYS } from "@/utils/constants";
+import { buildSearchParams } from "@/utils/query-params";
 import {
+  CodeMappingSchemaI,
   CodeSourceContentSchemaI,
   CodeSourceSchemaI,
-  CodeVersionMappingSchemaI,
   CodeVersionsPaginationI,
   NodeSearchResponseI,
   TreeResponseI,
@@ -15,7 +15,7 @@ import { QueryKey } from "@tanstack/react-query";
 
 export const contractUploadFolder = async (
   teamSlug: string,
-  projectSlug: string,
+  projectId: string,
   fileMap: Record<string, File>,
 ): Promise<{
   id: string;
@@ -25,7 +25,7 @@ export const contractUploadFolder = async (
   const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
   const formData = new FormData();
-  formData.append("project_id", projectSlug);
+  formData.append("project_id", projectId);
   Object.entries(fileMap).forEach(([relativePath, file]) => {
     formData.append("files", file, relativePath);
   });
@@ -42,7 +42,7 @@ export const contractUploadFolder = async (
 
 export const contractUploadFile = async (
   teamSlug: string,
-  projectSlug: string,
+  projectId: string,
   file: File,
 ): Promise<{
   id: string;
@@ -53,7 +53,7 @@ export const contractUploadFile = async (
 
   const formData = new FormData();
   formData.append("files", file);
-  formData.append("project_id", projectSlug);
+  formData.append("project_id", projectId);
 
   return api
     .post("/code-versions/create/file", formData, { headers: { "bevor-team-slug": teamSlug } })
@@ -67,7 +67,7 @@ export const contractUploadFile = async (
 
 export const contractUploadPaste = async (
   teamSlug: string,
-  projectSlug: string,
+  projectId: string,
   code: string,
 ): Promise<{
   id: string;
@@ -78,7 +78,7 @@ export const contractUploadPaste = async (
   return api
     .post(
       "/code-versions/create/paste",
-      { content: code, project_id: projectSlug },
+      { content: code, project_id: projectId },
       { headers: { "bevor-team-slug": teamSlug } },
     )
     .then((response) => {
@@ -91,7 +91,7 @@ export const contractUploadPaste = async (
 
 export const contractUploadScan = async (
   teamSlug: string,
-  projectSlug: string,
+  projectId: string,
   address: string,
 ): Promise<{
   id: string;
@@ -102,7 +102,7 @@ export const contractUploadScan = async (
   return api
     .post(
       "/code-versions/create/scan",
-      { address, project_id: projectSlug },
+      { address, project_id: projectId },
       { headers: { "bevor-team-slug": teamSlug } },
     )
     .then((response) => {
@@ -116,7 +116,7 @@ export const contractUploadScan = async (
 export const getCodeVersion = async (
   teamSlug: string,
   codeId: string,
-): Promise<CodeVersionMappingSchemaI> => {
+): Promise<CodeMappingSchemaI> => {
   return api
     .get(`/code-versions/${codeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
@@ -174,13 +174,13 @@ export const searchNodes = async (
 export const getVersions = async (
   teamSlug: string,
   filters: {
-    [key: string]: string | undefined;
+    [key: string]: string;
   },
 ): Promise<CodeVersionsPaginationI> => {
   const searchParams = buildSearchParams(filters);
 
   return api
-    .get(`/code-versions?${searchParams.toString()}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/code-versions?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });

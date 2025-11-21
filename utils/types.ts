@@ -13,6 +13,8 @@ interface BaseSchema {
 
 export interface PaginationI {
   more: boolean;
+  page: number;
+  page_size: number;
   total_pages: number;
 }
 
@@ -49,10 +51,11 @@ export interface AnalysisSchemaI extends BaseSchema {
   description?: string;
   n_versions: number;
   project_id: string;
+  project_slug: string;
   user: UserSchemaI;
 }
 
-export interface AnalysisVersionMappingSchemaI extends BaseSchema {
+export interface AnalysisMappingSchemaI extends BaseSchema {
   name: string;
   user: UserSchemaI;
   analysis_id: string;
@@ -76,13 +79,19 @@ export interface AnalysisPaginationI extends PaginationI {
 }
 
 export interface AnalysisVersionPaginationI extends PaginationI {
-  results: (AnalysisVersionMappingSchemaI & { n: number })[];
+  results: (AnalysisMappingSchemaI & { n: number })[];
 }
 
 export interface HeadFullSchemaI extends HeadSchema {
-  analysis_version?: AnalysisVersionMappingSchemaI;
-  code_version?: CodeVersionMappingSchemaI;
+  analysis_version?: AnalysisMappingSchemaI;
+  code_version?: CodeMappingSchemaI;
 }
+
+export interface RecentAnalysisSchemaI {
+  exists: boolean;
+  version?: AnalysisMappingSchemaI;
+}
+
 /*  CODE   */
 export interface FunctionScopeI {
   id: string;
@@ -142,7 +151,7 @@ export interface FindingSchemaI {
 }
 
 export interface NodeSearchResponseI {
-  instance_source_id: string;
+  code_version_source_id: string;
   node_type: string;
   merkle_hash: string;
   src_start_pos: number;
@@ -190,15 +199,18 @@ export interface ChatSchemaI {
   id: string;
   created_at: string;
   team_id: string;
-  is_visibile: string;
   total_messages: string;
-  project_id: string;
+  project: ProjectSchemaI;
   user: UserSchemaI;
+  analysis_thread_id?: string;
+  analysis_mapping_id?: string;
+  code_mapping_id: string;
+  chat_type: "code" | "analysis";
 }
 
-export interface ChatMessagesResponseI extends ChatSchemaI {
-  messages: ChatMessageI[];
-  head: HeadSchema;
+export interface ChatFullSchemaI extends ChatSchemaI {
+  code_mapping: CodeMappingSchemaI;
+  analysis_mapping?: AnalysisMappingSchemaI;
 }
 
 export interface TeamSchemaI extends BaseSchema {
@@ -222,8 +234,10 @@ export interface ActivitySchemaI extends BaseSchema {
   id: string;
   created_at: string;
   team_id: string;
+  team_slug: string;
   related_id: string;
   project_id?: string;
+  project_slug?: string;
   user: UserSchemaI;
   method: string;
   entity_type: string;
@@ -317,10 +331,11 @@ export interface ProjectsPaginationI extends PaginationI {
 }
 
 /* CODE VERSION */
-export interface CodeVersionMappingSchemaI extends BaseSchema {
+export interface CodeMappingSchemaI extends BaseSchema {
   name?: string;
   inferred_name: string;
   project_id: string;
+  project_slug: string;
   parent_version_id?: string;
   user: UserSchemaI;
   child?: BaseSchema & { name: string };
@@ -338,12 +353,12 @@ export interface CodeVersionSchemaI extends BaseSchema {
 }
 
 export interface CodeVersionsPaginationI extends PaginationI {
-  results: (CodeVersionMappingSchemaI & { n: number })[];
+  results: (CodeMappingSchemaI & { n: number })[];
 }
 
 export interface RecentCodeVersionSchemaI {
   is_any_code: boolean;
-  code_version?: CodeVersionMappingSchemaI;
+  code_version?: CodeMappingSchemaI;
 }
 
 export interface CodeSourceSchemaI extends BaseSchema {
@@ -379,6 +394,7 @@ export interface AuthSchema extends BaseSchema {
   name: string;
   prefix: string;
   permissions: AuthPermissionSchema;
+  user: UserSchemaI;
 }
 
 export interface TokenIssueResponse {

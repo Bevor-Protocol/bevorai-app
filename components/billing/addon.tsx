@@ -89,7 +89,7 @@ export const AddonRow: React.FC<{
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-3 mb-2">
-              <h4 className="text-lg font-semibold text-foreground truncate">{addon.name}</h4>
+              <h4 className="text-lg font-semibold truncate">{addon.name}</h4>
               {getStatusBadge()}
               {checkoutMutation.isPending && (
                 <div className="size-4 border-2 border-neutral-600 border-t-blue-500 rounded-full animate-spin"></div>
@@ -97,9 +97,7 @@ export const AddonRow: React.FC<{
             </div>
             <p className="text-muted-foreground text-sm mb-1">{addon.description}</p>
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-foreground">
-                {formatCurrency(currentPrice)}
-              </span>
+              <span className="text-sm font-medium">{formatCurrency(currentPrice)}</span>
               <span className="text-muted-foreground text-sm">/{addon.billing_interval}</span>
             </div>
           </div>

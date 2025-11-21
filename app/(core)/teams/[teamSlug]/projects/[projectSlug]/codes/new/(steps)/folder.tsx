@@ -3,7 +3,7 @@
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { navigation } from "@/utils/navigation";
+import { ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { solidity } from "@replit/codemirror-lang-solidity";
@@ -22,10 +22,8 @@ interface SourceFile {
 }
 
 const FolderStep: React.FC<{
-  teamSlug: string;
-  projectSlug: string;
-  prevStep: () => void;
-}> = ({ ...props }) => {
+  project: ProjectDetailedSchemaI;
+}> = ({ project }) => {
   const queryClient = useQueryClient();
 
   const [sourceFiles, setSourceFiles] = useState<SourceFile[]>([]);
@@ -42,7 +40,7 @@ const FolderStep: React.FC<{
       files.forEach((sourceFile) => {
         fileMap[sourceFile.path] = sourceFile.file;
       });
-      return codeActions.contractUploadFolder(props.teamSlug, props.projectSlug, fileMap);
+      return codeActions.contractUploadFolder(project.team.slug, project.slug, fileMap);
     },
     onMutate: () => {
       toastId.current = toast.loading("Uploading and parsing code...");
@@ -184,16 +182,13 @@ const FolderStep: React.FC<{
           <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
             <CheckCircle className="size-8 text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Version Created Successfully!</h2>
+          <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
           <p className="text-muted-foreground">
             Your contract has been uploaded and is ready for audit.
           </p>
           <Button asChild className="mt-4">
             <Link
-              href={navigation.code.overview({
-                teamSlug: props.teamSlug,
-                codeId: mutation.data.id,
-              })}
+              href={`/teams/${project.team.slug}/projects/${project.slug}/codes/${mutation.data.id}`}
             >
               View Version
             </Link>
@@ -210,7 +205,7 @@ const FolderStep: React.FC<{
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
             <XCircle className="size-8 text-red-400" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Upload Failed</h2>
+          <h2 className="text-2xl font-bold ">Upload Failed</h2>
           <p className="text-muted-foreground">
             There was an error processing your contract. Please try again.
           </p>
@@ -230,7 +225,7 @@ const FolderStep: React.FC<{
         <div className="text-left space-y-2">
           <div className="flex flex-row gap-4 justify-start items-center">
             <Folder className="size-6 text-yellow-400" />
-            <h2 className="text-2xl font-bold text-foreground">Upload Folder</h2>
+            <h2 className="text-2xl font-bold ">Upload Folder</h2>
           </div>
           <p className="text-muted-foreground">Upload an entire folder of solidity files</p>
         </div>
@@ -264,7 +259,7 @@ const FolderStep: React.FC<{
                   <Upload className="size-6 text-muted-foreground" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-lg font-medium text-foreground mb-2">Upload folder here</h3>
+                  <h3 className="text-lg font-medium  mb-2">Upload folder here</h3>
                   <p className="text-muted-foreground mb-4">
                     Click here or drag and drop to upload a folder with .sol files
                   </p>
@@ -296,13 +291,13 @@ const FolderStep: React.FC<{
               style={{ gridTemplateColumns: "250px 1fr", gridTemplateRows: "auto 1fr" }}
             >
               <div className="flex items-center space-x-2 p-3 border-b border-r border-border">
-                <span className="text-sm font-medium text-foreground">Sources</span>
+                <span className="text-sm font-medium ">Sources</span>
                 <span className="text-xs text-neutral-500">({sourceFiles.length})</span>
               </div>
               <div className="flex items-center justify-between p-3 border-b border-border">
                 <div className="flex items-center space-x-2">
                   <FileText className="size-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-sm font-medium ">
                     {selectedFile ? selectedFile.path.split("/").pop() : "No file selected"}
                   </span>
                   {selectedFile && (
@@ -317,8 +312,8 @@ const FolderStep: React.FC<{
                       className={cn(
                         "px-3 py-2 rounded-lg transition-colors flex justify-center flex-col cursor-pointer",
                         selectedFile?.path === sourceFile.path
-                          ? "bg-neutral-800 text-foreground"
-                          : "text-foreground hover:bg-neutral-800/50",
+                          ? "bg-neutral-800 "
+                          : " hover:bg-neutral-800/50",
                       )}
                       onClick={() => setSelectedFile(sourceFile)}
                     >

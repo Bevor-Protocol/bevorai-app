@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
-import { navigation } from "@/utils/navigation";
 import { TeamSchemaI } from "@/utils/types";
 // Removed Privy wallet dependency
 import { ExternalLink, LayoutDashboardIcon, LogOut, Settings } from "lucide-react";
@@ -32,7 +31,7 @@ export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ us
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
             <Link
-              href={navigation.team.overview({ teamSlug: defaultTeam?.id })}
+              href={`/teams/${defaultTeam?.slug}`}
               className="w-full flex items-center justify-between"
             >
               <span>Dashboard</span>
@@ -40,10 +39,7 @@ export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ us
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link
-              href={navigation.user.settings({})}
-              className="w-full flex items-center justify-between"
-            >
+            <Link href="/user" className="w-full flex items-center justify-between">
               <span>Settings</span>
               <Settings className="size-4" />
             </Link>

@@ -1,17 +1,11 @@
 import { teamActions } from "@/actions/bevor";
-import ContainerBreadcrumb from "@/components/breadcrumbs";
 import Container from "@/components/container";
+import TeamSubnav from "@/components/subnav/team";
 import { Icon } from "@/components/ui/icon";
 import { formatDate } from "@/utils/helpers";
 import { AsyncComponent } from "@/utils/types";
 import { Calendar } from "lucide-react";
-import {
-  AnalysesPreview,
-  ProjectsSection,
-  TeamActivities,
-  TeamMembers,
-  TeamToggle,
-} from "./team-client";
+import { AnalysesPreview, ProjectsSection, TeamActivities, TeamMembers } from "./team-client";
 
 interface TeamPageProps {
   params: Promise<{ teamSlug: string }>;
@@ -23,52 +17,39 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   const team = await teamActions.getTeam(teamSlug);
 
   return (
-    <Container
-      breadcrumb={
-        <ContainerBreadcrumb
-          queryKey={[teamSlug]}
-          queryType="team"
-          teamSlug={teamSlug}
-          id=""
-          toggle={<TeamToggle teamSlug={teamSlug} />}
-        />
-      }
-    >
-      <div className="max-w-5xl m-auto mt-8 lg:mt-16">
-        <div className="flex flex-col gap-6">
-          <h1>{team.name}</h1>
-          <div className="flex flex-row gap-10 items-center">
-            <div className="flex flex-row gap-2 items-center">
-              <div className="text-muted-foreground">Owner:</div>
+    <Container subnav={<TeamSubnav />}>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="border-b pb-6">
+          <h1 className="text-2xl font-semibold mb-2">{team.name}</h1>
+          <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>Owner:</span>
               <Icon size="sm" seed={team.created_by_user.id} />
-              <div>{team.created_by_user.username}</div>
+              <span>{team.created_by_user.username}</span>
             </div>
-            <div className="flex flex-row gap-2 items-center">
-              <div className="text-muted-foreground">Members:</div>
+            <div className="flex items-center gap-2">
+              <span>Members:</span>
               <TeamMembers team={team} />
             </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
             <div className="flex items-center gap-1">
               <Calendar className="size-4" />
               <span>{formatDate(team.created_at)}</span>
             </div>
           </div>
-
-          <div className="flex flex-row justify-between gap-10">
-            <div className="basis-1/2">
-              <div>
-                <h3 className="my-6">Recent Projects</h3>
-                <ProjectsSection teamSlug={teamSlug} />
-              </div>
-              <div>
-                <h3 className="my-6">Recent Analysis Threads</h3>
-                <AnalysesPreview teamSlug={teamSlug} />
-              </div>
+        </div>
+        <div className="px-6 py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
+          <div className="min-w-0 space-y-8">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Projects</h3>
+              <ProjectsSection teamSlug={teamSlug} />
             </div>
-            <div className="basis-1/2 my-6">
-              <TeamActivities teamSlug={teamSlug} />
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Recent Analysis Threads</h3>
+              <AnalysesPreview teamSlug={teamSlug} />
             </div>
+          </div>
+          <div className="min-w-0">
+            <TeamActivities teamSlug={teamSlug} />
           </div>
         </div>
       </div>

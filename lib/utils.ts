@@ -41,25 +41,3 @@ export const mergeButtonRefs = <T extends HTMLButtonElement>(
     }
   };
 };
-
-export const buildSearchParams = (
-  query: {
-    [key: string]: string | undefined;
-  },
-  defaults?: {
-    [key: string]: string;
-  },
-): URLSearchParams => {
-  const params = new URLSearchParams();
-  Object.entries(query).forEach(([k, v]) => {
-    if (v) {
-      params.set(k, v);
-    }
-  });
-
-  Object.entries(defaults ?? {}).forEach(([k, v]) => {
-    params.set(k, v);
-  });
-
-  return params;
-};

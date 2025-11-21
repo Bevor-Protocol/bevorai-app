@@ -30,7 +30,7 @@ export const refreshKey = async (
 ): Promise<{ api_key: string; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.apiKeys(teamSlug)];
   return api
-    .patch(`/auth/${keyId}`, {}, { headers: { "bevor-team-slug": teamSlug } })
+    .post(`/auth/${keyId}`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return {
         api_key: response.data.api_key,

@@ -4,82 +4,16 @@ import { activityActions, analysisActions, projectActions } from "@/actions/bevo
 import ActivityList from "@/components/activity";
 import { AnalysisElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
-import LucideIcon from "@/components/lucide-icon";
 import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSSE } from "@/hooks/useSSE";
 import { generateQueryKey } from "@/utils/constants";
-import { navigation } from "@/utils/navigation";
 import { TeamOverviewSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { Code, DollarSign, File, Files, MoreHorizontal, Settings } from "lucide-react";
-import Link from "next/link";
 import React from "react";
-
-export const TeamToggle: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <MoreHorizontal />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[200px]">
-        <DropdownMenuLabel>Settings</DropdownMenuLabel>
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild className="[&_svg]:ml-auto">
-            <Link href={navigation.team.settings.overview({ teamSlug: teamSlug })}>
-              <span>Home</span>
-              <Settings />
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild className="[&_svg]:ml-auto">
-            <Link href={navigation.team.settings.api({ teamSlug: teamSlug })}>
-              <span>API</span>
-              <Code />
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild className="[&_svg]:ml-auto">
-            <Link href={navigation.team.settings.billing({ teamSlug: teamSlug })}>
-              <span>Billing</span>
-              <DollarSign />
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild className="[&_svg]:ml-auto">
-            <Link href={navigation.team.settings.plans({ teamSlug: teamSlug })}>
-              <span>Plans</span>
-              <Files />
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild className="[&_svg]:ml-auto">
-            <Link href={navigation.team.settings.invoices({ teamSlug: teamSlug })}>
-              <span>Invoices</span>
-              <File />
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild className="[&_svg]:ml-auto">
-            <Link href={navigation.team.settings.members({ teamSlug: teamSlug })}>
-              <span>Members</span>
-              <LucideIcon assetType="member" />
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
 
 export const TeamActivities: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const { data: activities = [], refetch } = useQuery({
@@ -97,7 +31,7 @@ export const TeamActivities: React.FC<{ teamSlug: string }> = ({ teamSlug }) => 
     eventTypes: ["activities"],
   });
 
-  return <ActivityList activities={activities} className="w-fit mx-auto" />;
+  return <ActivityList activities={activities} className="w-full" />;
 };
 
 export const TeamMembers: React.FC<{ team: TeamOverviewSchemaI }> = ({ team }) => {
@@ -118,8 +52,8 @@ export const TeamMembers: React.FC<{ team: TeamOverviewSchemaI }> = ({ team }) =
       <TooltipContent align="start" side="top">
         <div className="flex flex-col gap-1 min-w-40">
           {team.users.map((user) => (
-            <div key={user.id} className="text-muted-foreground flex flex-row gap-2">
-              <Icon size="sm" seed={user.id} key={user.id} />
+            <div key={user.id} className="text-muted-foreground flex items-center gap-2">
+              <Icon size="sm" seed={user.id} />
               {user.username}
             </div>
           ))}

@@ -13,7 +13,6 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { trimAddress } from "@/utils/helpers";
-import { navigation } from "@/utils/navigation";
 import { UserDetailedSchemaI } from "@/utils/types";
 import { useMutation } from "@tanstack/react-query";
 import { ChevronsUpDown, ExternalLink, LogOut, Settings } from "lucide-react";
@@ -54,10 +53,7 @@ export const UserNavigation: React.FC<{
             <DropdownMenuLabel>Account</DropdownMenuLabel>
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link
-                  href={navigation.user.settings({})}
-                  className="w-full flex items-center justify-between"
-                >
+                <Link href="/user" className="w-full flex items-center justify-between">
                   <span>Settings</span>
 
                   <Settings className="size-4" />

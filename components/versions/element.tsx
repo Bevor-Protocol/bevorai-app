@@ -2,8 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDate, trimAddress } from "@/utils/helpers";
-import { navigation } from "@/utils/navigation";
-import { CodeVersionMappingSchemaI, CodeVersionSchemaI, SourceTypeEnum } from "@/utils/types";
+import { CodeMappingSchemaI, CodeVersionSchemaI, SourceTypeEnum } from "@/utils/types";
 import { Clock, Code, ExternalLink, Network } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -58,7 +57,7 @@ export const VersionMeta: React.FC<{
 
 export const CodeVersionElementCompact: React.FC<
   {
-    version: CodeVersionMappingSchemaI;
+    version: CodeMappingSchemaI;
   } & React.ComponentProps<"div">
 > = ({ version, className, ...props }) => {
   const isScanMethod = version.version.source_type === SourceTypeEnum.SCAN;
@@ -106,7 +105,7 @@ export const CodeVersionElementCompact: React.FC<
 
 export const CodeVersionElementBare: React.FC<
   {
-    version: CodeVersionMappingSchemaI;
+    version: CodeMappingSchemaI;
   } & React.ComponentProps<"div">
 > = ({ version, className, ...props }) => {
   const isScanMethod = version.version.source_type === SourceTypeEnum.SCAN;
@@ -124,66 +123,68 @@ export const CodeVersionElementBare: React.FC<
 
   return (
     <div
-      className={cn("flex items-start justify-start gap-2 rounded-lg p-4", className)}
+      className={cn(
+        "grid grid-cols-[24px_1fr_100px_80px_120px_80px_80px_160px] items-center gap-4 py-3 px-4 border rounded-lg",
+        className,
+      )}
       {...props}
     >
-      <Code className="size-4 text-green-foreground mt-1.5" />
-      <div className="grow space-y-2">
-        <div className="flex justify-between">
-          <p className="font-medium text-foreground truncate text-lg">{version.inferred_name}</p>
-        </div>
-        <div className="flex justify-between">
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            {isScanMethod && version.version.network && (
-              <div className="flex items-center gap-1">
-                <Network className="size-3" />
-                <span>{version.version.network}</span>
-              </div>
-            )}
-            <span className="capitalize">{version.version.source_type}</span>
-            <Badge variant="outline" size="sm" className="font-mono text-xs">
-              {formatVersionIdentifier()}
-            </Badge>
-            {version.version.solc_version && (
-              <span className="font-mono text-xs">{version.version.solc_version}</span>
-            )}
-            {isRepoMethod && version.version.source_url && (
-              <a
-                href={version.version.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-foreground transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ExternalLink className="size-3" />
-                <span>Source</span>
-              </a>
-            )}
-            <div className="flex items-center gap-1">
-              <Clock className="size-3" />
-              <span>{formatDate(version.created_at)}</span>
-            </div>
-          </div>
-        </div>
+      <div className="flex justify-center">
+        <Code className="size-4 text-green-400" />
+      </div>
+      <div className="min-w-0">
+        <h3 className="text-sm font-medium truncate">{version.inferred_name}</h3>
+      </div>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
+        {isScanMethod && version.version.network && (
+          <>
+            <Network className="size-3" />
+            <span>{version.version.network}</span>
+          </>
+        )}
+      </div>
+      <span className="capitalize text-xs text-muted-foreground whitespace-nowrap">
+        {version.version.source_type}
+      </span>
+      <Badge variant="outline" size="sm" className="font-mono text-xs shrink-0">
+        {formatVersionIdentifier()}
+      </Badge>
+      <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">
+        {version.version.solc_version || ""}
+      </span>
+      {isRepoMethod && version.version.source_url ? (
+        <a
+          href={version.version.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ExternalLink className="size-3" />
+          <span>Source</span>
+        </a>
+      ) : (
+        <div />
+      )}
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+        <Clock className="size-3" />
+        <span>{formatDate(version.created_at)}</span>
       </div>
     </div>
   );
 };
 
 export const CodeVersionElement: React.FC<{
-  version: CodeVersionMappingSchemaI;
+  version: CodeMappingSchemaI;
   teamSlug: string;
   isDisabled?: boolean;
 }> = ({ version, teamSlug, isDisabled = false }) => {
   return (
     <Link
-      href={navigation.code.overview({
-        teamSlug,
-        codeId: version.id,
-      })}
+      href={`/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.id}`}
       className={cn(
-        "block border transition-colors rounded-lg",
-        isDisabled ? "cursor-default" : "hover:border-muted-foreground/60 cursor-pointer",
+        "block transition-colors",
+        isDisabled ? "cursor-default opacity-50" : "hover:bg-accent/50 cursor-pointer",
       )}
       aria-disabled={isDisabled}
     >

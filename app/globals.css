@@ -76,7 +76,8 @@
   --logo-dot: oklch(0.65 0 0);
   --link: oklch(70.7% 0.165 254.624);
   --link-accent: oklch(80.9% 0.105 251.813);
-  --spacing-header: 3rem;
+  --spacing-header: 4rem;
+  --spacing-subheader: 2.5rem;
   --size-icon-sm: 20px;
   --size-icon-md: 25px;
   --size-icon-lg: 60px;
@@ -164,6 +165,8 @@
   --spacing-icon-sm: var(--size-icon-sm);
   --spacing-icon-md: var(--size-icon-md);
   --spacing-icon-lg: var(--size-icon-lg);
+  --spacing-header: var(--spacing-header);
+  --spacing-subheader: var(--spacing-subheader);
   --leading-normal: 1.2;
 
   @keyframes dots {
@@ -364,6 +367,25 @@
 
   & span[data-token].dim {
     @apply opacity-50;
+  }
+}
+
+@layer base {
+  [data-subnav][data-active="false"] {
+    @apply text-muted-foreground;
+  }
+  [data-subnav][data-active="true"] {
+    @apply text-foreground;
+  }
+
+  [data-subnav][data-active="true"][data-highlight="true"]::after {
+    content: "";
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: currentColor;
   }
 }
 

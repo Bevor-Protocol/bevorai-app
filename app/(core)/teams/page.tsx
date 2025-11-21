@@ -1,24 +1,25 @@
 "use server";
 
-import Container from "@/components/container";
+import { dashboardActions } from "@/actions/bevor";
 import { AsyncComponent } from "@/utils/types";
-import { TeamCreate, TeamsCount, TeamsTable } from "./teams-client";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 const TeamsPage: AsyncComponent = async () => {
-  return (
-    <Container>
-      <div className="max-w-5xl m-auto mt-8 lg:mt-16">
-        <div className="flex flex-row mb-8 justify-between">
-          <div className="flex flex-row items-center gap-4">
-            <h3 className="text-foreground">Teams</h3>
-            <TeamsCount />
-          </div>
-          <TeamCreate />
-        </div>
-        <TeamsTable />
-      </div>
-    </Container>
-  );
+  const cookieStore = await cookies();
+  const recentTeamSlug = cookieStore.get("bevor-recent-team");
+  if (recentTeamSlug?.value) {
+    redirect(`/teams/${recentTeamSlug.value}`);
+  }
+
+  const teams = await dashboardActions.getTeams();
+  const defaultTeam = teams.find((team) => team.is_default);
+
+  if (defaultTeam) {
+    redirect(`/teams/${defaultTeam.slug}`);
+  }
+
+  redirect("/sign-in");
 };
 
 export default TeamsPage;

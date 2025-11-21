@@ -1,6 +1,5 @@
 import LucideIcon from "@/components/lucide-icon";
 import { formatDate } from "@/utils/helpers";
-import { navigation } from "@/utils/navigation";
 import { ActivitySchemaI, ItemType } from "@/utils/types";
 import { Activity } from "lucide-react";
 import Link from "next/link";
@@ -35,27 +34,21 @@ const entityTypeToText: Record<string, string> = {
 
 // Entity type to route mapper
 const getEntityRoute = (activity: ActivitySchemaI): string => {
-  const { entity_type, team_id, project_id, related_id } = activity;
+  const { entity_type, team_slug, project_slug, related_id } = activity;
 
   switch (entity_type) {
     case "project":
-      return navigation.project.overview({ teamSlug: team_id, projectSlug: project_id });
+      return `/teams/${team_slug}/projects/${project_slug}`;
     case "code_version":
-      return navigation.code.overview({ teamSlug: team_id, codeId: related_id });
-    case "analysis":
-      return navigation.analysis.overview({ teamSlug: team_id, analysisId: related_id });
+      return `/teams/${team_slug}/projects/${project_slug}/codes/${related_id}`;
+    case "analysis_thread":
+      return `/teams/${team_slug}/projects/${project_slug}/analysis-thread/${related_id}`;
     case "analysis_version":
-      return navigation.analysisVersions.overview({
-        teamSlug: team_id,
-        analysisVersionId: related_id,
-      });
+      return `/teams/${team_slug}/projects/${project_slug}/analysis-thread/${related_id}`;
     case "team":
-      return navigation.team.overview({ teamSlug: team_id });
-    case "chat":
-      // TODO: fix for chat.
-      return navigation.team.overview({ teamSlug: team_id, analysisId: related_id });
+      return `/teams/${team_slug}`;
     case "member":
-      return navigation.team.settings.members({ teamSlug: team_id });
+      return `/teams/${team_slug}/settings/members`;
     default:
       return "#";
   }
@@ -69,7 +62,7 @@ const ActivityList: React.FC<{ activities: ActivitySchemaI[]; className?: string
     <div className={className}>
       <div className="flex items-center gap-2 mb-4">
         <Activity className="size-5" />
-        <h2 className="text-xl font-semibold">Recent Activity</h2>
+        <h2 className="font-semibold">Recent Activity</h2>
       </div>
       <div>
         {activities.map((activity) => {
@@ -79,21 +72,19 @@ const ActivityList: React.FC<{ activities: ActivitySchemaI[]; className?: string
           const route = getEntityRoute(activity);
 
           return (
-            <div key={activity.id} className="flex items-center gap-3 py-3 text-muted-foreground">
-              <div>
-                <LucideIcon assetType={assetType} className="size-4" />
-              </div>
-              <div>
-                <span>
-                  {activity.user.username} {methodText} a{" "}
-                </span>
-                <b>
-                  <Link href={route} className="text-foreground/80">
-                    {entityText}
-                  </Link>
-                </b>
-              </div>
-              <div> · {formatDate(activity.created_at)}</div>
+            <div
+              key={activity.id}
+              className="flex items-center gap-2 py-2 text-sm text-muted-foreground whitespace-nowrap"
+            >
+              <LucideIcon assetType={assetType} className="size-4 shrink-0" />
+              <span className="truncate">
+                {activity.user.username} {methodText} a{" "}
+                <Link href={route} className="text-foreground/80 font-medium">
+                  {entityText}
+                </Link>
+                {" · "}
+                {formatDate(activity.created_at)}
+              </span>
             </div>
           );
         })}

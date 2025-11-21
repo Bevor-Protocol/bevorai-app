@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDate, formatNumber } from "@/utils/helpers";
-import { navigation } from "@/utils/navigation";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { Clock, User } from "lucide-react";
 import Link from "next/link";
@@ -48,59 +47,55 @@ export const ProjectElement: React.FC<{
   return (
     <Link
       key={project.id}
-      href={navigation.project.overview({ teamSlug: project.team.slug, projectSlug: project.slug })}
+      href={`/teams/${project.team.slug}/projects/${project.slug}`}
       aria-disabled={isDisabled}
       className={cn(
-        "block border transition-colors rounded-lg",
-        isDisabled ? "cursor-default" : "hover:border-border-accent cursor-pointer",
+        "block border rounded-lg transition-colors",
+        isDisabled ? "cursor-default opacity-50" : "hover:bg-accent/50 cursor-pointer",
       )}
     >
-      <div className="flex items-start justify-start gap-2 rounded-lg p-4">
-        <div className="grow space-y-2">
-          <div className="flex justify-between items-start gap-2">
-            <p className="font-medium text-foreground truncate text-lg flex-1 min-w-0">
-              {project.name}
-            </p>
-            <div className="flex flex-row gap-1 shrink-0">
-              <Badge variant="blue" size="sm">
-                {formatNumber(project.n_codes)} codes
-              </Badge>
-              <Badge variant="green" size="sm">
-                {formatNumber(project.n_analyses)} analyses
-              </Badge>
-            </div>
+      <div className="p-4">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base font-semibold mb-1">{project.name}</h3>
+            {project.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2">{project.description}</p>
+            )}
           </div>
-          <div className="flex justify-between items-center text-sm text-muted-foreground">
-            <div className="flex items-center gap-3">
-              {showTeam && (
-                <div className="flex items-center gap-1">
-                  <LucideIcon assetType="team" className="size-3" />
-                  <span>{project.team.name}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1">
-                <User className="size-3" />
-                <span>{project.created_by_user.username}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="size-3" />
-                <span>{formatDate(project.created_at)}</span>
-              </div>
-            </div>
-            {project.tags.length > 0 && (
-              <div className="flex gap-1 shrink-0">
-                {project.tags.slice(0, 2).map((tag, index) => (
-                  <Badge key={index} variant="outline" size="sm">
-                    {tag}
-                  </Badge>
-                ))}
-                {project.tags.length > 2 && (
-                  <Badge variant="outline" size="sm">
-                    +{project.tags.length - 2}
-                  </Badge>
-                )}
+        </div>
+        {project.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {project.tags.map((tag, index) => (
+              <Badge key={index} variant="outline" size="sm">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            {showTeam && (
+              <div className="flex items-center gap-1.5">
+                <LucideIcon assetType="team" className="size-3" />
+                <span>{project.team.name}</span>
               </div>
             )}
+            <div className="flex items-center gap-1.5">
+              <User className="size-3" />
+              <span>{project.created_by_user.username}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Clock className="size-3" />
+              <span>{formatDate(project.created_at)}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="blue" size="sm">
+              {formatNumber(project.n_codes)} codes
+            </Badge>
+            <Badge variant="green" size="sm">
+              {formatNumber(project.n_analyses)} analyses
+            </Badge>
           </div>
         </div>
       </div>

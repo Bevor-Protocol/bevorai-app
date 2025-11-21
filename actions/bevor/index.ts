@@ -3,7 +3,6 @@ export * as analysisActions from "./analysis.service";
 export * as apiKeyActions from "./api-key.service";
 export * as authActions from "./auth.service";
 export * as billingActions from "./billing.service";
-export * as breadcrumbActions from "./breadcrumb.service";
 export * as chatActions from "./chat.service";
 export * as codeActions from "./code.service";
 export * as dashboardActions from "./dashboard.service";

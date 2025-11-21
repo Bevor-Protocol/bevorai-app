@@ -1,8 +1,8 @@
 "use server";
 
 import api from "@/lib/api";
-import { buildSearchParams } from "@/lib/utils";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
+import { buildSearchParams } from "@/utils/query-params";
 import {
   CreateProjectBody,
   ProjectDetailedSchemaI,
@@ -32,13 +32,13 @@ export const createProject = async (
 export const getProjects = async (
   teamSlug: string,
   filters: {
-    [key: string]: string | undefined;
+    [key: string]: string;
   },
 ): Promise<ProjectsPaginationI> => {
   const searchParams = buildSearchParams(filters);
 
   return api
-    .get(`/projects?${searchParams.toString()}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/projects?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });

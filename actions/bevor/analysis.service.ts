@@ -1,17 +1,18 @@
 "use server";
 
 import api from "@/lib/api";
-import { buildSearchParams } from "@/lib/utils";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
+import { buildSearchParams } from "@/utils/query-params";
 import { CreateAnalysisVersionFormValues } from "@/utils/schema";
 import {
+  AnalysisMappingSchemaI,
   AnalysisPaginationI,
   AnalysisSchemaI,
   AnalysisStatusSchemaI,
-  AnalysisVersionMappingSchemaI,
   AnalysisVersionPaginationI,
-  CodeVersionMappingSchemaI,
+  CodeMappingSchemaI,
   FindingSchemaI,
+  RecentAnalysisSchemaI,
   TreeResponseI,
 } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
@@ -30,7 +31,7 @@ export const createAnalysis = async (
 }> => {
   const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
   return api
-    .post("/analyses", data, { headers: { "bevor-team-slug": teamSlug } })
+    .post("/analysis-threads", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return {
         id: response.data.id,
@@ -62,7 +63,7 @@ export const getAnalysis = async (
   analysisId: string,
 ): Promise<AnalysisSchemaI> => {
   return api
-    .get(`/analyses/${analysisId}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/analysis-threads/${analysisId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
@@ -71,22 +72,22 @@ export const getAnalysis = async (
 export const getAnalysisRecentVersion = async (
   teamSlug: string,
   analysisId: string,
-): Promise<AnalysisVersionMappingSchemaI | null> => {
+): Promise<RecentAnalysisSchemaI> => {
   return api
-    .get(`/analyses/${analysisId}/recent/analysis-version`, {
+    .get(`/analysis-threads/${analysisId}/recent/analysis-version`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
-      return response.data.analysis_version;
+      return response.data;
     });
 };
 
 export const getAnalysisRecentCodeVersion = async (
   teamSlug: string,
   analysisId: string,
-): Promise<CodeVersionMappingSchemaI | null> => {
+): Promise<CodeMappingSchemaI | null> => {
   return api
-    .get(`/analyses/${analysisId}/recent/code-version`, {
+    .get(`/analysis-threads/${analysisId}/recent/code-version`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -114,7 +115,7 @@ export const submitFeedback = async (
   },
 ): Promise<{ success: boolean }> => {
   return api
-    .post(`/analyses/${analysisId}/feedback`, data, {
+    .post(`/analysis-threads/${analysisId}/feedback`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -125,13 +126,15 @@ export const submitFeedback = async (
 export const getAnalyses = async (
   teamSlug: string,
   filters: {
-    [key: string]: string | undefined;
+    [key: string]: string;
   },
 ): Promise<AnalysisPaginationI> => {
   const searchParams = buildSearchParams(filters);
 
   return api
-    .get(`/analyses?${searchParams.toString()}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/analysis-threads?${searchParams}`, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
     .then((response) => {
       return response.data;
     });
@@ -140,7 +143,7 @@ export const getAnalyses = async (
 export const getAnalysisVersion = async (
   teamSlug: string,
   analysisVersionId: string,
-): Promise<AnalysisVersionMappingSchemaI> => {
+): Promise<AnalysisMappingSchemaI> => {
   return api
     .get(`/analysis-versions/${analysisVersionId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
@@ -181,7 +184,11 @@ export const toggleVisibility = async (
   const toInvalidate = [generateQueryKey.analyses(teamSlug), generateQueryKey.analysis(analysisId)];
 
   return api
-    .patch(`/analyses/${analysisId}/visibility`, {}, { headers: { "bevor-team-slug": teamSlug } })
+    .patch(
+      `/analysis-threads/${analysisId}/visibility`,
+      {},
+      { headers: { "bevor-team-slug": teamSlug } },
+    )
     .then(() => {
       return {
         toInvalidate,
@@ -192,12 +199,12 @@ export const toggleVisibility = async (
 export const getAnalysisVersions = async (
   teamSlug: string,
   filters: {
-    [key: string]: string | undefined;
+    [key: string]: string;
   },
 ): Promise<AnalysisVersionPaginationI> => {
   const searchParams = buildSearchParams(filters);
   return api
-    .get(`/analysis-versions?${searchParams.toString()}`, {
+    .get(`/analysis-versions?${searchParams}`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {

@@ -1,11 +1,11 @@
 import { projectActions } from "@/actions/bevor";
-import ContainerBreadcrumb from "@/components/breadcrumbs";
 import Container from "@/components/container";
+import ProjectSubnav from "@/components/subnav/project";
 import { getQueryClient } from "@/lib/config/query";
 import { generateQueryKey } from "@/utils/constants";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import ProjectClient, { AnalysesPreview, ProjectActivities, ProjectToggle } from "./project-client";
+import ProjectClient, { AnalysesPreview, ProjectActivities } from "./project-client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -25,17 +25,7 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Container
-        breadcrumb={
-          <ContainerBreadcrumb
-            queryKey={[projectSlug]}
-            queryType="project"
-            teamSlug={teamSlug}
-            id={projectSlug}
-            toggle={<ProjectToggle teamSlug={teamSlug} projectSlug={projectSlug} />}
-          />
-        }
-      >
+      <Container subnav={<ProjectSubnav />}>
         <div className="max-w-5xl m-auto mt-8 lg:mt-16">
           <div className="flex flex-col gap-6">
             <ProjectClient teamSlug={teamSlug} projectSlug={projectSlug} />

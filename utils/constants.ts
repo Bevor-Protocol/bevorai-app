@@ -51,10 +51,7 @@ export const generateQueryKey = {
   teams: (): QueryKey => [QUERY_KEYS.TEAMS],
   teamsOverview: (): QueryKey => [QUERY_KEYS.TEAMS, "overview"],
 
-  allProjects: (filter: { [key: string]: string | undefined }): QueryKey => [
-    QUERY_KEYS.PROJECTS,
-    filter,
-  ],
+  allProjects: (): QueryKey => [QUERY_KEYS.PROJECTS],
   projects: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
     QUERY_KEYS.PROJECTS,
     teamSlug,
@@ -97,6 +94,7 @@ export const generateQueryKey = {
 
   chat: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId],
   chatHead: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "head"],
+  chatMessages: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "messages"],
   chatAttributes: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "attributes"],
   chats: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
     QUERY_KEYS.CHATS,

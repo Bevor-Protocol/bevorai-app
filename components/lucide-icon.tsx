@@ -2,8 +2,8 @@ import { ItemType } from "@/utils/types";
 import {
   BotMessageSquare,
   Box,
+  BrickWallShieldIcon,
   Code2,
-  Search,
   Settings,
   Shield,
   SquareUser,
@@ -13,12 +13,12 @@ import {
 
 const ASSET_ICON_MAP: Record<ItemType, LucideIconType> = {
   chat: BotMessageSquare,
-  analysis: Shield,
+  analysis: BrickWallShieldIcon,
   project: Box,
   code: Code2,
   team: SquareUser,
   member: User,
-  analysis_version: Search,
+  analysis_version: Shield,
   settings: Settings,
 };
 

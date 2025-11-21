@@ -45,7 +45,7 @@ const InvoiceNameSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 
   return (
     <div className="border border-border rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Invoice Name</h3>
+      <h3 className="text-lg font-semibold  mb-4">Invoice Name</h3>
       <p className="text-sm text-muted-foreground my-4">
         Your team name is shown on your invoice by default. If you want, you can have it show a
         custom name.
@@ -53,7 +53,7 @@ const InvoiceNameSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
       <form onSubmit={handleNameSubmit} className="space-y-4">
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Custom Name</label>
+            <label className="block text-sm font-medium  mb-1">Custom Name</label>
             <Input
               type="text"
               value={name}
@@ -121,7 +121,7 @@ const BillingEmailSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 
   return (
     <div className="border border-border rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Billing Email</h3>
+      <h3 className="text-lg font-semibold  mb-4">Billing Email</h3>
       <p className="text-sm text-muted-foreground my-4">
         By default, your invoices will go to the email of the user who created the team. If you
         want, you can update it here.
@@ -129,7 +129,7 @@ const BillingEmailSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
       <form onSubmit={handleEmailSubmit} className="space-y-4">
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Email Address</label>
+            <label className="block text-sm font-medium  mb-1">Email Address</label>
             <Input
               type="email"
               value={email}
@@ -195,7 +195,7 @@ const PaymentMethodSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   if (paymentMethodLoading) {
     return (
       <div className="border border-border rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Payment Method</h3>
+        <h3 className="text-lg font-semibold  mb-4">Payment Method</h3>
         <div className="animate-pulse">
           <div className="h-4 bg-neutral-800 rounded mb-2"></div>
           <div className="h-4 bg-neutral-800 rounded mb-4"></div>
@@ -212,7 +212,7 @@ const PaymentMethodSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   if (!paymentMethod.card || paymentMethod.type !== "card") {
     return (
       <div className="border border-border rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Payment Method</h3>
+        <h3 className="text-lg font-semibold  mb-4">Payment Method</h3>
         <p className="text-sm text-muted-foreground mb-4">
           Unsupported payment method type. Please contact support.
         </p>
@@ -222,7 +222,7 @@ const PaymentMethodSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 
   return (
     <div className="border border-border rounded-lg p-6 mb-8">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Payment Method</h3>
+      <h3 className="text-lg font-semibold  mb-4">Payment Method</h3>
       <div className="space-y-4">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-8 bg-neutral-800 rounded flex items-center justify-center">
@@ -232,7 +232,7 @@ const PaymentMethodSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
           </div>
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-1">
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-sm font-medium ">
                 {formatCardBrand(paymentMethod.card.brand)} •••• {paymentMethod.card.last4}
               </span>
               <span className="text-xs text-muted-foreground">
@@ -350,9 +350,7 @@ const CurrentSubscription: React.FC<{
     <>
       <div className="border border-border rounded-lg p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-foreground">
-            {isTrial ? "Free Trial" : "BevorAI Pro"}
-          </h3>
+          <h3 className="text-lg font-semibold ">{isTrial ? "Free Trial" : "BevorAI Pro"}</h3>
           {isCancelling && (
             <span className="bg-orange-500/20 text-orange-400 text-xs px-2 py-1 rounded">
               Cancelling
@@ -420,7 +418,7 @@ const CurrentSubscription: React.FC<{
               href="https://bevor.io"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm text-muted-foreground hover: transition-colors"
             >
               Contact Sales
             </a>
@@ -430,14 +428,14 @@ const CurrentSubscription: React.FC<{
 
       {subscription.limits && subscription.limits.length > 0 && (
         <div className="border border-border rounded-lg p-6 mb-8">
-          <h4 className="text-lg font-semibold text-foreground mb-4">Usage & Limits</h4>
+          <h4 className="text-lg font-semibold  mb-4">Usage & Limits</h4>
           <div className="space-y-3">
             {subscription.limits.map((limit, index) => (
               <div key={index} className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   {getFeatureName(limit.feature)}
                 </span>
-                <span className="text-sm text-foreground">{getLimitCopy(limit)}</span>
+                <span className="text-sm ">{getLimitCopy(limit)}</span>
               </div>
             ))}
           </div>
@@ -456,7 +454,7 @@ const AddonsSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   if (addonsLoading) {
     return (
       <div className="border border-border rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Add-ons</h3>
+        <h3 className="text-lg font-semibold  mb-4">Add-ons</h3>
         <div className="space-y-4">
           {[1, 2].map((i) => (
             <div key={i} className="border border-border rounded-lg p-6 animate-pulse">
@@ -476,7 +474,7 @@ const AddonsSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 
   return (
     <div className="border border-border rounded-lg p-6 mb-8">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Add-ons</h3>
+      <h3 className="text-lg font-semibold  mb-4">Add-ons</h3>
       <div className="space-y-4">
         {addons.map((addon: StripeAddonI) => (
           <AddonRow teamSlug={teamSlug} key={addon.id} addon={addon} />
@@ -493,7 +491,7 @@ const NoSubscription: React.FC<{ teamSlug: string; subscription?: StripeSubscrip
   return (
     <div className="border border-border rounded-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">No Active Subscription</h3>
+        <h3 className="text-lg font-semibold ">No Active Subscription</h3>
         <span className="bg-neutral-500/20 text-muted-foreground text-xs px-2 py-1 rounded">
           {subscription ? subscription.plan_status : "Inactive"}
         </span>
@@ -513,7 +511,7 @@ const NoSubscription: React.FC<{ teamSlug: string; subscription?: StripeSubscrip
             href="https://bevor.io"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm text-muted-foreground hover: transition-colors"
           >
             Contact Sales
           </a>

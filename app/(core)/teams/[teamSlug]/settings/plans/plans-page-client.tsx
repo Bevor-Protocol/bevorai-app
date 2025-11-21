@@ -67,12 +67,10 @@ const PlanCard: React.FC<{
                 className="w-12 h-12 object-contain rounded-lg"
               />
             )}
-            <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
+            <h3 className="text-xl font-semibold ">{plan.name}</h3>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-lg font-semibold text-foreground">
-              {formatCurrency(currentPrice)}
-            </span>
+            <span className="text-lg font-semibold ">{formatCurrency(currentPrice)}</span>
             <span className="text-muted-foreground">/{plan.billing_interval}</span>
           </div>
         </div>
@@ -129,9 +127,7 @@ const PlanCard: React.FC<{
                 {plan.features.slice(0, 3).map((feature: string, index: number) => (
                   <div key={index} className="flex items-center space-x-1">
                     <Check className="w-3 h-3 text-green-400" />
-                    <span className="text-xs text-foreground">
-                      {getFeatureName(feature.toLowerCase())}
-                    </span>
+                    <span className="text-xs ">{getFeatureName(feature.toLowerCase())}</span>
                   </div>
                 ))}
                 {plan.features.length > 3 && (
@@ -144,9 +140,7 @@ const PlanCard: React.FC<{
           </div>
           <div className="flex-shrink-0 sm:ml-6">
             {plan.is_active ? (
-              <span className="bg-green-500 text-foreground text-xs px-3 py-1 rounded-full">
-                Current
-              </span>
+              <span className="bg-green-500  text-xs px-3 py-1 rounded-full">Current</span>
             ) : (
               <Button
                 className="w-full sm:w-auto text-sm px-4 py-2"
@@ -233,7 +227,7 @@ export const AccessRestricted: React.FC = () => (
     <div className="max-w-7xl mx-auto">
       <div className="text-center py-12">
         <Lock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">Access Restricted</h3>
+        <h3 className="text-lg font-semibold  mb-2">Access Restricted</h3>
         <p className="text-muted-foreground mb-6 max-w-md mx-auto">
           Only team owners can manage billing and subscription settings.
         </p>
