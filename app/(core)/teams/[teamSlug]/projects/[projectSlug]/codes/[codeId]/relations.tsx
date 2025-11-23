@@ -25,12 +25,12 @@ const Relations: React.FC<{
         <div className="p-2 text-sm">
           <div className="mb-2">
             <span className="font-medium">Parent: </span>
-            {version.parent ? (
+            {version.parent_id ? (
               <Link
-                href={`/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.parent.id}`}
+                href={`/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.parent_id}`}
                 className="text-blue-400 hover:underline"
               >
-                Version {version.parent.name}
+                Version {version.parent_id.slice(0, 7)}
               </Link>
             ) : (
               <span className="text-muted-foreground">none</span>
@@ -38,15 +38,17 @@ const Relations: React.FC<{
           </div>
 
           <div>
-            <span className="font-medium">Child: </span>
-            {version.child ? (
+            <span className="font-medium">Children: </span>
+            {version.children_ids.map((child_id) => (
               <Link
-                href={`/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.child.id}`}
+                key={child_id}
+                href={`/teams/${teamSlug}/projects/${version.project_slug}/codes/${child_id}`}
                 className="text-blue-400 hover:underline"
               >
-                Version {version.child.name}
+                Version {child_id.slice(0, 7)}
               </Link>
-            ) : (
+            ))}
+            {version.children_ids.length === 0 && (
               <span className="text-muted-foreground">none</span>
             )}
           </div>
