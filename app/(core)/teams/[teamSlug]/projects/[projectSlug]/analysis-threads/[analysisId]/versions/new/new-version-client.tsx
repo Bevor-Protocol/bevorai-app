@@ -63,7 +63,7 @@
 //     case "success":
 //       return <CheckCircle2 className="size-4 text-green-400 shrink-0" />;
 //     case "failed":
-//       return <XCircle className="size-4 text-red-400 shrink-0" />;
+//       return <XCircle className="size-4 text-destructive shrink-0" />;
 //     case "partial":
 //       return <AlertCircle className="size-4 text-yellow-400 shrink-0" />;
 //     default:

@@ -4,8 +4,14 @@ import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSSE } from "@/hooks/useSSE";
+import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
+import {
+  PasteCodeFileFormValues,
+  UploadCodeFileFormValues,
+  pasteCodeFileSchema,
+  uploadCodeFileSchema,
+} from "@/utils/schema";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
@@ -30,71 +36,89 @@ interface SourceFile {
 
 const FileStep: React.FC<{
   project: ProjectDetailedSchemaI;
-}> = ({ project }) => {
+  parentId?: string;
+  connect: (url?: string) => void;
+}> = ({ project, parentId, connect }) => {
   const queryClient = useQueryClient();
-
-  const [contractCode, setContractCode] = useState(templateCode);
-  const [uploadedFile, setUploadedFile] = useState<SourceFile | null>(null);
-  const [error, setError] = useState("");
-  const [isDragOver, setIsDragOver] = useState(false);
   const [activeTab, setActiveTab] = useState<"upload" | "paste">("upload");
-  const editorRef = useRef<HTMLDivElement>(null);
-  const viewRef = useRef<EditorView | null>(null);
-  const toastId = useRef<string | number>(undefined);
-  const sseToastId = useRef<string | number | undefined>(undefined);
 
-  const { connect } = useSSE({
-    autoConnect: false,
-    eventTypes: ["code_versions"],
-    onMessage: (message) => {
-      let parsed: string;
-      try {
-        parsed = JSON.parse(message.data);
-      } catch {
-        parsed = message.data;
-      }
+  const uploadInitialState: UploadCodeFileFormValues = {
+    file: undefined as unknown as File,
+    parent_id: parentId,
+  };
+  const {
+    formState: uploadFormState,
+    setField: setUploadField,
+    updateFormState: updateUploadFormState,
+  } = useFormReducer<UploadCodeFileFormValues>(uploadInitialState);
 
-      if (parsed === "pending" || parsed === "embedding") {
-        sseToastId.current = toast.loading("Post-processing code...");
-      }
+  const pasteInitialState: PasteCodeFileFormValues = {
+    code: templateCode,
+    parent_id: parentId,
+  };
+  const {
+    formState: pasteFormState,
+    setField: setPasteField,
+    updateFormState: updatePasteFormState,
+  } = useFormReducer<PasteCodeFileFormValues>(pasteInitialState);
 
-      if (parsed === "embedded") {
-        toast.success("Post-processing successful", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      } else if (parsed === "failed") {
-        toast.error("Post-processing failed", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      }
-    },
-  });
+  const uploadedFileRef = useRef<SourceFile | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const uploadEditorRef = useRef<HTMLDivElement>(null);
+  const pasteEditorRef = useRef<HTMLDivElement>(null);
+  const uploadViewRef = useRef<EditorView | null>(null);
+  const pasteViewRef = useRef<EditorView | null>(null);
+  const uploadToastId = useRef<string | number>(undefined);
+  const pasteToastId = useRef<string | number>(undefined);
 
-  const mutation = useMutation({
-    mutationFn: async (data: { code?: string; file?: File }) => {
-      if (data.file) {
-        return codeActions.contractUploadFile(project.team.slug, project.id, data.file);
-      } else if (data.code) {
-        return codeActions.contractUploadPaste(project.team.slug, project.id, data.code);
-      }
-      throw new Error("No file or code provided");
-    },
+  const uploadMutation = useMutation({
+    mutationFn: async (data: UploadCodeFileFormValues) =>
+      codeActions.contractUploadFile(project.team.slug, project.id, data),
     onMutate: () => {
-      setError("");
-      toastId.current = toast.loading("Uploading and parsing code...");
+      updateUploadFormState({ type: "SET_ERRORS", errors: {} });
+      uploadToastId.current = toast.loading("Uploading and parsing code...");
     },
     onError: () => {
-      toast.dismiss(toastId.current);
-      setError("something went wrong");
+      toast.dismiss(uploadToastId.current);
+      updateUploadFormState({
+        type: "SET_ERRORS",
+        errors: { file: "Something went wrong" },
+      });
     },
     onSuccess: ({ id, status, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
       toast.success("Successfully uploaded code", {
-        id: toastId.current,
+        id: uploadToastId.current,
+      });
+
+      if (status === "embedding" || status === "pending") {
+        connect(`/code-versions/${id}`);
+      }
+    },
+  });
+
+  const pasteMutation = useMutation({
+    mutationFn: async (data: PasteCodeFileFormValues) =>
+      codeActions.contractUploadPaste(project.team.slug, project.id, data),
+    onMutate: () => {
+      updatePasteFormState({ type: "SET_ERRORS", errors: {} });
+      pasteToastId.current = toast.loading("Uploading and parsing code...");
+    },
+    onError: () => {
+      toast.dismiss(pasteToastId.current);
+      updatePasteFormState({
+        type: "SET_ERRORS",
+        errors: { code: "Something went wrong" },
+      });
+    },
+    onSuccess: ({ id, status, toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+      toast.success("Successfully uploaded code", {
+        id: pasteToastId.current,
       });
 
       if (status === "embedding" || status === "pending") {
@@ -104,58 +128,108 @@ const FileStep: React.FC<{
   });
 
   useEffect(() => {
-    if (!editorRef.current || mutation.isPending || mutation.data) return;
-    if (viewRef.current) {
-      viewRef.current.destroy();
+    if (activeTab !== "upload" || !uploadEditorRef.current) return;
+    if (uploadViewRef.current) {
+      uploadViewRef.current.destroy();
     }
 
+    const code = uploadedFileRef.current?.content || templateCode;
     const state = EditorState.create({
-      doc: contractCode,
+      doc: code,
       extensions: [
         basicSetup,
         solidity,
         githubDark,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
-            setContractCode(update.state.doc.toString());
+            const newContent = update.state.doc.toString();
+            if (uploadedFileRef.current) {
+              uploadedFileRef.current.content = newContent;
+            }
           }
         }),
       ],
     });
 
-    const view = new EditorView({ state, parent: editorRef.current });
-    viewRef.current = view;
+    const view = new EditorView({ state, parent: uploadEditorRef.current });
+    uploadViewRef.current = view;
 
     return (): void => {
-      if (viewRef.current) {
-        viewRef.current.destroy();
-        viewRef.current = null;
+      if (uploadViewRef.current) {
+        uploadViewRef.current.destroy();
+        uploadViewRef.current = null;
       }
     };
-  }, [activeTab, uploadedFile, contractCode, mutation.isPending, mutation.data]);
+  }, [activeTab, uploadFormState.values.file]);
 
-  const handleFileUpload = useCallback(async (file: File): Promise<void> => {
-    if (!file.name.endsWith(".sol") && !file.name.endsWith(".js") && !file.name.endsWith(".ts")) {
-      setError("Please upload a .sol, .js, or .ts file");
-      return;
+  useEffect(() => {
+    if (activeTab !== "paste" || !pasteEditorRef.current) return;
+    if (pasteViewRef.current) {
+      pasteViewRef.current.destroy();
     }
 
-    const reader = new FileReader();
-    reader.onload = (e): void => {
-      const content = e.target?.result as string;
-      setContractCode(content);
-      setUploadedFile({ file, content });
-      setError("");
-    };
-    reader.onerror = (): void => setError("Failed to read file");
-    reader.readAsText(file);
-  }, []);
+    const state = EditorState.create({
+      doc: pasteFormState.values.code,
+      extensions: [
+        basicSetup,
+        solidity,
+        githubDark,
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            setPasteField("code", update.state.doc.toString());
+          }
+        }),
+      ],
+    });
 
-  const clearContent = useCallback((): void => {
-    setContractCode(templateCode);
-    setUploadedFile(null);
-    setError("");
-  }, []);
+    const view = new EditorView({ state, parent: pasteEditorRef.current });
+    pasteViewRef.current = view;
+
+    return (): void => {
+      if (pasteViewRef.current) {
+        pasteViewRef.current.destroy();
+        pasteViewRef.current = null;
+      }
+    };
+  }, [activeTab, pasteFormState.values.code, setPasteField]);
+
+  const handleFileUpload = useCallback(
+    async (file: File): Promise<void> => {
+      if (!file.name.endsWith(".sol") && !file.name.endsWith(".js") && !file.name.endsWith(".ts")) {
+        updateUploadFormState({
+          type: "SET_ERRORS",
+          errors: { file: "Please upload a .sol, .js, or .ts file" },
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e): void => {
+        const content = e.target?.result as string;
+        uploadedFileRef.current = { file, content };
+        setUploadField("file", file);
+        updateUploadFormState({ type: "SET_ERRORS", errors: {} });
+      };
+      reader.onerror = (): void =>
+        updateUploadFormState({
+          type: "SET_ERRORS",
+          errors: { file: "Failed to read file" },
+        });
+      reader.readAsText(file);
+    },
+    [setUploadField, updateUploadFormState],
+  );
+
+  const clearUploadContent = useCallback((): void => {
+    uploadedFileRef.current = null;
+    setUploadField("file", undefined as unknown as File);
+    updateUploadFormState({ type: "SET_ERRORS", errors: {} });
+  }, [setUploadField, updateUploadFormState]);
+
+  const clearPasteContent = useCallback((): void => {
+    setPasteField("code", templateCode);
+    updatePasteFormState({ type: "SET_ERRORS", errors: {} });
+  }, [setPasteField, updatePasteFormState]);
 
   const handleDragOver = useCallback((e: React.DragEvent): void => {
     e.preventDefault();
@@ -171,7 +245,7 @@ const FileStep: React.FC<{
     async (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragOver(false);
-      setError("");
+      updateUploadFormState({ type: "SET_ERRORS", errors: {} });
 
       const items = Array.from(e.dataTransfer.items);
       const files: File[] = [];
@@ -187,13 +261,16 @@ const FileStep: React.FC<{
 
       if (files.length > 0) {
         if (files.length > 1) {
-          setError("Please upload only one file at a time");
+          updateUploadFormState({
+            type: "SET_ERRORS",
+            errors: { file: "Please upload only one file at a time" },
+          });
           return;
         }
         await handleFileUpload(files[0]);
       }
     },
-    [handleFileUpload],
+    [handleFileUpload, updateUploadFormState],
   );
 
   const handleFileInput = useCallback(
@@ -201,45 +278,83 @@ const FileStep: React.FC<{
       const files = e.target.files;
       if (files && files.length > 0) {
         if (files.length > 1) {
-          setError("Please upload only one file at a time");
+          updateUploadFormState({
+            type: "SET_ERRORS",
+            errors: { file: "Please upload only one file at a time" },
+          });
           return;
         }
         await handleFileUpload(files[0]);
       }
     },
-    [handleFileUpload],
+    [handleFileUpload, updateUploadFormState],
   );
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleUploadSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
+    updateUploadFormState({ type: "SET_ERRORS", errors: {} });
 
-    if (activeTab === "upload" && !uploadedFile) {
-      setError("Please upload a file");
+    if (!uploadFormState.values.file || !uploadedFileRef.current) {
+      updateUploadFormState({
+        type: "SET_ERRORS",
+        errors: { file: "Please upload a file" },
+      });
       return;
     }
 
-    if (activeTab === "paste" && !contractCode.trim()) {
-      setError("Please enter contract code");
+    const parsed = uploadCodeFileSchema.safeParse(uploadFormState.values);
+
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((issue) => {
+        const path = issue.path[0] as string;
+        if (path) {
+          fieldErrors[path] = issue.message;
+        }
+      });
+      updateUploadFormState({ type: "SET_ERRORS", errors: fieldErrors });
       return;
     }
 
-    setError("");
+    uploadMutation.mutate(parsed.data);
+  };
 
-    if (activeTab === "upload" && uploadedFile) {
-      mutation.mutate({ file: uploadedFile.file });
-    } else {
-      mutation.mutate({ code: contractCode });
+  const handlePasteSubmit = (e: React.FormEvent): void => {
+    e.preventDefault();
+    updatePasteFormState({ type: "SET_ERRORS", errors: {} });
+
+    const parsed = pasteCodeFileSchema.safeParse(pasteFormState.values);
+
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((issue) => {
+        const path = issue.path[0] as string;
+        if (path) {
+          fieldErrors[path] = issue.message;
+        }
+      });
+      updatePasteFormState({ type: "SET_ERRORS", errors: fieldErrors });
+      return;
     }
+
+    pasteMutation.mutate(parsed.data);
   };
 
   const handleToggle = (value: string): void => {
     setActiveTab(value as "upload" | "paste");
-    setContractCode(templateCode);
-    setUploadedFile(null);
-    setError("");
+    if (value === "upload") {
+      uploadedFileRef.current = null;
+      setUploadField("file", undefined as unknown as File);
+      updateUploadFormState({ type: "SET_ERRORS", errors: {} });
+    } else {
+      setPasteField("code", templateCode);
+      updatePasteFormState({ type: "SET_ERRORS", errors: {} });
+    }
   };
 
-  if (mutation.isSuccess) {
+  const currentMutation = activeTab === "upload" ? uploadMutation : pasteMutation;
+
+  if (currentMutation.isSuccess) {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">
@@ -252,7 +367,7 @@ const FileStep: React.FC<{
           </p>
           <Button asChild className="mt-4">
             <Link
-              href={`/teams/${project.team.slug}/projects/${project.slug}/codes/${mutation.data.id}`}
+              href={`/teams/${project.team.slug}/projects/${project.slug}/codes/${currentMutation.data.id}`}
             >
               View Version
             </Link>
@@ -262,19 +377,19 @@ const FileStep: React.FC<{
     );
   }
 
-  if (mutation.isError) {
+  if (currentMutation.isError) {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-            <XCircle className="size-8 text-red-400" />
+            <XCircle className="size-8 text-destructive" />
           </div>
           <h2 className="text-2xl font-bold ">Upload Failed</h2>
           <p className="text-muted-foreground">
             There was an error processing your contract. Please try again.
           </p>
           <div className="flex gap-4 justify-center mt-6">
-            <Button variant="outline" onClick={() => mutation.reset()}>
+            <Button variant="outline" onClick={() => currentMutation.reset()}>
               Try Again
             </Button>
           </div>
@@ -297,16 +412,20 @@ const FileStep: React.FC<{
         </div>
         <Button
           type="submit"
-          disabled={activeTab === "upload" ? !uploadedFile : !contractCode.trim()}
+          disabled={
+            activeTab === "upload"
+              ? !uploadedFileRef.current || uploadMutation.isPending
+              : !pasteFormState.values.code.trim() || pasteMutation.isPending
+          }
           className="min-w-40"
-          onClick={handleSubmit}
+          onClick={activeTab === "upload" ? handleUploadSubmit : handlePasteSubmit}
         >
           <span>Submit</span>
           <ArrowRight className="size-4" />
         </Button>
       </div>
 
-      <Tabs onValueChange={handleToggle} defaultValue="upload">
+      <Tabs onValueChange={handleToggle} value={activeTab}>
         <div className="flex flex-row justify-between items-center">
           <TabsList>
             <TabsTrigger value="upload">Upload</TabsTrigger>
@@ -314,15 +433,17 @@ const FileStep: React.FC<{
           </TabsList>
           <Button
             variant="outline"
-            disabled={activeTab == "upload" ? !uploadedFile : !contractCode.trim()}
-            onClick={clearContent}
+            disabled={
+              activeTab === "upload" ? !uploadedFileRef.current : !pasteFormState.values.code.trim()
+            }
+            onClick={activeTab === "upload" ? clearUploadContent : clearPasteContent}
           >
             <X className="size-3" />
             Clear
           </Button>
         </div>
         <TabsContent value="upload">
-          {!uploadedFile && (
+          {!uploadedFileRef.current && (
             <label className="w-full block mb-4">
               <div
                 className={cn(
@@ -356,23 +477,29 @@ const FileStep: React.FC<{
               </div>
             </label>
           )}
-          {uploadedFile && (
+          {uploadedFileRef.current && (
             <div className="border border-border rounded-lg min-h-20 overflow-scroll">
-              <div ref={editorRef} role="region" aria-label="Solidity code editor" />
+              <div ref={uploadEditorRef} role="region" aria-label="Solidity code editor" />
             </div>
           )}
 
-          {error && (
-            <div className="flex items-center space-x-2 text-red-400 text-sm mt-4">
+          {uploadFormState.errors.file && (
+            <div className="flex items-center space-x-2 text-destructive text-sm mt-4">
               <XCircle className="size-4" />
-              <span>{error}</span>
+              <span>{uploadFormState.errors.file}</span>
             </div>
           )}
         </TabsContent>
         <TabsContent value="paste">
           <div className="border border-border rounded-lg min-h-20 overflow-scroll">
-            <div ref={editorRef} role="region" aria-label="Solidity code editor" />
+            <div ref={pasteEditorRef} role="region" aria-label="Solidity code editor" />
           </div>
+          {pasteFormState.errors.code && (
+            <div className="flex items-center space-x-2 text-destructive text-sm mt-4">
+              <XCircle className="size-4" />
+              <span>{pasteFormState.errors.code}</span>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
       <style>{`

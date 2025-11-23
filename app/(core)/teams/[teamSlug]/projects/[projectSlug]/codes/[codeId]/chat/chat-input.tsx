@@ -14,9 +14,7 @@ interface ChatInputProps {
   teamSlug: string;
   chatId: string | undefined;
   codeId: string;
-  onChatCreated: (chatId: string) => void;
   onSendMessage: (message: string) => Promise<void>;
-  isLoading: boolean;
   messagesContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -26,7 +24,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   teamSlug,
   chatId,
   onSendMessage,
-  isLoading,
   messagesContainerRef,
 }) => {
   const [inputValue, setInputValue] = useState("");
@@ -79,7 +76,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim()) return;
 
     const message = inputValue.trim();
     setInputValue("");
@@ -213,13 +210,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder="Message Bevor..."
-          disabled={isLoading}
           className="flex-1 max-h-[264px] p-2 resize-none border-0 bg-transparent! leading-6 text-foreground focus-visible:outline-none focus-visible:ring-0 scrollbar-thin disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <div className="flex justify-end">
           <Button
             type="submit"
-            disabled={!inputValue.trim() || isLoading}
+            disabled={!inputValue.trim()}
             size="icon"
             className="size-8 rounded-full"
           >

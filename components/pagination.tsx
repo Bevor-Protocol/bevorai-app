@@ -31,19 +31,19 @@ export const Pagination: React.FC<{
         Page {currentPage + 1} of {totalPages}
       </div>
       <div className="flex items-center gap-2">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
-          disabled={currentPage === 0} 
+          disabled={currentPage === 0}
           onClick={() => handlePage(prevPage)}
         >
           <ChevronLeft className="size-4" />
           Previous
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
-          disabled={!hasMore} 
+          disabled={!hasMore}
           onClick={() => handlePage(nextPage)}
         >
           Next

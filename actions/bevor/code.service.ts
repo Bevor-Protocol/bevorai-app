@@ -4,10 +4,15 @@ import api from "@/lib/api";
 import { QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import {
+  PasteCodeFileFormValues,
+  ScanCodeAddressFormValues,
+  UploadCodeFileFormValues,
+  UploadCodeFolderFormValues,
+} from "@/utils/schema";
+import {
   CodeCreateSchemaI,
   CodeMappingSchemaI,
   CodeSourceContentSchemaI,
-  CodeSourceSchemaI,
   CodeVersionsPaginationI,
   NodeSearchResponseI,
   TreeResponseI,
@@ -17,20 +22,22 @@ import { QueryKey } from "@tanstack/react-query";
 export const contractUploadFolder = async (
   teamSlug: string,
   projectId: string,
-  fileMap: Record<string, File>,
+  data: UploadCodeFolderFormValues,
 ): Promise<
   CodeCreateSchemaI & {
     toInvalidate: QueryKey[];
   }
 > => {
-  // we won't know which heads are updated. Just invalidate all analyses.
   const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
   const formData = new FormData();
   formData.append("project_id", projectId);
-  Object.entries(fileMap).forEach(([relativePath, file]) => {
+  Object.entries(data.fileMap).forEach(([relativePath, file]) => {
     formData.append("files", file, relativePath);
   });
+  if (data.parent_id) {
+    formData.append("parent_id", data.parent_id);
+  }
 
   return api
     .post("/code-versions/create/folder", formData, { headers: { "bevor-team-slug": teamSlug } })
@@ -45,18 +52,20 @@ export const contractUploadFolder = async (
 export const contractUploadFile = async (
   teamSlug: string,
   projectId: string,
-  file: File,
+  data: UploadCodeFileFormValues,
 ): Promise<
   CodeCreateSchemaI & {
     toInvalidate: QueryKey[];
   }
 > => {
-  // we won't know which heads are updated. Just invalidate all analyses.
   const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
   const formData = new FormData();
-  formData.append("files", file);
+  formData.append("files", data.file);
   formData.append("project_id", projectId);
+  if (data.parent_id) {
+    formData.append("parent_id", data.parent_id);
+  }
 
   return api
     .post("/code-versions/create/file", formData, { headers: { "bevor-team-slug": teamSlug } })
@@ -71,18 +80,17 @@ export const contractUploadFile = async (
 export const contractUploadPaste = async (
   teamSlug: string,
   projectId: string,
-  code: string,
+  data: PasteCodeFileFormValues,
 ): Promise<
   CodeCreateSchemaI & {
     toInvalidate: QueryKey[];
   }
 > => {
-  // we won't know which heads are updated. Just invalidate all analyses.
   const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
   return api
     .post(
       "/code-versions/create/paste",
-      { content: code, project_id: projectId },
+      { project_id: projectId, ...data },
       { headers: { "bevor-team-slug": teamSlug } },
     )
     .then((response) => {
@@ -96,18 +104,17 @@ export const contractUploadPaste = async (
 export const contractUploadScan = async (
   teamSlug: string,
   projectId: string,
-  address: string,
+  data: ScanCodeAddressFormValues,
 ): Promise<
   CodeCreateSchemaI & {
     toInvalidate: QueryKey[];
   }
 > => {
-  // we won't know which heads are updated. Just invalidate all analyses.
   const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
   return api
     .post(
       "/code-versions/create/scan",
-      { address, project_id: projectId },
+      { address: data.address, project_id: projectId, parent_id: data.parent_id },
       { headers: { "bevor-team-slug": teamSlug } },
     )
     .then((response) => {
@@ -126,17 +133,6 @@ export const getCodeVersion = async (
     .get(`/code-versions/${codeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
-    });
-};
-
-export const getCodeVersionSources = async (
-  teamSlug: string,
-  codeId: string,
-): Promise<CodeSourceSchemaI[]> => {
-  return api
-    .get(`/code-versions/${codeId}/sources`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      return response.data.results;
     });
 };
 

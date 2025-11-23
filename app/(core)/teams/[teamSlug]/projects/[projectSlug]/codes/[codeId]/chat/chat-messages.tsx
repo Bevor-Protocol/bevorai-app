@@ -1,13 +1,15 @@
 "use client";
 
 import { chatActions } from "@/actions/bevor";
+import { Button } from "@/components/ui/button";
 import * as Chat from "@/components/ui/chat";
 import { Loader } from "@/components/ui/loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
-import { CreateChatFormValues } from "@/utils/schema";
 import { ChatMessageI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ChatEmptyState } from "./chat-empty-state";
@@ -19,6 +21,7 @@ interface ChatMessagesProps {
   chatId: string | undefined;
   codeId: string;
   onChatCreated: (chatId: string) => void;
+  fullWidth?: boolean;
 }
 
 export const ChatMessages: React.FC<ChatMessagesProps> = ({
@@ -26,6 +29,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   chatId,
   codeId,
   onChatCreated,
+  fullWidth = false,
 }) => {
   const [messages, setMessages] = useState<ChatMessageI[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,8 +37,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const [currentEventType, setCurrentEventType] = useState("");
   const [streamedContent, setStreamedContent] = useState("");
   const [buffer, setBuffer] = useState("");
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
 
   const chatQuery = useQuery({
@@ -49,20 +55,6 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     enabled: !!chatId,
   });
 
-  const createMutation = useMutation({
-    mutationFn: (params: CreateChatFormValues) => chatActions.initiateChat(teamSlug, params),
-    onSuccess: ({ id, toInvalidate }) => {
-      toast.success("New chat created");
-      toInvalidate.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-      });
-      onChatCreated(id);
-    },
-    onError: () => {
-      toast.error("Unable to create chat");
-    },
-  });
-
   useEffect(() => {
     if (chatMessageQuery.data) {
       setMessages(chatMessageQuery.data);
@@ -73,22 +65,35 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     scrollToBottom();
   }, [messages, streamedContent, isAwaitingResponse]);
 
+  useEffect(() => {
+    const viewport = scrollViewportRef.current;
+    if (!viewport) return;
+
+    const checkScrollPosition = (): void => {
+      const { scrollTop, scrollHeight, clientHeight } = viewport;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollToBottom(!isAtBottom && messages.length > 0);
+    };
+
+    checkScrollPosition();
+    viewport.addEventListener("scroll", checkScrollPosition);
+
+    return (): void => {
+      viewport.removeEventListener("scroll", checkScrollPosition);
+    };
+  }, [messages.length]);
+
   const scrollToBottom = (): void => {
+    const viewport = scrollViewportRef.current;
+    if (viewport) {
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const sendMessage = async (message: string, currentChatId: string): Promise<void> => {
     if (!message.trim()) return;
 
-    const userMessage: ChatMessageI = {
-      id: Date.now().toString(),
-      role: "user",
-      content: message.trim(),
-      timestamp: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
     setIsAwaitingResponse(true);
     setStreamedContent("");
     setCurrentEventType("");
@@ -185,37 +190,64 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const handleSendMessage = async (message: string): Promise<void> => {
     if (!message.trim()) return;
 
+    const userMessage: ChatMessageI = {
+      id: Date.now().toString(),
+      role: "user",
+      content: message.trim(),
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+
+    setIsLoading(true);
     if (!chatId) {
-      createMutation.mutate(
-        {
-          code_version_id: codeId,
+      try {
+        const newChat = await chatActions.initiateChat(teamSlug, {
           chat_type: "code",
-        },
-        {
-          onSuccess: ({ id }) => {
-            sendMessage(message, id);
-          },
-        },
-      );
+          code_version_id: codeId,
+        });
+
+        newChat.toInvalidate.forEach((queryKey) => {
+          queryClient.invalidateQueries({ queryKey });
+        });
+        onChatCreated(newChat.id);
+        sendMessage(message, newChat.id);
+      } catch {
+        toast.error("Unable to create chat");
+      }
     } else {
-      await sendMessage(message, chatId);
+      sendMessage(message, chatId);
     }
   };
 
-  const isDataLoading = chatQuery.isLoading || chatMessageQuery.isLoading;
-  const showEmptyState = !chatId || (messages.length === 0 && !!chatQuery.data);
+  const isInitialLoading =
+    (chatQuery.isLoading || chatMessageQuery.isLoading) &&
+    !chatQuery.data &&
+    !chatMessageQuery.data;
+  const showEmptyState = !chatId || (messages.length === 0 && !!chatQuery.data && !isLoading);
 
   return (
-    <div className="flex flex-col bg-background max-w-3xl m-auto grow min-h-0 w-full">
+    <div
+      className={cn(
+        "flex flex-col bg-background grow min-h-0 w-full",
+        !fullWidth && "max-w-3xl m-auto",
+      )}
+    >
       <div className="flex-1 min-h-0 flex flex-col">
-        {isDataLoading && chatId && (
+        {isInitialLoading && !messages.length && (
           <div className="flex items-center justify-center h-full">
             <Loader className="size-6" />
           </div>
         )}
-        {showEmptyState && !isDataLoading && <ChatEmptyState onSendMessage={handleSendMessage} />}
+        {showEmptyState && !isInitialLoading && (
+          <ChatEmptyState onSendMessage={handleSendMessage} />
+        )}
         {messages.length > 0 && (
-          <ScrollArea className="p-3 min-h-0 flex-1" ref={messagesContainerRef}>
+          <ScrollArea
+            className="min-h-0 flex-1 no-scrollbar"
+            ref={messagesContainerRef}
+            viewportRef={scrollViewportRef as React.RefObject<HTMLDivElement>}
+          >
             <div className="flex flex-col gap-4">
               {messages.map((message) => (
                 <Chat.Message role={message.role} content={message.content} key={message.id} />
@@ -231,15 +263,27 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           </ScrollArea>
         )}
       </div>
-      <ChatInput
-        teamSlug={teamSlug}
-        chatId={chatId}
-        codeId={codeId}
-        onChatCreated={onChatCreated}
-        onSendMessage={handleSendMessage}
-        isLoading={isLoading || createMutation.isPending}
-        messagesContainerRef={messagesContainerRef}
-      />
+      <div className="relative">
+        {showScrollToBottom && (
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10">
+            <Button
+              onClick={scrollToBottom}
+              size="icon-sm"
+              variant="outline"
+              className="hover:bg-input"
+            >
+              <ChevronDown className="size-4" />
+            </Button>
+          </div>
+        )}
+        <ChatInput
+          teamSlug={teamSlug}
+          chatId={chatId}
+          codeId={codeId}
+          onSendMessage={handleSendMessage}
+          messagesContainerRef={messagesContainerRef}
+        />
+      </div>
     </div>
   );
 };

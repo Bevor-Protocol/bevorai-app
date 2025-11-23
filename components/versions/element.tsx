@@ -9,15 +9,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDate, trimAddress } from "@/utils/helpers";
 import { CodeMappingSchemaI, CodeVersionSchemaI, SourceTypeEnum } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowUp,
   Clock,
   Code,
   ExternalLink,
+  GitBranch,
   MessageSquare,
   MoreHorizontal,
   Network,
@@ -27,6 +30,23 @@ import {
 import Link from "next/link";
 import React from "react";
 import { toast } from "sonner";
+
+const formatSourceType = (sourceType: SourceTypeEnum): string => {
+  switch (sourceType) {
+    case SourceTypeEnum.SCAN:
+      return "explorer";
+    case SourceTypeEnum.PASTE:
+      return "paste";
+    case SourceTypeEnum.UPLOAD_FILE:
+      return "file";
+    case SourceTypeEnum.UPLOAD_FOLDER:
+      return "folder";
+    case SourceTypeEnum.REPOSITORY:
+      return "repo";
+    default:
+      return sourceType;
+  }
+};
 
 export const CodeVersionElementLoader: React.FC = () => {
   return (
@@ -67,7 +87,7 @@ export const VersionMeta: React.FC<{
           <span>{version.network}</span>
         </div>
       )}
-      <span className="capitalize">{version.source_type}</span>
+      <span>{formatSourceType(version.source_type)}</span>
       <div className="flex items-center gap-1">
         <Clock className="size-3" />
         <span>{formatDate(version.created_at)}</span>
@@ -111,7 +131,7 @@ export const CodeVersionElementCompact: React.FC<
           </Badge>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-          <span className="capitalize">{version.version.source_type}</span>
+          <span>{formatSourceType(version.version.source_type)}</span>
           {version.version.solc_version && (
             <>
               <span>•</span>
@@ -144,6 +164,9 @@ const CodeVersionActions: React.FC<{
 
   const chatPath = `/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.id}/chat`;
   const uploadNewerPath = `/teams/${teamSlug}/projects/${version.project_slug}/codes/new?parentId=${version.id}`;
+  const parentPath = version.parent_id
+    ? `/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.parent_id}`
+    : null;
 
   return (
     <DropdownMenu>
@@ -179,6 +202,14 @@ const CodeVersionActions: React.FC<{
             Retry
           </DropdownMenuItem>
         )}
+        {parentPath && (
+          <DropdownMenuItem asChild>
+            <Link href={parentPath} onClick={(e) => e.stopPropagation()}>
+              <ArrowUp className="size-4" />
+              View parent
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link href={uploadNewerPath} onClick={(e) => e.stopPropagation()}>
             <Upload className="size-4" />
@@ -202,9 +233,6 @@ export const CodeVersionElementBare: React.FC<
     teamSlug: string;
   } & React.ComponentProps<"div">
 > = ({ version, teamSlug, className, ...props }) => {
-  const isScanMethod = version.version.source_type === SourceTypeEnum.SCAN;
-  const isRepoMethod = version.version.source_type === SourceTypeEnum.REPOSITORY;
-
   const formatVersionIdentifier = (): string => {
     if (version.version.version_method === "tag") {
       return version.version.version_identifier;
@@ -212,7 +240,7 @@ export const CodeVersionElementBare: React.FC<
     if (version.version.version_method === "address") {
       return trimAddress(version.version.version_identifier);
     }
-    return version.version.version_identifier.slice(0, 7) + "...";
+    return version.version.version_identifier.slice(0, 7);
   };
 
   const getEmbeddingStatusBadge = (): React.ReactNode => {
@@ -246,10 +274,38 @@ export const CodeVersionElementBare: React.FC<
     }
   };
 
+  const getSourceTypeContent = (versionData: CodeVersionSchemaI): React.ReactNode => {
+    if (versionData.source_type === SourceTypeEnum.SCAN && versionData.network) {
+      return (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
+          <Network className="size-3" />
+          <span>{versionData.network}</span>
+        </div>
+      );
+    }
+    if (versionData.source_type === SourceTypeEnum.REPOSITORY && versionData.source_url) {
+      return (
+        <a
+          href={versionData.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ExternalLink className="size-3" />
+          <span>Source</span>
+        </a>
+      );
+    }
+    return null;
+  };
+
+  const hasParent = !!version.parent_id;
+
   return (
     <div
       className={cn(
-        "grid grid-cols-[24px_1fr_100px_80px_120px_80px_100px_80px_160px_40px] items-center gap-4 py-3 px-4 border rounded-lg",
+        "grid grid-cols-[24px_1fr_90px_80px_100px_80px_100px_60px_40px_100px_40px] items-center gap-3 py-3 px-3 border rounded-lg",
         className,
       )}
       {...props}
@@ -260,16 +316,11 @@ export const CodeVersionElementBare: React.FC<
       <div className="min-w-0">
         <h3 className="text-sm font-medium truncate">{version.inferred_name}</h3>
       </div>
-      <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
-        {isScanMethod && version.version.network && (
-          <>
-            <Network className="size-3" />
-            <span>{version.version.network}</span>
-          </>
-        )}
+      <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap shrink-0">
+        {getSourceTypeContent(version.version)}
       </div>
-      <span className="capitalize text-xs text-muted-foreground whitespace-nowrap">
-        {version.version.source_type}
+      <span className="text-xs text-muted-foreground whitespace-nowrap">
+        {formatSourceType(version.version.source_type)}
       </span>
       <Badge variant="outline" size="sm" className="font-mono text-xs shrink-0">
         {formatVersionIdentifier()}
@@ -277,25 +328,26 @@ export const CodeVersionElementBare: React.FC<
       <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">
         {version.version.solc_version || ""}
       </span>
-      <div className="flex items-center justify-center">{getEmbeddingStatusBadge()}</div>
-      {isRepoMethod && version.version.source_url ? (
-        <a
-          href={version.version.source_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <ExternalLink className="size-3" />
-          <span>Source</span>
-        </a>
-      ) : (
-        <div />
-      )}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+      <div className="flex items-center justify-center shrink-0">{getEmbeddingStatusBadge()}</div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+        <Icon size="sm" seed={version.user.id} className="shrink-0" />
+        <span className="truncate">{version.user.username}</span>
+      </div>
+      <div className="flex items-center justify-center shrink-0">
+        {hasParent && (
+          <div
+            className="flex items-center gap-1 text-xs text-muted-foreground"
+            title="Has parent version"
+          >
+            <GitBranch className="size-3" />
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap shrink-0">
         <Clock className="size-3" />
         <span>{formatDate(version.created_at)}</span>
       </div>
+
       <div className="flex items-center justify-center">
         <CodeVersionActions version={version} teamSlug={teamSlug} />
       </div>

@@ -49,13 +49,16 @@ export const updateTeam = async (
   teamSlug: string,
   data: UpdateTeamBody,
 ): Promise<{
+  team: TeamOverviewSchemaI;
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.TEAMS], [QUERY_KEYS.PROJECTS]];
 
-  return api.patch("/teams", data, { headers: { "bevor-team-slug": teamSlug } }).then(() => {
-    return { toInvalidate };
-  });
+  return api
+    .patch("/teams", data, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return { team: response.data, toInvalidate };
+    });
 };
 
 export const getInvites = async (teamSlug: string): Promise<MemberInviteSchema[]> => {

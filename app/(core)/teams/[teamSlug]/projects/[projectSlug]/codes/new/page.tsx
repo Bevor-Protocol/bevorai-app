@@ -11,10 +11,12 @@ interface ResolvedParams {
 
 interface VersionPageProps {
   params: Promise<ResolvedParams>;
+  searchParams: Promise<{ parentId?: string }>;
 }
 
-const NewVersionPage: AsyncComponent<VersionPageProps> = async ({ params }) => {
+const NewVersionPage: AsyncComponent<VersionPageProps> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
 
   const project = await projectActions.getProject(
     resolvedParams.teamSlug,
@@ -23,7 +25,7 @@ const NewVersionPage: AsyncComponent<VersionPageProps> = async ({ params }) => {
 
   return (
     <Container subnav={<ProjectSubnav />}>
-      <Steps project={project} />
+      <Steps project={project} {...resolvedSearchParams} />
     </Container>
   );
 };

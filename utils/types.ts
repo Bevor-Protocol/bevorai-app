@@ -114,14 +114,18 @@ export interface ContractScopeI {
   src_start_pos: number;
   src_end_pos: number;
   source_id: string;
+  n_auditable_fct: number;
   functions: FunctionScopeI[];
 }
 
 export interface TreeResponseI {
   id: string;
   path: string;
+  source_hash: string;
   is_imported: boolean;
+  is_known_target: boolean;
   is_within_scope: boolean;
+  n_auditable_fct: number;
   contracts: ContractScopeI[];
 }
 
@@ -343,8 +347,8 @@ export interface CodeMappingSchemaI extends BaseSchema {
   project_slug: string;
   parent_version_id?: string;
   user: UserSchemaI;
-  child?: BaseSchema & { name: string };
-  parent?: BaseSchema & { name: string };
+  parent_id?: string;
+  children_ids: string[];
   version: CodeVersionSchemaI;
 }
 
@@ -367,19 +371,13 @@ export interface RecentCodeVersionSchemaI {
   code_version?: CodeMappingSchemaI;
 }
 
-export interface CodeSourceSchemaI extends BaseSchema {
-  path: string;
-  is_imported_dependency: boolean;
-  n_auditable_fcts: number;
-  source_hash_id: string;
-}
-
 export interface CodeSourceContentSchemaI extends BaseSchema {
   content: string;
   solc_version: string;
   content_hash: string;
   path: string;
-  is_imported_dependency: boolean;
+  is_imported: boolean;
+  is_known_target: boolean;
 }
 
 /*    */

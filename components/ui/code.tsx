@@ -1,5 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { TreeResponseI } from "@/utils/types";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { FileText } from "lucide-react";
 import React from "react";
@@ -77,12 +78,10 @@ export const CodeSources: React.FC<
 
 export const CodeSource: React.FC<
   React.ComponentProps<"div"> & {
-    path: string;
-    isActive?: boolean;
-    isImported?: boolean;
-    nFcts: number;
+    source: TreeResponseI;
+    isActive: boolean;
   }
-> = ({ path, isActive = false, isImported = false, nFcts, ...props }) => {
+> = ({ source, isActive = false, ...props }) => {
   return (
     <div
       className={cn(
@@ -95,12 +94,16 @@ export const CodeSource: React.FC<
         <div
           className={cn(
             "w-2 h-2 rounded-full",
-            isImported ? "bg-orange-500" : nFcts > 0 ? "bg-green-500" : "bg-gray-400",
+            source.is_known_target
+              ? "bg-green-500"
+              : source.n_auditable_fct > 0
+                ? "bg-orange-500"
+                : "bg-gray-400",
           )}
         />
-        <span className="text-sm font-medium truncate">{getFileName(path)}</span>
+        <span className="text-sm font-medium truncate">{getFileName(source.path)}</span>
       </div>
-      <div className="text-xs text-neutral-500 truncate">{getDirectoryPath(path)}</div>
+      <div className="text-xs text-neutral-500 truncate">{getDirectoryPath(source.path)}</div>
     </div>
   );
 };

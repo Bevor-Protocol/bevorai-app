@@ -22,9 +22,9 @@ type Props = {
 const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
   const resolvedParams = await params;
 
-  const [version, sources, user] = await Promise.all([
+  const [version, tree, user] = await Promise.all([
     codeActions.getCodeVersion(resolvedParams.teamSlug, resolvedParams.codeId),
-    codeActions.getCodeVersionSources(resolvedParams.teamSlug, resolvedParams.codeId),
+    codeActions.getTree(resolvedParams.teamSlug, resolvedParams.codeId),
     dashboardActions.getUser(),
   ]);
 
@@ -34,7 +34,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
   });
 
   return (
-    <CodeProvider initialSourceId={sources.length ? sources[0].id : null} {...resolvedParams}>
+    <CodeProvider initialSourceId={tree.length ? tree[0].id : null} {...resolvedParams}>
       <Container subnav={<CodeVersionSubnav />}>
         <CodeMetadata
           teamSlug={resolvedParams.teamSlug}
@@ -42,7 +42,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
           analysisQuery={analysisQuery}
           version={version}
         />
-        <SourcesViewer sources={sources} teamSlug={resolvedParams.teamSlug} codeId={version.id} />
+        <SourcesViewer tree={tree} teamSlug={resolvedParams.teamSlug} codeId={version.id} />
       </Container>
     </CodeProvider>
   );

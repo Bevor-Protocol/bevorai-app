@@ -62,7 +62,7 @@ export const CodeVersionsView: React.FC<{
   const isFetching = versionsQuery.isFetching && !versionsQuery.data;
 
   return (
-    <div className="flex flex-col space-y-6">
+    <div className="flex flex-col px-6">
       <CodeVersionFilters
         teamSlug={teamSlug}
         filters={filters}
@@ -70,22 +70,24 @@ export const CodeVersionsView: React.FC<{
         isAnySearched={isAnySearched}
         handleClear={handleClear}
       />
-      <div className="relative min-h-[200px]">
+      <div className="relative min-h-[200px] overflow-x-hidden">
         {hasResults && (
-          <div
-            className={cn(
-              "grid grid-cols-1 gap-3 transition-opacity duration-500 ease-in-out",
-              versionsQuery.isFetching ? "opacity-50" : "opacity-100",
-            )}
-          >
-            {versionsQuery.data?.results.map((version) => (
-              <CodeVersionElement
-                key={version.id}
-                version={version}
-                teamSlug={teamSlug}
-                isDisabled={isWaiting || versionsQuery.isFetching}
-              />
-            ))}
+          <div className="overflow-x-auto -mx-6 px-6">
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-3 transition-opacity duration-500 ease-in-out min-w-max",
+                versionsQuery.isFetching ? "opacity-50" : "opacity-100",
+              )}
+            >
+              {versionsQuery.data?.results.map((version) => (
+                <CodeVersionElement
+                  key={version.id}
+                  version={version}
+                  teamSlug={teamSlug}
+                  isDisabled={isWaiting || versionsQuery.isFetching}
+                />
+              ))}
+            </div>
           </div>
         )}
 

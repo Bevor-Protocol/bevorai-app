@@ -2,7 +2,13 @@
 
 import { dashboardActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
-import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { generateQueryKey } from "@/utils/constants";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,20 +70,22 @@ export const ProfileClient: React.FC = () => {
     <div className="border-b pb-6">
       <h2 className="text-lg font-semibold mb-4">Profile</h2>
       <form
-        className="space-y-4"
+        className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           handleSave();
         }}
       >
-        <div className="space-y-2">
+        <FieldGroup>
           <Field>
-            <FieldLabel>Username</FieldLabel>
+            <FieldLabel htmlFor="username">Username</FieldLabel>
             <FieldDescription>Your unique username that others will see</FieldDescription>
             <FieldContent>
               {isEditing ? (
                 <div className="flex items-center gap-3">
                   <Input
+                    id="username"
+                    name="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Enter username"
@@ -112,7 +120,7 @@ export const ProfileClient: React.FC = () => {
               )}
             </FieldContent>
           </Field>
-        </div>
+        </FieldGroup>
       </form>
     </div>
   );

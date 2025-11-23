@@ -5,7 +5,13 @@ import { Icon } from "@/components/ui/icon";
 import { formatDate } from "@/utils/helpers";
 import { AsyncComponent } from "@/utils/types";
 import { Calendar } from "lucide-react";
-import { AnalysesPreview, ProjectsSection, TeamActivities, TeamMembers } from "./team-client";
+import {
+  AnalysesPreview,
+  CreateProjectButton,
+  ProjectsSection,
+  TeamActivities,
+  TeamMembers,
+} from "./team-client";
 
 interface TeamPageProps {
   params: Promise<{ teamSlug: string }>;
@@ -40,7 +46,10 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
         <div className="py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
           <div className="min-w-0 space-y-8">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Projects</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold mb-4">Projects</h3>
+                <CreateProjectButton teamSlug={teamSlug} />
+              </div>
               <ProjectsSection teamSlug={teamSlug} />
             </div>
             <div>

@@ -96,13 +96,13 @@ const InviteItem: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
             </div>
 
             {acceptInviteMutation.error && (
-              <p className="text-sm text-red-400">{acceptInviteMutation.error.message}</p>
+              <p className="text-sm text-destructive">{acceptInviteMutation.error.message}</p>
             )}
             {acceptInviteMutation.isSuccess && (
               <p className="text-sm text-green-400">Successfully joined the team</p>
             )}
             {rejectInviteMutation.error && (
-              <p className="text-sm text-red-400">{rejectInviteMutation.error.message}</p>
+              <p className="text-sm text-destructive">{rejectInviteMutation.error.message}</p>
             )}
             {rejectInviteMutation.isSuccess && (
               <p className="text-sm text-green-400">Rejected the invite</p>

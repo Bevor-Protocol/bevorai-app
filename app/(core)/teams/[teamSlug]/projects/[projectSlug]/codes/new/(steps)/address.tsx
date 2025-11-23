@@ -2,63 +2,46 @@
 
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useSSE } from "@/hooks/useSSE";
+import { useFormReducer } from "@/hooks/useFormReducer";
+import { ScanCodeAddressFormValues, scanCodeAddressSchema } from "@/utils/schema";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, Globe, XCircle } from "lucide-react";
 import Link from "next/link";
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { toast } from "sonner";
 
 const ContractAddressStep: React.FC<{
   project: ProjectDetailedSchemaI;
-}> = ({ project }) => {
+  parentId?: string;
+  connect: (url?: string) => void;
+}> = ({ project, parentId, connect }) => {
   const queryClient = useQueryClient();
-  const [address, setAddress] = useState("");
-  const [error, setError] = useState("");
+
+  const initialState: ScanCodeAddressFormValues = {
+    address: "",
+    parent_id: parentId,
+  };
+  const { formState, setField, updateFormState } =
+    useFormReducer<ScanCodeAddressFormValues>(initialState);
+
   const toastId = useRef<string | number>(undefined);
-  const sseToastId = useRef<string | number | undefined>(undefined);
-
-  const { connect } = useSSE({
-    autoConnect: false,
-    eventTypes: ["code_versions"],
-    onMessage: (message) => {
-      let parsed: string;
-      try {
-        parsed = JSON.parse(message.data);
-      } catch {
-        parsed = message.data;
-      }
-
-      if (parsed === "pending" || parsed === "embedding") {
-        sseToastId.current = toast.loading("Post-processing code...");
-      }
-
-      if (parsed === "embedded") {
-        toast.success("Post-processing successful", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      } else if (parsed === "failed") {
-        toast.error("Post-processing failed", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      }
-    },
-  });
 
   const mutation = useMutation({
-    mutationFn: async (address: string) =>
-      codeActions.contractUploadScan(project.team.slug, project.id, address),
+    mutationFn: async (data: ScanCodeAddressFormValues) =>
+      codeActions.contractUploadScan(project.team.slug, project.id, data),
     onMutate: () => {
-      setError("");
+      updateFormState({ type: "SET_ERRORS", errors: {} });
       toastId.current = toast.loading("Uploading and parsing code...");
     },
     onError: () => {
       toast.dismiss(toastId.current);
-      setError("something went wrong");
+      updateFormState({
+        type: "SET_ERRORS",
+        errors: { address: "Something went wrong" },
+      });
     },
     onSuccess: ({ id, status, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
@@ -76,20 +59,27 @@ const ContractAddressStep: React.FC<{
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
+    updateFormState({ type: "SET_ERRORS", errors: {} });
 
-    if (!address.trim()) {
-      setError("Please enter a contract address");
+    const parsed = scanCodeAddressSchema.safeParse(formState.values);
+
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((issue) => {
+        const path = issue.path[0] as string;
+        if (path) {
+          fieldErrors[path] = issue.message;
+        }
+      });
+      updateFormState({ type: "SET_ERRORS", errors: fieldErrors });
       return;
     }
 
-    if (!address.match(/^0x[a-fA-F0-9]{40}$/)) {
-      setError("Please enter a valid address");
-      return;
-    }
-    setError("");
-
-    const encodedAddress = encodeURIComponent(address);
-    mutation.mutate(encodedAddress);
+    const encodedAddress = encodeURIComponent(parsed.data.address);
+    mutation.mutate({
+      ...parsed.data,
+      address: encodedAddress,
+    });
   };
 
   if (mutation.isSuccess) {
@@ -120,7 +110,7 @@ const ContractAddressStep: React.FC<{
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-            <XCircle className="size-8 text-red-400" />
+            <XCircle className="size-8 text-destructive" />
           </div>
           <h2 className="text-2xl font-bold ">Upload Failed</h2>
           <p className="text-muted-foreground">
@@ -148,37 +138,38 @@ const ContractAddressStep: React.FC<{
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label htmlFor="address" className="text-sm font-medium  hidden">
-            Contract Address
-          </label>
-          <div className="flex flex-row gap-4 flex-wrap">
-            <Input
-              id="address"
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="0x1234..."
-              className="font-mono grow basis-1/2"
-              disabled={mutation.isPending}
-            />
-            <Button
-              type="submit"
-              disabled={mutation.isPending || !address.trim()}
-              className="min-w-40 grow"
-            >
-              <span>Submit</span>
-              <ArrowRight className="size-4" />
-            </Button>
-          </div>
-          {error && (
-            <div className="flex items-center space-x-2 text-red-400 text-sm">
-              <XCircle className="size-4" />
-              <span>{error}</span>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="address" aria-required>
+              Contract Address
+            </FieldLabel>
+            <div className="flex flex-row gap-4 flex-wrap">
+              <Input
+                id="address"
+                name="address"
+                type="text"
+                value={formState.values.address}
+                onChange={(e) => setField("address", e.target.value)}
+                placeholder="0x1234..."
+                className="font-mono grow basis-1/2"
+                disabled={mutation.isPending}
+                aria-invalid={!!formState.errors.address}
+              />
+              <Button
+                type="submit"
+                disabled={mutation.isPending || !formState.values.address.trim()}
+                className="min-w-40 grow"
+              >
+                <span>Submit</span>
+                <ArrowRight className="size-4" />
+              </Button>
             </div>
-          )}
-        </div>
+            {formState.errors.address && (
+              <p className="text-sm text-destructive">{formState.errors.address}</p>
+            )}
+          </Field>
+        </FieldGroup>
       </form>
     </div>
   );

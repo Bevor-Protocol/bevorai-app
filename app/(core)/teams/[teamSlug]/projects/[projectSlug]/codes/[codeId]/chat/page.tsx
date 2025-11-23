@@ -36,7 +36,7 @@ const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params }) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Container subnav={<CodeVersionSubnav />} className="flex flex-col min-h-0">
+      <Container subnav={<CodeVersionSubnav />} contain>
         <ChatClient {...resolvedParams} defaultChat={defaultChat} query={chatQuery} />
       </Container>
     </HydrationBoundary>

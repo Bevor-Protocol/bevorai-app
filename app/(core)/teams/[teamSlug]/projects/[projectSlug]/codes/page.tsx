@@ -2,9 +2,11 @@ import { dashboardActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { CodeVersionsView } from "@/components/screens/code-versions";
 import ProjectSubnav from "@/components/subnav/project";
+import { Button } from "@/components/ui/button";
 import { DefaultCodesQuery, extractCodesQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
-import { CodesToggle } from "./codes-client";
+import { Plus } from "lucide-react";
+import Link from "next/link";
 
 interface ResolvedParams {
   teamSlug: string;
@@ -37,20 +39,22 @@ const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params, s
           <div className="px-6 py-6 flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-semibold mb-1">Code Versions</h1>
-              <p className="text-sm text-muted-foreground">
-                Uploaded code versions for analysis and auditing
-              </p>
             </div>
-            <CodesToggle {...resolvedParams} />
+            <Button asChild>
+              <Link
+                href={`/teams/${resolvedParams.teamSlug}/projects/${resolvedParams.projectSlug}/codes/new`}
+              >
+                <Plus className="size-4" />
+                New Code
+              </Link>
+            </Button>
           </div>
         </div>
-        <div className="px-6 py-6">
-          <CodeVersionsView
-            {...resolvedParams}
-            initialQuery={initialQuery}
-            defaultQuery={defaultQuery}
-          />
-        </div>
+        <CodeVersionsView
+          {...resolvedParams}
+          initialQuery={initialQuery}
+          defaultQuery={defaultQuery}
+        />
       </div>
     </Container>
   );

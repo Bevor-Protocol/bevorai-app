@@ -70,6 +70,31 @@ const ContainerBreadcrumb: React.FC<{
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
 
+  const currentRouteSegment = useMemo(() => {
+    if (!teamSlug || !projectSlug) return null;
+    const basePath = `/teams/${teamSlug}/projects/${projectSlug}`;
+
+    if (pathname.startsWith(`${basePath}/analysis-threads`)) {
+      return "analysis-threads";
+    }
+    if (pathname.startsWith(`${basePath}/codes`)) {
+      return "codes";
+    }
+    if (pathname.startsWith(`${basePath}/chats`)) {
+      return "chats";
+    }
+    return null;
+  }, [teamSlug, projectSlug, pathname]);
+
+  // Generate equivalent route for a new team/project
+  const getEquivalentRoute = (newTeamSlug: string, newProjectSlug: string): string => {
+    const basePath = `/teams/${newTeamSlug}/projects/${newProjectSlug}`;
+    if (currentRouteSegment) {
+      return `${basePath}/${currentRouteSegment}`;
+    }
+    return basePath;
+  };
+
   const projectLink = useMemo(() => {
     const basePath = `/teams/${teamSlug}/projects/${projectSlug}`;
 
@@ -280,20 +305,26 @@ const ContainerBreadcrumb: React.FC<{
               <span className="text-xs font-medium text-muted-foreground">PROJECTS</span>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0">
-              {displayedProjects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/teams/${project.team.slug}/projects/${project.slug}`}
-                  onClick={() => setPopoverOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
-                >
-                  <Icon seed={project.id} size="sm" />
-                  <span className="truncate text-sm">{project.name}</span>
-                  {curProject?.id === project.id && (
-                    <span className="ml-auto text-xs text-muted-foreground">✓</span>
-                  )}
-                </Link>
-              ))}
+              {displayedProjects.map((project) => {
+                const href = currentRouteSegment
+                  ? getEquivalentRoute(project.team.slug, project.slug)
+                  : `/teams/${project.team.slug}/projects/${project.slug}`;
+
+                return (
+                  <Link
+                    key={project.id}
+                    href={href}
+                    onClick={() => setPopoverOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+                  >
+                    <Icon seed={project.id} size="sm" />
+                    <span className="truncate text-sm">{project.name}</span>
+                    {curProject?.id === project.id && (
+                      <span className="ml-auto text-xs text-muted-foreground">✓</span>
+                    )}
+                  </Link>
+                );
+              })}
               {displayedProjects.length === 0 && (
                 <div className="px-3 py-2 text-sm text-muted-foreground">No projects</div>
               )}

@@ -2,8 +2,9 @@
 
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
-import { useSSE } from "@/hooks/useSSE";
+import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
+import { UploadCodeFolderFormValues, uploadCodeFolderSchema } from "@/utils/schema";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
@@ -24,62 +25,38 @@ interface SourceFile {
 
 const FolderStep: React.FC<{
   project: ProjectDetailedSchemaI;
-}> = ({ project }) => {
+  parentId?: string;
+  connect: (url?: string) => void;
+}> = ({ project, parentId, connect }) => {
   const queryClient = useQueryClient();
 
-  const [sourceFiles, setSourceFiles] = useState<SourceFile[]>([]);
+  const initialState: UploadCodeFolderFormValues = {
+    fileMap: {},
+    parent_id: parentId,
+  };
+  const { formState, setField, updateFormState } =
+    useFormReducer<UploadCodeFolderFormValues>(initialState);
+
+  const sourceFilesRef = useRef<SourceFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<SourceFile | null>(null);
-  const [error, setError] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const toastId = useRef<string | number>(undefined);
-  const sseToastId = useRef<string | number | undefined>(undefined);
-
-  const { connect } = useSSE({
-    autoConnect: false,
-    eventTypes: ["code_versions"],
-    onMessage: (message) => {
-      let parsed: string;
-      try {
-        parsed = JSON.parse(message.data);
-      } catch {
-        parsed = message.data;
-      }
-
-      if (parsed === "pending" || parsed === "embedding") {
-        sseToastId.current = toast.loading("Post-processing code...");
-      }
-
-      if (parsed === "embedded") {
-        toast.success("Post-processing successful", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      } else if (parsed === "failed") {
-        toast.error("Post-processing failed", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      }
-    },
-  });
 
   const mutation = useMutation({
-    mutationFn: async (files: SourceFile[]) => {
-      const fileMap: Record<string, File> = {};
-      files.forEach((sourceFile) => {
-        fileMap[sourceFile.path] = sourceFile.file;
-      });
-      return codeActions.contractUploadFolder(project.team.slug, project.slug, fileMap);
-    },
+    mutationFn: async (data: UploadCodeFolderFormValues) =>
+      codeActions.contractUploadFolder(project.team.slug, project.id, data),
     onMutate: () => {
-      setError("");
+      updateFormState({ type: "SET_ERRORS", errors: {} });
       toastId.current = toast.loading("Uploading and parsing code...");
     },
     onError: () => {
       toast.dismiss(toastId.current);
-      setError("something went wrong");
+      updateFormState({
+        type: "SET_ERRORS",
+        errors: { fileMap: "Something went wrong" },
+      });
     },
     onSuccess: ({ id, status, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
@@ -96,7 +73,7 @@ const FolderStep: React.FC<{
   });
 
   useEffect(() => {
-    if (!editorRef.current || !selectedFile || mutation.isPending || mutation.data) return;
+    if (!editorRef.current || !selectedFile) return;
     if (viewRef.current) {
       viewRef.current.destroy();
     }
@@ -115,43 +92,55 @@ const FolderStep: React.FC<{
         viewRef.current = null;
       }
     };
-  }, [selectedFile, mutation.isPending, mutation.data]);
+  }, [selectedFile, mutation.isSuccess, mutation.isError]);
 
-  const processFiles = useCallback(async (files: File[] | FileList) => {
-    const validFiles: SourceFile[] = [];
+  const processFiles = useCallback(
+    async (files: File[] | FileList) => {
+      const validFiles: SourceFile[] = [];
 
-    for (const file of Array.from(files)) {
-      if (file.name.endsWith(".sol") || file.name.endsWith(".js") || file.name.endsWith(".ts")) {
-        const content = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e): void => resolve(e.target?.result as string);
-          reader.onerror = (): void => reject(new Error("Failed to read file"));
-          reader.readAsText(file);
-        });
+      for (const file of Array.from(files)) {
+        if (file.name.endsWith(".sol") || file.name.endsWith(".js") || file.name.endsWith(".ts")) {
+          const content = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e): void => resolve(e.target?.result as string);
+            reader.onerror = (): void => reject(new Error("Failed to read file"));
+            reader.readAsText(file);
+          });
 
-        validFiles.push({
-          path: file.webkitRelativePath || file.name,
-          content,
-          file,
-        });
+          validFiles.push({
+            path: file.webkitRelativePath || file.name,
+            content,
+            file,
+          });
+        }
       }
-    }
 
-    if (validFiles.length === 0) {
-      setError("No valid .sol, .js, or .ts files found in the folder");
-      return;
-    }
+      if (validFiles.length === 0) {
+        updateFormState({
+          type: "SET_ERRORS",
+          errors: { fileMap: "No valid .sol, .js, or .ts files found in the folder" },
+        });
+        return;
+      }
 
-    setSourceFiles(validFiles);
-    setSelectedFile(validFiles[0]);
-    setError("");
-  }, []);
+      sourceFilesRef.current = validFiles;
+      const fileMap: Record<string, File> = {};
+      validFiles.forEach((sourceFile) => {
+        fileMap[sourceFile.path] = sourceFile.file;
+      });
+      setField("fileMap", fileMap);
+      setSelectedFile(validFiles[0]);
+      updateFormState({ type: "SET_ERRORS", errors: {} });
+    },
+    [setField, updateFormState],
+  );
 
   const clearAllFiles = useCallback(() => {
-    setSourceFiles([]);
+    sourceFilesRef.current = [];
+    setField("fileMap", {});
     setSelectedFile(null);
-    setError("");
-  }, []);
+    updateFormState({ type: "SET_ERRORS", errors: {} });
+  }, [setField, updateFormState]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -167,7 +156,7 @@ const FolderStep: React.FC<{
     async (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragOver(false);
-      setError("");
+      updateFormState({ type: "SET_ERRORS", errors: {} });
 
       const items = Array.from(e.dataTransfer.items);
       const files: File[] = [];
@@ -185,7 +174,7 @@ const FolderStep: React.FC<{
         await processFiles(files);
       }
     },
-    [processFiles],
+    [processFiles, updateFormState],
   );
 
   const handleFileInput = useCallback(
@@ -200,14 +189,23 @@ const FolderStep: React.FC<{
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
+    updateFormState({ type: "SET_ERRORS", errors: {} });
 
-    if (sourceFiles.length === 0) {
-      setError("Please upload a folder with contract files");
+    const parsed = uploadCodeFolderSchema.safeParse(formState.values);
+
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((issue) => {
+        const path = issue.path[0] as string;
+        if (path) {
+          fieldErrors[path] = issue.message;
+        }
+      });
+      updateFormState({ type: "SET_ERRORS", errors: fieldErrors });
       return;
     }
 
-    setError("");
-    mutation.mutate(sourceFiles);
+    mutation.mutate(parsed.data);
   };
 
   if (mutation.isSuccess) {
@@ -238,7 +236,7 @@ const FolderStep: React.FC<{
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-            <XCircle className="size-8 text-red-400" />
+            <XCircle className="size-8 text-destructive" />
           </div>
           <h2 className="text-2xl font-bold ">Upload Failed</h2>
           <p className="text-muted-foreground">
@@ -266,7 +264,7 @@ const FolderStep: React.FC<{
         </div>
         <Button
           type="submit"
-          disabled={sourceFiles.length === 0 || mutation.isPending}
+          disabled={Object.keys(formState.values.fileMap).length === 0 || mutation.isPending}
           className="min-w-40"
           onClick={handleSubmit}
         >
@@ -276,7 +274,7 @@ const FolderStep: React.FC<{
       </div>
 
       <div className="flex flex-col flex-1 min-h-0">
-        {sourceFiles.length === 0 ? (
+        {Object.keys(formState.values.fileMap).length === 0 ? (
           <label className="w-full block mb-4">
             <div
               className={cn(
@@ -319,7 +317,7 @@ const FolderStep: React.FC<{
           </div>
         )}
 
-        {sourceFiles.length > 0 && (
+        {Object.keys(formState.values.fileMap).length > 0 && (
           <div className="grow border border-border rounded-lg overflow-hidden flex flex-col">
             <div
               className="grid flex-1 h-full"
@@ -327,7 +325,9 @@ const FolderStep: React.FC<{
             >
               <div className="flex items-center space-x-2 p-3 border-b border-r border-border">
                 <span className="text-sm font-medium ">Sources</span>
-                <span className="text-xs text-neutral-500">({sourceFiles.length})</span>
+                <span className="text-xs text-neutral-500">
+                  ({Object.keys(formState.values.fileMap).length})
+                </span>
               </div>
               <div className="flex items-center justify-between p-3 border-b border-border">
                 <div className="flex items-center space-x-2">
@@ -341,7 +341,7 @@ const FolderStep: React.FC<{
                 </div>
               </div>
               <div className="border-r border-border overflow-y-auto min-h-0">
-                {sourceFiles.map((sourceFile) => (
+                {sourceFilesRef.current.map((sourceFile) => (
                   <div key={sourceFile.path} className="space-y-1">
                     <div
                       className={cn(
@@ -375,10 +375,10 @@ const FolderStep: React.FC<{
           </div>
         )}
 
-        {error && (
-          <div className="flex items-center space-x-2 text-red-400 text-sm mt-4">
+        {formState.errors.fileMap && (
+          <div className="flex items-center space-x-2 text-destructive text-sm mt-4">
             <XCircle className="size-4" />
-            <span>{error}</span>
+            <span>{formState.errors.fileMap}</span>
           </div>
         )}
       </div>

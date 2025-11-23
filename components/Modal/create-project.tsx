@@ -2,27 +2,36 @@
 
 import { projectActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
-import { DialogClose, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CreateProjectFormValues, createProjectSchema } from "@/utils/schema";
+import { useFormReducer } from "@/hooks/useFormReducer";
+import { ProjectFormValues, projectFormSchema } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Code } from "lucide-react";
-import React, { useState } from "react";
+import React from "react";
 
 const CreateProjectModal: React.FC<{
   teamSlug: string;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }> = ({ teamSlug, setOpen }) => {
   const queryClient = useQueryClient();
-  const [projectName, setProjectName] = useState("");
-  const [description, setDescription] = useState("");
-  const [tags, setTags] = useState("");
-  const [error, setError] = useState<string | null>(null);
+
+  const initialState: ProjectFormValues = {
+    name: "",
+    description: "",
+    tags: "",
+  };
+  const { formState, setField, updateFormState } = useFormReducer<ProjectFormValues>(initialState);
 
   const createProjectMutation = useMutation({
-    mutationFn: async (data: CreateProjectFormValues) =>
-      projectActions.createProject(teamSlug, data),
+    mutationFn: async (data: ProjectFormValues) => projectActions.createProject(teamSlug, data),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -31,19 +40,21 @@ const CreateProjectModal: React.FC<{
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    setError(null);
+    updateFormState({ type: "SET_ERRORS", errors: {} });
 
-    const parsed = createProjectSchema.safeParse({
-      name: projectName,
-      description: description || undefined,
-      tags: tags || undefined,
-    });
+    const parsed = projectFormSchema.safeParse(formState.values);
 
     if (!parsed.success) {
-      const message = parsed.error.issues[0]?.message ?? "Please review the form and try again.";
-      setError(message);
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((issue) => {
+        const path = issue.path[0] as string;
+        if (path) {
+          fieldErrors[path] = issue.message;
+        }
+      });
+      updateFormState({ type: "SET_ERRORS", errors: fieldErrors });
       return;
     }
 
@@ -53,61 +64,70 @@ const CreateProjectModal: React.FC<{
   return (
     <>
       <DialogHeader>
-        <div className="inline-flex gap-2 items-center">
-          <Code className="size-5 text-blue-400" />
-          <DialogTitle>Create New Project</DialogTitle>
-        </div>
+        <DialogTitle>Create New Project</DialogTitle>
         <DialogDescription>
-          Create a project to organize your smart contract versions and audits
+          Create a project to organize your smart contracts and analyses. All members of the team
+          will have access to this project
         </DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="justify-center flex flex-col gap-2">
-        <div className="py-4 space-y-4">
-          <div className="space-y-2">
-            <label className="text-md font-medium text-neutral-200">
-              Project Name <span className="text-red-400">*</span>
-            </label>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="name" aria-required>
+              Project Name
+            </FieldLabel>
             <Input
+              id="name"
               type="text"
-              className="bg-gray-900 rounded px-3 py-2 text-sm flex-1 w-full"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
+              name="name"
+              value={formState.values.name}
+              onChange={(e) => setField("name", e.target.value)}
               disabled={createProjectMutation.isPending}
-              required
-              placeholder="Enter project name"
+              placeholder="My first project"
+              aria-invalid={!!formState.errors.name}
             />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-md font-medium text-neutral-200">Description</label>
+            {formState.errors.name && (
+              <p className="text-sm text-destructive">{formState.errors.name}</p>
+            )}
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="description">Description</FieldLabel>
             <Textarea
-              className="bg-gray-900 rounded px-3 py-2 text-sm flex-1 w-full min-h-[80px]"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              id="description"
+              name="description"
+              className="w-full min-h-[80px]"
+              value={formState.values.description || ""}
+              onChange={(e) => setField("description", e.target.value)}
               disabled={createProjectMutation.isPending}
-              placeholder="Describe your project (optional)"
+              placeholder="Project description..."
+              aria-invalid={!!formState.errors.description}
             />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-md font-medium text-neutral-200">Tags</label>
+            {formState.errors.description && (
+              <p className="text-sm text-destructive">{formState.errors.description}</p>
+            )}
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="tags">Tags</FieldLabel>
             <Input
+              id="tags"
+              name="tags"
               type="text"
-              className="bg-gray-900 rounded px-3 py-2 text-sm flex-1 w-full"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
+              value={formState.values.tags || ""}
+              onChange={(e) => setField("tags", e.target.value)}
               disabled={createProjectMutation.isPending}
-              placeholder="Enter tags separated by commas (optional)"
+              placeholder="codebase-1, exploratory"
+              aria-invalid={!!formState.errors.tags}
             />
-            <p className="text-xs text-neutral-500">Example: defi, ethereum, security</p>
-          </div>
+            {formState.errors.tags && (
+              <p className="text-sm text-destructive">{formState.errors.tags}</p>
+            )}
+          </Field>
+        </FieldGroup>
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          {createProjectMutation.error && (
-            <p className="text-sm text-red-400">{createProjectMutation.error.message}</p>
-          )}
-        </div>
-        <div className="flex justify-between pt-4 border-t border-border">
+        {createProjectMutation.error && (
+          <p className="text-sm text-destructive">{createProjectMutation.error.message}</p>
+        )}
+        <DialogFooter className="mt-2">
           <DialogClose disabled={createProjectMutation.isPending} asChild>
             <Button type="button" variant="outline">
               Cancel
@@ -115,15 +135,11 @@ const CreateProjectModal: React.FC<{
           </DialogClose>
           <Button
             type="submit"
-            disabled={
-              createProjectMutation.isPending ||
-              !projectName.trim() ||
-              createProjectMutation.isSuccess
-            }
+            disabled={createProjectMutation.isPending || createProjectMutation.isSuccess}
           >
             {createProjectMutation.isPending ? "Creating..." : "Create Project"}
           </Button>
-        </div>
+        </DialogFooter>
       </form>
     </>
   );

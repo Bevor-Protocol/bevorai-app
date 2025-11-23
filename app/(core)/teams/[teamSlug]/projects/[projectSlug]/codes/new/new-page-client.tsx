@@ -1,8 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { useSSE } from "@/hooks/useSSE";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { MoveLeft } from "lucide-react";
 import * as React from "react";
+import { toast } from "sonner";
 import ContractAdressStep from "./(steps)/address";
 import FileStep from "./(steps)/file";
 import FolderStep from "./(steps)/folder";
@@ -12,9 +14,40 @@ const steps = ["Code Method", "Code Submission", "Submission"];
 
 const Steps: React.FC<{
   project: ProjectDetailedSchemaI;
-}> = ({ project }) => {
+  parentId?: string;
+}> = ({ project, parentId }) => {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [method, setMethod] = React.useState<string | null>(null);
+  const sseToastId = React.useRef<string | number | undefined>(undefined);
+
+  const { connect } = useSSE({
+    autoConnect: false,
+    eventTypes: ["code_versions"],
+    onMessage: (message) => {
+      let parsed: string;
+      try {
+        parsed = JSON.parse(message.data);
+      } catch {
+        parsed = message.data;
+      }
+
+      if (parsed === "pending" || parsed === "embedding") {
+        sseToastId.current = toast.loading("Post-processing code...");
+      }
+
+      if (parsed === "embedded") {
+        toast.success("Post-processing successful", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+      } else if (parsed === "failed") {
+        toast.error("Post-processing failed", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
+      }
+    },
+  });
 
   const nextStep = (): void => {
     if (currentStep < steps.length) {
@@ -37,9 +70,15 @@ const Steps: React.FC<{
         </Button>
       )}
       {currentStep === 1 && <MethodSelection setMethod={setMethod} nextStep={nextStep} />}
-      {currentStep === 2 && method === "scan" && <ContractAdressStep project={project} />}
-      {currentStep === 2 && method === "file" && <FileStep project={project} />}
-      {currentStep === 2 && method === "folder" && <FolderStep project={project} />}
+      {currentStep === 2 && method === "scan" && (
+        <ContractAdressStep project={project} parentId={parentId} connect={connect} />
+      )}
+      {currentStep === 2 && method === "file" && (
+        <FileStep project={project} parentId={parentId} connect={connect} />
+      )}
+      {currentStep === 2 && method === "folder" && (
+        <FolderStep project={project} parentId={parentId} connect={connect} />
+      )}
     </div>
   );
 };

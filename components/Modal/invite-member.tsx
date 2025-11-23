@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -95,50 +96,55 @@ const InviteMemberModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
         </div>
         <DialogDescription>Send invitations to collaborate on this team</DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="justify-center flex flex-col gap-2">
-        <div className="py-4 space-y-4">
-          <ScrollArea
-            className="space-y-3 h-[calc(44px*5)]"
-            viewportRef={scrollRef as React.RefObject<HTMLDivElement>}
-            type="auto"
-          >
-            {invitees.map((invitee, index) => (
-              <div key={index} className="flex items-center gap-3 py-1 pr-4 pl-1">
-                <Input
-                  type="text"
-                  className="grow"
-                  value={invitee.identifier}
-                  onChange={(e) => updateInvitee(index, "identifier", e.target.value)}
-                  disabled={inviteMembersMutation.isPending}
-                  placeholder="Enter email address or wallet address"
-                />
-                <Select
-                  value={invitee.role}
-                  disabled={inviteMembersMutation.isPending}
-                  onValueChange={(value) => updateInvitee(index, "role", value as MemberRoleEnum)}
-                >
-                  <SelectTrigger className="mr-0 min-w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value={MemberRoleEnum.MEMBER}>Member</SelectItem>
-                      <SelectItem value={MemberRoleEnum.OWNER}>Owner</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {invitees.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeInvitee(index)}
-                    className="p-1 text-muted-foreground hover:text-red-400 transition-colors"
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Team Members</FieldLabel>
+            <ScrollArea
+              className="space-y-3 h-[calc(44px*5)]"
+              viewportRef={scrollRef as React.RefObject<HTMLDivElement>}
+              type="auto"
+            >
+              {invitees.map((invitee, index) => (
+                <div key={index} className="flex items-center gap-3 py-1 pr-4 pl-1">
+                  <Input
+                    id={`identifier-${index}`}
+                    name={`identifier-${index}`}
+                    type="text"
+                    className="grow"
+                    value={invitee.identifier}
+                    onChange={(e) => updateInvitee(index, "identifier", e.target.value)}
+                    disabled={inviteMembersMutation.isPending}
+                    placeholder="Enter email address or wallet address"
+                  />
+                  <Select
+                    value={invitee.role}
+                    disabled={inviteMembersMutation.isPending}
+                    onValueChange={(value) => updateInvitee(index, "role", value as MemberRoleEnum)}
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </ScrollArea>
+                    <SelectTrigger id={`role-${index}`} className="mr-0 min-w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value={MemberRoleEnum.MEMBER}>Member</SelectItem>
+                        <SelectItem value={MemberRoleEnum.OWNER}>Owner</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {invitees.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeInvitee(index)}
+                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </ScrollArea>
+          </Field>
 
           <Button
             type="button"
@@ -159,15 +165,16 @@ const InviteMemberModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
               <strong>Member:</strong> Can view and contribute to team projects
             </li>
           </ul>
-          {inviteMembersMutation.error && (
-            <p className="text-sm text-red-400">{inviteMembersMutation.error.message}</p>
-          )}
-          {inviteMembersMutation.isSuccess && (
-            <p className="text-sm text-green-400">Invitations sent successfully</p>
-          )}
-        </div>
+        </FieldGroup>
 
-        <DialogFooter>
+        {inviteMembersMutation.error && (
+          <p className="text-sm text-destructive">{inviteMembersMutation.error.message}</p>
+        )}
+        {inviteMembersMutation.isSuccess && (
+          <p className="text-sm text-green-400">Invitations sent successfully</p>
+        )}
+
+        <DialogFooter className="mt-2">
           <DialogClose asChild>
             <Button type="button" variant="outline" disabled={inviteMembersMutation.isPending}>
               Cancel

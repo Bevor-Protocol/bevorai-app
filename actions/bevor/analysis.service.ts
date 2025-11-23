@@ -3,7 +3,7 @@
 import api from "@/lib/api";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
-import { CreateAnalysisVersionFormValues } from "@/utils/schema";
+import { CreateAnalysisThreadFormValues, CreateAnalysisVersionFormValues } from "@/utils/schema";
 import {
   AnalysisMappingSchemaI,
   AnalysisPaginationI,
@@ -19,12 +19,7 @@ import { QueryKey } from "@tanstack/react-query";
 
 export const createAnalysis = async (
   teamSlug: string,
-  data: {
-    project_id: string;
-    name?: string;
-    description?: string;
-    is_public?: boolean;
-  },
+  data: CreateAnalysisThreadFormValues,
 ): Promise<{
   id: string;
   toInvalidate: QueryKey[];

@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CreateKeyBody } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -74,101 +74,106 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
         </div>
         <DialogDescription>Create a new API key for your team with custom scopes</DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="justify-center flex flex-col gap-2">
-        <Label>
-          API Key Name <span className="text-red-400">*</span>
-        </Label>
-        <Input
-          type="text"
-          className="bg-gray-900 rounded px-3 py-2 text-sm flex-1 w-full"
-          value={createForm.name}
-          onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-          disabled={createKeyMutation.isPending}
-          required
-          placeholder="Enter API key name"
-        />
-        <div className="space-y-4 my-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="project-toggle">Project Access</Label>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="name" aria-required>
+              API Key Name
+            </FieldLabel>
+            <Input
+              id="name"
+              name="name"
+              type="text"
+              className="bg-gray-900 rounded px-3 py-2 text-sm flex-1 w-full"
+              value={createForm.name}
+              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+              disabled={createKeyMutation.isPending}
+              required
+              placeholder="Enter API key name"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="project-toggle">Project Access</FieldLabel>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {createForm.scopes.project === "write" ? "Write" : "Read"}
               </span>
               <Switch
                 id="project-toggle"
+                name="project-toggle"
                 checked={createForm.scopes.project === "write"}
                 onCheckedChange={() => togglePermission("project")}
                 disabled={createKeyMutation.isPending}
               />
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label htmlFor="code-toggle">Code Access</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="code-toggle">Code Access</FieldLabel>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {createForm.scopes.code === "write" ? "Write" : "Read"}
               </span>
               <Switch
                 id="code-toggle"
+                name="code-toggle"
                 checked={createForm.scopes.code === "write"}
                 onCheckedChange={() => togglePermission("code")}
                 disabled={createKeyMutation.isPending}
               />
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label htmlFor="analysis-toggle">Analysis Access</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="analysis-toggle">Analysis Access</FieldLabel>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {createForm.scopes.analysis === "write" ? "Write" : "Read"}
               </span>
               <Switch
                 id="analysis-toggle"
+                name="analysis-toggle"
                 checked={createForm.scopes.analysis === "write"}
                 onCheckedChange={() => togglePermission("analysis")}
                 disabled={createKeyMutation.isPending}
               />
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label htmlFor="analysis-version-toggle">Analysis Version Access</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="analysis-version-toggle">Analysis Version Access</FieldLabel>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {createForm.scopes.analysis_version === "write" ? "Write" : "Read"}
               </span>
               <Switch
                 id="analysis-version-toggle"
+                name="analysis-version-toggle"
                 checked={createForm.scopes.analysis_version === "write"}
                 onCheckedChange={() => togglePermission("analysis_version")}
                 disabled={createKeyMutation.isPending}
               />
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label htmlFor="chat-toggle">Chat Access</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="chat-toggle">Chat Access</FieldLabel>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {createForm.scopes.chat === "write" ? "Write" : "Read"}
               </span>
               <Switch
                 id="chat-toggle"
+                name="chat-toggle"
                 checked={createForm.scopes.chat === "write"}
                 onCheckedChange={() => togglePermission("chat")}
                 disabled={createKeyMutation.isPending}
               />
             </div>
-          </div>
-        </div>
+          </Field>
+        </FieldGroup>
 
         {createKeyMutation.error && (
-          <p className="text-sm text-red-400">{createKeyMutation.error.message}</p>
+          <p className="text-sm text-destructive">{createKeyMutation.error.message}</p>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="mt-2">
           <DialogClose asChild>
             <Button type="button" variant="outline" disabled={createKeyMutation.isPending}>
               Cancel

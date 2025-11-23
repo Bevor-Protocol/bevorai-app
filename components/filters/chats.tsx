@@ -8,7 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { DefaultChatsQuery } from "@/utils/query-params";
+import { X } from "lucide-react";
 import React from "react";
 
 export const ChatFilters: React.FC<{
@@ -19,19 +21,34 @@ export const ChatFilters: React.FC<{
 }> = ({ filters, handleClear, setFilters, isAnySearched }) => {
   return (
     <div className="flex items-center justify-start mb-6 gap-4 flex-wrap">
-      <Select
-        value={filters.chat_type}
-        onValueChange={(value) => setFilters((prev) => ({ ...prev, chat_type: value }))}
-        key={`chat-type-${filters.chat_type || "empty"}`}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Chat Type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="code">Code</SelectItem>
-          <SelectItem value="analysis">Analysis</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="relative">
+        <Select
+          value={filters.chat_type}
+          onValueChange={(value) => setFilters((prev) => ({ ...prev, chat_type: value }))}
+          key={`chat-type-${filters.chat_type || "empty"}`}
+        >
+          <SelectTrigger className={cn("w-[180px]", filters.chat_type && "pr-7")}>
+            <SelectValue placeholder="Chat Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="code">Code</SelectItem>
+            <SelectItem value="analysis">Analysis</SelectItem>
+          </SelectContent>
+        </Select>
+        {filters.chat_type && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
+            onClick={(e) => {
+              e.stopPropagation();
+              setFilters((prev) => ({ ...prev, chat_type: "" }));
+            }}
+          >
+            <X className="size-3" />
+          </Button>
+        )}
+      </div>
       <Select
         value={filters.order || "desc"}
         onValueChange={(value) => setFilters((prev) => ({ ...prev, order: value }))}

@@ -27,7 +27,7 @@ const Relations: React.FC<{
             <span className="font-medium">Parent: </span>
             {version.parent ? (
               <Link
-                href={`/teams/${teamSlug}/codes/${version.parent.id}`}
+                href={`/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.parent.id}`}
                 className="text-blue-400 hover:underline"
               >
                 Version {version.parent.name}
@@ -41,7 +41,7 @@ const Relations: React.FC<{
             <span className="font-medium">Child: </span>
             {version.child ? (
               <Link
-                href={`/teams/${teamSlug}/codes/${version.child.id}`}
+                href={`/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.child.id}`}
                 className="text-blue-400 hover:underline"
               >
                 Version {version.child.name}

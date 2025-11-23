@@ -13,19 +13,19 @@ import {
 } from "@/components/ui/code";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
-import { CodeSourceSchemaI } from "@/utils/types";
+import { TreeResponseI } from "@/utils/types";
 import React from "react";
 
 interface SourcesViewerProps {
-  sources: CodeSourceSchemaI[];
+  tree: TreeResponseI[];
   teamSlug: string;
   codeId: string;
 }
 
-const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId }) => {
+const SourcesViewer: React.FC<SourcesViewerProps> = ({ tree, teamSlug, codeId }) => {
   const { handleSourceChange, sourceQuery, containerRef, isSticky } = useCode();
 
-  if (sources.length === 0) {
+  if (tree.length === 0) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 pr-2">
         <div className="border border-border rounded-lg p-6">
@@ -42,7 +42,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId
     <CodeHolder ref={containerRef} className="pr-2">
       <CodeCounter>
         <Badge variant="green" size="sm">
-          {sources.length} sources
+          {tree.length} sources
         </Badge>
       </CodeCounter>
       <CodeHeader path={sourceQuery.data?.path}>
@@ -56,13 +56,11 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId
         />
       </CodeHeader>
       <CodeSources>
-        {sources.map((source) => (
+        {tree.map((source) => (
           <CodeSource
             key={source.id}
-            path={source.path}
+            source={source}
             isActive={source.id === sourceQuery.data?.id}
-            isImported={source.is_imported_dependency}
-            nFcts={source.n_auditable_fcts}
             onClick={() => handleSourceChange(source.id)}
           />
         ))}

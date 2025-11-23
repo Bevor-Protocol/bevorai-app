@@ -3,8 +3,8 @@
 import api from "@/lib/api";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
+import { ProjectFormValues } from "@/utils/schema";
 import {
-  CreateProjectBody,
   ProjectDetailedSchemaI,
   ProjectsPaginationI,
   RecentCodeVersionSchemaI,
@@ -13,7 +13,7 @@ import { QueryKey } from "@tanstack/react-query";
 
 export const createProject = async (
   teamSlug: string,
-  data: CreateProjectBody,
+  data: ProjectFormValues,
 ): Promise<{
   id: string;
   toInvalidate: QueryKey[];
@@ -70,7 +70,7 @@ export const deleteProject = async (
 export const updateProject = async (
   teamSlug: string,
   projectSlug: string,
-  data: { name?: string; description?: string; tags?: string[] },
+  data: ProjectFormValues,
 ): Promise<{ project: ProjectDetailedSchemaI; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.project(projectSlug), generateQueryKey.allProjects()];
   return api

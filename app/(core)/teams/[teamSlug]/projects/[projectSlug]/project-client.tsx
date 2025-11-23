@@ -35,11 +35,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { useFormReducer } from "@/hooks/useFormReducer";
 import { useSSE } from "@/hooks/useSSE";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
@@ -49,7 +50,7 @@ import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tansta
 import { Calendar, Edit, MoreHorizontal, Tag, Trash } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React from "react";
 import { toast } from "sonner";
 
 export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> = ({
@@ -111,13 +112,9 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      {project && (
-        <ProjectEditDialog
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          teamSlug={teamSlug}
-          project={project}
-        />
+      {/* intentionally unmount this, so state resets */}
+      {project && editOpen && (
+        <ProjectEditDialog onOpenChange={setEditOpen} teamSlug={teamSlug} project={project} />
       )}
       {project && (
         <ProjectDeleteAlert
@@ -137,14 +134,19 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
 };
 
 const ProjectEditDialog: React.FC<{
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   teamSlug: string;
   project: ProjectDetailedSchemaI;
-}> = ({ open, onOpenChange, teamSlug, project }) => {
+}> = ({ onOpenChange, teamSlug, project }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
+
+  const initialState: ProjectFormValues = {
+    name: project.name,
+    tags: project.tags.join(", "),
+    description: project.description || "",
+  };
+  const { formState, setField, updateFormState } = useFormReducer<ProjectFormValues>(initialState);
 
   const updateMutation = useMutation({
     mutationFn: (data: ProjectFormValues) =>
@@ -161,62 +163,88 @@ const ProjectEditDialog: React.FC<{
     },
   });
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    setError(null);
-    const formData = new FormData(event.currentTarget);
-    const parsed = projectFormSchema.safeParse({
-      name: formData.get("name"),
-      description: formData.get("description") || undefined,
-      tags: formData.get("tags") || undefined,
-    });
+  const handleSubmit = (e: React.FormEvent): void => {
+    e.preventDefault();
+    updateFormState({ type: "SET_ERRORS", errors: {} });
+
+    const parsed = projectFormSchema.safeParse(formState.values);
+
     if (!parsed.success) {
-      const message = parsed.error.issues[0]?.message ?? "Please review the form and try again.";
-      setError(message);
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((issue) => {
+        const path = issue.path[0] as string;
+        if (path) {
+          fieldErrors[path] = issue.message;
+        }
+      });
+      updateFormState({ type: "SET_ERRORS", errors: fieldErrors });
       return;
     }
+
     updateMutation.mutate(parsed.data);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit Project</DialogTitle>
-          <DialogDescription>Update the project details and tags.</DialogDescription>
+          <DialogDescription>Update the project metadata</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              name="name"
-              defaultValue={project.name}
-              disabled={updateMutation.isPending}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              defaultValue={project.description}
-              disabled={updateMutation.isPending}
-              rows={4}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="tags">Tags</Label>
-            <Input
-              id="tags"
-              name="tags"
-              defaultValue={project.tags}
-              disabled={updateMutation.isPending}
-              placeholder="tag-one, tag-two"
-            />
-          </div>
-          <div className="min-h-5">{error && <p className="text-sm text-red-600">{error}</p>}</div>
-          <DialogFooter className="mt-2 gap-2">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="name" aria-required>
+                Name
+              </FieldLabel>
+              <Input
+                id="name"
+                name="name"
+                value={formState.values.name}
+                onChange={(e) => setField("name", e.target.value)}
+                disabled={updateMutation.isPending}
+                aria-invalid={!!formState.errors.name}
+              />
+              {formState.errors.name && (
+                <p className="text-sm text-destructive">{formState.errors.name}</p>
+              )}
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="description">Description</FieldLabel>
+              <Textarea
+                id="description"
+                name="description"
+                value={formState.values.description || ""}
+                onChange={(e) => setField("description", e.target.value)}
+                disabled={updateMutation.isPending}
+                rows={4}
+                aria-invalid={!!formState.errors.description}
+              />
+              {formState.errors.description && (
+                <p className="text-sm text-destructive">{formState.errors.description}</p>
+              )}
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="tags">Tags</FieldLabel>
+              <Input
+                id="tags"
+                name="tags"
+                value={formState.values.tags || ""}
+                onChange={(e) => setField("tags", e.target.value)}
+                disabled={updateMutation.isPending}
+                placeholder="codebase-1, exploratory"
+                aria-invalid={!!formState.errors.tags}
+              />
+              {formState.errors.tags && (
+                <p className="text-sm text-destructive">{formState.errors.tags}</p>
+              )}
+            </Field>
+
+            {updateMutation.error && (
+              <p className="text-sm text-destructive">{updateMutation.error.message}</p>
+            )}
+          </FieldGroup>
+          <DialogFooter className="mt-2">
             <DialogClose asChild>
               <Button type="button" variant="outline" disabled={updateMutation.isPending}>
                 Cancel

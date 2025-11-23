@@ -21,7 +21,7 @@ export const DefaultAnalysisThreadsQuery = {
 
 export const DefaultCodesQuery = {
   page: "0",
-  page_size: "12",
+  page_size: "20",
   order: "desc",
   project_slug: "",
   user_id: "",

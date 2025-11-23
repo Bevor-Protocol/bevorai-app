@@ -58,7 +58,7 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
               ) : attr.node_type === "EnumDefinition" ? (
                 <Hash className="size-3 text-pink-400" />
               ) : attr.node_type === "ErrorDefinition" ? (
-                <AlertTriangle className="size-3 text-red-400" />
+                <AlertTriangle className="size-3 text-destructive" />
               ) : (
                 <Zap className="size-3 text-gray-400" />
               )}

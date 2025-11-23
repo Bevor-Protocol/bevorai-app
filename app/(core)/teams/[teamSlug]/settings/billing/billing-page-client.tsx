@@ -5,6 +5,14 @@ import { billingActions } from "@/actions/bevor";
 
 import { AddonRow } from "@/components/billing/addon";
 import { Button } from "@/components/ui/button";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { generateQueryKey } from "@/utils/constants";
 import { PlanStatusEnum } from "@/utils/enums";
@@ -44,17 +52,19 @@ const InvoiceNameSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   };
 
   return (
-    <div className="border border-border rounded-lg p-6">
-      <h3 className="text-lg font-semibold  mb-4">Invoice Name</h3>
-      <p className="text-sm text-muted-foreground my-4">
-        Your team name is shown on your invoice by default. If you want, you can have it show a
-        custom name.
-      </p>
-      <form onSubmit={handleNameSubmit} className="space-y-4">
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium  mb-1">Custom Name</label>
+    <form onSubmit={handleNameSubmit} className="flex flex-col gap-4">
+      <FieldGroup>
+        <FieldSet>
+          <FieldLegend>Invoice Name</FieldLegend>
+          <FieldDescription>
+            Your team name is shown on your invoice by default. If you want, you can have it show a
+            custom name.
+          </FieldDescription>
+          <Field>
+            <FieldLabel htmlFor="invoice-name">Custom Name</FieldLabel>
             <Input
+              id="invoice-name"
+              name="invoice-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -62,16 +72,16 @@ const InvoiceNameSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
               className="w-full"
               disabled={updateNameMutation.isPending}
             />
-          </div>
-        </div>
+          </Field>
+        </FieldSet>
+      </FieldGroup>
 
-        <div className="pt-4 border-t border-border">
-          <Button type="submit" disabled={updateNameMutation.isPending} className="text-sm">
-            {updateNameMutation.isPending ? "Updating..." : "Update Invoice Name"}
-          </Button>
-        </div>
-      </form>
-    </div>
+      <div className="pt-4 border-t border-border">
+        <Button type="submit" disabled={updateNameMutation.isPending} className="text-sm">
+          {updateNameMutation.isPending ? "Updating..." : "Update Invoice Name"}
+        </Button>
+      </div>
+    </form>
   );
 };
 
@@ -126,21 +136,26 @@ const BillingEmailSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
         By default, your invoices will go to the email of the user who created the team. If you
         want, you can update it here.
       </p>
-      <form onSubmit={handleEmailSubmit} className="space-y-4">
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium  mb-1">Email Address</label>
+      <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="billing-email" aria-required>
+              Email Address
+            </FieldLabel>
             <Input
+              id="billing-email"
+              name="billing-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter billing email address"
               className="w-full"
               disabled={updateEmailMutation.isPending}
+              aria-invalid={!!emailError}
             />
-            {emailError && <p className="text-red-400 text-sm mt-1">{emailError}</p>}
-          </div>
-        </div>
+            {emailError && <p className="text-sm text-destructive">{emailError}</p>}
+          </Field>
+        </FieldGroup>
 
         <div className="pt-4 border-t border-border">
           <Button type="submit" disabled={updateEmailMutation.isPending} className="text-sm">

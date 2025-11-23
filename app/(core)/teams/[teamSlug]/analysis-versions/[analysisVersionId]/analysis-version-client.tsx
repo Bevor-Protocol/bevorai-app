@@ -404,7 +404,9 @@ export const AnalysisVersionClient: React.FC<{
                       <br />
                       <span
                         className={
-                          selectedFinding.metadata?.is_verified ? "text-green-400" : "text-red-400"
+                          selectedFinding.metadata?.is_verified
+                            ? "text-green-400"
+                            : "text-destructive"
                         }
                       >
                         {selectedFinding.metadata?.is_verified ? "Yes" : "No"}

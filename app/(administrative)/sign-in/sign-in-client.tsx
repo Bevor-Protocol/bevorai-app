@@ -123,12 +123,13 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-lg">
-      <form onSubmit={handleMagicLinkLogin} noValidate>
+      <form onSubmit={handleMagicLinkLogin} noValidate className="flex flex-col gap-4">
         <FieldGroup>
           <Field className="relative pb-1">
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
               id="email"
+              name="email"
               type="email"
               placeholder="m@example.com"
               value={email}

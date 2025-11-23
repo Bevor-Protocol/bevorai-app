@@ -306,12 +306,10 @@
 
 @utility no-scrollbar {
   /* Hide scrollbar for Chrome, Safari and Opera */
-  &::-webkit-scrollbar {
+  & [data-slot="scroll-area-thumb"] {
     display: none;
+    scrollbar-width: none;
   }
-  /* Hide scrollbar for IE, Edge and Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
 }
 
 @utility conic-full {
@@ -386,6 +384,12 @@
     right: 0;
     height: 1px;
     background-color: currentColor;
+  }
+}
+
+@layer base {
+  label[aria-required]::after {
+    content: "*";
   }
 }
 

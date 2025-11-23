@@ -1,39 +1,29 @@
 import { z } from "zod";
 
-export const createProjectSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  tags: z
-    .string()
-    .optional()
-    .transform((value) => {
-      if (!value || value.trim() === "") return [];
-      return value
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-    })
-    .pipe(z.array(z.string())),
-});
-
-export type CreateProjectFormValues = z.infer<typeof createProjectSchema>;
-
 export const projectFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  tags: z
+  description: z
     .string()
-    .optional()
-    .transform((value) => {
-      if (!value || value.trim() === "") return [];
-      return value
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-    })
-    .pipe(z.array(z.string())),
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
+  tags: z.string().optional(), // api response is an array. but easier to work with a string in a form.
 });
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
+export const createAnalysisThreadSchema = z.object({
+  project_id: z.string().min(1, "Project ID is required"),
+  name: z
+    .string()
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
+  description: z
+    .string()
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
+  is_public: z.boolean(),
+});
+
+export type CreateAnalysisThreadFormValues = z.infer<typeof createAnalysisThreadSchema>;
 
 export const createAnalysisVersionSchema = z
   .object({
@@ -57,3 +47,39 @@ export const createChatSchema = z.object({
 });
 
 export type CreateChatFormValues = z.infer<typeof createChatSchema>;
+
+export const uploadCodeFileSchema = z.object({
+  file: z.instanceof(File, { message: "File is required" }),
+  parent_id: z.string().optional(),
+});
+
+export type UploadCodeFileFormValues = z.infer<typeof uploadCodeFileSchema>;
+
+export const pasteCodeFileSchema = z.object({
+  code: z.string().min(1, "Please enter contract code"),
+  parent_id: z.string().optional(),
+});
+
+export type PasteCodeFileFormValues = z.infer<typeof pasteCodeFileSchema>;
+
+export const scanCodeAddressSchema = z.object({
+  address: z
+    .string()
+    .min(1, "Please enter a contract address")
+    .regex(/^0x[a-fA-F0-9]{40}$/, "Please enter a valid address"),
+  parent_id: z.string().optional(),
+});
+
+export type ScanCodeAddressFormValues = z.infer<typeof scanCodeAddressSchema>;
+
+export const uploadCodeFolderSchema = z.object({
+  fileMap: z
+    .record(z.string(), z.instanceof(File))
+    .refine(
+      (fileMap) => Object.keys(fileMap).length > 0,
+      "Please upload a folder with contract files",
+    ),
+  parent_id: z.string().optional(),
+});
+
+export type UploadCodeFolderFormValues = z.infer<typeof uploadCodeFolderSchema>;

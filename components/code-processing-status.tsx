@@ -95,7 +95,7 @@ export const CodeProcessingStatus: React.FC<CodeProcessingStatusProps> = ({
       case "success":
         return <CheckCircle className="size-8 text-green-400" />;
       case "error":
-        return <X className="size-8 text-red-400" />;
+        return <X className="size-8 text-destructive" />;
       default:
         return <Circle className="size-8 text-muted-foreground" />;
     }

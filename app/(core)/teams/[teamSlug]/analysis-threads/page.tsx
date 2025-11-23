@@ -1,3 +1,4 @@
+import { dashboardActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { AnalysisThreadsView } from "@/components/screens/analysis-threads";
 import TeamSubnav from "@/components/subnav/team";
@@ -21,7 +22,12 @@ const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const initialQuery = extractAnalysisThreadsQuery(resolvedSearchParams);
+  const currentUser = await dashboardActions.getUser();
+
+  const initialQuery = extractAnalysisThreadsQuery({
+    ...resolvedSearchParams,
+    user_id: currentUser?.id ?? "",
+  });
   const defaultQuery = { ...DefaultAnalysisThreadsQuery };
 
   return (
