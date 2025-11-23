@@ -100,7 +100,6 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
               </span>
               <Switch
                 id="project-toggle"
-                name="project-toggle"
                 checked={createForm.scopes.project === "write"}
                 onCheckedChange={() => togglePermission("project")}
                 disabled={createKeyMutation.isPending}
@@ -115,7 +114,6 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
               </span>
               <Switch
                 id="code-toggle"
-                name="code-toggle"
                 checked={createForm.scopes.code === "write"}
                 onCheckedChange={() => togglePermission("code")}
                 disabled={createKeyMutation.isPending}
@@ -130,7 +128,6 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
               </span>
               <Switch
                 id="analysis-toggle"
-                name="analysis-toggle"
                 checked={createForm.scopes.analysis === "write"}
                 onCheckedChange={() => togglePermission("analysis")}
                 disabled={createKeyMutation.isPending}
@@ -145,7 +142,6 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
               </span>
               <Switch
                 id="analysis-version-toggle"
-                name="analysis-version-toggle"
                 checked={createForm.scopes.analysis_version === "write"}
                 onCheckedChange={() => togglePermission("analysis_version")}
                 disabled={createKeyMutation.isPending}
@@ -160,7 +156,6 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
               </span>
               <Switch
                 id="chat-toggle"
-                name="chat-toggle"
                 checked={createForm.scopes.chat === "write"}
                 onCheckedChange={() => togglePermission("chat")}
                 disabled={createKeyMutation.isPending}
