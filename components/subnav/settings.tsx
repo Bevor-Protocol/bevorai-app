@@ -14,38 +14,38 @@ const SettingsSubnav: React.FC = () => {
   const navItems = [
     {
       label: "General",
-      href: `/teams/${teamSlug}/settings`,
+      href: `/${teamSlug}/settings`,
       icon: SettingsIcon,
     },
     {
       label: "API",
-      href: `/teams/${teamSlug}/settings/api`,
+      href: `/${teamSlug}/settings/api`,
       icon: Code,
     },
     {
       label: "Billing",
-      href: `/teams/${teamSlug}/settings/billing`,
+      href: `/${teamSlug}/settings/billing`,
       icon: DollarSign,
     },
     {
       label: "Invoices",
-      href: `/teams/${teamSlug}/settings/invoices`,
+      href: `/${teamSlug}/settings/invoices`,
       icon: File,
     },
     {
       label: "Plans",
-      href: `/teams/${teamSlug}/settings/plans`,
+      href: `/${teamSlug}/settings/plans`,
       icon: Files,
     },
     {
       label: "Members",
-      href: `/teams/${teamSlug}/settings/members`,
+      href: `/${teamSlug}/settings/members`,
       icon: User,
     },
   ];
 
   const isActive = (href: string): boolean => {
-    if (href === `/teams/${teamSlug}/settings`) {
+    if (href === `/${teamSlug}/settings`) {
       return pathname === href;
     }
     return pathname.startsWith(href);

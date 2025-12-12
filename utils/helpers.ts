@@ -34,14 +34,8 @@ export const constructSearchQuery = ({
   return search;
 };
 
-export const generateSlug = (name: string): string => {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "") // Remove special characters except spaces and hyphens
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
-    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+export const truncateId = (id: string, length: number = 9): string => {
+  return id.slice(0, length);
 };
 
 export const timeSince = (dateString: string): string => {

@@ -351,9 +351,8 @@
 }
 
 @utility shiki-container {
-  @apply text-sm font-mono;
   & * {
-    @apply text-sm;
+    @apply text-xs font-mono;
   }
   & > pre {
     @apply bg-background!;

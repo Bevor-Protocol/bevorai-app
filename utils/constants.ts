@@ -37,6 +37,8 @@ export const QUERY_KEYS = {
   ADD_ONS: "add-ons",
   PRODUCTS: "products",
   BREADCRUMBS: "breadcrumbs",
+  GITHUB_INSTALLATIONS: "github-installations",
+  GITHUB_REPOSITORIES: "github-repositories",
 };
 
 export const generateQueryKey = {
@@ -49,7 +51,6 @@ export const generateQueryKey = {
 
   team: (teamSlug: string): QueryKey => [QUERY_KEYS.TEAMS, teamSlug],
   teams: (): QueryKey => [QUERY_KEYS.TEAMS],
-  teamsOverview: (): QueryKey => [QUERY_KEYS.TEAMS, "overview"],
 
   allProjects: (): QueryKey => [QUERY_KEYS.PROJECTS],
   projects: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
@@ -79,6 +80,8 @@ export const generateQueryKey = {
     "nodes",
     filter,
   ],
+  codeRelations: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "relations"],
+  codeSimilarity: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "similarity"],
   codeSource: (codeId: string, sourceId: string): QueryKey => [
     QUERY_KEYS.CODES,
     codeId,
@@ -93,7 +96,6 @@ export const generateQueryKey = {
   ],
 
   chat: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId],
-  chatHead: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "head"],
   chatMessages: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "messages"],
   chatAttributes: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "attributes"],
   chats: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
@@ -102,33 +104,32 @@ export const generateQueryKey = {
     filter,
   ],
 
-  analysis: (analysisId: string): QueryKey => [QUERY_KEYS.ANALYSES, analysisId],
+  analysis: (threadId: string): QueryKey => [QUERY_KEYS.ANALYSES, threadId],
   analyses: (teamSlug: string, filter?: { [key: string]: string | undefined }): QueryKey => [
     QUERY_KEYS.ANALYSES,
     teamSlug,
     filter,
   ],
 
-  analysisHead: (analysisId: string): QueryKey => [QUERY_KEYS.ANALYSES, analysisId, "head"],
+  analysisHead: (threadId: string): QueryKey => [QUERY_KEYS.ANALYSES, threadId, "head"],
 
-  analysisVersionRecent: (analysisId: string): QueryKey => [
-    QUERY_KEYS.ANALYSES,
-    analysisId,
-    "recent",
-  ],
-  analysisVersion: (analysisVersionId: string): QueryKey => [
+  analysisLeafs: (threadId: string): QueryKey => [QUERY_KEYS.ANALYSES, threadId, "leafs"],
+  analysisDag: (threadId: string): QueryKey => [QUERY_KEYS.ANALYSES, threadId, "dag"],
+  analysisVersion: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSIS_VERSIONS, nodeId],
+  analysisVersionStatus: (nodeId: string): QueryKey => [
     QUERY_KEYS.ANALYSIS_VERSIONS,
-    analysisVersionId,
-  ],
-  analysisVersionStatus: (analysisVersionId: string): QueryKey => [
-    QUERY_KEYS.ANALYSIS_VERSIONS,
-    analysisVersionId,
+    nodeId,
     "status",
   ],
-  analysisVersionFindings: (analysisVersionId: string): QueryKey => [
+  analysisVersionFindings: (nodeId: string): QueryKey => [
     QUERY_KEYS.ANALYSIS_VERSIONS,
-    analysisVersionId,
+    nodeId,
     "findings",
+  ],
+  analysisVersionDraft: (nodeId: string): QueryKey => [
+    QUERY_KEYS.ANALYSIS_VERSIONS,
+    nodeId,
+    "draft",
   ],
 
   analysisVersions: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
@@ -142,4 +143,10 @@ export const generateQueryKey = {
   customer: (teamSlug: string): QueryKey => [QUERY_KEYS.CUSTOMERS, teamSlug],
   paymentMethods: (teamSlug: string): QueryKey => [QUERY_KEYS.PAYMENT_METHODS, teamSlug],
   products: (teamSlug: string): QueryKey => [QUERY_KEYS.PRODUCTS, teamSlug],
+
+  githubInstallations: (): QueryKey => [QUERY_KEYS.GITHUB_INSTALLATIONS],
+  githubRepositories: (installationId: number): QueryKey => [
+    QUERY_KEYS.GITHUB_REPOSITORIES,
+    installationId,
+  ],
 };

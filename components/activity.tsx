@@ -17,7 +17,7 @@ const entityTypeToAssetType: Record<string, ItemType> = {
   project: "project",
   team: "team",
   analysis: "analysis",
-  analysis_version: "analysis_version",
+  analysis_node: "analysis_node",
   chat: "chat",
   member: "member",
 };
@@ -27,7 +27,7 @@ const entityTypeToText: Record<string, string> = {
   project: "project",
   team: "team",
   analysis: "analysis",
-  analysis_version: "analysis version",
+  analysis_node: "analysis node",
   chat: "chat",
   member: "member",
 };
@@ -38,17 +38,17 @@ const getEntityRoute = (activity: ActivitySchemaI): string => {
 
   switch (entity_type) {
     case "project":
-      return `/teams/${team_slug}/projects/${project_slug}`;
+      return `/${team_slug}/${project_slug}`;
     case "code_version":
-      return `/teams/${team_slug}/projects/${project_slug}/codes/${related_id}`;
+      return `/${team_slug}/${project_slug}/codes/${related_id}`;
     case "analysis_thread":
-      return `/teams/${team_slug}/projects/${project_slug}/analysis-thread/${related_id}`;
-    case "analysis_version":
-      return `/teams/${team_slug}/projects/${project_slug}/analysis-thread/${related_id}`;
+      return `/${team_slug}/${project_slug}/analysis-threads/${related_id}`;
+    case "analysis_node":
+      return `/${team_slug}/${project_slug}/analysis-threads/${related_id}`;
     case "team":
-      return `/teams/${team_slug}`;
+      return `/${team_slug}`;
     case "member":
-      return `/teams/${team_slug}/settings/members`;
+      return `/${team_slug}/settings/members`;
     default:
       return "#";
   }

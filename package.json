@@ -31,12 +31,9 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@replit/codemirror-lang-solidity": "^6.0.2",
-    "@stytch/nextjs": "^21.15.0",
-    "@stytch/vanilla-js": "^5.40.0",
     "@tanstack/react-query": "^5.90.5",
     "@uiw/codemirror-theme-github": "^4.25.2",
     "@vercel/analytics": "^1.5.0",
-    "ahooks": "^3.9.6",
     "axios": "^1.12.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -53,9 +50,9 @@
     "react-markdown": "^9.1.0",
     "react-resizable-panels": "^3.0.6",
     "sonner": "^2.0.7",
-    "stytch": "^12.42.1",
     "tailwind-merge": "^3.3.1",
     "viem": "^2.38.2",
+    "vis-network": "^10.0.2",
     "zod": "^4.1.12"
   },
   "devDependencies": {

@@ -13,24 +13,24 @@ const ProjectSubnav: React.FC = () => {
   const navItems = [
     {
       label: "Overview",
-      href: `/teams/${teamSlug}/projects/${projectSlug}`,
+      href: `/${teamSlug}/${projectSlug}`,
     },
     {
       label: "Analysis Threads",
-      href: `/teams/${teamSlug}/projects/${projectSlug}/analysis-threads`,
+      href: `/${teamSlug}/${projectSlug}/analysis-threads`,
     },
     {
       label: "Codes",
-      href: `/teams/${teamSlug}/projects/${projectSlug}/codes`,
+      href: `/${teamSlug}/${projectSlug}/codes`,
     },
     {
       label: "My Chats",
-      href: `/teams/${teamSlug}/projects/${projectSlug}/chats`,
+      href: `/${teamSlug}/${projectSlug}/chats`,
     },
   ];
 
   const isActive = (href: string): boolean => {
-    if (href === `/teams/${teamSlug}/projects/${projectSlug}`) {
+    if (href === `/${teamSlug}/${projectSlug}`) {
       return pathname === href;
     }
     return pathname.startsWith(href);

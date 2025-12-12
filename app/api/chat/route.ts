@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest): Promise<Response> {
   try {
-    const { message, chatId, attributes } = await req.json();
+    const { chatId, ...rest } = await req.json();
 
     const sessionToken = req.cookies.get("bevor-token")?.value;
     const teamSlug = req.cookies.get("bevor-recent-team")?.value;
@@ -17,13 +17,9 @@ export async function POST(req: NextRequest): Promise<Response> {
     const stream = new ReadableStream({
       async start(controller: ReadableStreamDefaultController): Promise<void> {
         try {
-          // Make the API request to your backend
           const response = await streaming_api.post(
             `/chats/${chatId}`,
-            {
-              message,
-              attributes,
-            },
+            { ...rest },
             {
               headers: {
                 Authorization: `Bearer ${sessionToken}`,

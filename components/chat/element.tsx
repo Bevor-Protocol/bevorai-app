@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { formatDate } from "@/utils/helpers";
+import { formatDate, truncateId } from "@/utils/helpers";
 import { ChatSchemaI } from "@/utils/types";
 import { Clock, MessageSquare, MoreHorizontal, User } from "lucide-react";
 import Link from "next/link";
@@ -37,8 +37,8 @@ const ChatElementMenu: React.FC<{
 
   const viewPath =
     chat.chat_type === "analysis" && chat.analysis_thread_id
-      ? `/teams/${teamSlug}/projects/${projectSlug}/analysis-threads/${chat.analysis_thread_id}`
-      : `/teams/${teamSlug}/projects/${projectSlug}/codes/${chat.code_mapping_id}`;
+      ? `/${teamSlug}/${projectSlug}/analysis-threads/${chat.analysis_thread_id}`
+      : `/${teamSlug}/${projectSlug}/codes/${chat.code_mapping_id}`;
 
   const viewLabel = chat.chat_type === "analysis" ? "View analysis" : "View code";
 
@@ -87,7 +87,7 @@ export const ChatElementBare: React.FC<
     return "blue";
   };
 
-  const mappingId = chat.analysis_mapping_id || chat.code_mapping_id;
+  const mappingId = chat.analysis_node_id || chat.code_mapping_id;
 
   return (
     <div
@@ -110,7 +110,7 @@ export const ChatElementBare: React.FC<
       </div>
       <div className="min-w-0">
         <code className="text-xs font-mono text-muted-foreground truncate block">
-          {mappingId.slice(0, 8)}...
+          {truncateId(mappingId)}...
         </code>
       </div>
       <div className="text-xs text-muted-foreground whitespace-nowrap text-right">
@@ -137,9 +137,7 @@ export const ChatElement: React.FC<ChatElementProps> = ({
   projectSlug,
   isDisabled = false,
 }) => {
-  const chatPath = chat.analysis_thread_id
-    ? `/teams/${teamSlug}/projects/${projectSlug}/analysis-threads/${chat.analysis_thread_id}/chat`
-    : `/teams/${teamSlug}/projects/${projectSlug}/codes/${chat.code_mapping_id}/chat`;
+  const chatPath = `/${teamSlug}/${projectSlug}/chats/${chat.id}`;
 
   return (
     <Link

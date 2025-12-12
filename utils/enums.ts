@@ -12,6 +12,21 @@ export enum FindingLevel {
   LOW = "low",
 }
 
+export enum FindingType {
+  ACCESS_CONTROL = "access_control",
+  AUTHORIZATION = "authorization",
+  REENTRANCY = "reentrancy",
+  ARITHMETIC = "arithmetic",
+  INPUT_VALIDATION = "input_validation",
+  LOGIC = "logic",
+  DOS = "dos",
+  UPGRADEABILITY = "upgradeability",
+  ECONOMIC = "economic",
+  ORACLE = "oracle",
+  STATE_EXPOSURE = "state_exposure",
+  GAS = "gas",
+}
+
 export enum PlanStatusEnum {
   ACTIVE = "active",
   CANCELED = "canceled",

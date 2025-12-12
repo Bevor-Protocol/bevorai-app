@@ -1,4 +1,4 @@
-import { dashboardActions, tokenActions } from "@/actions/bevor";
+import { authActions, tokenActions } from "@/actions/bevor";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type EventType = "activities" | "code_versions" | "invites" | "teams";
@@ -46,7 +46,7 @@ export const useSSE = (options: UseSSEOptions = {}): UseSSEReturn => {
   const callbacksRef = useRef({ onMessage, onError, onOpen, onClose });
 
   useEffect(() => {
-    dashboardActions.getBaseUrl().then((url) => setBaseUrl(url + "/events"));
+    authActions.getBaseUrl().then((url) => setBaseUrl(url + "/events"));
   }, []);
 
   useEffect(() => {

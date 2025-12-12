@@ -1,0 +1,49 @@
+import { chatActions } from "@/actions/bevor";
+import Container from "@/components/container";
+import CodeVersionSubnav from "@/components/subnav/code-version";
+import { getQueryClient } from "@/lib/config/query";
+import { generateQueryKey } from "@/utils/constants";
+import { extractChatsQuery } from "@/utils/query-params";
+import { AsyncComponent } from "@/utils/types";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import ChatClient from "./chat-client";
+
+type ResolvedParams = {
+  teamSlug: string;
+  projectSlug: string;
+  chatId: string;
+};
+
+interface ChatsPageProps {
+  params: Promise<ResolvedParams>;
+}
+
+const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params }) => {
+  const queryClient = getQueryClient();
+  const resolvedParams = await params;
+
+  const chatQuery = extractChatsQuery({
+    project_slug: resolvedParams.projectSlug,
+  });
+
+  await Promise.all([
+    queryClient.fetchQuery({
+      queryKey: generateQueryKey.chats(resolvedParams.teamSlug, chatQuery),
+      queryFn: () => chatActions.getChats(resolvedParams.teamSlug, chatQuery),
+    }),
+    queryClient.fetchQuery({
+      queryKey: generateQueryKey.chat(resolvedParams.chatId),
+      queryFn: () => chatActions.getChat(resolvedParams.teamSlug, resolvedParams.chatId),
+    }),
+  ]);
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Container subnav={<CodeVersionSubnav />} contain>
+        <ChatClient {...resolvedParams} query={chatQuery} />
+      </Container>
+    </HydrationBoundary>
+  );
+};
+
+export default ChatsPage;

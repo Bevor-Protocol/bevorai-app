@@ -1,47 +1,49 @@
 "use server";
 
-import { idpApi } from "@/lib/api";
+import api, { idpApi } from "@/lib/api";
 import { TokenIssueResponse } from "@/utils/types";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import stytch from "stytch";
 import { revokeToken } from "./token.service";
-
-const stytchClient = new stytch.Client({
-  project_id: process.env.NEXT_STYTCH_PROJECT_ID!,
-  secret: process.env.NEXT_STYTCH_SECRET!,
-});
 
 /*
 setting the session_duration_minutes is required, with a minimum of 5mins.
 Otherwise, you don't get a session_token or a session_jwt in the response.
 */
 
-export const authenticateOauth = async (
-  token: string,
-): Promise<{ user_id: string; idp_jwt: string }> => {
-  return stytchClient.oauth
-    .authenticate({ token, session_duration_minutes: 5 })
-    .then((response) => ({ user_id: response.user_id, idp_jwt: response.session_jwt }));
+export const getBaseUrl = async (): Promise<string> => process.env.API_URL!;
+
+export const magicLink = async (
+  email: string,
+  data: {
+    login_magic_link_url: string;
+    signup_magic_link_url: string;
+  },
+): Promise<boolean> => {
+  return idpApi.post("/user/auth/magic-link", { ...data, email }).then((response) => {
+    return response.data.is_user_created;
+  });
 };
 
-export const authenticateMagicLink = async (
-  token: string,
-): Promise<{ user_id: string; idp_jwt: string }> => {
-  return stytchClient.magicLinks
-    .authenticate({ token, session_duration_minutes: 5 })
-    .then((response) => ({ user_id: response.user_id, idp_jwt: response.session_jwt }));
-};
-
-export const exchangeToken = async (data: {
-  idp_jwt: string;
-  user_id: string;
+export const authenticate = async (data: {
+  token: string;
+  method: "oauth" | "magic_links";
 }): Promise<TokenIssueResponse> => {
-  // handshake between IDP and my server
-  const headers = { Authorization: `Bearer ${data.idp_jwt}` };
-  const body = { user_id: data.user_id };
-  return idpApi.post("/token/issue", body, { headers }).then((response) => {
+  // the token acts as the authorization. This handles authentication + token issuance.
+  return idpApi.post("/user/auth/authenticate", data).then((response) => {
     return response.data;
+  });
+};
+
+export const getAttachToken = async (providerName: string): Promise<string> => {
+  return api.get(`/user/auth/attach?provider_name=${providerName}`).then((response) => {
+    return response.data.token;
+  });
+};
+
+export const detachOAuth = async (providerName: "google" | "github"): Promise<void> => {
+  return api.delete(`/user/auth/oauth/${providerName}`).then(() => {
+    return;
   });
 };
 

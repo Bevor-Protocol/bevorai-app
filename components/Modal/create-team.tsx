@@ -34,7 +34,7 @@ const CreateTeamModal: React.FC = () => {
       toast.success("Team created", {
         action: {
           label: "View",
-          onClick: () => router.push(`/teams/${id}`),
+          onClick: () => router.push(`/${id}`),
         },
         icon: <LucideIcon assetType="team" />,
       });

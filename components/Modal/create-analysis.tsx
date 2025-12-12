@@ -34,7 +34,7 @@ import React from "react";
 const CreateAnalysisModal: React.FC<{
   teamSlug: string;
   project?: ProjectSchemaI;
-  onSuccess?: (analysisId: string) => void;
+  onSuccess?: (threadId: string) => void;
 }> = ({ teamSlug, project, onSuccess }) => {
   const queryClient = useQueryClient();
   const initialState: CreateAnalysisThreadFormValues = {

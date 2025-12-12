@@ -3,16 +3,23 @@
 import api from "@/lib/api";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
-import { CreateAnalysisThreadFormValues, CreateAnalysisVersionFormValues } from "@/utils/schema";
 import {
-  AnalysisMappingSchemaI,
+  AddAnalysisFindingBody,
+  AnalysisFindingBody,
+  CreateAnalysisThreadFormValues,
+  CreateAnalysisVersionFormValues,
+  FindingFeedbackBody,
+  UpdateAnalysisNodeBody,
+} from "@/utils/schema";
+import {
+  AnalysisDagSchemaI,
+  AnalysisNodeSchemaI,
   AnalysisPaginationI,
-  AnalysisSchemaI,
   AnalysisStatusSchemaI,
+  AnalysisThreadSchemaI,
   AnalysisVersionPaginationI,
-  CodeMappingSchemaI,
+  DraftFindingSchemaI,
   FindingSchemaI,
-  RecentAnalysisSchemaI,
   TreeResponseI,
 } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
@@ -44,7 +51,7 @@ export const createAnalysisVersion = async (
 }> => {
   const toInvalidate = [[QUERY_KEYS.ANALYSIS_VERSIONS, teamSlug]];
   return api
-    .post("/analysis-versions", data, { headers: { "bevor-team-slug": teamSlug } })
+    .post("/analysis-nodes", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return {
         id: response.data.id,
@@ -55,47 +62,40 @@ export const createAnalysisVersion = async (
 
 export const getAnalysis = async (
   teamSlug: string,
-  analysisId: string,
-): Promise<AnalysisSchemaI> => {
+  threadId: string,
+): Promise<AnalysisThreadSchemaI> => {
   return api
-    .get(`/analysis-threads/${analysisId}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/analysis-threads/${threadId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
-export const getAnalysisRecentVersion = async (
+export const getLeafs = async (
   teamSlug: string,
-  analysisId: string,
-): Promise<RecentAnalysisSchemaI> => {
+  threadId: string,
+): Promise<AnalysisNodeSchemaI[]> => {
   return api
-    .get(`/analysis-threads/${analysisId}/recent/analysis-version`, {
-      headers: { "bevor-team-slug": teamSlug },
-    })
+    .get(`/analysis-threads/${threadId}/leafs`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data;
+      return response.data.results;
     });
 };
 
-export const getAnalysisRecentCodeVersion = async (
-  teamSlug: string,
-  analysisId: string,
-): Promise<CodeMappingSchemaI | null> => {
+export const getDAG = async (teamSlug: string, threadId: string): Promise<AnalysisDagSchemaI> => {
   return api
-    .get(`/analysis-threads/${analysisId}/recent/code-version`, {
-      headers: { "bevor-team-slug": teamSlug },
-    })
+    .get(`/analysis-threads/${threadId}/dag`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data.analysis_version;
+      return response.data;
     });
 };
 
 export const getStatus = async (
   teamSlug: string,
-  analysisId: string,
+  threadId: string,
 ): Promise<AnalysisStatusSchemaI> => {
   return api
-    .get(`/analysis-versions/${analysisId}/status`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/analysis-nodes/${threadId}/status`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
@@ -103,14 +103,14 @@ export const getStatus = async (
 
 export const submitFeedback = async (
   teamSlug: string,
-  analysisId: string,
+  threadId: string,
   data: {
     feedback?: string;
     verified?: boolean;
   },
 ): Promise<{ success: boolean }> => {
   return api
-    .post(`/analysis-threads/${analysisId}/feedback`, data, {
+    .post(`/analysis-threads/${threadId}/feedback`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -137,21 +137,18 @@ export const getAnalyses = async (
 
 export const getAnalysisVersion = async (
   teamSlug: string,
-  analysisVersionId: string,
-): Promise<AnalysisMappingSchemaI> => {
+  nodeId: string,
+): Promise<AnalysisNodeSchemaI> => {
   return api
-    .get(`/analysis-versions/${analysisVersionId}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/analysis-nodes/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
 };
 
-export const getScope = async (
-  teamSlug: string,
-  analysisVersionId: string,
-): Promise<TreeResponseI[]> => {
+export const getScope = async (teamSlug: string, nodeId: string): Promise<TreeResponseI[]> => {
   return api
-    .get(`/analysis-versions/${analysisVersionId}/scope`, {
+    .get(`/analysis-nodes/${nodeId}/scope`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -159,28 +156,62 @@ export const getScope = async (
     });
 };
 
-export const getFindings = async (
-  teamSlug: string,
-  analysisVersionId: string,
-): Promise<FindingSchemaI[]> => {
+export const getFindings = async (teamSlug: string, nodeId: string): Promise<FindingSchemaI[]> => {
   return api
-    .get(`/analysis-versions/${analysisVersionId}/findings`, {
+    .get(`/analysis-nodes/${nodeId}/findings`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
       return response.data.results;
+    });
+};
+
+export const updateFindings = async (
+  teamSlug: string,
+  nodeId: string,
+  data: UpdateAnalysisNodeBody,
+): Promise<{
+  id: string;
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [[QUERY_KEYS.ANALYSIS_VERSIONS, teamSlug]];
+  return api
+    .patch(`/analysis-nodes/${nodeId}/findings`, data, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then((response) => {
+      return {
+        id: response.data.id,
+        toInvalidate,
+      };
+    });
+};
+
+export const submitFindingFeedback = async (
+  teamSlug: string,
+  nodeId: string,
+  findingId: string,
+  data: FindingFeedbackBody,
+): Promise<{ toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [generateQueryKey.analysisVersionFindings(nodeId)];
+  return api
+    .post(`/analysis-nodes/${nodeId}/findings/${findingId}`, data, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then(() => {
+      return { toInvalidate };
     });
 };
 
 export const toggleVisibility = async (
   teamSlug: string,
-  analysisId: string,
+  threadId: string,
 ): Promise<{ toInvalidate: QueryKey[] }> => {
-  const toInvalidate = [generateQueryKey.analyses(teamSlug), generateQueryKey.analysis(analysisId)];
+  const toInvalidate = [generateQueryKey.analyses(teamSlug), generateQueryKey.analysis(threadId)];
 
   return api
     .patch(
-      `/analysis-threads/${analysisId}/visibility`,
+      `/analysis-threads/${threadId}/visibility`,
       {},
       { headers: { "bevor-team-slug": teamSlug } },
     )
@@ -199,7 +230,7 @@ export const getAnalysisVersions = async (
 ): Promise<AnalysisVersionPaginationI> => {
   const searchParams = buildSearchParams(filters);
   return api
-    .get(`/analysis-versions?${searchParams}`, {
+    .get(`/analysis-nodes?${searchParams}`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -209,18 +240,98 @@ export const getAnalysisVersions = async (
 
 export const forkAnalysis = async (
   teamSlug: string,
-  codeId: string,
+  analysisNodeId: string,
 ): Promise<{
   id: string;
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.ANALYSIS_VERSIONS, teamSlug]];
   return api
-    .post(`/analysis-versions/${codeId}/fork`, {}, { headers: { "bevor-team-slug": teamSlug } })
+    .post(
+      `/analysis-nodes/${analysisNodeId}/fork`,
+      {},
+      { headers: { "bevor-team-slug": teamSlug } },
+    )
     .then((response) => {
       return {
         id: response.data.id,
         toInvalidate,
       };
+    });
+};
+
+export const getDraft = async (
+  teamSlug: string,
+  analysisNodeId: string,
+): Promise<DraftFindingSchemaI[]> => {
+  return api
+    .get(`/analysis-nodes/${analysisNodeId}/draft`, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return response.data.results;
+    });
+};
+
+export const commitDraft = async (
+  teamSlug: string,
+  analysisNodeId: string,
+): Promise<{
+  id: string;
+}> => {
+  return api
+    .post(
+      `/analysis-nodes/${analysisNodeId}/draft/commit`,
+      {},
+      { headers: { "bevor-team-slug": teamSlug } },
+    )
+    .then((response) => {
+      return { id: response.data.id };
+    });
+};
+
+export const addStagedFinding = async (
+  teamSlug: string,
+  analysisNodeId: string,
+  data: AddAnalysisFindingBody,
+): Promise<{ toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [generateQueryKey.analysisVersionDraft(analysisNodeId)];
+  return api
+    .post(`/analysis-nodes/${analysisNodeId}/draft/stage/add`, data, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then(() => {
+      return { toInvalidate };
+    });
+};
+
+export const deleteStagedFinding = async (
+  teamSlug: string,
+  analysisNodeId: string,
+  findingId: string,
+): Promise<{ toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [generateQueryKey.analysisVersionDraft(analysisNodeId)];
+  return api
+    .post(
+      `/analysis-nodes/${analysisNodeId}/draft/stage/delete/${findingId}`,
+      {},
+      { headers: { "bevor-team-slug": teamSlug } },
+    )
+    .then(() => {
+      return { toInvalidate };
+    });
+};
+
+export const updateStagedFinding = async (
+  teamSlug: string,
+  analysisNodeId: string,
+  findingId: string,
+  data: AnalysisFindingBody,
+): Promise<{ toInvalidate: QueryKey[] }> => {
+  const toInvalidate = [generateQueryKey.analysisVersionDraft(analysisNodeId)];
+  return api
+    .post(`/analysis-nodes/${analysisNodeId}/draft/stage/edit/${findingId}`, data, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then(() => {
+      return { toInvalidate };
     });
 };

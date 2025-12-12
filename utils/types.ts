@@ -1,4 +1,3 @@
-import { FetchQueryOptions } from "@tanstack/react-query";
 import { FindingLevel, PlanStatusEnum } from "./enums";
 
 export interface DropdownOption {
@@ -26,6 +25,8 @@ export interface UserSchemaI extends BaseSchema {
 export interface UserDetailedSchemaI extends UserSchemaI {
   email?: string;
   wallet?: string;
+  is_google_oauth_connected: boolean;
+  is_github_oauth_connected: boolean;
 }
 
 export interface AnalysisStatusSchemaI {
@@ -44,7 +45,7 @@ export interface HeadSchema {
   analysis_version_id?: string;
 }
 
-export interface AnalysisSchemaI extends BaseSchema {
+export interface AnalysisThreadSchemaI extends BaseSchema {
   is_owner: boolean;
   is_public: boolean;
   name?: string;
@@ -55,16 +56,16 @@ export interface AnalysisSchemaI extends BaseSchema {
   user: UserSchemaI;
 }
 
-export interface AnalysisMappingSchemaI extends BaseSchema {
-  name: string;
+export interface AnalysisNodeSchemaI extends BaseSchema {
+  n_findings: number;
+  n_scopes: number;
   user: UserSchemaI;
-  analysis_id: string;
-  is_active: boolean;
+  analysis_thread_id: string;
+  code_version_id: string;
   is_owner: boolean;
   trigger: "manual_run" | "chat" | "manual_edit" | "fork" | "merge";
-  parent?: BaseSchema & { name: string };
-  children: (BaseSchema & { name: string })[];
-  version: AnalysisVersionSchemaI;
+  parent?: BaseSchema;
+  children: BaseSchema[];
 }
 
 export interface AnalysisVersionSchemaI extends BaseSchema {
@@ -75,27 +76,32 @@ export interface AnalysisVersionSchemaI extends BaseSchema {
 }
 
 export interface AnalysisPaginationI extends PaginationI {
-  results: (AnalysisSchemaI & { n: number })[];
+  results: (AnalysisThreadSchemaI & { n: number })[];
 }
 
 export interface AnalysisVersionPaginationI extends PaginationI {
-  results: (AnalysisMappingSchemaI & { n: number })[];
+  results: (AnalysisNodeSchemaI & { n: number })[];
+}
+
+export interface AnalysisDagEdgeSchemaI {
+  source: string;
+  target: string;
+}
+
+export interface AnalysisDagSchemaI {
+  id: string;
+  nodes: AnalysisNodeSchemaI[];
+  edges: AnalysisDagEdgeSchemaI[];
 }
 
 export interface HeadFullSchemaI extends HeadSchema {
-  analysis_version?: AnalysisMappingSchemaI;
+  analysis_version?: AnalysisNodeSchemaI;
   code_version?: CodeMappingSchemaI;
-}
-
-export interface RecentAnalysisSchemaI {
-  exists: boolean;
-  version?: AnalysisMappingSchemaI;
 }
 
 /*  CODE   */
 export interface FunctionScopeI {
   id: string;
-  merkle_hash: string;
   name: string;
   is_auditable: boolean;
   is_entry_point: boolean;
@@ -108,7 +114,6 @@ export interface FunctionScopeI {
 
 export interface ContractScopeI {
   id: string;
-  merkle_hash: string;
   name: string;
   is_within_scope: boolean;
   src_start_pos: number;
@@ -137,6 +142,8 @@ interface CallableSchemaI {
 
 export interface FindingSchemaI {
   id: string;
+  code_version_node_id: string;
+  status: "waiting" | "processing" | "success" | "failed" | "partial";
   callable: CallableSchemaI;
   findings: {
     id: string;
@@ -146,23 +153,66 @@ export interface FindingSchemaI {
     explanation: string;
     recommendation: string;
     reference: string;
-    metadata?: {
-      attested_at?: string;
-      is_verified: boolean;
-      feedback?: string;
-    };
+    validated_at?: Date;
+    invalidated_at?: Date;
+    feedback?: string;
+  }[];
+}
+
+export interface DraftFindingSchemaI {
+  id: string;
+  code_version_node_id: string;
+  status: "waiting" | "processing" | "success" | "failed" | "partial";
+  callable: CallableSchemaI;
+  findings: {
+    id: string;
+    type: string;
+    level: FindingLevel;
+    name: string;
+    explanation: string;
+    recommendation: string;
+    reference: string;
+    validated_at?: Date;
+    invalidated_at?: Date;
+    feedback?: string;
+    is_draft: boolean;
+    draft_id?: string;
+    draft_type?: "add" | "updated" | "delete";
+    base_finding_id?: string;
+  }[];
+  staged: {
+    id: string;
+    type: string;
+    level: FindingLevel;
+    name: string;
+    explanation: string;
+    recommendation: string;
+    reference: string;
+    validated_at?: Date;
+    invalidated_at?: Date;
+    feedback?: string;
+    is_draft: boolean;
+    draft_id?: string;
+    draft_type?: "add" | "updated" | "delete";
+    base_finding_id?: string;
+    code_version_node_id: string;
   }[];
 }
 
 export interface NodeSearchResponseI {
+  id: string;
   code_version_source_id: string;
   node_type: string;
-  merkle_hash: string;
   src_start_pos: number;
   src_end_pos: number;
   name: string;
   signature?: string;
   path: string;
+}
+
+export interface CodeRelationSchemaI {
+  parent?: CodeMappingSchemaI;
+  children: CodeMappingSchemaI[];
 }
 
 export interface ContractSourceResponseI extends BaseSchema {
@@ -188,11 +238,13 @@ export interface CreditSyncResponseI {
   credits_removed: number;
 }
 
-export interface ChatMessageI {
-  id: string;
-  role: "user" | "system";
-  timestamp: string;
-  content: string;
+export interface ChatMessageI extends BaseSchema {
+  chat_id: string;
+  chat_role: "user" | "system";
+  message: string;
+  tools: string[];
+  code_mapping_id: string;
+  analysis_node_id?: string;
 }
 
 export interface ChatPaginationI extends PaginationI {
@@ -207,14 +259,14 @@ export interface ChatSchemaI {
   project: ProjectSchemaI;
   user: UserSchemaI;
   analysis_thread_id?: string;
-  analysis_mapping_id?: string;
+  analysis_node_id?: string;
   code_mapping_id: string;
   chat_type: "code" | "analysis";
 }
 
 export interface ChatFullSchemaI extends ChatSchemaI {
   code_mapping: CodeMappingSchemaI;
-  analysis_mapping?: AnalysisMappingSchemaI;
+  analysis_node?: AnalysisNodeSchemaI;
 }
 
 export interface TeamSchemaI extends BaseSchema {
@@ -226,9 +278,6 @@ export interface TeamSchemaI extends BaseSchema {
 
 export interface TeamDetailedSchemaI extends TeamSchemaI {
   created_by_user: UserSchemaI;
-}
-
-export interface TeamOverviewSchemaI extends TeamDetailedSchemaI {
   n_projects: number;
   role: MemberRoleEnum;
   users: UserSchemaI[];
@@ -321,6 +370,31 @@ export interface ProjectSchemaI extends BaseSchema {
   is_default: boolean;
   team_id: string;
   created_by_user_id: string;
+  github_repo_id?: number;
+}
+
+export interface InstallationSchemaI {
+  id: number;
+  created_at: string;
+  updated_at: string;
+  account_login: string;
+  account_type: string;
+  account_url: string;
+  account_avatar_url: string;
+  suspended_at?: string | null;
+  deleted_at?: string | null;
+}
+
+export interface RepoSchemaI {
+  id: number;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  full_name: string;
+  is_private: boolean;
+  is_active: boolean;
+  installation: InstallationSchemaI;
+  url: string; // computed field
 }
 
 export interface ProjectDetailedSchemaI extends ProjectSchemaI {
@@ -328,6 +402,7 @@ export interface ProjectDetailedSchemaI extends ProjectSchemaI {
   n_analyses: number;
   team: TeamSchemaI;
   created_by_user: UserSchemaI;
+  github_repo?: RepoSchemaI | null;
 }
 
 export interface ProjectsPaginationI extends PaginationI {
@@ -345,10 +420,8 @@ export interface CodeMappingSchemaI extends BaseSchema {
   inferred_name: string;
   project_id: string;
   project_slug: string;
-  parent_version_id?: string;
   user: UserSchemaI;
   parent_id?: string;
-  children_ids: string[];
   version: CodeVersionSchemaI;
 }
 
@@ -357,9 +430,26 @@ export interface CodeVersionSchemaI extends BaseSchema {
   version_method: "tag" | "commit" | "hash" | "address";
   version_identifier: string;
   source_type: SourceTypeEnum;
-  source_url?: string;
   solc_version?: string;
-  embedding_status: "pending" | "embedded" | "embedding" | "failed";
+  status:
+    | "waiting"
+    | "parsing"
+    | "parsed"
+    | "failed_parsing"
+    | "embedding"
+    | "failed_embedding"
+    | "success";
+  commit?: CommitSchemaI;
+  repository_id?: number;
+}
+
+export interface CommitSchemaI {
+  sha: string;
+  author: string;
+  message: string;
+  ref: string;
+  branch: string;
+  timestamp: string;
 }
 
 export interface CodeVersionsPaginationI extends PaginationI {
@@ -564,55 +654,129 @@ export interface UpdateSubscriptionRequest {
   price_id: string;
 }
 
+export interface GithubBaseSchemaI {
+  is_authenticated: boolean;
+}
+
+interface GitHubInstallationAccount {
+  login: string;
+  id: number;
+  node_id: string;
+  avatar_url: string;
+  html_url: string;
+  type: "User" | "Organization";
+}
+
+interface GitHubInstallationPermissions {
+  metadata: string;
+  checks?: string | null;
+  contents?: string | null;
+}
+
+interface GitHubInstallationResponse {
+  id: number;
+  account: GitHubInstallationAccount;
+  access_tokens_url: string;
+  repositories_url: string;
+  html_url: string;
+  app_id: number;
+  target_id: number;
+  target_type: "User" | "Organization";
+  permissions: GitHubInstallationPermissions;
+  events: string[];
+  repository_selection: "all" | "selected";
+  created_at: string; // ISO datetime string
+  updated_at: string; // ISO datetime string
+  suspended_at?: string | null; // ISO datetime string
+}
+
+interface GitHubRepositoryOwner {
+  login: string;
+  id: number;
+  node_id: string;
+  avatar_url: string;
+  html_url: string;
+  type: "User" | "Organization";
+}
+
+interface GitHubRepositoryPermissions {
+  admin: boolean;
+  push: boolean;
+  pull: boolean;
+}
+
+interface GitHubRepositoryLicense {
+  key: string;
+  name: string;
+  url?: string | null;
+  spdx_id?: string | null;
+  node_id?: string | null;
+  html_url?: string | null;
+}
+
+interface GitHubRepository {
+  id: number;
+  node_id: string;
+  name: string;
+  full_name: string;
+  owner: GitHubRepositoryOwner;
+  private: boolean;
+  html_url: string;
+  description?: string | null;
+  fork: boolean;
+  url: string;
+  default_branch: string;
+  visibility?: "public" | "private" | "internal" | null;
+  created_at?: string | null; // ISO datetime string
+  updated_at?: string | null; // ISO datetime string
+  pushed_at?: string | null; // ISO datetime string
+  permissions?: GitHubRepositoryPermissions | null;
+  license?: GitHubRepositoryLicense | null;
+  language?: string | null;
+  forks_count?: number | null;
+  stargazers_count?: number | null;
+  watchers_count?: number | null;
+  open_issues_count?: number | null;
+  topics: string[];
+  archived?: boolean | null;
+  disabled?: boolean | null;
+}
+
+interface GithubRepositoriesResponse {
+  total_count: number;
+  repositories: GitHubRepository[];
+}
+
+interface GithubInstallationsResponse {
+  total_count: number;
+  installations: GitHubInstallationResponse[];
+}
+
+export interface GithubInstallationsSchemaI extends GithubBaseSchemaI {
+  installation_info?: GithubInstallationsResponse;
+}
+
+export interface GithubRepositoriesSchemaI extends GithubBaseSchemaI {
+  repository_info?: GithubRepositoriesResponse;
+}
+
 export type ItemType =
   | "team"
   | "project"
   | "code"
   | "chat"
   | "analysis"
-  | "analysis_version"
+  | "analysis_node"
   | "member"
   | "settings";
-
-export interface BreadcrumbItem {
-  route: string;
-  display_name: string;
-  type: ItemType;
-}
-
-export interface BreadcrumbPage {
-  display_name: string;
-  type: ItemType;
-}
-
-export interface BreadcrumbFavorite {
-  display_name: string;
-  type: ItemType;
-  id: string;
-  route: string;
-}
-
-export interface BreadcrumbNav {
-  display_name: string;
-  route: string;
-}
-
-export interface BreadcrumbSchemaI {
-  team_slug: string;
-  navs: BreadcrumbNav[];
-  items: BreadcrumbItem[];
-  page: BreadcrumbPage;
-  allow_favorite: boolean;
-  favorite?: BreadcrumbFavorite;
-}
 
 export type HrefProps = {
   teamSlug?: string;
   projectSlug?: string;
   codeId?: string;
-  analysisId?: string;
+  threadId?: string;
   chatId?: string;
-  analysisVersionId?: string;
+  nodeId?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -622,16 +786,3 @@ export type AsyncComponent<P = {}> = AsyncFunctionComponent<P>;
 interface AsyncFunctionComponent<P = {}> {
   (props: P): Promise<React.ReactNode>;
 }
-
-export type BreadcrumbQueryOptions = FetchQueryOptions<
-  BreadcrumbSchemaI,
-  Error,
-  BreadcrumbSchemaI,
-  (
-    | string
-    | {
-        [key: string]: string | undefined;
-      }
-  )[],
-  never
->;

@@ -1,4 +1,4 @@
-import { dashboardActions } from "@/actions/bevor";
+import { userActions } from "@/actions/bevor";
 import { Profile } from "@/components/header";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
@@ -14,10 +14,10 @@ const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children 
   let currentUser = null;
   let teams: TeamSchemaI[] = [];
   if (sessionToken) {
-    currentUser = await dashboardActions.getUser();
+    currentUser = await userActions.get();
     teams = await queryClient.fetchQuery({
       queryKey: generateQueryKey.teams(),
-      queryFn: () => dashboardActions.getTeams(),
+      queryFn: () => userActions.teams(),
     });
   }
 

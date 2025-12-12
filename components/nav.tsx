@@ -1,6 +1,6 @@
 "use client";
 
-import { authActions, dashboardActions, teamActions } from "@/actions/bevor";
+import { authActions, teamActions, userActions } from "@/actions/bevor";
 import ContainerBreadcrumb from "@/components/breadcrumbs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,38 +25,55 @@ import { useSSE } from "@/hooks/useSSE";
 import { generateQueryKey } from "@/utils/constants";
 import { trimAddress } from "@/utils/helpers";
 import { MemberInviteSchema, UserDetailedSchemaI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  QueryKey,
+  useMutation,
+  UseMutationResult,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Bell, Calendar, ExternalLink, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 
-const InviteItem: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
-  const queryClient = useQueryClient();
+const InviteItem: React.FC<{
+  invite: MemberInviteSchema;
+  acceptMutation: UseMutationResult<
+    {
+      id: string;
+      toInvalidate: QueryKey[];
+    },
+    Error,
+    string,
+    unknown
+  >;
+  rejectMutation: UseMutationResult<
+    {
+      toInvalidate: QueryKey[];
+    },
+    Error,
+    {
+      teamSlug: string;
+      inviteId: string;
+    },
+    unknown
+  >;
+}> = ({ invite, acceptMutation, rejectMutation }) => {
   const [showModal, setShowModal] = useState(false);
 
-  const acceptInviteMutation = useMutation({
-    mutationFn: async () => teamActions.acceptInvite(invite.id),
-    onSuccess: ({ toInvalidate }) => {
-      toInvalidate.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-      });
-      setShowModal(false);
-    },
-  });
+  const handleAccept = (): void => {
+    acceptMutation.mutate(invite.id);
+    setShowModal(false);
+  };
 
-  const rejectInviteMutation = useMutation({
-    mutationFn: async () => teamActions.removeInvite(invite.team.id, invite.id),
-    onSuccess: ({ toInvalidate }) => {
-      toInvalidate.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-      });
-      setShowModal(false);
-    },
-  });
+  const handleReject = (): void => {
+    rejectMutation.mutate({ teamSlug: invite.team.slug, inviteId: invite.id });
+    setShowModal(false);
+  };
 
-  const isPending = acceptInviteMutation.isPending || rejectInviteMutation.isPending;
-  const isSuccess = acceptInviteMutation.isSuccess || rejectInviteMutation.isSuccess;
+  const isPending = acceptMutation.isPending || rejectMutation.isPending;
+  const isSuccess = acceptMutation.isSuccess || rejectMutation.isSuccess;
 
   return (
     <>
@@ -95,16 +112,16 @@ const InviteItem: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
               </p>
             </div>
 
-            {acceptInviteMutation.error && (
-              <p className="text-sm text-destructive">{acceptInviteMutation.error.message}</p>
+            {acceptMutation.error && (
+              <p className="text-sm text-destructive">{acceptMutation.error.message}</p>
             )}
-            {acceptInviteMutation.isSuccess && (
+            {acceptMutation.isSuccess && (
               <p className="text-sm text-green-400">Successfully joined the team</p>
             )}
-            {rejectInviteMutation.error && (
-              <p className="text-sm text-destructive">{rejectInviteMutation.error.message}</p>
+            {rejectMutation.error && (
+              <p className="text-sm text-destructive">{rejectMutation.error.message}</p>
             )}
-            {rejectInviteMutation.isSuccess && (
+            {rejectMutation.isSuccess && (
               <p className="text-sm text-green-400">Rejected the invite</p>
             )}
           </div>
@@ -113,7 +130,7 @@ const InviteItem: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => rejectInviteMutation.mutate()}
+              onClick={handleReject}
               disabled={isPending || isSuccess}
             >
               Reject
@@ -122,7 +139,7 @@ const InviteItem: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
               type="button"
               className="bg-blue-600 hover:bg-blue-700"
               disabled={isPending || isSuccess}
-              onClick={() => acceptInviteMutation.mutate()}
+              onClick={handleAccept}
             >
               {isPending ? "Joining..." : "Accept"}
             </Button>
@@ -134,6 +151,26 @@ const InviteItem: React.FC<{ invite: MemberInviteSchema }> = ({ invite }) => {
 };
 
 const NotificationsDropdown: React.FC<{ invites: MemberInviteSchema[] }> = ({ invites }) => {
+  const queryClient = useQueryClient();
+  const acceptInviteMutation = useMutation({
+    mutationFn: async (inviteId: string) => teamActions.acceptInvite(inviteId),
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+    },
+  });
+
+  const rejectInviteMutation = useMutation({
+    mutationFn: async (data: { teamSlug: string; inviteId: string }) =>
+      teamActions.removeInvite(data.teamSlug, data.inviteId),
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+    },
+  });
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -180,7 +217,12 @@ const NotificationsDropdown: React.FC<{ invites: MemberInviteSchema[] }> = ({ in
         ) : (
           <div className="max-h-[400px] overflow-y-auto">
             {invites.map((invite) => (
-              <InviteItem key={invite.id} invite={invite} />
+              <InviteItem
+                key={invite.id}
+                invite={invite}
+                acceptMutation={acceptInviteMutation}
+                rejectMutation={rejectInviteMutation}
+              />
             ))}
           </div>
         )}
@@ -242,12 +284,12 @@ const UserDropdown: React.FC<{
 const AppNav: React.FC = () => {
   const { data: user } = useQuery({
     queryKey: generateQueryKey.currentUser(),
-    queryFn: () => dashboardActions.getUser(),
+    queryFn: () => userActions.get(),
   });
 
   const { data: invites = [], refetch } = useQuery({
     queryKey: generateQueryKey.userInvites(),
-    queryFn: async () => dashboardActions.getInvites(),
+    queryFn: async () => userActions.invites(),
   });
 
   useSSE({

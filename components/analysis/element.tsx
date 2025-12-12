@@ -12,23 +12,25 @@ import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/helpers";
-import { AnalysisMappingSchemaI, AnalysisSchemaI } from "@/utils/types";
+import { AnalysisNodeSchemaI, AnalysisThreadSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   BrickWallShieldIcon,
   Clock,
   GitBranch,
   Lock,
+  MessageSquare,
   MoreHorizontal,
   Shield,
   Unlock,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { toast } from "sonner";
 
 type AnalysisElementProps = {
-  analysis: AnalysisSchemaI & { n: number };
+  analysis: AnalysisThreadSchemaI & { n: number };
   teamSlug: string;
   isDisabled?: boolean;
   isPreview?: boolean;
@@ -68,7 +70,7 @@ export const AnalysisElementLoader: React.FC = () => {
 
 export const AnalysisVersionElementCompact: React.FC<
   {
-    analysisVersion: AnalysisMappingSchemaI;
+    analysisVersion: AnalysisNodeSchemaI;
   } & React.ComponentProps<"div">
 > = ({ analysisVersion, className, ...props }) => {
   return (
@@ -81,43 +83,115 @@ export const AnalysisVersionElementCompact: React.FC<
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-          <span>{analysisVersion.version.n_scopes} scopes</span>
+          <span>{analysisVersion.n_scopes} scopes</span>
           <span>•</span>
-          <span>{analysisVersion.version.n_findings} findings</span>
+          <span>{analysisVersion.n_findings} findings</span>
         </div>
       </div>
     </div>
   );
 };
 
+const getStatusIndicator = (
+  status: string,
+): { text: string; circleColor: string; textColor: string } => {
+  switch (status) {
+    case "success":
+      return { text: "Success", circleColor: "bg-green-500", textColor: "text-green-500" };
+    case "failed":
+      return { text: "Failed", circleColor: "bg-red-500", textColor: "text-red-500" };
+    case "processing":
+      return { text: "Processing", circleColor: "bg-blue-500", textColor: "text-blue-500" };
+    case "waiting":
+      return { text: "Waiting", circleColor: "bg-yellow-500", textColor: "text-yellow-500" };
+    case "partial":
+      return { text: "Partial", circleColor: "bg-orange-500", textColor: "text-orange-500" };
+    default:
+      return { text: "Unknown", circleColor: "bg-muted", textColor: "text-muted-foreground" };
+  }
+};
+
+const getTriggerLabel = (trigger: string): string => {
+  switch (trigger) {
+    case "manual_run":
+      return "Manual Run";
+    case "chat":
+      return "Chat";
+    case "manual_edit":
+      return "Manual Edit";
+    case "fork":
+      return "Fork";
+    case "merge":
+      return "Merge";
+    default:
+      return trigger;
+  }
+};
+
+const getTriggerIcon = (trigger: string): React.ReactElement => {
+  switch (trigger) {
+    case "chat":
+      return <MessageSquare className="size-3" />;
+    case "manual_run":
+    case "manual_edit":
+      return <User className="size-3" />;
+    case "fork":
+    case "merge":
+      return <GitBranch className="size-3" />;
+    default:
+      return <Shield className="size-3" />;
+  }
+};
+
 export const AnalysisVersionElementBare: React.FC<
   {
-    analysisVersion: AnalysisMappingSchemaI;
+    analysisVersion: AnalysisNodeSchemaI;
     isPreview?: boolean;
   } & React.ComponentProps<"div">
 > = ({ analysisVersion, className, ...props }) => {
+  const shortId = analysisVersion.id.slice(0, 8);
+  const status = "unknown"; // TODO: come back to this, if i want it.
+  const statusIndicator = getStatusIndicator(status);
+
   return (
     <div
-      className={cn("flex items-start justify-start gap-2 rounded-lg p-4", className)}
+      className={cn(
+        "grid grid-cols-[24px_minmax(0,120px)_auto_minmax(100px,1fr)_auto] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
+        className,
+      )}
       {...props}
     >
-      <Shield className="size-4 text-purple-foreground mt-1.5" />
-      <div className="grow space-y-2">
-        <div className="flex justify-between">
-          <p className="font-medium truncate text-lg">
-            v{analysisVersion.id.slice(0, 5) + "..." + analysisVersion.id.slice(-5)}
-          </p>
+      <div className="flex justify-center">
+        <Shield className="size-4 text-purple-400" />
+      </div>
+      <div className="min-w-0">
+        <p className="font-medium text-sm font-mono truncate">{shortId}</p>
+      </div>
+      <div className="flex flex-col shrink-0 justify-center">
+        <div className="flex items-center gap-2">
+          <div className={cn("size-2 rounded-full shrink-0", statusIndicator.circleColor)} />
+          <span className={cn("text-xs", statusIndicator.textColor)}>{statusIndicator.text}</span>
         </div>
-        <div className="flex justify-between">
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span>{analysisVersion.version.n_scopes} scopes</span>
-            <span>{analysisVersion.version.n_findings} findings</span>
-            <div className="flex items-center gap-1">
-              <Clock className="size-3" />
-              <span>{formatDate(analysisVersion.created_at)}</span>
-            </div>
-          </div>
+      </div>
+      <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
+        <div className="flex items-center gap-1 shrink-0">
+          {getTriggerIcon(analysisVersion.trigger)}
+          <span className="whitespace-nowrap">{getTriggerLabel(analysisVersion.trigger)}</span>
         </div>
+        <span>•</span>
+        <span className="whitespace-nowrap">
+          {analysisVersion.n_scopes} scope
+          {analysisVersion.n_scopes !== 1 ? "s" : ""}
+        </span>
+        <span>•</span>
+        <span className="whitespace-nowrap">
+          {analysisVersion.n_findings} finding
+          {analysisVersion.n_findings !== 1 ? "s" : ""}
+        </span>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap shrink-0">
+        <Clock className="size-3" />
+        <span>{formatDate(analysisVersion.created_at)}</span>
       </div>
     </div>
   );
@@ -126,17 +200,14 @@ export const AnalysisVersionElementBare: React.FC<
 export const AnalysisVersionElement: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  analysisVersion: AnalysisMappingSchemaI;
+  analysisVersion: AnalysisNodeSchemaI;
   isDisabled?: boolean;
 }> = ({ teamSlug, projectSlug, analysisVersion, isDisabled = false }) => {
   return (
     <Link
-      href={`/teams/${teamSlug}/projects/${projectSlug}/analysis-thread/`}
+      href={`/${teamSlug}/${projectSlug}/analysis-threads/${analysisVersion.analysis_thread_id}/nodes/${analysisVersion.id}`}
       aria-disabled={isDisabled}
-      className={cn(
-        "block border transition-colors rounded-lg",
-        isDisabled ? "cursor-default" : "hover:border-muted-foreground/60 cursor-pointer",
-      )}
+      className={cn("block group", isDisabled ? "cursor-default opacity-50" : "cursor-pointer")}
     >
       <AnalysisVersionElementBare analysisVersion={analysisVersion} />
     </Link>
@@ -144,7 +215,7 @@ export const AnalysisVersionElement: React.FC<{
 };
 
 const AnalysisElementMenu: React.FC<{
-  analysis: AnalysisSchemaI;
+  analysis: AnalysisThreadSchemaI;
   teamSlug: string;
 }> = ({ analysis, teamSlug }) => {
   const queryClient = useQueryClient();
@@ -209,7 +280,7 @@ const AnalysisElementMenu: React.FC<{
 
 export const AnalysisElementCompact: React.FC<
   {
-    analysis: AnalysisSchemaI;
+    analysis: AnalysisThreadSchemaI;
   } & React.ComponentProps<"div">
 > = ({ analysis, className, ...props }) => {
   return (
@@ -240,7 +311,7 @@ export const AnalysisElementCompact: React.FC<
 
 export const AnalysisElementBare: React.FC<
   {
-    analysis: AnalysisSchemaI;
+    analysis: AnalysisThreadSchemaI;
     teamSlug: string;
   } & React.ComponentProps<"div">
 > = ({ analysis, teamSlug, className, ...props }) => {
@@ -295,7 +366,7 @@ export const AnalysisElement: React.FC<AnalysisElementProps> = ({
 }) => {
   return (
     <Link
-      href={`/teams/${teamSlug}/projects/${analysis.project_slug}/analysis-threads/${analysis.id}`}
+      href={`/${teamSlug}/${analysis.project_slug}/analysis-threads/${analysis.id}`}
       aria-disabled={isDisabled}
       className={cn("block group", isDisabled ? "cursor-default opacity-50" : "cursor-pointer")}
     >

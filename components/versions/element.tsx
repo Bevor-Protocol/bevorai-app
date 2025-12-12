@@ -19,13 +19,14 @@ import {
   ArrowUp,
   Clock,
   Code,
-  ExternalLink,
   GitBranch,
+  GitCommit,
   MessageSquare,
   MoreHorizontal,
   Network,
   RotateCw,
   Upload,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -87,10 +88,28 @@ export const VersionMeta: React.FC<{
           <span>{version.network}</span>
         </div>
       )}
+      {!!version.commit && version.version_method === "commit" && (
+        <div className="flex items-center gap-1">
+          <GitBranch className="size-3" />
+          <span className="font-mono">{version.commit.branch}</span>
+        </div>
+      )}
+      {version.version_method === "hash" && (
+        <div className="flex items-center gap-1">
+          <GitCommit className="size-3" />
+          <span className="font-mono">{version.version_identifier.slice(0, 7)}</span>
+        </div>
+      )}
+      {version.commit && (
+        <div className="flex items-center gap-1">
+          <User className="size-3" />
+          <span>{version.commit.author}</span>
+        </div>
+      )}
       <span>{formatSourceType(version.source_type)}</span>
       <div className="flex items-center gap-1">
         <Clock className="size-3" />
-        <span>{formatDate(version.created_at)}</span>
+        <span>{formatDate(version.commit?.timestamp || version.created_at)}</span>
       </div>
     </div>
   );
@@ -112,6 +131,9 @@ export const CodeVersionElementCompact: React.FC<
     if (version.version.version_method === "address") {
       return trimAddress(version.version.version_identifier);
     }
+    if (version.version.version_method === "commit" || version.version.version_method === "hash") {
+      return version.version.version_identifier.slice(0, 7);
+    }
     return version.version.version_identifier.slice(0, 7) + "...";
   };
 
@@ -126,12 +148,34 @@ export const CodeVersionElementCompact: React.FC<
               {version.version.network}
             </Badge>
           )}
-          <Badge variant="outline" size="sm" className="font-mono text-xs shrink-0">
-            {formatVersionIdentifier()}
-          </Badge>
+          {!!version.version.commit && (
+            <div className="flex items-center gap-1 shrink-0">
+              <GitBranch className="size-3 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground font-mono">
+                {version.version.commit.branch}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-1 shrink-0">
+            {(version.version.version_method === "commit" ||
+              version.version.version_method === "hash") && (
+              <GitCommit className="size-3 text-muted-foreground" />
+            )}
+            <Badge variant="outline" size="sm" className="font-mono text-xs">
+              {formatVersionIdentifier()}
+            </Badge>
+          </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
           <span>{formatSourceType(version.version.source_type)}</span>
+          {version.version.commit && (
+            <>
+              <span>•</span>
+              <span className="truncate max-w-[200px]" title={version.version.commit.message}>
+                {version.version.commit.message}
+              </span>
+            </>
+          )}
           {version.version.solc_version && (
             <>
               <span>•</span>
@@ -162,10 +206,10 @@ const CodeVersionActions: React.FC<{
     },
   });
 
-  const chatPath = `/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.id}/chat`;
-  const uploadNewerPath = `/teams/${teamSlug}/projects/${version.project_slug}/codes/new?parentId=${version.id}`;
+  const chatPath = `/${teamSlug}/${version.project_slug}/codes/${version.id}/chat`;
+  const uploadNewerPath = `/${teamSlug}/${version.project_slug}/codes/new?parentId=${version.id}`;
   const parentPath = version.parent_id
-    ? `/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.parent_id}`
+    ? `/${teamSlug}/${version.project_slug}/codes/${version.parent_id}`
     : null;
 
   return (
@@ -190,7 +234,8 @@ const CodeVersionActions: React.FC<{
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        {version.version.embedding_status === "failed" && (
+        {(version.version.status === "failed_parsing" ||
+          version.version.status === "failed_embedding") && (
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
@@ -240,64 +285,58 @@ export const CodeVersionElementBare: React.FC<
     if (version.version.version_method === "address") {
       return trimAddress(version.version.version_identifier);
     }
+    if (version.version.version_method === "commit" || version.version.version_method === "hash") {
+      return version.version.version_identifier.slice(0, 7);
+    }
     return version.version.version_identifier.slice(0, 7);
   };
 
-  const getEmbeddingStatusBadge = (): React.ReactNode => {
-    switch (version.version.embedding_status) {
-      case "embedded":
-        return (
-          <Badge variant="green" size="sm" className="shrink-0">
-            Processed
-          </Badge>
-        );
-      case "embedding":
-        return (
-          <Badge variant="blue" size="sm" className="shrink-0">
-            Processing
-          </Badge>
-        );
-      case "pending":
-        return (
-          <Badge variant="outline" size="sm" className="shrink-0">
-            Pending
-          </Badge>
-        );
-      case "failed":
-        return (
-          <Badge variant="destructive" size="sm" className="shrink-0">
-            Failed
-          </Badge>
-        );
-      default:
-        return null;
-    }
+  const formatDateShort = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
   };
 
-  const getSourceTypeContent = (versionData: CodeVersionSchemaI): React.ReactNode => {
-    if (versionData.source_type === SourceTypeEnum.SCAN && versionData.network) {
-      return (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
-          <Network className="size-3" />
-          <span>{versionData.network}</span>
+  const getStatusIndicator = (): React.ReactNode => {
+    let statusText: string;
+    let circleColor: string;
+
+    switch (version.version.status) {
+      case "success":
+        statusText = "Processed";
+        circleColor = "bg-green-500";
+        break;
+      case "embedding":
+      case "parsing":
+        statusText = "Processing";
+        circleColor = "bg-muted";
+        break;
+      case "failed_parsing":
+      case "failed_embedding":
+        statusText = "Failed";
+        circleColor = "bg-red-500";
+        break;
+      case "waiting":
+      case "parsed":
+      default:
+        statusText = "Processing";
+        circleColor = "bg-muted";
+        break;
+    }
+
+    return (
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <div className={cn("size-2 rounded-full shrink-0", circleColor)} />
+          <span className="text-xs text-foreground">{statusText}</span>
         </div>
-      );
-    }
-    if (versionData.source_type === SourceTypeEnum.REPOSITORY && versionData.source_url) {
-      return (
-        <a
-          href={versionData.source_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap shrink-0"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <ExternalLink className="size-3" />
-          <span>Source</span>
-        </a>
-      );
-    }
-    return null;
+        <span className="text-xs text-muted-foreground">
+          {formatSourceType(version.version.source_type)}
+        </span>
+      </div>
+    );
   };
 
   const hasParent = !!version.parent_id;
@@ -305,7 +344,7 @@ export const CodeVersionElementBare: React.FC<
   return (
     <div
       className={cn(
-        "grid grid-cols-[24px_1fr_90px_80px_100px_80px_100px_60px_40px_100px_40px] items-center gap-3 py-3 px-3 border rounded-lg",
+        "grid grid-cols-[24px_minmax(0,200px)_minmax(100px,auto)_minmax(0,300px)_24px_auto_40px] items-center gap-3 py-3 px-3 border rounded-lg",
         className,
       )}
       {...props}
@@ -316,23 +355,53 @@ export const CodeVersionElementBare: React.FC<
       <div className="min-w-0">
         <h3 className="text-sm font-medium truncate">{version.inferred_name}</h3>
       </div>
-      <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap shrink-0">
-        {getSourceTypeContent(version.version)}
-      </div>
-      <span className="text-xs text-muted-foreground whitespace-nowrap">
-        {formatSourceType(version.version.source_type)}
-      </span>
-      <Badge variant="outline" size="sm" className="font-mono text-xs shrink-0">
-        {formatVersionIdentifier()}
-      </Badge>
-      <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">
-        {version.version.solc_version || ""}
-      </span>
-      <div className="flex items-center justify-center shrink-0">{getEmbeddingStatusBadge()}</div>
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-        <Icon size="sm" seed={version.user.id} className="shrink-0" />
-        <span className="truncate">{version.user.username}</span>
-      </div>
+      <div className="flex flex-col shrink-0 justify-center">{getStatusIndicator()}</div>
+      {(version.version.version_method === "commit" || version.version.version_method === "hash") &&
+      version.version.source_type === SourceTypeEnum.REPOSITORY ? (
+        <div className="flex flex-col gap-1 shrink-0 min-w-0 justify-center">
+          {version.version.commit && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+              <GitBranch className="size-3 shrink-0" />
+              <span className="font-mono truncate min-w-0">{version.version.commit.branch}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 min-w-0">
+            <GitCommit className="size-3 text-muted-foreground shrink-0" />
+            <span className="font-mono text-xs text-muted-foreground shrink-0">
+              {formatVersionIdentifier()}
+            </span>
+            {version.version.commit && (
+              <span
+                className="text-xs text-muted-foreground truncate min-w-0"
+                title={version.version.commit.message}
+              >
+                {version.version.commit.message}
+              </span>
+            )}
+          </div>
+        </div>
+      ) : version.version.source_type === SourceTypeEnum.SCAN ? (
+        <div className="flex flex-col gap-1 shrink-0 min-w-0 justify-center">
+          {version.version.network && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Network className="size-3" />
+              <span>{version.version.network}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 min-w-0">
+            <Code className="size-3 text-muted-foreground shrink-0" />
+            <span className="font-mono text-xs text-muted-foreground">
+              {version.version.version_identifier}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="font-mono text-xs text-muted-foreground">
+            {formatVersionIdentifier()}
+          </span>
+        </div>
+      )}
       <div className="flex items-center justify-center shrink-0">
         {hasParent && (
           <div
@@ -343,9 +412,11 @@ export const CodeVersionElementBare: React.FC<
           </div>
         )}
       </div>
-      <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap shrink-0">
-        <Clock className="size-3" />
-        <span>{formatDate(version.created_at)}</span>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0 whitespace-nowrap">
+        <span>{formatDateShort(version.created_at)}</span>
+        <span>by</span>
+        <Icon size="sm" seed={version.user.id} className="shrink-0" />
+        <span className="truncate">{version.user.username}</span>
       </div>
 
       <div className="flex items-center justify-center">
@@ -360,9 +431,10 @@ export const CodeVersionElement: React.FC<{
   teamSlug: string;
   isDisabled?: boolean;
 }> = ({ version, teamSlug, isDisabled = false }) => {
+  console.log(version);
   return (
     <Link
-      href={`/teams/${teamSlug}/projects/${version.project_slug}/codes/${version.id}`}
+      href={`/${teamSlug}/${version.project_slug}/codes/${version.id}`}
       className={cn(
         "block transition-colors",
         isDisabled ? "cursor-default opacity-50" : "hover:bg-accent/50 cursor-pointer",

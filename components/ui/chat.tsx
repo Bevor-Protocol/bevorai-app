@@ -8,6 +8,7 @@ import {
   Code,
   FileCode,
   Hash,
+  InfoIcon,
   Package,
   Shield,
   Variable,
@@ -35,7 +36,7 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
       <ScrollArea className="h-56">
         {attributes.map((attr, index) => (
           <div
-            key={attr.merkle_hash + index}
+            key={attr.id}
             data-autocomplete-item
             className={`px-3 py-2 cursor-pointer flex items-start space-x-2 rounded ${
               index === selectedAutocompleteIndex ? "bg-neutral-700" : "hover:bg-neutral-800"
@@ -80,17 +81,30 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
 };
 
 const Message: React.FC<
-  React.ComponentProps<"div"> & { role: ChatMessageI["role"]; content: string }
-> = ({ className, role, content, ...props }) => {
+  React.ComponentProps<"div"> & {
+    role: ChatMessageI["chat_role"];
+    content: string;
+    isDiffVersion: boolean;
+  }
+> = ({ className, role, content, isDiffVersion, ...props }) => {
   return (
     <div
       className={cn(
+        "relative",
         role === "user" && "rounded-lg px-2.5 py-1 bg-blue-600 max-w-2xl ml-auto",
         role === "system" && "max-w-none",
         className,
       )}
       {...props}
     >
+      {isDiffVersion && (
+        <InfoIcon
+          className={cn(
+            "absolute text-muted-foreground text-xs size-3",
+            role == "user" ? "-left-4" : "left-0 top-0",
+          )}
+        />
+      )}
       <ReactMarkdown className="markdown">{content}</ReactMarkdown>
     </div>
   );

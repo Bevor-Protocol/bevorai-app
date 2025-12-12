@@ -14,7 +14,9 @@ export const DefaultAnalysisThreadsQuery = {
   page: "0",
   page_size: "12",
   order: "desc",
+  order_by: "created_at",
   user_id: "",
+  project_id: "",
   project_slug: "",
   name: "",
 };
@@ -23,6 +25,7 @@ export const DefaultCodesQuery = {
   page: "0",
   page_size: "20",
   order: "desc",
+  order_by: "created_at",
   project_slug: "",
   user_id: "",
   method: "",
@@ -34,6 +37,7 @@ export const DefaultProjectsQuery = {
   page: "0",
   page_size: "6",
   order: "desc",
+  order_by: "created_at",
   name: "",
   tag: "",
 };
@@ -44,19 +48,22 @@ export const DefaultAnalysisNodesQuery = {
   order: "desc",
   user_id: "",
   project_id: "",
-  analysis_id: "",
-  status: "success",
+  project_slug: "",
+  analysis_thread_id: "",
+  code_mapping_id: "",
+  trigger: "",
 };
 
 export const DefaultChatsQuery = {
   page: "0",
   page_size: "12",
   order: "desc",
+  order_by: "created_at",
   project_id: "",
   project_slug: "",
   analysis_thread_id: "",
   code_mapping_id: "",
-  analysis_mapping_id: "",
+  analysis_node_id: "",
   chat_type: "",
 };
 

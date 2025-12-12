@@ -88,7 +88,7 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
   }, [html, htmlLoaded, positions, applyHighlight, scrollToElement, sourceQuery.data?.id]);
 
   return (
-    <div className="relative flex-1">
+    <div className="relative grow">
       {!htmlLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/50">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-border" />

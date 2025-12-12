@@ -4,13 +4,7 @@ import api from "@/lib/api";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import { CreateChatFormValues } from "@/utils/schema";
-import {
-  ChatFullSchemaI,
-  ChatMessageI,
-  ChatPaginationI,
-  HeadFullSchemaI,
-  NodeSearchResponseI,
-} from "@/utils/types";
+import { ChatFullSchemaI, ChatMessageI, ChatPaginationI, NodeSearchResponseI } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
 export const initiateChat = async (
@@ -60,22 +54,17 @@ export const getChatMessages = async (
     });
 };
 
-export const getChatHead = async (teamSlug: string, chatId: string): Promise<HeadFullSchemaI> => {
-  return api
-    .get(`/chats/${chatId}/head`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      return response.data;
-    });
-};
-
-export const updateChatHead = async (
+export const update = async (
   teamSlug: string,
   chatId: string,
-  data: { analysis_version_id?: string; code_version_id?: string; is_code_only?: boolean },
+  data: { analysis_version_id: string },
 ): Promise<{ toInvalidate: QueryKey[] }> => {
-  const toInvalidate = [generateQueryKey.chatHead(chatId)];
+  // we do NOT allow for changing the code version within a chat. That should spawn a new chat thread
+  // what we do allow for is "upgrading" a chat to start pulling in context of an analysis, or just changing the
+  // analysis node that it looks like + manipulates.
+  const toInvalidate = [generateQueryKey.chat(chatId), generateQueryKey.chatAttributes(chatId)];
   return api
-    .post(`/chats/${chatId}/head`, data, { headers: { "bevor-team-slug": teamSlug } })
+    .patch(`/chats/${chatId}`, data, { headers: { "bevor-team-slug": teamSlug } })
     .then(() => {
       return { toInvalidate };
     });

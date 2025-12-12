@@ -46,7 +46,7 @@ export const CodeProvider: React.FC<{
 }> = ({ children, initialSourceId, teamSlug, codeId }) => {
   const [codeVersionId, setCodeVersionId] = useState(codeId);
   const [positions, setPositions] = useState<{ start: number; end: number } | undefined>(undefined);
-  const [htmlLoaded, setHtmlLoaded] = useState(true);
+  const [htmlLoaded, setHtmlLoaded] = useState(false);
   const [sourceId, setSourceId] = useState<string | null>(initialSourceId);
   const [isSticky, setIsSticky] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null!); // thing that should stick to top (code holder)

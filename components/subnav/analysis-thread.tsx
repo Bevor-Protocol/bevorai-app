@@ -5,10 +5,10 @@ import { useParams, usePathname } from "next/navigation";
 import React from "react";
 
 const AnalysisThreadSubnav: React.FC = () => {
-  const { teamSlug, projectSlug, analysisId } = useParams<{
+  const { teamSlug, projectSlug, threadId } = useParams<{
     teamSlug: string;
     projectSlug: string;
-    analysisId: string;
+    threadId: string;
   }>();
   const pathname = usePathname();
 
@@ -17,16 +17,16 @@ const AnalysisThreadSubnav: React.FC = () => {
   const navItems = [
     {
       label: "Analysis Thread",
-      href: `/teams/${teamSlug}/projects/${projectSlug}/analysis-threads/${analysisId}`,
+      href: `/${teamSlug}/${projectSlug}/analysis-threads/${threadId}`,
     },
     {
-      label: "Chat",
-      href: `/teams/${teamSlug}/projects/${projectSlug}/analysis-threads/${analysisId}/chat`,
+      label: "Nodes",
+      href: `/${teamSlug}/${projectSlug}/analysis-threads/${threadId}/nodes`,
     },
   ];
 
   const isActive = (href: string): boolean => {
-    if (href === `/teams/${teamSlug}`) {
+    if (href === `/${teamSlug}/${projectSlug}/analysis-threads/${threadId}`) {
       return pathname === href;
     }
     return pathname.startsWith(href);

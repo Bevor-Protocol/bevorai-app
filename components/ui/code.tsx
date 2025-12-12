@@ -1,4 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { TreeResponseI } from "@/utils/types";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
@@ -55,8 +56,13 @@ export const CodeHeader: React.FC<React.ComponentProps<"div"> & { path?: string 
       >
         <div className="flex items-center gap-2 whitespace-nowrap">
           <FileText className="size-4 text-muted-foreground" />
-          <span className="text-sm font-medium">{getFileName(path ?? "")}</span>
-          <span className="text-xs text-neutral-500">{path}</span>
+          {!path && <Skeleton className="h-4 w-36" />}
+          {path && (
+            <>
+              <span className="text-sm font-medium">{getFileName(path ?? "")}</span>
+              <span className="text-xs text-neutral-500">{path}</span>
+            </>
+          )}
         </div>
         {children}
       </div>
@@ -115,7 +121,7 @@ export const CodeContent: React.FC<
 > = ({ className, ...props }) => {
   return (
     <div
-      className={cn("overflow-x-scroll border-r border-b border-l rounded-br-lg", className)}
+      className={cn("overflow-x-scroll border-r border-b border-l rounded-br-lg flex", className)}
       id="code-holder"
       {...props}
     />

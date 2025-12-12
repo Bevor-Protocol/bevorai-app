@@ -62,13 +62,14 @@ export const CodeVersionsView: React.FC<{
   const isFetching = versionsQuery.isFetching && !versionsQuery.data;
 
   return (
-    <div className="flex flex-col px-6">
+    <div className="flex flex-col">
       <CodeVersionFilters
         teamSlug={teamSlug}
         filters={filters}
         setFilters={setFilters}
         isAnySearched={isAnySearched}
         handleClear={handleClear}
+        includeProject={!defaultQuery.project_slug}
       />
       <div className="relative min-h-[200px] overflow-x-hidden">
         {hasResults && (

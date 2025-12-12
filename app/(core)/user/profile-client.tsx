@@ -1,6 +1,6 @@
 "use client";
 
-import { dashboardActions } from "@/actions/bevor";
+import { userActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -22,12 +22,11 @@ export const ProfileClient: React.FC = () => {
 
   const { data: user, isLoading } = useQuery({
     queryKey: generateQueryKey.currentUser(),
-    queryFn: async () => dashboardActions.getUser(),
+    queryFn: () => userActions.get(),
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (newUsername: string) =>
-      dashboardActions.updateUser({ username: newUsername }),
+    mutationFn: async (newUsername: string) => userActions.update({ username: newUsername }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

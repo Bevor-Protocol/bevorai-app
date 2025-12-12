@@ -18,7 +18,7 @@ const ASSET_ICON_MAP: Record<ItemType, LucideIconType> = {
   code: Code2,
   team: SquareUser,
   member: User,
-  analysis_version: Shield,
+  analysis_node: Shield,
   settings: Settings,
 };
 

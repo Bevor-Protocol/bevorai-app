@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Chrome, Github } from "lucide-react";
 import Image from "next/image";
 
-import { stytchClient } from "@/lib/config/stytch";
+import { authActions } from "@/actions/bevor";
+import { start } from "@/utils/auth";
+import { useMutation } from "@tanstack/react-query";
 import React, { useState } from "react";
 
 const CompanyContent: React.FC = () => {
@@ -32,27 +34,29 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
   const [isError, setIsError] = useState(false);
   const [email, setEmail] = useState("");
   const [isEmailError, setIsEmailError] = useState(false);
-  const [isMagicLinkSuccess, setIsMagicLinkSuccess] = useState(false);
-  const [isMagicLinkError, setIsMagicLinkError] = useState(false);
 
   const baseURL =
     typeof window !== "undefined"
       ? window.location.origin
       : process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
+  const magicLinkMutation = useMutation({
+    mutationFn: (email: string) =>
+      authActions.magicLink(email, {
+        login_magic_link_url: `${baseURL}/api/auth/callback`,
+        signup_magic_link_url: `${baseURL}/api/auth/callback`,
+      }),
+    onSettled: () => setIsLoggingIn(false),
+  });
+
   const handleOAuthLogin = (provider: "google" | "github"): void => {
     setIsLoggingIn(true);
-    if (provider === "google") {
-      stytchClient.oauth.google.start({
-        login_redirect_url: `${baseURL}/api/auth/callback`,
-        signup_redirect_url: `${baseURL}/api/auth/callback`,
-      });
-    } else {
-      stytchClient.oauth.github.start({
-        login_redirect_url: `${baseURL}/api/auth/callback`,
-        signup_redirect_url: `${baseURL}/api/auth/callback`,
-      });
-    }
+    // will re-direct, don't need to worry about state, unless it fails
+    start({ providerName: provider }).catch((error) => {
+      console.log(error);
+      setIsLoggingIn(false);
+      setIsError(true);
+    });
   };
 
   const validateEmail = (email: string): boolean => {
@@ -77,38 +81,16 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
       return;
     }
 
-    setIsLoggingIn(true);
-    setIsError(false);
-    setIsMagicLinkError(false);
-    setIsMagicLinkSuccess(false);
-
-    try {
-      const response = await stytchClient.magicLinks.email.loginOrCreate(email, {
-        login_magic_link_url: `${baseURL}/api/auth/callback`,
-        login_expiration_minutes: 10,
-        signup_magic_link_url: `${baseURL}/api/auth/callback`,
-        signup_expiration_minutes: 10,
-      });
-
-      if (response.status_code < 200 || response.status_code >= 400) {
-        throw new Error(`Magic link request failed with status ${response.status_code}`);
-      }
-      setIsMagicLinkSuccess(true);
-    } catch {
-      setIsMagicLinkError(true);
-    } finally {
-      setIsLoggingIn(false);
-    }
+    magicLinkMutation.mutate(email);
   };
 
   const handleBackToLogin = (): void => {
-    setIsMagicLinkSuccess(false);
-    setIsMagicLinkError(false);
+    magicLinkMutation.reset();
     setIsError(false);
     setEmail("");
   };
 
-  if (isMagicLinkSuccess) {
+  if (magicLinkMutation.isSuccess) {
     return (
       <div className="flex flex-col gap-6 w-full max-w-lg">
         <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-600 text-sm">
@@ -171,7 +153,7 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
         </FieldGroup>
       </form>
 
-      {isMagicLinkError && (
+      {magicLinkMutation.isError && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-destructive text-sm text-center">
           Failed to send magic link. Please try again.
         </div>

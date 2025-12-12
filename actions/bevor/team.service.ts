@@ -7,7 +7,8 @@ import {
   InviteMemberBody,
   MemberInviteSchema,
   MemberSchemaI,
-  TeamOverviewSchemaI,
+  TeamDetailedSchemaI,
+  TeamSchemaI,
   UpdateMemberBody,
   UpdateTeamBody,
 } from "@/utils/types";
@@ -26,7 +27,7 @@ export const createTeam = async (
   });
 };
 
-export const getTeam = async (teamSlug: string): Promise<TeamOverviewSchemaI> => {
+export const getTeam = async (teamSlug: string): Promise<TeamDetailedSchemaI> => {
   return api.get("/teams", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
     return response.data;
   });
@@ -49,7 +50,7 @@ export const updateTeam = async (
   teamSlug: string,
   data: UpdateTeamBody,
 ): Promise<{
-  team: TeamOverviewSchemaI;
+  team: TeamSchemaI;
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.TEAMS], [QUERY_KEYS.PROJECTS]];

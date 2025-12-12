@@ -49,9 +49,9 @@ const attemptRefresh = async (
     if (isSignIn) {
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {
-        return NextResponse.redirect(new URL(`/teams/${lastTeam}`, request.url));
+        return NextResponse.redirect(new URL(`/${lastTeam}`, request.url));
       } else {
-        return NextResponse.redirect(new URL("/teams", request.url));
+        return NextResponse.redirect(new URL("/", request.url));
       }
     }
 
@@ -64,19 +64,23 @@ const attemptRefresh = async (
   }
 };
 
+const staticRoots = new Set(["user", "admin", "sign-in", "account", "api"]);
+
 const proxy = async (request: NextRequest): Promise<NextResponse> => {
   const response = NextResponse.next();
   const { pathname, searchParams } = request.nextUrl;
 
-  if (pathname.startsWith("/teams")) {
-    const segments = pathname.split("/").filter(Boolean);
-    if (segments.length > 1) {
-      response.cookies.set("bevor-recent-team", segments[1]);
-    }
-  }
-
   if (pathname.includes(".") || pathname.startsWith("/api")) {
     return response;
+  }
+
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length > 0) {
+    const first = segments[0];
+    if (!staticRoots.has(first)) {
+      // treat the first segment as the team slug
+      response.cookies.set("bevor-recent-team", first);
+    }
   }
 
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
@@ -90,8 +94,8 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
           switch (err.response.data.code) {
             case "invalid_team_membership": {
               // either attempting access to a team they don't belong to, or the slug was changed
-              // and they weren't aware. In either instance, route to /teams and let that logic decide what to do.
-              const teamsRedirect = NextResponse.redirect(new URL("/teams", request.url));
+              // and they weren't aware. In either instance, route to / and let that logic decide what to do.
+              const teamsRedirect = NextResponse.redirect(new URL("/", request.url));
               teamsRedirect.cookies.delete("bevor-recent-team");
               return teamsRedirect;
             }
@@ -117,10 +121,9 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
       // If we got here, they're already logged in → redirect them away
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {
-        console.log(lastTeam);
-        return NextResponse.redirect(new URL(`/teams/${lastTeam.value}`, request.url));
+        return NextResponse.redirect(new URL(`/${lastTeam.value}`, request.url));
       } else {
-        return NextResponse.redirect(new URL("/teams", request.url));
+        return NextResponse.redirect(new URL("/", request.url));
       }
     } catch {
       return await attemptRefresh(request, response, true);
@@ -132,7 +135,7 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
 
 // Configure which routes the middleware should run on
 export const config = {
-  matcher: ["/teams/:path*", "/user/:path*", "/admin/:path*", "/sign-in"],
+  matcher: ["/user/:path*", "/admin/:path*", "/sign-in", "/:teamSlug/:path*"],
 };
 
 export default proxy;

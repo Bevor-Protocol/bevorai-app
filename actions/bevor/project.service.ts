@@ -15,15 +15,18 @@ export const createProject = async (
   teamSlug: string,
   data: ProjectFormValues,
 ): Promise<{
-  id: string;
+  project: ProjectDetailedSchemaI;
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.PROJECTS]];
+  if (data.github_repo_id) {
+    toInvalidate.push([QUERY_KEYS.GITHUB_REPOSITORIES]);
+  }
   return api
     .post("/projects", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return {
-        id: response.data.id,
+        project: response.data,
         toInvalidate,
       };
     });

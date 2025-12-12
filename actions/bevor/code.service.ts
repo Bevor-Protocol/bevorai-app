@@ -1,7 +1,7 @@
 "use server";
 
 import api from "@/lib/api";
-import { QUERY_KEYS } from "@/utils/constants";
+import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import {
   PasteCodeFileFormValues,
@@ -12,6 +12,7 @@ import {
 import {
   CodeCreateSchemaI,
   CodeMappingSchemaI,
+  CodeRelationSchemaI,
   CodeSourceContentSchemaI,
   CodeVersionsPaginationI,
   NodeSearchResponseI,
@@ -28,7 +29,7 @@ export const contractUploadFolder = async (
     toInvalidate: QueryKey[];
   }
 > => {
-  const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
+  const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
   const formData = new FormData();
   formData.append("project_id", projectId);
@@ -37,6 +38,7 @@ export const contractUploadFolder = async (
   });
   if (data.parent_id) {
     formData.append("parent_id", data.parent_id);
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
   }
 
   return api
@@ -58,13 +60,14 @@ export const contractUploadFile = async (
     toInvalidate: QueryKey[];
   }
 > => {
-  const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
+  const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
   const formData = new FormData();
   formData.append("files", data.file);
   formData.append("project_id", projectId);
   if (data.parent_id) {
     formData.append("parent_id", data.parent_id);
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
   }
 
   return api
@@ -86,7 +89,10 @@ export const contractUploadPaste = async (
     toInvalidate: QueryKey[];
   }
 > => {
-  const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
+  const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
+  if (data.parent_id) {
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  }
   return api
     .post(
       "/code-versions/create/paste",
@@ -110,7 +116,10 @@ export const contractUploadScan = async (
     toInvalidate: QueryKey[];
   }
 > => {
-  const toInvalidate = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
+  const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
+  if (data.parent_id) {
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  }
   return api
     .post(
       "/code-versions/create/scan",
@@ -133,6 +142,17 @@ export const getCodeVersion = async (
     .get(`/code-versions/${codeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
+    });
+};
+
+export const getCodeVersionSimilar = async (
+  teamSlug: string,
+  codeId: string,
+): Promise<{ score: number; version: CodeMappingSchemaI }[]> => {
+  return api
+    .get(`/code-versions/${codeId}/similarity`, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return response.data.results;
     });
 };
 
@@ -172,6 +192,17 @@ export const searchNodes = async (
     });
 };
 
+export const getRelations = async (
+  teamSlug: string,
+  codeId: string,
+): Promise<CodeRelationSchemaI> => {
+  return api
+    .get(`/code-versions/${codeId}/relations`, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return response.data;
+    });
+};
+
 export const getVersions = async (
   teamSlug: string,
   filters: {
@@ -201,6 +232,27 @@ export const retryEmbedding = async (
     .then((response) => {
       return {
         ...response.data,
+        toInvalidate,
+      };
+    });
+};
+
+export const updateCodeVersionParent = async (
+  teamSlug: string,
+  codeId: string,
+  parentId: string,
+): Promise<{
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [generateQueryKey.codeRelations(codeId)];
+  return api
+    .patch(
+      `/code-versions/${codeId}`,
+      { parent_id: parentId },
+      { headers: { "bevor-team-slug": teamSlug } },
+    )
+    .then(() => {
+      return {
         toInvalidate,
       };
     });

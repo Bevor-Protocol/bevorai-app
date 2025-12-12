@@ -1,6 +1,6 @@
 "use client";
 
-import { dashboardActions } from "@/actions/bevor";
+import { userActions } from "@/actions/bevor";
 import LucideIcon from "@/components/lucide-icon";
 import CreateProjectModal from "@/components/Modal/create-project";
 import CreateTeamModal from "@/components/Modal/create-team";
@@ -17,6 +17,7 @@ import { Icon } from "@/components/ui/icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generateQueryKey } from "@/utils/constants";
+import { truncateId } from "@/utils/helpers";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Plus, SlashIcon } from "lucide-react";
@@ -27,22 +28,22 @@ import React, { useMemo, useState } from "react";
 const ContainerBreadcrumb: React.FC<{
   toggle?: React.ReactNode;
 }> = ({ toggle }) => {
-  const { teamSlug, projectSlug, codeId, analysisId, analysisVersionId } = useParams();
+  const { teamSlug, projectSlug, codeId, threadId, nodeId } = useParams();
   const pathname = usePathname();
 
   const { data: teams } = useQuery({
     queryKey: generateQueryKey.teams(),
-    queryFn: () => dashboardActions.getTeams(),
+    queryFn: () => userActions.teams(),
   });
 
   const { data: projects } = useQuery({
     queryKey: generateQueryKey.allProjects(),
-    queryFn: () => dashboardActions.getAllProjects(),
+    queryFn: () => userActions.projects(),
   });
 
   const { data: user } = useQuery({
     queryKey: generateQueryKey.currentUser(),
-    queryFn: () => dashboardActions.getUser(),
+    queryFn: () => userActions.get(),
   });
 
   const curTeam = useMemo(() => {
@@ -72,7 +73,7 @@ const ContainerBreadcrumb: React.FC<{
 
   const currentRouteSegment = useMemo(() => {
     if (!teamSlug || !projectSlug) return null;
-    const basePath = `/teams/${teamSlug}/projects/${projectSlug}`;
+    const basePath = `/${teamSlug}/${projectSlug}`;
 
     if (pathname.startsWith(`${basePath}/analysis-threads`)) {
       return "analysis-threads";
@@ -88,7 +89,7 @@ const ContainerBreadcrumb: React.FC<{
 
   // Generate equivalent route for a new team/project
   const getEquivalentRoute = (newTeamSlug: string, newProjectSlug: string): string => {
-    const basePath = `/teams/${newTeamSlug}/projects/${newProjectSlug}`;
+    const basePath = `/${newTeamSlug}/${newProjectSlug}`;
     if (currentRouteSegment) {
       return `${basePath}/${currentRouteSegment}`;
     }
@@ -96,7 +97,7 @@ const ContainerBreadcrumb: React.FC<{
   };
 
   const projectLink = useMemo(() => {
-    const basePath = `/teams/${teamSlug}/projects/${projectSlug}`;
+    const basePath = `/${teamSlug}/${projectSlug}`;
 
     if (pathname.startsWith(`${basePath}/analysis-threads/`)) {
       return `${basePath}/analysis-threads`;
@@ -160,7 +161,7 @@ const ContainerBreadcrumb: React.FC<{
                       <span className="truncate max-w-40">Account</span>
                     </Link>
                   ) : curTeam ? (
-                    <Link href={`/teams/${curTeam.slug}`} className="flex items-center gap-2">
+                    <Link href={`/${curTeam.slug}`} className="flex items-center gap-2">
                       <Icon seed={curTeam.id} size="sm" />
                       <span className="truncate max-w-40">{curTeam.name}</span>
                     </Link>
@@ -204,11 +205,11 @@ const ContainerBreadcrumb: React.FC<{
                   </BreadcrumbSeparator>
                   <BreadcrumbItem>
                     <LucideIcon assetType="code" className="size-4 text-green-foreground" />
-                    {codeId}
+                    {truncateId(codeId as string)}
                   </BreadcrumbItem>
                 </>
               )}
-              {!!analysisId && (
+              {!!threadId && !nodeId && (
                 <>
                   <BreadcrumbSeparator>
                     <SlashIcon className="-rotate-25" />
@@ -216,21 +217,39 @@ const ContainerBreadcrumb: React.FC<{
 
                   <BreadcrumbItem>
                     <LucideIcon assetType="analysis" className="size-4 text-purple-foreground" />
-                    {analysisId}
+                    {truncateId(threadId as string)}
                   </BreadcrumbItem>
                 </>
               )}
-              {!!analysisVersionId && (
+              {!!nodeId && (
                 <>
+                  <BreadcrumbSeparator>
+                    <SlashIcon className="-rotate-25" />
+                  </BreadcrumbSeparator>
+
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link
+                        href={`/${teamSlug}/${projectSlug}/analysis-threads/${threadId}`}
+                        className="flex gap-1.5 items-center"
+                      >
+                        <LucideIcon
+                          assetType="analysis"
+                          className="size-4 text-purple-foreground"
+                        />
+                        {truncateId(threadId as string)}
+                      </Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
                   <BreadcrumbSeparator>
                     <SlashIcon className="-rotate-25" />
                   </BreadcrumbSeparator>
                   <BreadcrumbItem>
                     <LucideIcon
-                      assetType="analysis_version"
+                      assetType="analysis_node"
                       className="size-4 text-muted-foreground"
                     />
-                    {analysisVersionId}
+                    {truncateId(nodeId as string)}
                   </BreadcrumbItem>
                 </>
               )}
@@ -260,7 +279,7 @@ const ContainerBreadcrumb: React.FC<{
               {teams.map((team) => (
                 <Link
                   key={team.id}
-                  href={`/teams/${team.slug}`}
+                  href={`/${team.slug}`}
                   onMouseEnter={() => handleTeamHover(team.id)}
                   onClick={() => setPopoverOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
@@ -308,7 +327,7 @@ const ContainerBreadcrumb: React.FC<{
               {displayedProjects.map((project) => {
                 const href = currentRouteSegment
                   ? getEquivalentRoute(project.team.slug, project.slug)
-                  : `/teams/${project.team.slug}/projects/${project.slug}`;
+                  : `/${project.team.slug}/${project.slug}`;
 
                 return (
                   <Link
@@ -372,82 +391,5 @@ const ContainerBreadcrumb: React.FC<{
     </Popover>
   );
 };
-
-//   const { data: breadcrumb } = useQuery({
-//     queryKey: [QUERY_KEYS.BREADCRUMBS, queryType, ...queryKey],
-//     queryFn: () => breadcrumbFetchers[queryType as keyof typeof breadcrumbFetchers](teamSlug, id),
-//   });
-
-//   const { state, addItem, removeItem } = useLocalStorageState("bevor:starred");
-
-//   const isFavorite = state?.find((item) => item.id === breadcrumb?.favorite?.id);
-
-//   const toggleFavorite = React.useCallback(() => {
-//     if (!breadcrumb || !breadcrumb.favorite) return;
-//     if (isFavorite) {
-//       removeItem(breadcrumb.favorite.id);
-//     } else {
-//       addItem({
-//         id: breadcrumb.favorite.id,
-//         type: breadcrumb.favorite.type,
-//         teamSlug: breadcrumb.team_slug,
-//         label: breadcrumb.favorite.display_name,
-//         url: breadcrumb.favorite.route,
-//       });
-//     }
-//   }, [isFavorite, removeItem, addItem, breadcrumb]);
-
-//   if (!breadcrumb) {
-//     return <div className="flex flex-row gap-2 items-center h-8" />;
-//   }
-
-//   return (
-//     <div className="flex flex-row gap-2 items-center h-8">
-//       <Breadcrumb>
-//         <BreadcrumbList>
-//           {breadcrumb.items.map((item) => (
-//             <Fragment key={item.route}>
-//               <BreadcrumbLink asChild>
-//                 <Link href={item.route} className="flex flex-row gap-2 items-center max-w-40">
-//                   <LucideIcon assetType={item.type} className="size-4 shrink-0" />
-//                   <span className="truncate">{item.display_name}</span>
-//                 </Link>
-//               </BreadcrumbLink>
-//               <BreadcrumbSeparator />
-//             </Fragment>
-//           ))}
-//           <BreadcrumbItem>
-//             <BreadcrumbPage className="flex flex-row gap-2 items-center max-w-40">
-//               <LucideIcon assetType={breadcrumb.page.type} className="size-4 shrink-0" />
-//               <span className="truncate">{breadcrumb.page.display_name}</span>
-//             </BreadcrumbPage>
-//           </BreadcrumbItem>
-//         </BreadcrumbList>
-//       </Breadcrumb>
-//       {breadcrumb.favorite && (
-//         <Button variant="ghost" onClick={toggleFavorite} className="group" size="sm">
-//           <Star
-//             className={cn(
-//               "size-4 transition-colors",
-//               isFavorite
-//                 ? "fill-yellow-500 text-yellow-500 group-hover:fill-muted-foreground group-hover:text-muted-foreground"
-//                 : "text-muted-foreground group-hover:",
-//             )}
-//           />
-//         </Button>
-//       )}
-//       {toggle && toggle}
-//       <div className="flex flex-row gap-2 items-center">
-//         {breadcrumb.navs.map((item) => (
-//           <Link href={item.route} key={item.route}>
-//             <Badge variant="outline" size="sm">
-//               {item.display_name}
-//             </Badge>
-//           </Link>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// };
 
 export default ContainerBreadcrumb;

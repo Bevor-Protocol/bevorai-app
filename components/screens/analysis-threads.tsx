@@ -67,6 +67,7 @@ export const AnalysisThreadsView: React.FC<{
         setFilters={setFilters}
         isAnySearched={isAnySearched}
         handleClear={handleClear}
+        includeProject={!defaultQuery.project_slug}
       />
       {hasResults && (
         <>

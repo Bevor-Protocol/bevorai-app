@@ -1,6 +1,6 @@
 "use client";
 
-import { teamActions } from "@/actions/bevor";
+import { projectActions, teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { SearchInput } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
 import { DefaultCodesQuery } from "@/utils/query-params";
@@ -46,19 +46,38 @@ const NETWORKS = [
 ];
 
 const FilterContent: React.FC<{
+  teamSlug: string;
   filters: typeof DefaultCodesQuery;
   setFilters: React.Dispatch<React.SetStateAction<typeof DefaultCodesQuery>>;
-  members?: Array<{ user: { id: string; username: string } }>;
-}> = ({ filters, setFilters, members }) => {
+  includeProject: boolean;
+  variant?: "mobile" | "desktop";
+}> = ({ teamSlug, filters, setFilters, includeProject, variant = "mobile" }) => {
+  const isMobile = variant === "mobile";
+  const selectWidth = isMobile ? "w-full" : "w-[180px]";
+  const containerClass = isMobile
+    ? "flex flex-col gap-4"
+    : "hidden md:flex items-center justify-start gap-2 md:gap-4 flex-wrap";
+
+  const { data: members } = useQuery({
+    queryKey: generateQueryKey.members(teamSlug),
+    queryFn: () => teamActions.getMembers(teamSlug),
+  });
+
+  const { data: projects } = useQuery({
+    queryKey: generateQueryKey.projects(teamSlug, { page_size: "10" }),
+    queryFn: async () => projectActions.getProjects(teamSlug, { page_size: "10" }),
+    enabled: includeProject,
+  });
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className={containerClass}>
       <div className="relative">
         <Select
           value={filters.user_id}
           onValueChange={(value) => setFilters((prev) => ({ ...prev, user_id: value }))}
           key={`user-${filters.user_id || "empty"}`}
         >
-          <SelectTrigger className={cn("w-full", filters.user_id && "pr-7")}>
+          <SelectTrigger className={cn(selectWidth, filters.user_id && "pr-7")}>
             <SelectValue placeholder="User" />
           </SelectTrigger>
           <SelectContent>
@@ -84,13 +103,47 @@ const FilterContent: React.FC<{
           </Button>
         )}
       </div>
+      {includeProject && (
+        <div className="relative">
+          <Select
+            value={filters.project_slug}
+            onValueChange={(value) => setFilters((prev) => ({ ...prev, project_slug: value }))}
+            key={`project-${filters.project_slug || "empty"}`}
+          >
+            <SelectTrigger className={cn(selectWidth, filters.project_slug && "pr-7")}>
+              <SelectValue placeholder="Project" />
+            </SelectTrigger>
+            <SelectContent>
+              {projects?.results?.map((project) => (
+                <SelectItem key={project.slug} value={project.slug}>
+                  <Icon size="sm" seed={project.slug} className="shrink-0" />
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filters.project_slug && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFilters((prev) => ({ ...prev, project_slug: "" }));
+              }}
+            >
+              <X className="size-3" />
+            </Button>
+          )}
+        </div>
+      )}
       <div className="relative">
         <Select
           value={filters.method}
           onValueChange={(value) => setFilters((prev) => ({ ...prev, method: value }))}
           key={`method-${filters.method || "empty"}`}
         >
-          <SelectTrigger className={cn("w-full", filters.method && "pr-7")}>
+          <SelectTrigger className={cn(selectWidth, filters.method && "pr-7")}>
             <SelectValue placeholder="Upload Method" />
           </SelectTrigger>
           <SelectContent>
@@ -121,7 +174,7 @@ const FilterContent: React.FC<{
           onValueChange={(value) => setFilters((prev) => ({ ...prev, network: value }))}
           key={`network-${filters.network || "empty"}`}
         >
-          <SelectTrigger className={cn("w-full", filters.network && "pr-7")}>
+          <SelectTrigger className={cn(selectWidth, filters.network && "pr-7")}>
             <SelectValue placeholder="Network" />
           </SelectTrigger>
           <SelectContent>
@@ -151,7 +204,7 @@ const FilterContent: React.FC<{
           value={filters.order || "desc"}
           onValueChange={(value) => setFilters((prev) => ({ ...prev, order: value }))}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className={selectWidth}>
             <SelectValue placeholder="Order" />
           </SelectTrigger>
           <SelectContent>
@@ -170,13 +223,10 @@ export const CodeVersionFilters: React.FC<{
   setFilters: React.Dispatch<React.SetStateAction<typeof DefaultCodesQuery>>;
   isAnySearched: boolean;
   handleClear: () => void;
-}> = ({ teamSlug, filters, handleClear, setFilters, isAnySearched }) => {
+  includeProject: boolean;
+}> = ({ teamSlug, filters, handleClear, setFilters, isAnySearched, includeProject }) => {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const { data: members } = useQuery({
-    queryKey: generateQueryKey.members(teamSlug),
-    queryFn: () => teamActions.getMembers(teamSlug),
-  });
 
   return (
     <div className="py-4 sticky top-subheader z-10 bg-background">
@@ -218,7 +268,12 @@ export const CodeVersionFilters: React.FC<{
                   <SheetTitle>Filters</SheetTitle>
                 </SheetHeader>
                 <div className="flex-1 px-4 pb-4 overflow-y-auto">
-                  <FilterContent filters={filters} setFilters={setFilters} members={members} />
+                  <FilterContent
+                    teamSlug={teamSlug}
+                    filters={filters}
+                    setFilters={setFilters}
+                    includeProject={includeProject}
+                  />
                   {isAnySearched && (
                     <Button
                       variant="outline"
@@ -237,121 +292,18 @@ export const CodeVersionFilters: React.FC<{
           </Sheet>
         ) : (
           <>
-            <div className="hidden md:flex items-center justify-start gap-2 md:gap-4 flex-wrap">
-              <div className="relative">
-                <Select
-                  value={filters.user_id}
-                  onValueChange={(value) => setFilters((prev) => ({ ...prev, user_id: value }))}
-                  key={`user-${filters.user_id || "empty"}`}
-                >
-                  <SelectTrigger className={cn("w-[180px]", filters.user_id && "pr-7")}>
-                    <SelectValue placeholder="User" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members?.map((member) => (
-                      <SelectItem key={member.user.id} value={member.user.id}>
-                        <Icon size="sm" seed={member.user.id} />
-                        {member.user.username}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {filters.user_id && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setFilters((prev) => ({ ...prev, user_id: "" }));
-                    }}
-                  >
-                    <X className="size-3" />
-                  </Button>
-                )}
-              </div>
-              <div className="relative">
-                <Select
-                  value={filters.method}
-                  onValueChange={(value) => setFilters((prev) => ({ ...prev, method: value }))}
-                  key={`method-${filters.method || "empty"}`}
-                >
-                  <SelectTrigger className={cn("w-[180px]", filters.method && "pr-7")}>
-                    <SelectValue placeholder="Upload Method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SOURCE_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {filters.method && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setFilters((prev) => ({ ...prev, method: "" }));
-                    }}
-                  >
-                    <X className="size-3" />
-                  </Button>
-                )}
-              </div>
-              <div className="relative">
-                <Select
-                  value={filters.network}
-                  onValueChange={(value) => setFilters((prev) => ({ ...prev, network: value }))}
-                  key={`network-${filters.network || "empty"}`}
-                >
-                  <SelectTrigger className={cn("w-[180px]", filters.network && "pr-7")}>
-                    <SelectValue placeholder="Network" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {NETWORKS.map((network) => (
-                      <SelectItem key={network.value} value={network.value}>
-                        {network.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {filters.network && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setFilters((prev) => ({ ...prev, network: "" }));
-                    }}
-                  >
-                    <X className="size-3" />
-                  </Button>
-                )}
-              </div>
-              <div className="relative">
-                <Select
-                  value={filters.order || "desc"}
-                  onValueChange={(value) => setFilters((prev) => ({ ...prev, order: value }))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Order" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="desc">Descending</SelectItem>
-                    <SelectItem value="asc">Ascending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {isAnySearched && (
-                <Button variant="ghost" size="sm" onClick={handleClear} className="shrink-0">
-                  Clear All
-                </Button>
-              )}
-            </div>
+            <FilterContent
+              teamSlug={teamSlug}
+              filters={filters}
+              setFilters={setFilters}
+              includeProject={includeProject}
+              variant="desktop"
+            />
+            {isAnySearched && (
+              <Button variant="ghost" size="sm" onClick={handleClear} className="shrink-0">
+                Clear All
+              </Button>
+            )}
           </>
         )}
       </div>

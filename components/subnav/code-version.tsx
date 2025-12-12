@@ -17,16 +17,16 @@ const CodeVersionSubnav: React.FC = () => {
   const navItems = [
     {
       label: "Code Version",
-      href: `/teams/${teamSlug}/projects/${projectSlug}/codes/${codeId}`,
+      href: `/${teamSlug}/${projectSlug}/codes/${codeId}`,
     },
     {
       label: "Chat",
-      href: `/teams/${teamSlug}/projects/${projectSlug}/codes/${codeId}/chat`,
+      href: `/${teamSlug}/${projectSlug}/codes/${codeId}/chat`,
     },
   ];
 
   const isActive = (href: string): boolean => {
-    if (href === `/teams/${teamSlug}/projects/${projectSlug}/codes/${codeId}`) {
+    if (href === `/${teamSlug}/${projectSlug}/codes/${codeId}`) {
       return pathname === href;
     }
     return pathname.startsWith(href);

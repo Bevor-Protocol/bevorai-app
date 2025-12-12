@@ -143,9 +143,7 @@ export const CodeProcessingStatus: React.FC<CodeProcessingStatusProps> = ({
       </div>
       {isFullySuccessful && codeVersionId && (
         <Button asChild className="w-[200px] m-auto">
-          <Link
-            href={`/teams/${project.team.slug}/projects/${project.slug}/codes/${codeVersionId}`}
-          >
+          <Link href={`/${project.team.slug}/${project.slug}/codes/${codeVersionId}`}>
             View Version
           </Link>
         </Button>
