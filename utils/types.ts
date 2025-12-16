@@ -102,6 +102,7 @@ export interface HeadFullSchemaI extends HeadSchema {
 /*  CODE   */
 export interface FunctionScopeI {
   id: string;
+  generic_id: string;
   name: string;
   is_auditable: boolean;
   is_entry_point: boolean;
@@ -134,8 +135,19 @@ export interface TreeResponseI {
   contracts: ContractScopeI[];
 }
 
+export interface NodeSchemaI {
+  id: string;
+  code_version_id: string;
+  source_id: string;
+  node_type: string;
+  src_start_pos: number;
+  src_end_pos: number;
+  content: string;
+  children: object;
+}
+
 interface CallableSchemaI {
-  merkle_hash: string;
+  generic_id: string;
   name: string;
   signature: string;
 }
@@ -412,7 +424,14 @@ export interface ProjectsPaginationI extends PaginationI {
 /* CODE VERSION */
 export interface CodeCreateSchemaI {
   id: string;
-  status: "pending" | "embedding" | "embedded" | "failed";
+  status:
+    | "waiting"
+    | "parsing"
+    | "parsed"
+    | "failed_parsing"
+    | "embedding"
+    | "failed_embedding"
+    | "success";
 }
 
 export interface CodeMappingSchemaI extends BaseSchema {

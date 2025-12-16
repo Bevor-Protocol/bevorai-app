@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
 import { ChatMessageI } from "@/utils/types";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   chatId,
   fullWidth = false,
 }) => {
-  const [messages, setMessages] = useState<ChatMessageI[]>([]);
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
   const [currentEventType, setCurrentEventType] = useState("");
@@ -51,23 +51,18 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   });
 
   useEffect(() => {
-    if (chatMessageQuery.data) {
-      setMessages(chatMessageQuery.data);
-    }
-  }, [chatMessageQuery.data]);
-
-  useEffect(() => {
     scrollToBottom();
-  }, [messages, streamedContent, isAwaitingResponse]);
+  }, [chatMessageQuery.data, streamedContent, isAwaitingResponse]);
 
   useEffect(() => {
     const viewport = scrollViewportRef.current;
     if (!viewport) return;
 
     const checkScrollPosition = (): void => {
+      if (!chatMessageQuery.data?.length) return;
       const { scrollTop, scrollHeight, clientHeight } = viewport;
       const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setShowScrollToBottom(!isAtBottom && messages.length > 0);
+      setShowScrollToBottom(!isAtBottom && chatMessageQuery.data.length > 0);
     };
 
     checkScrollPosition();
@@ -76,7 +71,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     return (): void => {
       viewport.removeEventListener("scroll", checkScrollPosition);
     };
-  }, [messages.length]);
+  }, [chatMessageQuery.data?.length]);
 
   const scrollToBottom = (): void => {
     const viewport = scrollViewportRef.current;
@@ -87,13 +82,13 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
 
   const sendMessage = async (data: {
-    message: string;
+    message: ChatMessageI;
     chatId: string;
     approval_id?: string;
     is_approved?: boolean;
     attributes?: string[];
   }): Promise<void> => {
-    if (!data.message.trim() && !data.approval_id) return;
+    if (!data.message.message.trim() && !data.approval_id) return;
 
     setIsAwaitingResponse(true);
     if (!pendingApprovalId) {
@@ -104,20 +99,40 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     try {
       const body = {
         ...data,
-        message: data.message.trim() || "",
+        message: data.message.message.trim() || "",
         attributes: data.attributes || [],
       };
+
+      let bodyString: string;
+      try {
+        bodyString = JSON.stringify(body);
+      } catch (stringifyError) {
+        console.error("Failed to stringify request body:", stringifyError, body);
+        const errorMessage =
+          stringifyError instanceof Error ? stringifyError.message : String(stringifyError);
+        throw new Error(`Failed to serialize message: ${errorMessage}`);
+      }
 
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(body),
+        body: bodyString,
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.statusText}`);
+        const errorText = await response.text();
+        let errorMessage = `API request failed: ${response.statusText}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          if (errorText) {
+            errorMessage = errorText;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const reader = response.body?.getReader();
@@ -174,37 +189,35 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       }
 
       if (finalMessage) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            created_at: new Date().toISOString(),
-            chat_id: chatQuery.data.id,
-            chat_role: "system",
-            message: finalMessage,
-            tools: [],
-            code_mapping_id: chatQuery.data.code_mapping_id,
-            analysis_node_id: chatQuery.data.analysis_node_id,
+        const systemMessageData: ChatMessageI = {
+          id: (Date.now() + 1).toString(),
+          created_at: new Date().toISOString(),
+          chat_id: chatQuery.data.id,
+          chat_role: "system",
+          message: finalMessage,
+          tools: [],
+          code_mapping_id: chatQuery.data.code_mapping_id,
+          analysis_node_id: chatQuery.data.analysis_node_id,
+        };
+        // we already optimistically added the user message upon submission.
+        queryClient.setQueryData(
+          generateQueryKey.chatMessages(chatId),
+          (oldData: ChatMessageI[]) => {
+            return [...oldData, systemMessageData];
           },
-        ]);
+        );
         setStreamedContent("");
         setCurrentEventType("");
       }
-    } catch {
-      toast.error("Failed to send message");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          chat_id: chatQuery.data.id,
-          created_at: new Date().toISOString(),
-          chat_role: "system",
-          tools: [],
-          message: "Sorry, I encountered an error. Please try again.",
-          code_mapping_id: chatQuery.data.code_mapping_id,
-          analysis_node_id: chatQuery.data.analysis_node_id,
-        },
-      ]);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to send message";
+      toast.error(errorMessage);
+      // undo the optimistically added user message.
+      queryClient.setQueryData(generateQueryKey.chatMessages(chatId), (oldData: ChatMessageI[]) => {
+        const newData = oldData.slice(0, -1);
+        return newData;
+      });
     } finally {
       setIsLoading(false);
       setIsAwaitingResponse(false);
@@ -225,16 +238,32 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       analysis_node_id: chatQuery.data.analysis_node_id,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // optimistically add it.
+    queryClient.setQueryData(generateQueryKey.chatMessages(chatId), (oldData: ChatMessageI[]) => {
+      return [...oldData, userMessage];
+    });
 
     setIsLoading(true);
     setPendingApprovalId(null);
     setApprovalContent("");
-    sendMessage({ message, chatId, attributes });
+    sendMessage({ message: userMessage, chatId, attributes });
   };
 
   const handleApproval = async (isApproved: boolean): Promise<void> => {
     if (!pendingApprovalId) return;
+
+    // fake message. Can likely remove and just pass approvalId. We do not add this to the query client.
+    // if a user leaves the page then comes back, this should not be shown (And it's not stored in the DB).
+    const userMessage: ChatMessageI = {
+      id: Date.now().toString(),
+      created_at: new Date().toISOString(),
+      chat_id: chatQuery.data.id,
+      chat_role: "user",
+      message: "",
+      tools: [],
+      code_mapping_id: chatQuery.data.code_mapping_id,
+      analysis_node_id: chatQuery.data.analysis_node_id,
+    };
 
     const approvalId = pendingApprovalId;
     setIsLoading(true);
@@ -242,10 +271,15 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     setApprovalContent("");
     setStreamedContent("");
     setCurrentEventType("");
-    await sendMessage({ message: "", chatId, approval_id: approvalId, is_approved: isApproved });
+    await sendMessage({
+      message: userMessage,
+      chatId,
+      approval_id: approvalId,
+      is_approved: isApproved,
+    });
   };
 
-  const showEmptyState = messages.length === 0 && !isLoading;
+  const showEmptyState = chatMessageQuery.data?.length === 0 && !isLoading;
 
   return (
     <div
@@ -255,7 +289,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       )}
     >
       <div className="flex-1 min-h-0 flex flex-col">
-        {chatMessageQuery.isLoading && !messages.length && (
+        {chatMessageQuery.isLoading && (
           <div className="flex items-center justify-center h-full">
             <Loader className="size-6" />
           </div>
@@ -263,14 +297,14 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         {showEmptyState && !chatMessageQuery.isLoading && (
           <ChatEmptyState onSendMessage={handleSendMessage} />
         )}
-        {messages.length > 0 && (
+        {(chatMessageQuery.data ?? []).length > 0 && (
           <ScrollArea
             className="min-h-0 w-full no-scrollbar"
             ref={messagesContainerRef}
             viewportRef={scrollViewportRef as React.RefObject<HTMLDivElement>}
           >
             <div className="flex flex-col gap-4 max-w-3xl">
-              {messages.map((message) => (
+              {chatMessageQuery.data?.map((message) => (
                 <Chat.Message
                   role={message.chat_role}
                   content={message.message}
@@ -307,7 +341,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         )}
         <ChatInput
           teamSlug={teamSlug}
-          chatId={chatId}
+          codeId={chatQuery.data.code_mapping_id}
           onSendMessage={handleSendMessage}
           messagesContainerRef={messagesContainerRef}
         />

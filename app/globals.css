@@ -339,6 +339,46 @@
   @apply aspect-square z-0 p-[3px] rounded-full;
 }
 
+@utility code-panel {
+  --gap: 1.5rem;
+  --truncated: 20px;
+
+  gap: var(--gap);
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  & .finding {
+    flex-shrink: 0;
+    min-width: 0;
+    transition: width 500ms ease-in-out;
+  }
+
+  & .code {
+    flex-shrink: 0;
+    min-width: 0;
+    transition: width 500ms ease-in-out;
+  }
+
+  &[data-open="true"] .finding {
+    width: calc(66.66% - var(--gap) / 2);
+  }
+
+  &[data-open="true"] .code {
+    width: calc(33.33% - var(--gap) / 2);
+  }
+
+  &[data-open="false"] .finding {
+    width: calc(100% - var(--gap) - var(--truncated));
+  }
+
+  &[data-open="false"] .code {
+    width: var(--truncated);
+  }
+}
+
 @utility language-sol {
   counter-reset: step;
   counter-increment: step 0;

@@ -41,7 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useFormReducer } from "@/hooks/useFormReducer";
-import { useSSE } from "@/hooks/useSSE";
+import { useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
@@ -333,13 +333,11 @@ export const ProjectActivities: React.FC<{ teamSlug: string; projectSlug: string
   });
 
   useSSE({
-    url: `/project/${projectSlug}`,
-    autoConnect: true,
     onMessage: (message) => {
-      console.log(message);
+      console.log("PROJECT ACTIVITY MESSAGE", message);
       refetch();
     },
-    eventTypes: ["activities"],
+    eventTypes: ["activity"],
   });
 
   return <ActivityList activities={activities} />;

@@ -20,7 +20,6 @@ import {
   AnalysisVersionPaginationI,
   DraftFindingSchemaI,
   FindingSchemaI,
-  TreeResponseI,
 } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
@@ -90,17 +89,6 @@ export const getDAG = async (teamSlug: string, threadId: string): Promise<Analys
     });
 };
 
-export const getStatus = async (
-  teamSlug: string,
-  threadId: string,
-): Promise<AnalysisStatusSchemaI> => {
-  return api
-    .get(`/analysis-nodes/${threadId}/status`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      return response.data;
-    });
-};
-
 export const submitFeedback = async (
   teamSlug: string,
   threadId: string,
@@ -146,13 +134,16 @@ export const getAnalysisVersion = async (
     });
 };
 
-export const getScope = async (teamSlug: string, nodeId: string): Promise<TreeResponseI[]> => {
+export const getScope = async (
+  teamSlug: string,
+  nodeId: string,
+): Promise<AnalysisStatusSchemaI> => {
   return api
     .get(`/analysis-nodes/${nodeId}/scope`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
-      return response.data.results;
+      return response.data;
     });
 };
 

@@ -15,6 +15,7 @@ import {
   CodeRelationSchemaI,
   CodeSourceContentSchemaI,
   CodeVersionsPaginationI,
+  NodeSchemaI,
   NodeSearchResponseI,
   TreeResponseI,
 } from "@/utils/types";
@@ -178,18 +179,36 @@ export const getTree = async (teamSlug: string, codeId: string): Promise<TreeRes
     });
 };
 
-export const searchNodes = async (
+export const getNode = async (
   teamSlug: string,
   codeId: string,
-  data: {
-    name: string;
+  nodeId: string,
+): Promise<NodeSchemaI> => {
+  return api
+    .get(`/code-versions/${codeId}/nodes/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return response.data;
+    });
+};
+
+export const getNodes = async (
+  teamSlug: string,
+  codeId: string,
+  data?: {
+    name?: string;
+    source_id?: string;
+    node_type?: string;
   },
 ): Promise<NodeSearchResponseI[]> => {
-  return api
-    .post(`/code-versions/${codeId}/search`, data, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      return response.data.results;
-    });
+  const searchParams = new URLSearchParams(data);
+  let url = `/code-versions/${codeId}/nodes`;
+  if (searchParams) {
+    url += `?${searchParams.toString()}`;
+  }
+
+  return api.get(url, { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
+    return response.data.results;
+  });
 };
 
 export const getRelations = async (

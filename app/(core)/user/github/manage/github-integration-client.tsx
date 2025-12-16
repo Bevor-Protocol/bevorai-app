@@ -36,7 +36,7 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
   );
 
   const { data: repositories, isLoading: isLoadingRepositories } = useQuery({
-    queryKey: generateQueryKey.githubRepositories(selectedInstallationId ?? 0),
+    queryKey: generateQueryKey.githubRepositories(selectedInstallationId ?? 0, teamSlug),
     queryFn: () => {
       if (!selectedInstallationId) return null;
       return githubActions.getRepositories(selectedInstallationId, teamSlug);
@@ -187,7 +187,7 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
                     <div className="relative size-8 shrink-0 flex items-center justify-center">
                       <PlusCircle />
                     </div>
-                    <span className="text-sm">Add Github Account</span>
+                    <span className="text-sm">Manage Github Integration</span>
                   </div>
                 </SelectItem>
               </SelectContent>

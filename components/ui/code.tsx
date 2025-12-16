@@ -24,7 +24,7 @@ export const CodeCounter: React.FC<React.ComponentProps<"div">> = ({ className, 
     <div className="bg-background sticky top-subheader z-10">
       <div
         className={cn(
-          "flex items-center gap-2 border border-b rounded-tl-lg px-3 bg-background size-full",
+          "flex items-center gap-2 border-l border-t border-b rounded-tl-lg px-3 bg-background size-full",
           className,
         )}
         {...props}
@@ -51,7 +51,7 @@ export const CodeHeader: React.FC<React.ComponentProps<"div"> & { path?: string 
   return (
     <div className="bg-background sticky top-subheader z-10" id="code-header">
       <div
-        className="flex items-center justify-between border border-l-0 rounded-tr-lg pl-3 pr-1.5 bg-background size-full gap-6"
+        className="flex items-center justify-between border rounded-tr-lg pl-3 pr-1.5 bg-background size-full gap-6"
         {...props}
       >
         <div className="flex items-center gap-2 whitespace-nowrap">

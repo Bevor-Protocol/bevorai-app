@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
-import { useSSE } from "@/hooks/useSSE";
+import { useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
 import { trimAddress } from "@/utils/helpers";
 import { MemberInviteSchema, UserDetailedSchemaI } from "@/utils/types";
@@ -293,10 +293,9 @@ const AppNav: React.FC = () => {
   });
 
   useSSE({
-    url: "/user",
-    autoConnect: true,
-    eventTypes: ["invites"],
-    onMessage: () => {
+    eventTypes: ["invite"],
+    onMessage: (message) => {
+      console.log("USER INVITE MESSAGE RECEIVED", message);
       refetch();
     },
   });

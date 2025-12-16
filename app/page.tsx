@@ -10,14 +10,11 @@ interface MainProps {
 }
 
 const MainPage: AsyncComponent<MainProps> = async ({ searchParams }) => {
-  console.log("HIT");
   const { is_signup } = await searchParams;
   const cookieStore = await cookies();
   const recentTeamSlug = cookieStore.get("bevor-recent-team");
 
   const querySuffix = is_signup === "true" ? "?is_signup=true" : "";
-
-  console.log("recent team", recentTeamSlug?.value);
 
   if (recentTeamSlug?.value) {
     redirect(`/${recentTeamSlug.value}${querySuffix}`);

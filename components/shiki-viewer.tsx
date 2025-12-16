@@ -19,17 +19,44 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
     scrollToElement,
     htmlLoaded,
     setHtmlLoaded,
+    codeVersionId,
   } = useCode();
   const lastHtmlRef = useRef<string>("");
   const lastSourceIdRef = useRef<string | null>(null);
+  const lastCodeVersionIdRef = useRef<string | null>(null);
   const codeRef = useRef<HTMLDivElement>(null);
+  const isInitialRenderRef = useRef(true);
 
   useEffect(() => {
-    const highlightCode = async (): Promise<void> => {
-      if (!sourceQuery.data) return;
-      try {
+    const codeVersionChanged = lastCodeVersionIdRef.current !== codeVersionId;
+    if (codeVersionChanged) {
+      lastCodeVersionIdRef.current = codeVersionId;
+      lastSourceIdRef.current = null;
+      isInitialRenderRef.current = true;
+      setHtml("");
+      setHtmlLoaded(false);
+    }
+
+    if (!sourceQuery.data) {
+      if (!codeVersionChanged) {
+        setHtml("");
         setHtmlLoaded(false);
-        const result = await codeToHtml(sourceQuery.data.content, {
+        lastSourceIdRef.current = null;
+      }
+      return;
+    }
+
+    const sourceData = sourceQuery.data;
+    const highlightCode = async (): Promise<void> => {
+      const currentSourceId = sourceData.id;
+      const sourceChanged = lastSourceIdRef.current !== currentSourceId;
+
+      if (sourceChanged && !isInitialRenderRef.current) {
+        setHtmlLoaded(false);
+      }
+
+      try {
+        const result = await codeToHtml(sourceData.content, {
           lang: "solidity",
           theme: "github-dark",
           colorReplacements: {},
@@ -50,24 +77,35 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
           ],
         });
         setHtml(result);
+        lastSourceIdRef.current = currentSourceId;
+        isInitialRenderRef.current = false;
       } catch (error) {
         console.error("Error highlighting code:", error);
-        setHtml(`<pre><code>${sourceQuery.data.content}</code></pre>`);
+        const fallbackHtml = `<pre><code>${sourceData.content}</code></pre>`;
+        setHtml(fallbackHtml);
+        lastSourceIdRef.current = currentSourceId;
+        isInitialRenderRef.current = false;
       }
     };
-    if (!sourceQuery.data) return;
+
     highlightCode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourceQuery.data, setHtmlLoaded]);
+  }, [sourceQuery.data, codeVersionId, setHtmlLoaded]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // CodeProvider state updates cause a re-render. Since the className updates are not done
     // via JSX, we lose the class information when ANYTHING changes since we're just rendering an html string.
     // Doing this prevents that from happening.
-    if (!html || !codeRef.current) return;
+    if (!html) {
+      if (codeRef.current) {
+        codeRef.current.innerHTML = "";
+      }
+      return;
+    }
+    if (!codeRef.current) return;
     codeRef.current.innerHTML = html;
     setHtmlLoaded(true);
-  }, [html, setHtmlLoaded]);
+  }, [html, codeVersionId, setHtmlLoaded]);
 
   useLayoutEffect(() => {
     // on html changes, we need to wait for the paint in order to apply class changes.

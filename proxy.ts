@@ -70,7 +70,7 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
   const response = NextResponse.next();
   const { pathname, searchParams } = request.nextUrl;
 
-  if (pathname.includes(".") || pathname.startsWith("/api")) {
+  if (pathname.includes(".") || pathname.startsWith("/api") || pathname.startsWith("/_next")) {
     return response;
   }
 

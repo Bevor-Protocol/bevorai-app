@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { useSSE } from "@/hooks/useSSE";
+import { useSSE } from "@/providers/sse";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { MoveLeft } from "lucide-react";
 import * as React from "react";
@@ -20,10 +20,10 @@ const Steps: React.FC<{
   const [method, setMethod] = React.useState<string | null>(null);
   const sseToastId = React.useRef<string | number | undefined>(undefined);
 
-  const { connect } = useSSE({
-    autoConnect: false,
-    eventTypes: ["code_versions"],
+  const { updateClaims } = useSSE({
+    eventTypes: ["code"],
     onMessage: (message) => {
+      console.log("NEW CODE MESSAGE RECEIVED", message);
       let parsed: string;
       try {
         parsed = JSON.parse(message.data);
@@ -49,6 +49,13 @@ const Steps: React.FC<{
     },
   });
 
+  const handleSuccess = React.useCallback(
+    (id: string): void => {
+      updateClaims({ code_version_id: id });
+    },
+    [updateClaims],
+  );
+
   const nextStep = (): void => {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
@@ -73,13 +80,13 @@ const Steps: React.FC<{
         <MethodSelection setMethod={setMethod} nextStep={nextStep} isChild={!!parentId} />
       )}
       {currentStep === 2 && method === "scan" && (
-        <ContractAdressStep project={project} parentId={parentId} connect={connect} />
+        <ContractAdressStep project={project} parentId={parentId} onSuccess={handleSuccess} />
       )}
       {currentStep === 2 && method === "file" && (
-        <FileStep project={project} parentId={parentId} connect={connect} />
+        <FileStep project={project} parentId={parentId} onSuccess={handleSuccess} />
       )}
       {currentStep === 2 && method === "folder" && (
-        <FolderStep project={project} parentId={parentId} connect={connect} />
+        <FolderStep project={project} parentId={parentId} onSuccess={handleSuccess} />
       )}
     </div>
   );

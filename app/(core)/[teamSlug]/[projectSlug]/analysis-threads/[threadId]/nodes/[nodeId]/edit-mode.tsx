@@ -1,6 +1,6 @@
 "use client";
 
-import { analysisActions } from "@/actions/bevor";
+import { analysisActions, codeActions } from "@/actions/bevor";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -33,9 +34,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { generateQueryKey } from "@/utils/constants";
+import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { FindingLevel, FindingType } from "@/utils/enums";
 import {
   AddAnalysisFindingBody,
@@ -44,51 +46,17 @@ import {
 } from "@/utils/schema";
 import { DraftFindingSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronDown, Info, Plus, RotateCcw, XCircle } from "lucide-react";
+import { ChevronDown, Plus, RotateCcw, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { codeToHtml } from "shiki";
 import { toast } from "sonner";
-
-const getSeverityIcon = (level: FindingLevel): React.ReactElement => {
-  switch (level.toLowerCase()) {
-    case "critical":
-      return <XCircle className="size-4 text-red-500" />;
-    case "high":
-      return <AlertTriangle className="size-4 text-orange-500" />;
-    case "medium":
-      return <AlertTriangle className="size-4 text-yellow-500" />;
-    case "low":
-      return <Info className="size-4 text-blue-500" />;
-    default:
-      return <Info className="size-4 text-neutral-500" />;
-  }
-};
-
-const getSeverityColor = (level: FindingLevel): string => {
-  switch (level.toLowerCase()) {
-    case "critical":
-      return "border-red-500/20 bg-red-500/5";
-    case "high":
-      return "border-orange-500/20 bg-orange-500/5";
-    case "medium":
-      return "border-yellow-500/20 bg-yellow-500/5";
-    case "low":
-      return "border-blue-500/20 bg-blue-500/5";
-    default:
-      return "border-neutral-500/20 bg-neutral-500/5";
-  }
-};
-
-const levelOrder = [
-  FindingLevel.CRITICAL,
-  FindingLevel.HIGH,
-  FindingLevel.MEDIUM,
-  FindingLevel.LOW,
-];
+import { getSeverityBadgeClasses, getSeverityColor, getSeverityIcon, levelOrder } from "./scopes";
 
 type DraftFindingWithScope = DraftFindingSchemaI["findings"][0] & {
   scope: {
     id: string;
+    code_version_node_id: string;
     callable: DraftFindingSchemaI["callable"];
   };
 };
@@ -96,6 +64,7 @@ type DraftFindingWithScope = DraftFindingSchemaI["findings"][0] & {
 type MergedFindingWithScope = DraftFindingSchemaI["findings"][0] & {
   scope: {
     id: string;
+    code_version_node_id: string;
     callable: DraftFindingSchemaI["callable"];
   };
 };
@@ -103,8 +72,38 @@ type MergedFindingWithScope = DraftFindingSchemaI["findings"][0] & {
 type StagedFindingWithScope = DraftFindingSchemaI["staged"][0] & {
   scope: {
     id: string;
+    code_version_node_id: string;
     callable: DraftFindingSchemaI["callable"];
   };
+};
+
+type GroupingMode = "scope" | "severity" | "type";
+
+type GroupedData =
+  | {
+      mode: "scope";
+      groups: DraftFindingSchemaI[];
+    }
+  | {
+      mode: "severity";
+      groups: Array<{
+        key: FindingLevel;
+        findings: DraftFindingWithScope[];
+      }>;
+    }
+  | {
+      mode: "type";
+      groups: Array<{
+        key: string;
+        findings: DraftFindingWithScope[];
+      }>;
+    };
+
+const severityScoreMap: Record<FindingLevel, number> = {
+  [FindingLevel.CRITICAL]: 6,
+  [FindingLevel.HIGH]: 4,
+  [FindingLevel.MEDIUM]: 2,
+  [FindingLevel.LOW]: 1,
 };
 
 const getFindingsCountByLevel = (
@@ -134,33 +133,109 @@ const EditScopesList: React.FC<{
   onAddFinding: (data: AddAnalysisFindingBody) => void;
 }> = ({ teamSlug, nodeId, selectedFinding, onSelectFinding, onAddFinding }) => {
   const [openAddDialog, setOpenAddDialog] = useState<string | null>(null);
-  const [openScopes, setOpenScopes] = useState<Set<string>>(new Set());
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const [groupingMode, setGroupingMode] = useState<GroupingMode>("scope");
 
   const { data: draftScopes = [], isLoading } = useQuery<DraftFindingSchemaI[]>({
     queryKey: generateQueryKey.analysisVersionDraft(nodeId),
     queryFn: () => analysisActions.getDraft(teamSlug, nodeId),
   });
 
-  const sortedScopes = useMemo(() => {
-    return [...draftScopes].sort((a, b) => {
-      const aCount = a.findings.length;
-      const bCount = b.findings.length;
-      if (aCount !== bCount) {
-        return bCount - aCount;
-      }
-      return a.callable.name.localeCompare(b.callable.name);
+  const groupedData = useMemo((): GroupedData => {
+    if (groupingMode === "scope") {
+      return {
+        mode: "scope",
+        groups: draftScopes,
+      };
+    }
+
+    const allFindings: DraftFindingWithScope[] = [];
+    draftScopes.forEach((scope) => {
+      scope.findings.forEach((finding) => {
+        allFindings.push({
+          ...finding,
+          scope: {
+            id: scope.id,
+            code_version_node_id: scope.code_version_node_id,
+            callable: scope.callable,
+          },
+        });
+      });
     });
-  }, [draftScopes]);
+
+    if (groupingMode === "severity") {
+      const groups = levelOrder
+        .map((level) => ({
+          key: level,
+          findings: allFindings.filter((f) => f.level === level),
+        }))
+        .filter((group) => group.findings.length > 0);
+
+      return {
+        mode: "severity",
+        groups,
+      };
+    }
+
+    const typeGroups = new Map<string, DraftFindingWithScope[]>();
+    allFindings.forEach((finding) => {
+      const type = finding.type;
+      if (!typeGroups.has(type)) {
+        typeGroups.set(type, []);
+      }
+      typeGroups.get(type)!.push(finding);
+    });
+
+    const groups = Array.from(typeGroups.entries())
+      .map(([key, findings]) => {
+        const sortedFindings = [...findings].sort((a, b) => {
+          const scoreA = severityScoreMap[a.level as FindingLevel] ?? 0;
+          const scoreB = severityScoreMap[b.level as FindingLevel] ?? 0;
+          return scoreB - scoreA;
+        });
+        const totalScore = sortedFindings.reduce(
+          (sum, f) => sum + (severityScoreMap[f.level as FindingLevel] ?? 0),
+          0,
+        );
+        return { key, findings: sortedFindings, totalScore };
+      })
+      .sort((a, b) => {
+        if (b.totalScore !== a.totalScore) {
+          return b.totalScore - a.totalScore;
+        }
+        return a.key.localeCompare(b.key);
+      })
+      .map(({ key, findings }) => ({ key, findings }));
+
+    return {
+      mode: "type",
+      groups,
+    };
+  }, [draftScopes, groupingMode]);
 
   React.useEffect(() => {
-    if (selectedFinding && !openScopes.has(selectedFinding.scope.id)) {
-      setOpenScopes(new Set([...openScopes, selectedFinding.scope.id]));
+    if (!selectedFinding) return;
+
+    if (groupingMode === "scope") {
+      if (!openGroups.has(selectedFinding.scope.id)) {
+        setOpenGroups(new Set([...openGroups, selectedFinding.scope.id]));
+      }
+    } else if (groupingMode === "severity") {
+      const groupKey = selectedFinding.level;
+      if (!openGroups.has(groupKey)) {
+        setOpenGroups(new Set([...openGroups, groupKey]));
+      }
+    } else if (groupingMode === "type") {
+      const groupKey = selectedFinding.type;
+      if (!openGroups.has(groupKey)) {
+        setOpenGroups(new Set([...openGroups, groupKey]));
+      }
     }
-  }, [selectedFinding, openScopes]);
+  }, [selectedFinding, groupingMode, openGroups]);
 
   if (isLoading) {
     return (
-      <div className="flex flex-col space-y-4 overflow-y-auto pr-2">
+      <div className="flex flex-col space-y-4 pr-2">
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-20 w-full rounded-lg" />
         ))}
@@ -168,180 +243,648 @@ const EditScopesList: React.FC<{
     );
   }
 
-  if (sortedScopes.length === 0) {
-    return <div className="text-sm text-muted-foreground py-4 text-center">No scopes found</div>;
+  const hasData =
+    groupingMode === "scope" ? groupedData.groups.length > 0 : groupedData.groups.length > 0;
+
+  if (!hasData) {
+    return <div className="text-sm text-muted-foreground py-4 text-center">No findings found</div>;
   }
 
   return (
-    <div className="flex flex-col space-y-4 overflow-y-auto pr-2">
-      {sortedScopes.map((scope) => {
-        const counts = getFindingsCountByLevel(scope.findings);
-        const hasFindings = scope.findings.length > 0;
-        const isOpen = openScopes.has(scope.id);
+    <div className="flex flex-col space-y-2">
+      <Select
+        value={groupingMode}
+        onValueChange={(value) => setGroupingMode(value as GroupingMode)}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="scope">Group by Scope</SelectItem>
+          <SelectItem value="severity">Group by Severity</SelectItem>
+          <SelectItem value="type">Group by Type</SelectItem>
+        </SelectContent>
+      </Select>
+      <ScrollArea className="flex flex-col space-y-4 pr-2 overflow-y-auto max-h-[calc(100svh-var(--spacing-header)-var(--spacing-subheader)-9rem-1.5rem-2rem)]">
+        <div className="w-[350px]">
+          {groupingMode === "scope"
+            ? (groupedData as { mode: "scope"; groups: DraftFindingSchemaI[] }).groups.map(
+                (scope) => {
+                  const counts = getFindingsCountByLevel(scope.findings);
+                  const hasFindings = scope.findings.length > 0;
+                  const isOpen = openGroups.has(scope.id);
 
-        return (
-          <Collapsible
-            key={scope.id}
-            open={isOpen}
-            onOpenChange={(open) => {
-              const newOpenScopes = new Set(openScopes);
-              if (open) {
-                newOpenScopes.add(scope.id);
-              } else {
-                newOpenScopes.delete(scope.id);
-              }
-              setOpenScopes(newOpenScopes);
-            }}
-            className="group"
-          >
-            <div className="space-y-2">
-              <CollapsibleTrigger
-                className={cn(
-                  "w-full text-left flex items-start gap-2 p-2 data-[state=open]:[&>svg]:rotate-180",
-                  "rounded-lg hover:bg-accent transition-colors",
-                )}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="font-medium truncate min-w-0 flex-1">{scope.callable.name}</div>
-                    {hasFindings ? (
-                      <div className="flex items-center gap-2 shrink-0">
-                        {levelOrder.map((level) => {
-                          const count = counts[level];
-                          if (count === 0) return null;
-                          return (
-                            <Badge
-                              key={level}
-                              variant={
-                                level === FindingLevel.CRITICAL
-                                  ? "destructive"
-                                  : level === FindingLevel.HIGH
-                                    ? "destructive"
-                                    : level === FindingLevel.MEDIUM
-                                      ? "secondary"
-                                      : "blue"
-                              }
-                              className="text-xs"
-                            >
-                              {count} {level}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground shrink-0">No findings</div>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground font-mono truncate mt-1">
-                    {scope.callable.signature}
-                  </div>
-                </div>
-                <ChevronDown className="size-4 mt-1 transition-transform shrink-0" />
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="space-y-2 ml-6">
-                  {!hasFindings ? (
-                    <div className="text-sm text-muted-foreground py-2">
-                      No findings in this scope
-                    </div>
-                  ) : (
-                    levelOrder.map((level) => {
-                      const levelFindings = scope.findings.filter((f) => f.level === level);
-                      if (levelFindings.length === 0) return null;
-
-                      return (
-                        <div key={level} className="space-y-2">
-                          <div className="text-xs font-medium text-muted-foreground capitalize">
-                            {level}
+                  return (
+                    <Collapsible
+                      key={scope.id}
+                      open={isOpen}
+                      onOpenChange={(open) => {
+                        const newOpenGroups = new Set(openGroups);
+                        if (open) {
+                          newOpenGroups.add(scope.id);
+                        } else {
+                          newOpenGroups.delete(scope.id);
+                        }
+                        setOpenGroups(newOpenGroups);
+                      }}
+                      className="group"
+                    >
+                      <div className="space-y-2">
+                        <CollapsibleTrigger
+                          className={cn(
+                            "w-full text-left flex items-start gap-2 p-2 data-[state=open]:[&>svg]:rotate-180",
+                            "rounded-lg hover:bg-accent transition-colors",
+                          )}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <div className="font-medium truncate min-w-0 flex-1">
+                                {scope.callable.name}
+                              </div>
+                              {hasFindings ? (
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {levelOrder.map((level) => {
+                                    const count = counts[level];
+                                    if (count === 0) return null;
+                                    return (
+                                      <Badge
+                                        key={level}
+                                        variant="outline"
+                                        className={cn("text-xs", getSeverityBadgeClasses(level))}
+                                      >
+                                        {count}
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-muted-foreground shrink-0">
+                                  No findings
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-mono truncate mt-1">
+                              {scope.callable.signature}
+                            </div>
                           </div>
-                          {levelFindings.map((finding, index) => {
-                            const findingWithScope: DraftFindingWithScope = {
-                              ...finding,
-                              scope: {
-                                id: scope.id,
-                                callable: scope.callable,
-                              },
-                            };
-                            const isSelected = selectedFinding?.id === finding.id;
-                            const isDraftDelete = finding.draft_type === "delete";
+                          <ChevronDown className="size-4 mt-1 transition-transform shrink-0" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="space-y-2 ml-6 pr-4">
+                            {!hasFindings ? (
+                              <div className="text-sm text-muted-foreground py-2">
+                                No findings in this scope
+                              </div>
+                            ) : (
+                              levelOrder.map((level) => {
+                                const levelFindings = scope.findings.filter(
+                                  (f) => f.level === level,
+                                );
+                                if (levelFindings.length === 0) return null;
 
-                            if (isDraftDelete) {
+                                return (
+                                  <div key={level} className="space-y-2">
+                                    <div className="text-xs font-medium text-muted-foreground capitalize">
+                                      {level}
+                                    </div>
+                                    {levelFindings.map((finding, index) => {
+                                      const findingWithScope: DraftFindingWithScope = {
+                                        ...finding,
+                                        scope: {
+                                          id: scope.id,
+                                          code_version_node_id: scope.code_version_node_id,
+                                          callable: scope.callable,
+                                        },
+                                      };
+                                      const isSelected = selectedFinding?.id === finding.id;
+                                      const isDraftDelete = finding.draft_type === "delete";
+
+                                      if (isDraftDelete) {
+                                        return (
+                                          <div
+                                            key={finding.id || index}
+                                            className={cn(
+                                              "w-full text-left p-2 rounded border flex items-center justify-between group",
+                                              getSeverityColor(level),
+                                              "border-dashed opacity-50",
+                                            )}
+                                          >
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                              {getSeverityIcon(level)}
+                                              <span className="text-sm font-medium truncate line-through">
+                                                {finding.name}
+                                              </span>
+                                              <Badge
+                                                variant="destructive"
+                                                className="text-xs shrink-0"
+                                              >
+                                                Deleting
+                                              </Badge>
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+
+                                      return (
+                                        <div
+                                          key={finding.id || index}
+                                          onClick={() => {
+                                            onSelectFinding(findingWithScope);
+                                            if (!openGroups.has(scope.id)) {
+                                              setOpenGroups(new Set([...openGroups, scope.id]));
+                                            }
+                                          }}
+                                          className={cn(
+                                            "w-full text-left p-2 rounded border transition-all duration-200 cursor-pointer",
+                                            getSeverityColor(level),
+                                            isSelected
+                                              ? "border-opacity-60 bg-opacity-10"
+                                              : "hover:bg-opacity-10 hover:border-opacity-40",
+                                          )}
+                                        >
+                                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            {getSeverityIcon(level)}
+                                            <span className="text-sm font-medium truncate">
+                                              {finding.name}
+                                            </span>
+                                            {finding.is_draft && finding.draft_type === "add" && (
+                                              <Badge
+                                                variant="secondary"
+                                                className="text-xs shrink-0"
+                                              >
+                                                New
+                                              </Badge>
+                                            )}
+                                            {finding.is_draft &&
+                                              finding.draft_type === "updated" && (
+                                                <Badge
+                                                  variant="secondary"
+                                                  className="text-xs shrink-0"
+                                                >
+                                                  Modified
+                                                </Badge>
+                                              )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })
+                            )}
+                            <AddFindingDialog
+                              scopeId={scope.id}
+                              scopeName={scope.callable.name}
+                              open={openAddDialog === scope.id}
+                              onOpenChange={(open) => setOpenAddDialog(open ? scope.id : null)}
+                              onAdd={onAddFinding}
+                              isLoading={false}
+                            />
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  );
+                },
+              )
+            : groupingMode === "severity"
+              ? (
+                  groupedData as {
+                    mode: "severity";
+                    groups: Array<{ key: FindingLevel; findings: DraftFindingWithScope[] }>;
+                  }
+                ).groups.map((group) => {
+                  const isOpen = openGroups.has(group.key);
+                  return (
+                    <Collapsible
+                      key={group.key}
+                      open={isOpen}
+                      onOpenChange={(open) => {
+                        const newOpenGroups = new Set(openGroups);
+                        if (open) {
+                          newOpenGroups.add(group.key);
+                        } else {
+                          newOpenGroups.delete(group.key);
+                        }
+                        setOpenGroups(newOpenGroups);
+                      }}
+                      className="group"
+                    >
+                      <div className="space-y-2">
+                        <CollapsibleTrigger
+                          className={cn(
+                            "w-full text-left flex items-start gap-2 p-2 data-[state=open]:[&>svg]:rotate-180",
+                            "rounded-lg hover:bg-accent transition-colors",
+                          )}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              {getSeverityIcon(group.key)}
+                              <div className="font-medium truncate min-w-0 flex-1 capitalize">
+                                {group.key}
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-xs shrink-0",
+                                  getSeverityBadgeClasses(group.key),
+                                )}
+                              >
+                                {group.findings.length}
+                              </Badge>
+                            </div>
+                          </div>
+                          <ChevronDown className="size-4 mt-1 transition-transform shrink-0" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="space-y-2 ml-6 pr-4">
+                            {group.findings.map((finding, index) => {
+                              const isSelected = selectedFinding?.id === finding.id;
+                              const isDraftDelete = finding.draft_type === "delete";
+
+                              if (isDraftDelete) {
+                                return (
+                                  <div
+                                    key={finding.id || index}
+                                    className={cn(
+                                      "w-full text-left p-2 rounded border flex items-center justify-between group",
+                                      getSeverityColor(group.key),
+                                      "border-dashed opacity-50",
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                      {getSeverityIcon(group.key)}
+                                      <span className="text-sm font-medium truncate line-through">
+                                        {finding.name}
+                                      </span>
+                                      <Badge variant="destructive" className="text-xs shrink-0">
+                                        Deleting
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
                               return (
                                 <div
                                   key={finding.id || index}
+                                  onClick={() => {
+                                    onSelectFinding(finding);
+                                    if (!openGroups.has(group.key)) {
+                                      setOpenGroups(new Set([...openGroups, group.key]));
+                                    }
+                                  }}
                                   className={cn(
-                                    "w-full text-left p-2 rounded border flex items-center justify-between group",
-                                    getSeverityColor(level),
-                                    "border-dashed opacity-50",
+                                    "w-full text-left p-2 rounded border transition-all duration-200 cursor-pointer",
+                                    getSeverityColor(group.key),
+                                    isSelected
+                                      ? "border-opacity-60 bg-opacity-10"
+                                      : "hover:bg-opacity-10 hover:border-opacity-40",
                                   )}
                                 >
-                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    {getSeverityIcon(level)}
-                                    <span className="text-sm font-medium truncate line-through">
-                                      {finding.name}
-                                    </span>
-                                    <Badge variant="destructive" className="text-xs shrink-0">
-                                      Deleting
-                                    </Badge>
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                      <span className="text-sm font-medium truncate">
+                                        {finding.name}
+                                      </span>
+                                      {finding.is_draft && finding.draft_type === "add" && (
+                                        <Badge variant="secondary" className="text-xs shrink-0">
+                                          New
+                                        </Badge>
+                                      )}
+                                      {finding.is_draft && finding.draft_type === "updated" && (
+                                        <Badge variant="secondary" className="text-xs shrink-0">
+                                          Modified
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground font-mono truncate">
+                                      {finding.scope.callable.name}
+                                    </div>
                                   </div>
                                 </div>
                               );
-                            }
-
-                            return (
-                              <div
-                                key={finding.id || index}
-                                onClick={() => {
-                                  onSelectFinding(findingWithScope);
-                                  if (!openScopes.has(scope.id)) {
-                                    setOpenScopes(new Set([...openScopes, scope.id]));
-                                  }
-                                }}
-                                className={cn(
-                                  "w-full text-left p-2 rounded border transition-all duration-200 cursor-pointer",
-                                  getSeverityColor(level),
-                                  isSelected
-                                    ? "border-opacity-60 bg-opacity-10"
-                                    : "hover:bg-opacity-10 hover:border-opacity-40",
-                                )}
-                              >
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  {getSeverityIcon(level)}
-                                  <span className="text-sm font-medium truncate">
-                                    {finding.name}
-                                  </span>
-                                  {finding.is_draft && finding.draft_type === "add" && (
-                                    <Badge variant="secondary" className="text-xs shrink-0">
-                                      New
-                                    </Badge>
-                                  )}
-                                  {finding.is_draft && finding.draft_type === "updated" && (
-                                    <Badge variant="secondary" className="text-xs shrink-0">
-                                      Modified
-                                    </Badge>
-                                  )}
-                                </div>
+                            })}
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  );
+                })
+              : (
+                  groupedData as {
+                    mode: "type";
+                    groups: Array<{ key: string; findings: DraftFindingWithScope[] }>;
+                  }
+                ).groups.map((group) => {
+                  const isOpen = openGroups.has(group.key);
+                  const typeCounts = getFindingsCountByLevel(
+                    group.findings.map((f) => ({ ...f, level: f.level })),
+                  );
+                  return (
+                    <Collapsible
+                      key={group.key}
+                      open={isOpen}
+                      onOpenChange={(open) => {
+                        const newOpenGroups = new Set(openGroups);
+                        if (open) {
+                          newOpenGroups.add(group.key);
+                        } else {
+                          newOpenGroups.delete(group.key);
+                        }
+                        setOpenGroups(newOpenGroups);
+                      }}
+                      className="group"
+                    >
+                      <div className="space-y-2">
+                        <CollapsibleTrigger
+                          className={cn(
+                            "w-full text-left flex items-start gap-2 p-2 data-[state=open]:[&>svg]:rotate-180",
+                            "rounded-lg hover:bg-accent transition-colors",
+                          )}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <div className="font-medium truncate min-w-0 flex-1">
+                                {group.key
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
                               </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })
-                  )}
-                  <AddFindingDialog
-                    scopeId={scope.id}
-                    scopeName={scope.callable.name}
-                    open={openAddDialog === scope.id}
-                    onOpenChange={(open) => setOpenAddDialog(open ? scope.id : null)}
-                    onAdd={onAddFinding}
-                    isLoading={false}
-                  />
-                </div>
-              </CollapsibleContent>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {levelOrder.map((level) => {
+                                  const count = typeCounts[level];
+                                  if (count === 0) return null;
+                                  return (
+                                    <Badge
+                                      key={level}
+                                      variant="outline"
+                                      className={cn("text-xs", getSeverityBadgeClasses(level))}
+                                    >
+                                      {count}
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                          <ChevronDown className="size-4 mt-1 transition-transform shrink-0" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="space-y-2 ml-6 pr-4">
+                            {levelOrder.map((level) => {
+                              const levelFindings = group.findings.filter((f) => f.level === level);
+                              if (levelFindings.length === 0) return null;
+
+                              return (
+                                <div key={level} className="space-y-2">
+                                  <div className="text-xs font-medium text-muted-foreground capitalize">
+                                    {level}
+                                  </div>
+                                  {levelFindings.map((finding, index) => {
+                                    const isSelected = selectedFinding?.id === finding.id;
+                                    const isDraftDelete = finding.draft_type === "delete";
+
+                                    if (isDraftDelete) {
+                                      return (
+                                        <div
+                                          key={finding.id || index}
+                                          className={cn(
+                                            "w-full text-left p-2 rounded border flex items-center justify-between group",
+                                            getSeverityColor(level),
+                                            "border-dashed opacity-50",
+                                          )}
+                                        >
+                                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            {getSeverityIcon(level)}
+                                            <span className="text-sm font-medium truncate line-through">
+                                              {finding.name}
+                                            </span>
+                                            <Badge
+                                              variant="destructive"
+                                              className="text-xs shrink-0"
+                                            >
+                                              Deleting
+                                            </Badge>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    return (
+                                      <div
+                                        key={finding.id || index}
+                                        onClick={() => {
+                                          onSelectFinding(finding);
+                                          if (!openGroups.has(group.key)) {
+                                            setOpenGroups(new Set([...openGroups, group.key]));
+                                          }
+                                        }}
+                                        className={cn(
+                                          "w-full text-left p-2 rounded border transition-all duration-200 cursor-pointer",
+                                          getSeverityColor(level),
+                                          isSelected
+                                            ? "border-opacity-60 bg-opacity-10"
+                                            : "hover:bg-opacity-10 hover:border-opacity-40",
+                                        )}
+                                      >
+                                        <div className="flex flex-col gap-1">
+                                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            {getSeverityIcon(level)}
+                                            <span className="text-sm font-medium truncate">
+                                              {finding.name}
+                                            </span>
+                                            {finding.is_draft && finding.draft_type === "add" && (
+                                              <Badge
+                                                variant="secondary"
+                                                className="text-xs shrink-0"
+                                              >
+                                                New
+                                              </Badge>
+                                            )}
+                                            {finding.is_draft &&
+                                              finding.draft_type === "updated" && (
+                                                <Badge
+                                                  variant="secondary"
+                                                  className="text-xs shrink-0"
+                                                >
+                                                  Modified
+                                                </Badge>
+                                              )}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground font-mono truncate">
+                                            {finding.scope.callable.name}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  );
+                })}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+};
+
+const EditFindingMetadata: React.FC<{
+  finding: DraftFindingWithScope;
+}> = ({ finding }) => {
+  return (
+    <div className="flex items-center gap-3">
+      <h3 className="text-lg font-semibold">{finding.name}</h3>
+      <Badge variant="outline" className={cn("text-xs", getSeverityBadgeClasses(finding.level))}>
+        {finding.level}
+      </Badge>
+      <span className="text-sm text-muted-foreground">
+        {finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+      </span>
+      {finding.is_draft && (
+        <Badge variant="secondary" size="sm">
+          {finding.draft_type === "add"
+            ? "New"
+            : finding.draft_type === "updated"
+              ? "Modified"
+              : finding.draft_type === "delete"
+                ? "Deleted"
+                : ""}
+        </Badge>
+      )}
+    </div>
+  );
+};
+
+const EditCodeSnippet: React.FC<{
+  teamSlug: string;
+  codeVersionId: string;
+  codeVersionNodeId: string;
+  isEditing: boolean;
+}> = ({ teamSlug, codeVersionId, codeVersionNodeId, isEditing }) => {
+  const { data: nodeData, isLoading: isLoadingNode } = useQuery({
+    queryKey: [QUERY_KEYS.CODES, codeVersionId, "nodes", codeVersionNodeId],
+    queryFn: () => codeActions.getNode(teamSlug, codeVersionId, codeVersionNodeId),
+    enabled: !!codeVersionNodeId && !isEditing,
+  });
+
+  const [html, setHtml] = useState<string>("");
+
+  useEffect(() => {
+    if (!nodeData?.content || isEditing) {
+      setHtml("");
+      return;
+    }
+
+    const highlightCode = async (): Promise<void> => {
+      try {
+        const result = await codeToHtml(nodeData.content, {
+          lang: "solidity",
+          theme: "github-dark",
+          colorReplacements: {},
+        });
+        setHtml(result);
+      } catch (error) {
+        console.error("Error highlighting code:", error);
+        const fallbackHtml = `<pre><code>${nodeData.content}</code></pre>`;
+        setHtml(fallbackHtml);
+      }
+    };
+
+    highlightCode();
+  }, [nodeData?.content, isEditing]);
+
+  return (
+    <div className="border rounded-lg relative">
+      <ScrollArea className="p-2 h-[200px]">
+        {isLoadingNode || !html ? (
+          <Skeleton className="h-48 w-full" />
+        ) : (
+          <div
+            className="shiki-container overflow-x-auto w-full"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        )}
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </div>
+  );
+};
+
+const EditFindingTabs: React.FC<{
+  finding: DraftFindingWithScope;
+  onEdit: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
+}> = ({ finding, onEdit, onDelete, isDeleting }) => {
+  const [tab, setTab] = useState("description");
+
+  return (
+    <div className={cn("border rounded-lg p-4", getSeverityColor(finding.level), "finding")}>
+      <Subnav className="w-fit px-0 mb-4">
+        <SubnavButton
+          isActive={tab === "description"}
+          shouldHighlight
+          onClick={() => setTab("description")}
+        >
+          Description
+        </SubnavButton>
+        <SubnavButton
+          isActive={tab === "recommendation"}
+          shouldHighlight
+          onClick={() => setTab("recommendation")}
+        >
+          Recommendation
+        </SubnavButton>
+      </Subnav>
+      {tab === "description" && (
+        <div className="space-y-4">
+          {finding.explanation && (
+            <p className="text-sm text-muted-foreground leading-relaxed">{finding.explanation}</p>
+          )}
+          {finding.reference && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Reference</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">{finding.reference}</p>
             </div>
-          </Collapsible>
-        );
-      })}
+          )}
+          {!finding.explanation && !finding.reference && (
+            <p className="text-sm text-muted-foreground">No description or reference available.</p>
+          )}
+        </div>
+      )}
+      {tab === "recommendation" && (
+        <div className="space-y-2">
+          {finding.recommendation ? (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {finding.recommendation}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">No recommendation available.</p>
+          )}
+        </div>
+      )}
+
+      <div className="pt-4 border-t border-border/50 mt-4">
+        <div className="flex items-center justify-between">
+          {finding.draft_type === "delete" ? (
+            <div className="text-sm text-muted-foreground">This finding is staged for deletion</div>
+          ) : (
+            <>
+              <Button variant="destructive" size="sm" onClick={onDelete} disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                Edit
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -349,10 +892,20 @@ const EditScopesList: React.FC<{
 const EditFindingDetail: React.FC<{
   teamSlug: string;
   nodeId: string;
+  codeVersionId: string;
   finding: DraftFindingWithScope | null;
   onFindingDeleted?: (deletedFindingId: string) => void;
+  setSelectedFinding: React.Dispatch<React.SetStateAction<DraftFindingWithScope | null>>;
   isLoading?: boolean;
-}> = ({ teamSlug, nodeId, finding, onFindingDeleted, isLoading }) => {
+}> = ({
+  teamSlug,
+  nodeId,
+  codeVersionId,
+  finding,
+  onFindingDeleted,
+  setSelectedFinding,
+  isLoading,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<AnalysisFindingBody | null>(null);
   const queryClient = useQueryClient();
@@ -373,10 +926,35 @@ const EditFindingDetail: React.FC<{
   const updateMutation = useMutation({
     mutationFn: ({ findingId, data }: { findingId: string; data: AnalysisFindingBody }) =>
       analysisActions.updateStagedFinding(teamSlug, nodeId, findingId, data),
-    onSuccess: ({ toInvalidate }) => {
-      toInvalidate.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-      });
+    onSuccess: (_, { findingId, data }) => {
+      queryClient.setQueryData<DraftFindingSchemaI[]>(
+        generateQueryKey.analysisVersionDraft(nodeId),
+        (oldData) => {
+          if (!oldData) return oldData;
+          return oldData.map((scope) => ({
+            ...scope,
+            findings: scope.findings.map((f) => {
+              if (f.id === findingId) {
+                const newFinding = {
+                  ...f,
+                  ...data,
+                  draft_type: f.draft_type || "updated",
+                };
+                setSelectedFinding({
+                  ...newFinding,
+                  scope: {
+                    id: scope.id,
+                    code_version_node_id: scope.code_version_node_id,
+                    callable: scope.callable,
+                  },
+                });
+                return newFinding;
+              }
+              return f;
+            }),
+          }));
+        },
+      );
       setIsEditing(false);
     },
   });
@@ -417,6 +995,8 @@ const EditFindingDetail: React.FC<{
     return (
       <div className="flex items-center justify-center text-center py-12">
         <div>
+          <Shield className="size-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Finding Selected</h3>
           <p className="text-muted-foreground">Select a finding to edit</p>
         </div>
       </div>
@@ -441,9 +1021,6 @@ const EditFindingDetail: React.FC<{
               {updateMutation.isPending ? "Saving..." : "Save"}
             </Button>
           </div>
-        </div>
-        <div className="text-sm text-muted-foreground mb-4">
-          Scope: <span className="font-mono">{finding.scope.callable.name}</span>
         </div>
         <Field>
           <FieldLabel>Name</FieldLabel>
@@ -531,77 +1108,21 @@ const EditFindingDetail: React.FC<{
   }
 
   return (
-    <>
-      <div className="flex items-start gap-4 mb-4">
-        {getSeverityIcon(finding.level)}
-        <div className="flex-1">
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="text-lg font-semibold">{finding.name}</h3>
-            {finding.is_draft && (
-              <Badge variant="secondary">
-                {finding.draft_type === "add"
-                  ? "New"
-                  : finding.draft_type === "updated"
-                    ? "Modified"
-                    : ""}
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-            <span className="capitalize font-medium">{finding.level} severity</span>
-            <span>•</span>
-            <span>
-              Type: {finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-            </span>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            <span className="font-medium">Scope: </span>
-            <span className="font-mono">{finding.scope.callable.name}</span>
-            <span className="mx-2">•</span>
-            <span className="font-mono text-xs">{finding.scope.callable.signature}</span>
-          </div>
-        </div>
-      </div>
-
-      {finding.explanation && (
-        <div className="space-y-2 mb-6">
-          <h4 className="text-sm font-medium">Description</h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">{finding.explanation}</p>
-        </div>
-      )}
-
-      {finding.recommendation && (
-        <div className="space-y-2 mb-6">
-          <h4 className="text-sm font-medium">Recommendation</h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">{finding.recommendation}</p>
-        </div>
-      )}
-
-      {finding.reference && (
-        <div className="space-y-2 mb-6">
-          <h4 className="text-sm font-medium">Reference</h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">{finding.reference}</p>
-        </div>
-      )}
-
-      <div className="pt-4 border-t border-border/50">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              deleteMutation.mutate(finding.id);
-            }}
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? "Deleting..." : "Delete"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-            Edit
-          </Button>
-        </div>
-      </div>
-    </>
+    <div className="space-y-4">
+      <EditFindingMetadata finding={finding} />
+      <EditCodeSnippet
+        teamSlug={teamSlug}
+        codeVersionId={codeVersionId}
+        codeVersionNodeId={finding.scope.code_version_node_id}
+        isEditing={isEditing}
+      />
+      <EditFindingTabs
+        finding={finding}
+        onEdit={() => setIsEditing(true)}
+        onDelete={() => deleteMutation.mutate(finding.id)}
+        isDeleting={deleteMutation.isPending}
+      />
+    </div>
   );
 };
 
@@ -776,6 +1297,11 @@ export const EditClient: React.FC<{
   const [openCommitDialog, setOpenCommitDialog] = useState(false);
   const queryClient = useQueryClient();
 
+  const { data: analysisVersion } = useQuery({
+    queryKey: generateQueryKey.analysisVersion(nodeId),
+    queryFn: () => analysisActions.getAnalysisVersion(teamSlug, nodeId),
+  });
+
   const { data: draftScopes = [] } = useQuery<DraftFindingSchemaI[]>({
     queryKey: generateQueryKey.analysisVersionDraft(nodeId),
     queryFn: () => analysisActions.getDraft(teamSlug, nodeId),
@@ -825,6 +1351,7 @@ export const EditClient: React.FC<{
           ...finding,
           scope: {
             id: scope.id,
+            code_version_node_id: scope.code_version_node_id,
             callable: scope.callable,
           },
         });
@@ -842,6 +1369,7 @@ export const EditClient: React.FC<{
           scope: {
             id: scope.id,
             callable: scope.callable,
+            code_version_node_id: finding.code_version_node_id || scope.code_version_node_id,
           },
         });
       });
@@ -867,9 +1395,6 @@ export const EditClient: React.FC<{
   }, [initialFinding, selectedFinding]);
 
   const handleFindingDeleted = (deletedFindingId: string): void => {
-    console.log(deletedFindingId);
-    console.log(selectedFinding);
-    console.log(allFindings);
     if (selectedFinding?.id === deletedFindingId) {
       const nextFinding = allFindings.find((f) => f.id !== deletedFindingId) || null;
       setSelectedFinding(nextFinding);
@@ -881,7 +1406,7 @@ export const EditClient: React.FC<{
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Edit Mode</h2>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 h-[600px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 min-w-0">
         <EditScopesList
           teamSlug={teamSlug}
           nodeId={nodeId}
@@ -889,25 +1414,28 @@ export const EditClient: React.FC<{
           onSelectFinding={setSelectedFinding}
           onAddFinding={(data) => addMutation.mutate(data)}
         />
-        <div className="flex flex-col">
-          <div className="flex-1 overflow-y-auto">
-            <div
-              className={cn(
-                "border rounded-xl p-6",
-                selectedFinding ? getSeverityColor(selectedFinding.level) : "border-border",
-              )}
-            >
-              <EditFindingDetail
-                teamSlug={teamSlug}
-                nodeId={nodeId}
-                finding={selectedFinding}
-                onFindingDeleted={handleFindingDeleted}
-                isLoading={false}
-              />
+        <div className="space-y-4">
+          {!selectedFinding ? (
+            <div className="flex items-center justify-center text-center py-12">
+              <div>
+                <Shield className="size-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No Finding Selected</h3>
+                <p className="text-muted-foreground">Select a finding to edit</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <EditFindingDetail
+              teamSlug={teamSlug}
+              nodeId={nodeId}
+              codeVersionId={analysisVersion?.code_version_id ?? ""}
+              finding={selectedFinding}
+              onFindingDeleted={handleFindingDeleted}
+              setSelectedFinding={setSelectedFinding}
+              isLoading={false}
+            />
+          )}
           {stagedFindings.length > 0 && (
-            <div className="border-t border-border pt-4 mt-4">
+            <div className="border rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="text-sm font-medium mb-1">
@@ -959,13 +1487,26 @@ export const EditClient: React.FC<{
                       </div>
                       {levelFindings.map((finding) => {
                         const isDraftDelete = finding.draft_type === "delete";
+                        const isSelected = selectedFinding?.id === finding.id;
+                        const stagedFindingAsDraft: DraftFindingWithScope = {
+                          ...finding,
+                          scope: {
+                            id: finding.scope.id,
+                            code_version_node_id: finding.scope.code_version_node_id,
+                            callable: finding.scope.callable,
+                          },
+                        };
                         return (
                           <div
                             key={finding.id}
+                            onClick={() => setSelectedFinding(stagedFindingAsDraft)}
                             className={cn(
-                              "w-full text-left p-2 rounded border text-sm",
+                              "w-full text-left p-2 rounded border text-sm cursor-pointer transition-all duration-200",
                               getSeverityColor(level),
                               isDraftDelete && "border-dashed opacity-50",
+                              isSelected
+                                ? "border-opacity-60 bg-opacity-10"
+                                : "hover:bg-opacity-10 hover:border-opacity-40",
                             )}
                           >
                             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -997,7 +1538,10 @@ export const EditClient: React.FC<{
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0 shrink-0"
-                                onClick={() => undoStagedMutation.mutate(finding.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  undoStagedMutation.mutate(finding.id);
+                                }}
                                 disabled={undoStagedMutation.isPending}
                                 title="Undo staged change"
                               >

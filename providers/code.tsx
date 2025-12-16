@@ -3,7 +3,7 @@
 import { codeActions } from "@/actions/bevor";
 import { generateQueryKey } from "@/utils/constants";
 import { CodeSourceContentSchemaI } from "@/utils/types";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import React, {
   createContext,
   useCallback,
@@ -43,9 +43,12 @@ export const CodeProvider: React.FC<{
   teamSlug: string;
   codeId: string | null;
   initialSourceId: string | null;
-}> = ({ children, initialSourceId, teamSlug, codeId }) => {
+  initialPosition: { start: number; end: number } | undefined;
+}> = ({ children, initialSourceId, initialPosition, teamSlug, codeId }) => {
   const [codeVersionId, setCodeVersionId] = useState(codeId);
-  const [positions, setPositions] = useState<{ start: number; end: number } | undefined>(undefined);
+  const [positions, setPositions] = useState<{ start: number; end: number } | undefined>(
+    initialPosition,
+  );
   const [htmlLoaded, setHtmlLoaded] = useState(false);
   const [sourceId, setSourceId] = useState<string | null>(initialSourceId);
   const [isSticky, setIsSticky] = useState(false);
@@ -55,7 +58,6 @@ export const CodeProvider: React.FC<{
     queryKey: generateQueryKey.codeSource(codeVersionId ?? "", sourceId ?? ""),
     queryFn: () => codeActions.getCodeVersionSource(teamSlug, codeVersionId ?? "", sourceId ?? ""),
     enabled: !!sourceId && !!codeVersionId,
-    placeholderData: keepPreviousData,
     staleTime: Infinity,
   });
 
@@ -160,6 +162,15 @@ export const CodeProvider: React.FC<{
     });
   }, []);
 
+  const sourceQueryValue = useMemo(
+    () => ({
+      data: sourceQuery.data,
+      isLoading: sourceQuery.isLoading,
+      error: sourceQuery.error,
+    }),
+    [sourceQuery.data, sourceQuery.isLoading, sourceQuery.error],
+  );
+
   const value = useMemo(
     () => ({
       positions,
@@ -176,11 +187,7 @@ export const CodeProvider: React.FC<{
       handleSourceChange,
       codeVersionId,
       setCodeVersionId,
-      sourceQuery: {
-        data: sourceQuery.data,
-        isLoading: sourceQuery.isLoading,
-        error: sourceQuery.error,
-      },
+      sourceQuery: sourceQueryValue,
     }),
     [
       positions,
@@ -194,9 +201,7 @@ export const CodeProvider: React.FC<{
       setCodeVersionId,
       isSticky,
       containerRef,
-      sourceQuery.data,
-      sourceQuery.isLoading,
-      sourceQuery.error,
+      sourceQueryValue,
     ],
   );
 

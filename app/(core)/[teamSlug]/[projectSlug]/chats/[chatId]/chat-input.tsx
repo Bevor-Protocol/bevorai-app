@@ -1,6 +1,6 @@
 "use client";
 
-import { chatActions } from "@/actions/bevor";
+import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import * as Chat from "@/components/ui/chat";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +12,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 interface ChatInputProps {
   teamSlug: string;
-  chatId: string;
+  codeId: string;
   onSendMessage: (message: string, attributes: string[]) => Promise<void>;
   messagesContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
@@ -21,7 +21,7 @@ const TEXTAREA_MAX_HEIGHT = 264;
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   teamSlug,
-  chatId,
+  codeId,
   onSendMessage,
   messagesContainerRef,
 }) => {
@@ -33,8 +33,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: chatAttributes } = useQuery({
-    queryKey: generateQueryKey.chatAttributes(chatId),
-    queryFn: () => chatActions.getChatAttributes(teamSlug, chatId),
+    queryKey: generateQueryKey.codeNodes(codeId),
+    queryFn: () => codeActions.getNodes(teamSlug, codeId),
   });
 
   const adjustTextareaHeight = (): void => {

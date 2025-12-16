@@ -26,8 +26,8 @@ interface SourceFile {
 const FolderStep: React.FC<{
   project: ProjectDetailedSchemaI;
   parentId?: string;
-  connect: (url?: string) => void;
-}> = ({ project, parentId, connect }) => {
+  onSuccess?: (id: string) => void;
+}> = ({ project, parentId, onSuccess }) => {
   const queryClient = useQueryClient();
 
   const initialState: UploadCodeFolderFormValues = {
@@ -66,8 +66,8 @@ const FolderStep: React.FC<{
         id: toastId.current,
       });
 
-      if (status === "embedding" || status === "pending") {
-        connect(`/code-versions/${id}`);
+      if (status === "embedding" || status === "parsed") {
+        onSuccess?.(id);
       }
     },
   });

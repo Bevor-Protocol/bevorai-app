@@ -32,8 +32,15 @@ export const revokeAllTokens = async (): Promise<boolean> => {
   });
 };
 
-export const issueSSEToken = async (): Promise<string> => {
-  return api.post("/events/auth", {}).then((response) => {
-    return response.data.id;
+export const issueSSEToken = async (claims: {
+  team_slug?: string;
+  project_slug?: string;
+  code_version_id?: string;
+  analysis_thread_id?: string;
+  analysis_node_id?: string;
+}): Promise<string> => {
+  console.log("ISSUING TOKEN WITH CLAIMS", claims);
+  return api.post("/events/auth", { ...claims }).then((response) => {
+    return response.data.token;
   });
 };

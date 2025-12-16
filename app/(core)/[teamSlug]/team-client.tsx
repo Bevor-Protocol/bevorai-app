@@ -19,7 +19,7 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useSSE } from "@/hooks/useSSE";
+import { useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
 import { TeamDetailedSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
@@ -69,13 +69,11 @@ export const TeamActivities: React.FC<{ teamSlug: string }> = ({ teamSlug }) => 
   });
 
   useSSE({
-    url: `/team/${teamSlug}`,
-    autoConnect: true,
+    eventTypes: ["activity"],
     onMessage: (message) => {
-      console.log(message);
+      console.log("TEAM ACTIVITY MESSAGE", message);
       refetch();
     },
-    eventTypes: ["activities"],
   });
 
   return <ActivityList activities={activities} className="w-full" />;

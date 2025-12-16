@@ -37,8 +37,8 @@ interface SourceFile {
 const FileStep: React.FC<{
   project: ProjectDetailedSchemaI;
   parentId?: string;
-  connect: (url?: string) => void;
-}> = ({ project, parentId, connect }) => {
+  onSuccess?: (id: string) => void;
+}> = ({ project, parentId, onSuccess }) => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"upload" | "paste">("upload");
 
@@ -93,8 +93,8 @@ const FileStep: React.FC<{
         id: uploadToastId.current,
       });
 
-      if (status === "embedding" || status === "pending") {
-        connect(`/code-versions/${id}`);
+      if (status === "embedding" || status === "parsed") {
+        onSuccess?.(id);
       }
     },
   });
@@ -121,8 +121,8 @@ const FileStep: React.FC<{
         id: pasteToastId.current,
       });
 
-      if (status === "embedding" || status === "pending") {
-        connect(`/code-versions/${id}`);
+      if (status === "embedding" || status === "parsed") {
+        onSuccess?.(id);
       }
     },
   });

@@ -30,6 +30,7 @@ import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { CodeVersionElementCompact } from "@/components/versions/element";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
+import { useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
 import { CreateAnalysisVersionFormValues, createAnalysisVersionSchema } from "@/utils/schema";
 import {
@@ -54,12 +55,12 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface AnalysisScopeSelectorProps {
   tree: TreeResponseI[];
-  scope?: TreeResponseI[];
+  scope?: AnalysisStatusSchemaI;
   teamSlug: string;
   projectSlug: string;
   threadId: string;
@@ -481,16 +482,67 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const { codeVersionId } = useCode();
+  const analysisNodeIdRef = useRef<string | null>(null);
 
-  const initialScopeState = useMemo(
-    () =>
-      scope?.flatMap((s) =>
-        s.contracts.flatMap((c) => c.functions.filter((f) => f.is_within_scope).map((f) => f.id)),
-      ) ?? [],
-    [scope],
-  );
+  const { updateClaims } = useSSE({
+    eventTypes: ["analysis"],
+    onMessage: (event: MessageEvent) => {
+      // as events come in, we'll update the scopeStatus directly with the new statuses per-scope.
+      // this comes directly from the SSE
+      if (!analysisNodeIdRef.current) return;
 
-  const [selectedScopes, setSelectedScopes] = useState<string[]>(initialScopeState);
+      let parsed;
+      try {
+        parsed = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+
+      if (!parsed.scope_id || !parsed.status) return;
+      const scopeQueryKey = generateQueryKey.analysisVersionScope(analysisNodeIdRef.current);
+      queryClient.setQueryData<AnalysisStatusSchemaI>(scopeQueryKey, (oldData) => {
+        if (!oldData) return oldData;
+
+        const updatedScopes = oldData.scopes.map((scope) =>
+          scope.id === parsed.scope_id
+            ? {
+                ...scope,
+                status: parsed.status,
+                n_findings: parsed.n_findings ?? scope.n_findings,
+              }
+            : scope,
+        );
+
+        const allScopesStatus = updatedScopes.map((s) => s.status);
+        const hasProcessing = allScopesStatus.includes("processing");
+        const hasWaiting = allScopesStatus.includes("waiting");
+        const hasFailed = allScopesStatus.includes("failed");
+        const allSuccess = allScopesStatus.every((s) => s === "success");
+        const hasPartial = allScopesStatus.some((s) => s === "partial");
+
+        let overallStatus: AnalysisStatusSchemaI["status"];
+        if (hasFailed) {
+          overallStatus = "failed";
+        } else if (hasProcessing || hasWaiting) {
+          overallStatus = hasProcessing ? "processing" : "waiting";
+        } else if (allSuccess) {
+          overallStatus = "success";
+        } else if (hasPartial) {
+          overallStatus = "partial";
+        } else {
+          overallStatus = oldData.status;
+        }
+
+        return {
+          ...oldData,
+          status: overallStatus,
+          scopes: updatedScopes,
+        };
+      });
+    },
+  });
+
+  const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
   const [scopeStrategy, setScopeStrategy] = useState<"all" | "explicit" | "parent">(
     defaultParentVersion ? "parent" : "explicit",
   );
@@ -500,10 +552,12 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
       const payload = createAnalysisVersionSchema.parse(data);
       return analysisActions.createAnalysisVersion(teamSlug, payload);
     },
-    onSuccess: ({ toInvalidate }) => {
+    onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
+      analysisNodeIdRef.current = id;
+      updateClaims({ analysis_node_id: id });
     },
     onError: () => {
       toast.error("Something went wrong", {
@@ -512,22 +566,13 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     },
   });
 
-  const { data: status } = useQuery({
-    queryKey: generateQueryKey.analysisVersionStatus(createAnalysisVersionMutation.data?.id ?? ""),
-    queryFn: async () =>
-      analysisActions.getStatus(teamSlug, createAnalysisVersionMutation.data!.id),
-    refetchInterval: (query) => {
-      const { data } = query.state;
-      if (!data) return 1000;
-      if (data.status === "success" || data.status === "partial") {
-        return false;
-      }
-      if (data.status === "failed") {
-        return false;
-      }
-      return 1000;
-    },
-    enabled: !!createAnalysisVersionMutation.data?.id,
+  const analysisNodeId = createAnalysisVersionMutation.data?.id;
+
+  const { data: scopeStatus } = useQuery({
+    queryKey: generateQueryKey.analysisVersionScope(analysisNodeId ?? ""),
+    queryFn: async () => analysisActions.getScope(teamSlug, analysisNodeId!),
+    enabled: !!analysisNodeId,
+    staleTime: Infinity,
   });
 
   const { data: tree = [] } = useQuery({
@@ -546,20 +591,37 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     );
   }, [tree]);
 
+  const parentScopes = useMemo(
+    () => scope?.scopes.map((s) => s.callable.generic_id) ?? [],
+    [scope],
+  );
+
+  const overlappingScopes = useMemo(() => {
+    const overlaps = [];
+    for (const source of tree) {
+      for (const contract of source.contracts) {
+        for (const fct of contract.functions) {
+          if (parentScopes.includes(fct.generic_id)) {
+            overlaps.push(fct.id);
+          }
+        }
+      }
+    }
+    return overlaps;
+  }, [parentScopes, tree]);
+
   React.useEffect(() => {
     if (scopeStrategy === "all" && codeVersionId) {
       setSelectedScopes(allAuditableScopes);
     } else if (scopeStrategy === "parent" && defaultParentVersion) {
       // construct the overlap, in order to set the scopes available w.r.t. the parent.
-      const overlappingScopes = selectedScopes.filter((scope) =>
-        allAuditableScopes.includes(scope),
-      );
       setSelectedScopes(overlappingScopes);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scopeStrategy, codeVersionId, allAuditableScopes, defaultParentVersion, initialScopeState]);
+  }, [scopeStrategy, codeVersionId, overlappingScopes]);
 
   const handleScopeSelect = (fct: FunctionScopeI): void => {
+    console.log(fct);
     if (!fct.is_auditable) return;
     let newScopes: string[];
     if (selectedScopes.some((fctId) => fctId == fct.id)) {
@@ -571,7 +633,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
     if (scopeStrategy === "parent") {
       const scopesMatch =
-        JSON.stringify([...newScopes].sort()) === JSON.stringify([...initialScopeState].sort());
+        JSON.stringify([...newScopes].sort()) === JSON.stringify([...parentScopes].sort());
       if (!scopesMatch) {
         setScopeStrategy("explicit");
       }
@@ -590,10 +652,10 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     });
   };
 
-  if (status) {
+  if (scopeStatus) {
     return (
       <AnalysisStatusDisplay
-        status={status}
+        status={scopeStatus}
         teamSlug={teamSlug}
         projectSlug={projectSlug}
         threadId={threadId}

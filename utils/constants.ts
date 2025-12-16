@@ -74,12 +74,10 @@ export const generateQueryKey = {
   currentMember: (teamSlug: string): QueryKey => [QUERY_KEYS.MEMBERS, "current", teamSlug],
 
   code: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId],
-  codeNodes: (codeId: string, filter: { name: string }): QueryKey => [
-    QUERY_KEYS.CODES,
-    codeId,
-    "nodes",
-    filter,
-  ],
+  codeNodes: (
+    codeId: string,
+    filter?: { name?: string; source_id?: string; node_type?: string },
+  ): QueryKey => [QUERY_KEYS.CODES, codeId, "nodes", filter],
   codeRelations: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "relations"],
   codeSimilarity: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "similarity"],
   codeSource: (codeId: string, sourceId: string): QueryKey => [
@@ -97,7 +95,6 @@ export const generateQueryKey = {
 
   chat: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId],
   chatMessages: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "messages"],
-  chatAttributes: (chatId: string): QueryKey => [QUERY_KEYS.CHATS, chatId, "attributes"],
   chats: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
     QUERY_KEYS.CHATS,
     teamSlug,
@@ -131,6 +128,11 @@ export const generateQueryKey = {
     nodeId,
     "draft",
   ],
+  analysisVersionScope: (nodeId: string): QueryKey => [
+    QUERY_KEYS.ANALYSIS_VERSIONS,
+    nodeId,
+    "scope",
+  ],
 
   analysisVersions: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
     QUERY_KEYS.ANALYSIS_VERSIONS,
@@ -145,8 +147,9 @@ export const generateQueryKey = {
   products: (teamSlug: string): QueryKey => [QUERY_KEYS.PRODUCTS, teamSlug],
 
   githubInstallations: (): QueryKey => [QUERY_KEYS.GITHUB_INSTALLATIONS],
-  githubRepositories: (installationId: number): QueryKey => [
+  githubRepositories: (installationId: number, teamSlug?: string): QueryKey => [
     QUERY_KEYS.GITHUB_REPOSITORIES,
     installationId,
+    teamSlug ?? "",
   ],
 };

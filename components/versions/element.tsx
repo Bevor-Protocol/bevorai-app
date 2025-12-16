@@ -431,7 +431,6 @@ export const CodeVersionElement: React.FC<{
   teamSlug: string;
   isDisabled?: boolean;
 }> = ({ version, teamSlug, isDisabled = false }) => {
-  console.log(version);
   return (
     <Link
       href={`/${teamSlug}/${version.project_slug}/codes/${version.id}`}

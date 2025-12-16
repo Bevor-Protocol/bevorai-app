@@ -5,7 +5,23 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest): Promise<Response> {
   try {
-    const { chatId, ...rest } = await req.json();
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (parseError) {
+      console.error("Failed to parse request body:", parseError);
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON in request body", details: parseError instanceof Error ? parseError.message : String(parseError) }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    }
+
+    const { chatId, ...rest } = requestBody;
 
     const sessionToken = req.cookies.get("bevor-token")?.value;
     const teamSlug = req.cookies.get("bevor-recent-team")?.value;

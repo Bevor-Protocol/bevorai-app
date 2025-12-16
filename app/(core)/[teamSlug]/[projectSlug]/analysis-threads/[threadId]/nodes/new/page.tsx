@@ -4,9 +4,9 @@ import AnalysisThreadSubnav from "@/components/subnav/analysis-thread";
 import { CodeProvider } from "@/providers/code";
 import {
   AnalysisNodeSchemaI,
+  AnalysisStatusSchemaI,
   AsyncComponent,
   CodeMappingSchemaI,
-  TreeResponseI,
 } from "@/utils/types";
 import { redirect } from "next/navigation";
 import NewVersionClient from "./new-version-client";
@@ -62,7 +62,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
 
   let defaultCodeVersion: CodeMappingSchemaI | undefined;
   let defaultParentVersion: AnalysisNodeSchemaI | undefined;
-  let scope: TreeResponseI[] | undefined;
+  let scope: AnalysisStatusSchemaI | undefined;
 
   const analysis = await analysisActions.getAnalysis(
     resolvedParams.teamSlug,
