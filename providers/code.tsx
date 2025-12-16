@@ -43,7 +43,7 @@ export const CodeProvider: React.FC<{
   teamSlug: string;
   codeId: string | null;
   initialSourceId: string | null;
-  initialPosition: { start: number; end: number } | undefined;
+  initialPosition?: { start: number; end: number };
 }> = ({ children, initialSourceId, initialPosition, teamSlug, codeId }) => {
   const [codeVersionId, setCodeVersionId] = useState(codeId);
   const [positions, setPositions] = useState<{ start: number; end: number } | undefined>(
