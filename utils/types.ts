@@ -45,27 +45,22 @@ export interface HeadSchema {
   analysis_version_id?: string;
 }
 
-export interface AnalysisThreadSchemaI extends BaseSchema {
-  is_owner: boolean;
-  is_public: boolean;
-  name?: string;
-  description?: string;
-  n_versions: number;
-  project_id: string;
-  project_slug: string;
-  user: UserSchemaI;
-}
-
 export interface AnalysisNodeSchemaI extends BaseSchema {
   n_findings: number;
   n_scopes: number;
   user: UserSchemaI;
-  analysis_thread_id: string;
+  team_id: string;
+  team_slug: string;
+  project_id: string;
+  project_slug: string;
   code_version_id: string;
   is_owner: boolean;
   trigger: "manual_run" | "chat" | "manual_edit" | "fork" | "merge";
-  parent?: BaseSchema;
-  children: BaseSchema[];
+  is_leaf: boolean;
+  is_public: boolean;
+  parent_node_id?: string;
+  root_node_id: string;
+  children: string[];
 }
 
 export interface AnalysisVersionSchemaI extends BaseSchema {
@@ -73,10 +68,6 @@ export interface AnalysisVersionSchemaI extends BaseSchema {
   n_findings: number;
   n_scopes: number;
   code_version_id: string;
-}
-
-export interface AnalysisPaginationI extends PaginationI {
-  results: (AnalysisThreadSchemaI & { n: number })[];
 }
 
 export interface AnalysisVersionPaginationI extends PaginationI {
@@ -270,7 +261,6 @@ export interface ChatSchemaI {
   total_messages: string;
   project: ProjectSchemaI;
   user: UserSchemaI;
-  analysis_thread_id?: string;
   analysis_node_id?: string;
   code_mapping_id: string;
   chat_type: "code" | "analysis";
@@ -793,7 +783,6 @@ export type HrefProps = {
   teamSlug?: string;
   projectSlug?: string;
   codeId?: string;
-  threadId?: string;
   chatId?: string;
   nodeId?: string;
 };

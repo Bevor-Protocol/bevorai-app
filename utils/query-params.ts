@@ -10,17 +10,6 @@ function extractQuery<T extends Record<string, string>>(defaults: T, params: Par
   return result;
 }
 
-export const DefaultAnalysisThreadsQuery = {
-  page: "0",
-  page_size: "12",
-  order: "desc",
-  order_by: "created_at",
-  user_id: "",
-  project_id: "",
-  project_slug: "",
-  name: "",
-};
-
 export const DefaultCodesQuery = {
   page: "0",
   page_size: "20",
@@ -49,9 +38,9 @@ export const DefaultAnalysisNodesQuery = {
   user_id: "",
   project_id: "",
   project_slug: "",
-  analysis_thread_id: "",
   code_mapping_id: "",
   trigger: "",
+  is_leaf: "",
 };
 
 export const DefaultChatsQuery = {
@@ -61,16 +50,9 @@ export const DefaultChatsQuery = {
   order_by: "created_at",
   project_id: "",
   project_slug: "",
-  analysis_thread_id: "",
   code_mapping_id: "",
   analysis_node_id: "",
   chat_type: "",
-};
-
-export const extractAnalysisThreadsQuery = (
-  params?: Partial<typeof DefaultAnalysisThreadsQuery>,
-): typeof DefaultAnalysisThreadsQuery => {
-  return extractQuery(DefaultAnalysisThreadsQuery, params);
 };
 
 export const extractCodesQuery = (

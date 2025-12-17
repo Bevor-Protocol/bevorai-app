@@ -31,7 +31,7 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
           <div className="py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
             <div className="min-w-0 space-y-8">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Recent Analysis Threads</h3>
+                <h3 className="text-lg font-semibold mb-4">Recent Analyses</h3>
                 <AnalysesPreview teamSlug={teamSlug} projectSlug={projectSlug} />
               </div>
             </div>

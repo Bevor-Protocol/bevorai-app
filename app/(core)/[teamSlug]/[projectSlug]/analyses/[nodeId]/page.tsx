@@ -1,5 +1,5 @@
 import { analysisActions } from "@/actions/bevor";
-import AnalysisNodeMetadata from "@/app/(core)/[teamSlug]/[projectSlug]/analysis-threads/[threadId]/nodes/[nodeId]/metadata";
+import AnalysisNodeMetadata from "@/app/(core)/[teamSlug]/[projectSlug]/analyses/[nodeId]/metadata";
 import Container from "@/components/container";
 import AnalysisThreadSubnav from "@/components/subnav/analysis-thread";
 import { AsyncComponent } from "@/utils/types";
@@ -7,7 +7,6 @@ import { AnalysisVersionClient } from "./analysis-version-client";
 import { EditClient } from "./edit-mode";
 
 type ResolvedParams = {
-  threadId: string;
   nodeId: string;
   teamSlug: string;
   projectSlug: string;
@@ -37,7 +36,6 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
           teamSlug={resolvedParams.teamSlug}
           nodeId={resolvedParams.nodeId}
           projectSlug={resolvedParams.projectSlug}
-          threadId={resolvedParams.threadId}
         />
       ) : (
         <AnalysisVersionClient {...resolvedParams} analysisVersion={analysisVersion} />

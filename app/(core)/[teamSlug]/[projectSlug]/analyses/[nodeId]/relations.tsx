@@ -14,10 +14,9 @@ import React from "react";
 
 const Relations: React.FC<{
   analysisVersion: AnalysisNodeSchemaI;
-  threadId: string;
   teamSlug: string;
   projectSlug: string;
-}> = ({ analysisVersion, teamSlug, projectSlug, threadId }) => {
+}> = ({ analysisVersion, teamSlug, projectSlug }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -29,13 +28,13 @@ const Relations: React.FC<{
         <div className="p-2 text-sm">
           <div className="mb-2 flex items-center gap-2">
             <span className="font-medium">Parent: </span>
-            {analysisVersion.parent ? (
+            {analysisVersion.parent_node_id ? (
               <Badge variant="outline" size="sm">
                 <Link
-                  href={`/${teamSlug}/${projectSlug}/analysis-threads/${threadId}/nodes/${analysisVersion.parent.id}`}
+                  href={`/${teamSlug}/${projectSlug}/analyses/${analysisVersion.parent_node_id}`}
                   className="text-blue-400"
                 >
-                  {analysisVersion.parent.id.slice(0, 7)}
+                  {analysisVersion.parent_node_id.slice(0, 7)}
                 </Link>
               </Badge>
             ) : (
@@ -47,12 +46,12 @@ const Relations: React.FC<{
             <span className="font-medium">Children: </span>
             <div className="flex flex-wrap gap-1 items-center">
               {analysisVersion.children.map((child) => (
-                <Badge key={child.id} variant="outline" size="sm">
+                <Badge key={child} variant="outline" size="sm">
                   <Link
-                    href={`/${teamSlug}/${projectSlug}/analysis-threads/${threadId}/nodes/${child.id}`}
+                    href={`/${teamSlug}/${projectSlug}/nodes/${child}`}
                     className="text-blue-400"
                   >
-                    {child.id.slice(0, 7)}
+                    {child.slice(0, 7)}
                   </Link>
                 </Badge>
               ))}

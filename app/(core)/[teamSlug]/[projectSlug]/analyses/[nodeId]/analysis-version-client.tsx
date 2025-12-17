@@ -1,6 +1,6 @@
 "use client";
 
-import { analysisActions } from "@/actions/bevor";
+import { analysisActions, codeActions } from "@/actions/bevor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generateQueryKey } from "@/utils/constants";
 import { AnalysisNodeSchemaI, FindingSchemaI } from "@/utils/types";
@@ -11,7 +11,6 @@ import { CodeSnippet, FindingMetadata, FindingTabs } from "./finding";
 import { FindingWithScope, levelOrder, ScopesList } from "./scopes";
 
 export const AnalysisVersionClient: React.FC<{
-  threadId: string;
   nodeId: string;
   teamSlug: string;
   projectSlug: string;
@@ -22,6 +21,17 @@ export const AnalysisVersionClient: React.FC<{
   const { data: scopes = [], isLoading } = useQuery<FindingSchemaI[]>({
     queryKey: generateQueryKey.analysisVersionFindings(analysisVersion.id),
     queryFn: () => analysisActions.getFindings(teamSlug, analysisVersion.id),
+  });
+
+  const nodeQuery = useQuery({
+    queryKey: generateQueryKey.codeNode(selectedFinding?.scope.code_version_node_id ?? ""),
+    queryFn: () =>
+      codeActions.getNode(
+        teamSlug,
+        analysisVersion.code_version_id,
+        selectedFinding?.scope.code_version_node_id ?? "",
+      ),
+    enabled: !!selectedFinding,
   });
 
   const allFindings = useMemo(() => {
@@ -96,13 +106,13 @@ export const AnalysisVersionClient: React.FC<{
           </div>
         ) : (
           <div className="space-y-4">
-            <FindingMetadata finding={selectedFinding} />
-            <CodeSnippet
+            <FindingMetadata
               teamSlug={teamSlug}
               projectSlug={projectSlug}
-              codeVersionId={analysisVersion.code_version_id}
-              codeVersionNodeId={selectedFinding.scope.code_version_node_id}
+              finding={selectedFinding}
+              nodeQuery={nodeQuery}
             />
+            <CodeSnippet nodeQuery={nodeQuery} />
             <FindingTabs
               teamSlug={teamSlug}
               nodeId={analysisVersion.id}

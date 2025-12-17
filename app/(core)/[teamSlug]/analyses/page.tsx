@@ -1,8 +1,8 @@
 import { userActions } from "@/actions/bevor";
 import Container from "@/components/container";
-import { AnalysisThreadsView } from "@/components/screens/analysis-threads";
+import { AnalysisNodesView } from "@/components/screens/nodes";
 import TeamSubnav from "@/components/subnav/team";
-import { DefaultAnalysisThreadsQuery, extractAnalysisThreadsQuery } from "@/utils/query-params";
+import { DefaultAnalysisNodesQuery, extractAnalysisNodesQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
 import { AnalysisCreate } from "./analyses-client";
 
@@ -12,7 +12,7 @@ type ResolvedParams = {
 
 interface ProjectAnalysesPageProps {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<Partial<typeof DefaultAnalysisThreadsQuery>>;
+  searchParams: Promise<Partial<typeof DefaultAnalysisNodesQuery>>;
 }
 
 const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
@@ -24,11 +24,11 @@ const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
 
   const currentUser = await userActions.get();
 
-  const initialQuery = extractAnalysisThreadsQuery({
+  const initialQuery = extractAnalysisNodesQuery({
     ...resolvedSearchParams,
     user_id: currentUser.id,
   });
-  const defaultQuery = { ...DefaultAnalysisThreadsQuery };
+  const defaultQuery = { ...DefaultAnalysisNodesQuery };
 
   return (
     <Container subnav={<TeamSubnav />}>
@@ -36,16 +36,14 @@ const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
         <div className="border-b">
           <div className="px-6 py-6 flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-semibold mb-1">Analysis Threads</h1>
-              <p className="text-sm text-muted-foreground">
-                User-scoped threads of reasoning about code and security analyses
-              </p>
+              <h1 className="text-2xl font-semibold mb-1">Analyses</h1>
+              <p className="text-sm text-muted-foreground">User-scoped security analyses</p>
             </div>
             <AnalysisCreate teamSlug={resolvedParams.teamSlug} />
           </div>
         </div>
         <div className="px-6 py-6">
-          <AnalysisThreadsView
+          <AnalysisNodesView
             initialQuery={initialQuery}
             defaultQuery={defaultQuery}
             {...resolvedParams}

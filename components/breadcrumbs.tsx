@@ -28,7 +28,7 @@ import React, { useMemo, useState } from "react";
 const ContainerBreadcrumb: React.FC<{
   toggle?: React.ReactNode;
 }> = ({ toggle }) => {
-  const { teamSlug, projectSlug, codeId, threadId, nodeId } = useParams();
+  const { teamSlug, projectSlug, codeId, nodeId } = useParams();
   const pathname = usePathname();
 
   const { data: teams } = useQuery({
@@ -209,18 +209,6 @@ const ContainerBreadcrumb: React.FC<{
                   </BreadcrumbItem>
                 </>
               )}
-              {!!threadId && !nodeId && (
-                <>
-                  <BreadcrumbSeparator>
-                    <SlashIcon className="-rotate-25" />
-                  </BreadcrumbSeparator>
-
-                  <BreadcrumbItem>
-                    <LucideIcon assetType="analysis" className="size-4 text-purple-foreground" />
-                    {truncateId(threadId as string)}
-                  </BreadcrumbItem>
-                </>
-              )}
               {!!nodeId && (
                 <>
                   <BreadcrumbSeparator>
@@ -230,14 +218,14 @@ const ContainerBreadcrumb: React.FC<{
                   <BreadcrumbItem>
                     <BreadcrumbLink asChild>
                       <Link
-                        href={`/${teamSlug}/${projectSlug}/analysis-threads/${threadId}`}
+                        href={`/${teamSlug}/${projectSlug}/analyses/${nodeId}`}
                         className="flex gap-1.5 items-center"
                       >
                         <LucideIcon
                           assetType="analysis"
                           className="size-4 text-purple-foreground"
                         />
-                        {truncateId(threadId as string)}
+                        {truncateId(nodeId as string)}
                       </Link>
                     </BreadcrumbLink>
                   </BreadcrumbItem>

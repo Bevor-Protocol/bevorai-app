@@ -36,7 +36,6 @@ import { CreateAnalysisVersionFormValues, createAnalysisVersionSchema } from "@/
 import {
   AnalysisNodeSchemaI,
   AnalysisStatusSchemaI,
-  AnalysisThreadSchemaI,
   CodeMappingSchemaI,
   FunctionScopeI,
   TreeResponseI,
@@ -63,10 +62,8 @@ interface AnalysisScopeSelectorProps {
   scope?: AnalysisStatusSchemaI;
   teamSlug: string;
   projectSlug: string;
-  threadId: string;
-  analysis: AnalysisThreadSchemaI;
   defaultParentVersion?: AnalysisNodeSchemaI;
-  defaultCodeVersion?: CodeMappingSchemaI;
+  defaultCodeVersion: CodeMappingSchemaI;
   allowCodeVersionChange: boolean;
 }
 
@@ -93,10 +90,9 @@ const AnalysisStatusDisplay: React.FC<{
   status: AnalysisStatusSchemaI;
   teamSlug: string;
   projectSlug: string;
-  threadId: string;
   nodeId: string;
-}> = ({ status, teamSlug, projectSlug, threadId, nodeId }) => {
-  const newAnalysisRoute = `/${teamSlug}/${projectSlug}/analysis-threads/${threadId}/nodes/${nodeId}`;
+}> = ({ status, teamSlug, projectSlug, nodeId }) => {
+  const newAnalysisRoute = `/${teamSlug}/${projectSlug}/analyses/${nodeId}`;
   return (
     <div className="flex flex-col gap-4 my-8 max-w-5xl m-auto">
       <div className="space-y-4">
@@ -147,8 +143,8 @@ const CodeVersionSelector: React.FC<{
   const { codeVersionId, setCodeVersionId, setSourceId } = useCode();
 
   const { data: codeVersions } = useQuery({
-    queryKey: generateQueryKey.codes(teamSlug, { project_id: projectSlug }),
-    queryFn: () => codeActions.getVersions(teamSlug, { project_id: projectSlug }),
+    queryKey: generateQueryKey.codes(teamSlug, { project_slug: projectSlug }),
+    queryFn: () => codeActions.getVersions(teamSlug, { project_slug: projectSlug }),
     enabled: allowCodeVersionChange,
   });
 
@@ -474,8 +470,6 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   scope,
   teamSlug,
   projectSlug,
-  threadId,
-  analysis,
   defaultParentVersion,
   defaultCodeVersion,
   allowCodeVersionChange,
@@ -644,7 +638,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
   const handleSubmit = (): void => {
     createAnalysisVersionMutation.mutate({
-      analysis_thread_id: analysis.id,
+      project_id: defaultCodeVersion?.project_id,
       scopes: selectedScopes,
       scope_strategy: scopeStrategy,
       ...(defaultParentVersion?.id ? { parent_version_id: defaultParentVersion.id } : {}),
@@ -658,7 +652,6 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
         status={scopeStatus}
         teamSlug={teamSlug}
         projectSlug={projectSlug}
-        threadId={threadId}
         nodeId={createAnalysisVersionMutation.data?.id ?? ""}
       />
     );
@@ -672,7 +665,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
             <CodeVersionSelector
               defaultCodeVersion={defaultCodeVersion}
               teamSlug={teamSlug}
-              projectSlug={analysis.project_id}
+              projectSlug={projectSlug}
               allowCodeVersionChange={allowCodeVersionChange}
             />
             <AnalysisVersionSelector

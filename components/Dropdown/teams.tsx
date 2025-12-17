@@ -38,7 +38,7 @@ const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
   }, [teams, teamFilter]);
 
   const newRoute = (teamItem: TeamSchemaI): string => {
-    if (!params.teamSlug || params.threadId || params.chatId || params.codeId) {
+    if (!params.teamSlug || params.nodeId || params.chatId || params.codeId) {
       return `/${params.teamSlug}`;
     }
     return pathname.replace(params.teamSlug, teamItem.id);

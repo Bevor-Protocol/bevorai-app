@@ -10,7 +10,6 @@ export type SSEClaims = {
   team_slug?: string | null;
   project_slug?: string | null;
   code_version_id?: string | null;
-  analysis_thread_id?: string | null;
   analysis_node_id?: string | null;
 };
 
@@ -51,7 +50,6 @@ const deriveClaimsFromPath = (params: {
   teamSlug?: string | string[];
   projectSlug?: string | string[];
   codeId?: string | string[];
-  threadId?: string | string[];
   nodeId?: string | string[];
 }): SSEClaims => {
   const claims: SSEClaims = {};
@@ -64,9 +62,6 @@ const deriveClaimsFromPath = (params: {
   }
   if (params.codeId && typeof params.codeId === "string") {
     claims.code_version_id = params.codeId;
-  }
-  if (params.threadId && typeof params.threadId === "string") {
-    claims.analysis_thread_id = params.threadId;
   }
   if (params.nodeId && typeof params.nodeId === "string") {
     claims.analysis_node_id = params.nodeId;

@@ -8,7 +8,7 @@ import { CodeVersionElementCompact } from "@/components/versions/element";
 import { useCode } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate, truncateVersion } from "@/utils/helpers";
-import { DefaultAnalysisThreadsQuery, extractChatsQuery } from "@/utils/query-params";
+import { DefaultAnalysisNodesQuery, extractChatsQuery } from "@/utils/query-params";
 import { CodeMappingSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, GitBranch, MessageSquare, Network } from "lucide-react";
@@ -22,7 +22,7 @@ const CodeMetadata: React.FC<{
   teamSlug: string;
   projectSlug: string;
   version: CodeMappingSchemaI;
-  analysisQuery: typeof DefaultAnalysisThreadsQuery;
+  analysisQuery: typeof DefaultAnalysisNodesQuery;
 }> = ({ teamSlug, projectSlug, version, analysisQuery }) => {
   const { isSticky } = useCode();
   const queryClient = useQueryClient();

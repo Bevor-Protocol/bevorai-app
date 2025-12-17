@@ -6,7 +6,7 @@ import CodeVersionSubnav from "@/components/subnav/code-version";
 import { getQueryClient } from "@/lib/config/query";
 import { CodeProvider } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
-import { extractAnalysisThreadsQuery } from "@/utils/query-params";
+import { extractAnalysisNodesQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
@@ -77,9 +77,10 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
     }
   }
 
-  const analysisQuery = extractAnalysisThreadsQuery({
+  const analysisQuery = extractAnalysisNodesQuery({
     project_slug: resolvedParams.projectSlug,
     user_id: user.id,
+    code_mapping_id: resolvedParams.codeId,
   });
 
   return (

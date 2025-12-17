@@ -42,7 +42,7 @@ export type CreateAnalysisThreadFormValues = z.infer<typeof createAnalysisThread
 
 export const createAnalysisVersionSchema = z
   .object({
-    analysis_thread_id: z.string().min(1, "Analysis ID is required"),
+    project_id: z.string().min(1, "project_id is required"),
     scopes: z.array(z.string()),
     scope_strategy: z.enum(["all", "explicit", "parent"]),
     parent_version_id: z.string().optional(),
@@ -100,8 +100,8 @@ export const uploadCodeFolderSchema = z.object({
 export type UploadCodeFolderFormValues = z.infer<typeof uploadCodeFolderSchema>;
 
 export const analysisFindingBodySchema = z.object({
-  type: z.nativeEnum(FindingType),
-  level: z.nativeEnum(FindingLevel),
+  type: z.enum(FindingType),
+  level: z.enum(FindingLevel),
   name: z.string().min(1, "Name is required"),
   explanation: z.string().min(1, "Explanation is required"),
   recommendation: z.string().min(1, "Recommendation is required"),

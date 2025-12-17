@@ -2,7 +2,7 @@
 
 import { activityActions, analysisActions, projectActions } from "@/actions/bevor";
 import ActivityList from "@/components/activity";
-import { AnalysisElement } from "@/components/analysis/element";
+import { AnalysisVersionElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
 import LucideIcon from "@/components/lucide-icon";
 import CreateAnalysisModal from "@/components/Modal/create-analysis";
@@ -350,7 +350,7 @@ export const AnalysesPreview: React.FC<{
   const query = { page_size: "3", project_slug: projectSlug };
   const { data: analyses, isLoading } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, query),
-    queryFn: async () => analysisActions.getAnalyses(teamSlug, query),
+    queryFn: async () => analysisActions.getAnalysisVersions(teamSlug, query),
   });
 
   if (analyses?.results.length === 0) {
@@ -360,7 +360,7 @@ export const AnalysesPreview: React.FC<{
   return (
     <div className="flex flex-col gap-3">
       {analyses?.results.map((analysis) => (
-        <AnalysisElement key={analysis.id} analysis={analysis} teamSlug={teamSlug} />
+        <AnalysisVersionElement key={analysis.id} analysisVersion={analysis} />
       ))}
       {isLoading && <Skeleton className="w-full h-12" />}
     </div>

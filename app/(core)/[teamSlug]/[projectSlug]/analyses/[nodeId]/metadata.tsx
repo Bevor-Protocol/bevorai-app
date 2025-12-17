@@ -32,10 +32,9 @@ const getTriggerIcon = (trigger: string): React.ReactElement => {
 const AnalysisNodeMetadata: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  threadId: string;
   version: AnalysisNodeSchemaI;
   isEditMode: boolean;
-}> = ({ teamSlug, projectSlug, threadId, version, isEditMode }) => {
+}> = ({ teamSlug, projectSlug, version, isEditMode }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -97,12 +96,7 @@ const AnalysisNodeMetadata: React.FC<{
         <Calendar className="size-3" />
         <span>{formatDate(version.created_at)}</span>
       </div>
-      <Relations
-        analysisVersion={version}
-        teamSlug={teamSlug}
-        projectSlug={projectSlug}
-        threadId={threadId}
-      />
+      <Relations analysisVersion={version} teamSlug={teamSlug} projectSlug={projectSlug} />
       <Button
         variant="outline"
         size="sm"
@@ -116,8 +110,8 @@ const AnalysisNodeMetadata: React.FC<{
         <Link
           href={
             isEditMode
-              ? `/${teamSlug}/${projectSlug}/analysis-threads/${threadId}/nodes/${version.id}`
-              : `/${teamSlug}/${projectSlug}/analysis-threads/${threadId}/nodes/${version.id}?mode=edit`
+              ? `/${teamSlug}/${projectSlug}/analyses/${version.id}`
+              : `/${teamSlug}/${projectSlug}/analyses/${version.id}?mode=edit`
           }
         >
           {isEditMode ? "Exit Edit Mode" : "Edit Mode"}

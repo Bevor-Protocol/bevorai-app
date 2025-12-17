@@ -1,16 +1,16 @@
 "use server";
 
 import api from "@/lib/api";
-import { AnalysisThreadSchemaI, TreeResponseI } from "@/utils/types";
+import { AnalysisNodeSchemaI, TreeResponseI } from "@/utils/types";
 
-export const getAnalysis = async (threadId: string): Promise<AnalysisThreadSchemaI> => {
-  return api.get(`/analysis-threads/${threadId}`).then((response) => {
+export const getAnalysis = async (nodeId: string): Promise<AnalysisNodeSchemaI> => {
+  return api.get(`/analysis-nodes/${nodeId}`).then((response) => {
     return response.data;
   });
 };
 
-export const getScope = async (threadId: string): Promise<TreeResponseI[]> => {
-  return api.get(`/shared/analysis-versions/${threadId}/scope`).then((response) => {
+export const getScope = async (nodeId: string): Promise<TreeResponseI[]> => {
+  return api.get(`/shared/analysis-nodes/${nodeId}/scope`).then((response) => {
     return response.data.results;
   });
 };

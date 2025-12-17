@@ -4,11 +4,11 @@ import { Subnav, SubnavItem } from "@/components/ui/subnav";
 import { useParams, usePathname } from "next/navigation";
 import React from "react";
 
-const AnalysisThreadSubnav: React.FC = () => {
-  const { teamSlug, projectSlug, threadId } = useParams<{
+const AnalysisSubnav: React.FC = () => {
+  const { teamSlug, projectSlug, nodeId } = useParams<{
     teamSlug: string;
     projectSlug: string;
-    threadId: string;
+    nodeId: string;
   }>();
   const pathname = usePathname();
 
@@ -16,17 +16,17 @@ const AnalysisThreadSubnav: React.FC = () => {
 
   const navItems = [
     {
-      label: "Analysis Thread",
-      href: `/${teamSlug}/${projectSlug}/analysis-threads/${threadId}`,
+      label: "Analysis",
+      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}`,
     },
     {
       label: "Nodes",
-      href: `/${teamSlug}/${projectSlug}/analysis-threads/${threadId}/nodes`,
+      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}/nodes`,
     },
   ];
 
   const isActive = (href: string): boolean => {
-    if (href === `/${teamSlug}/${projectSlug}/analysis-threads/${threadId}`) {
+    if (href === `/${teamSlug}/${projectSlug}/analyses/${nodeId}`) {
       return pathname === href;
     }
     return pathname.startsWith(href);
@@ -48,4 +48,4 @@ const AnalysisThreadSubnav: React.FC = () => {
   );
 };
 
-export default AnalysisThreadSubnav;
+export default AnalysisSubnav;

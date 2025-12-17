@@ -198,14 +198,12 @@ export const AnalysisVersionElementBare: React.FC<
 };
 
 export const AnalysisVersionElement: React.FC<{
-  teamSlug: string;
-  projectSlug: string;
   analysisVersion: AnalysisNodeSchemaI;
   isDisabled?: boolean;
-}> = ({ teamSlug, projectSlug, analysisVersion, isDisabled = false }) => {
+}> = ({ analysisVersion, isDisabled = false }) => {
   return (
     <Link
-      href={`/${teamSlug}/${projectSlug}/analysis-threads/${analysisVersion.analysis_thread_id}/nodes/${analysisVersion.id}`}
+      href={`/${analysisVersion.team_slug}/${analysisVersion.project_slug}/nodes/${analysisVersion.id}`}
       aria-disabled={isDisabled}
       className={cn("block group", isDisabled ? "cursor-default opacity-50" : "cursor-pointer")}
     >

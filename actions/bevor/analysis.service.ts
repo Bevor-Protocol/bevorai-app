@@ -6,7 +6,6 @@ import { buildSearchParams } from "@/utils/query-params";
 import {
   AddAnalysisFindingBody,
   AnalysisFindingBody,
-  CreateAnalysisThreadFormValues,
   CreateAnalysisVersionFormValues,
   FindingFeedbackBody,
   UpdateAnalysisNodeBody,
@@ -14,32 +13,12 @@ import {
 import {
   AnalysisDagSchemaI,
   AnalysisNodeSchemaI,
-  AnalysisPaginationI,
   AnalysisStatusSchemaI,
-  AnalysisThreadSchemaI,
   AnalysisVersionPaginationI,
   DraftFindingSchemaI,
   FindingSchemaI,
 } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
-
-export const createAnalysis = async (
-  teamSlug: string,
-  data: CreateAnalysisThreadFormValues,
-): Promise<{
-  id: string;
-  toInvalidate: QueryKey[];
-}> => {
-  const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
-  return api
-    .post("/analysis-threads", data, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      return {
-        id: response.data.id,
-        toInvalidate,
-      };
-    });
-};
 
 export const createAnalysisVersion = async (
   teamSlug: string,
@@ -59,65 +38,20 @@ export const createAnalysisVersion = async (
     });
 };
 
-export const getAnalysis = async (
-  teamSlug: string,
-  threadId: string,
-): Promise<AnalysisThreadSchemaI> => {
-  return api
-    .get(`/analysis-threads/${threadId}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      return response.data;
-    });
-};
-
 export const getLeafs = async (
   teamSlug: string,
-  threadId: string,
+  nodeId: string,
 ): Promise<AnalysisNodeSchemaI[]> => {
   return api
-    .get(`/analysis-threads/${threadId}/leafs`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/analysis-nodes/${nodeId}/leafs`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data.results;
     });
 };
 
-export const getDAG = async (teamSlug: string, threadId: string): Promise<AnalysisDagSchemaI> => {
+export const getDAG = async (teamSlug: string, nodeId: string): Promise<AnalysisDagSchemaI> => {
   return api
-    .get(`/analysis-threads/${threadId}/dag`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      return response.data;
-    });
-};
-
-export const submitFeedback = async (
-  teamSlug: string,
-  threadId: string,
-  data: {
-    feedback?: string;
-    verified?: boolean;
-  },
-): Promise<{ success: boolean }> => {
-  return api
-    .post(`/analysis-threads/${threadId}/feedback`, data, {
-      headers: { "bevor-team-slug": teamSlug },
-    })
-    .then((response) => {
-      return response.data;
-    });
-};
-
-export const getAnalyses = async (
-  teamSlug: string,
-  filters: {
-    [key: string]: string;
-  },
-): Promise<AnalysisPaginationI> => {
-  const searchParams = buildSearchParams(filters);
-
-  return api
-    .get(`/analysis-threads?${searchParams}`, {
-      headers: { "bevor-team-slug": teamSlug },
-    })
+    .get(`/analysis-nodes/${nodeId}/dag`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
@@ -196,16 +130,12 @@ export const submitFindingFeedback = async (
 
 export const toggleVisibility = async (
   teamSlug: string,
-  threadId: string,
+  nodeId: string,
 ): Promise<{ toInvalidate: QueryKey[] }> => {
-  const toInvalidate = [generateQueryKey.analyses(teamSlug), generateQueryKey.analysis(threadId)];
+  const toInvalidate = [generateQueryKey.analyses(teamSlug), generateQueryKey.analysis(nodeId)];
 
   return api
-    .patch(
-      `/analysis-threads/${threadId}/visibility`,
-      {},
-      { headers: { "bevor-team-slug": teamSlug } },
-    )
+    .patch(`/analysis-node/${nodeId}/visibility`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then(() => {
       return {
         toInvalidate,

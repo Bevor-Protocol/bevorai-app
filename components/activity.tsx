@@ -41,8 +41,6 @@ const getEntityRoute = (activity: ActivitySchemaI): string => {
       return `/${team_slug}/${project_slug}`;
     case "code_version":
       return `/${team_slug}/${project_slug}/codes/${related_id}`;
-    case "analysis_thread":
-      return `/${team_slug}/${project_slug}/analysis-threads/${related_id}`;
     case "analysis_node":
       return `/${team_slug}/${project_slug}/analysis-threads/${related_id}`;
     case "team":

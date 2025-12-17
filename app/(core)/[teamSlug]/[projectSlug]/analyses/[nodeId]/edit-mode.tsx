@@ -1290,8 +1290,7 @@ export const EditClient: React.FC<{
   teamSlug: string;
   nodeId: string;
   projectSlug: string;
-  threadId: string;
-}> = ({ teamSlug, nodeId, projectSlug, threadId }) => {
+}> = ({ teamSlug, nodeId, projectSlug }) => {
   const router = useRouter();
   const [selectedFinding, setSelectedFinding] = useState<DraftFindingWithScope | null>(null);
   const [openCommitDialog, setOpenCommitDialog] = useState(false);
@@ -1322,7 +1321,7 @@ export const EditClient: React.FC<{
     onSuccess: ({ id }) => {
       setOpenCommitDialog(false);
       toast.success("Changes committed successfully");
-      router.push(`/${teamSlug}/${projectSlug}/analysis-threads/${threadId}/nodes/${id}`);
+      router.push(`/${teamSlug}/${projectSlug}/analyses/${id}`);
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to commit changes");

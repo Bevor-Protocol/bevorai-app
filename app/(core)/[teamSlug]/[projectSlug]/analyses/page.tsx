@@ -1,10 +1,8 @@
-import { userActions } from "@/actions/bevor";
 import Container from "@/components/container";
-import { AnalysisThreadsView } from "@/components/screens/analysis-threads";
+import { AnalysisNodesView } from "@/components/screens/nodes";
 import ProjectSubnav from "@/components/subnav/project";
-import { DefaultAnalysisThreadsQuery, extractAnalysisThreadsQuery } from "@/utils/query-params";
+import { DefaultAnalysisNodesQuery, extractAnalysisNodesQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
-import { AnalysisCreate } from "./analyses-client";
 
 type ResolvedParams = {
   teamSlug: string;
@@ -16,19 +14,19 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string }>;
 }
 
-const ProjectAnalysesPage: AsyncComponent<PageProps> = async ({ params, searchParams }) => {
+const AnalysisNodesPage: AsyncComponent<PageProps> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const currentUser = await userActions.get();
-
-  const initialQuery = extractAnalysisThreadsQuery({
+  const initialQuery = extractAnalysisNodesQuery({
     ...resolvedSearchParams,
     project_slug: resolvedParams.projectSlug,
-    user_id: currentUser.id,
   });
 
-  const defaultQuery = { ...DefaultAnalysisThreadsQuery, project_slug: resolvedParams.projectSlug };
+  const defaultQuery = {
+    ...DefaultAnalysisNodesQuery,
+    project_slug: resolvedParams.projectSlug,
+  };
 
   return (
     <Container subnav={<ProjectSubnav />}>
@@ -36,16 +34,16 @@ const ProjectAnalysesPage: AsyncComponent<PageProps> = async ({ params, searchPa
         <div className="border-b">
           <div className="py-6 flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-semibold mb-1">Analysis Threads</h1>
+              <h1 className="text-2xl font-semibold mb-1">Analysis Nodes</h1>
               <p className="text-sm text-muted-foreground">
-                User-scoped threads of reasoning about code and security analyses
+                User-scoped security analysis nodes for the given thread.
               </p>
             </div>
-            <AnalysisCreate {...resolvedParams} />
+            {/* <AnalysisCreate {...resolvedParams} /> */}
           </div>
         </div>
         <div className="py-6">
-          <AnalysisThreadsView
+          <AnalysisNodesView
             initialQuery={initialQuery}
             defaultQuery={defaultQuery}
             {...resolvedParams}
@@ -56,4 +54,4 @@ const ProjectAnalysesPage: AsyncComponent<PageProps> = async ({ params, searchPa
   );
 };
 
-export default ProjectAnalysesPage;
+export default AnalysisNodesPage;

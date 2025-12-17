@@ -14,7 +14,6 @@ import NewVersionClient from "./new-version-client";
 type ResolvedParams = {
   teamSlug: string;
   projectSlug: string;
-  threadId: string;
 };
 
 type Props = {
@@ -55,19 +54,12 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
 
   if (!codeVersionId && !parentVersionId) {
     // if we don't know a parent, and we don't know a code version, we shouldn't make assumptions
-    redirect(
-      `/${resolvedParams.teamSlug}/${resolvedParams.projectSlug}/analysis-threads/${resolvedParams.threadId}`,
-    );
+    redirect(`/${resolvedParams.teamSlug}/${resolvedParams.projectSlug}/analyses`);
   }
 
-  let defaultCodeVersion: CodeMappingSchemaI | undefined;
+  let defaultCodeVersion: CodeMappingSchemaI;
   let defaultParentVersion: AnalysisNodeSchemaI | undefined;
   let scope: AnalysisStatusSchemaI | undefined;
-
-  const analysis = await analysisActions.getAnalysis(
-    resolvedParams.teamSlug,
-    resolvedParams.threadId,
-  );
 
   if (parentVersionId) {
     defaultParentVersion = await analysisActions.getAnalysisVersion(
@@ -98,7 +90,6 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
           {...resolvedParams}
           tree={tree}
           scope={scope}
-          analysis={analysis}
           defaultParentVersion={defaultParentVersion}
           defaultCodeVersion={defaultCodeVersion}
           allowCodeVersionChange={!codeVersionId}

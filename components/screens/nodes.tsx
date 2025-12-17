@@ -22,10 +22,9 @@ import React, { useMemo, useState } from "react";
 
 export const AnalysisNodesView: React.FC<{
   teamSlug: string;
-  projectSlug: string;
   initialQuery: typeof DefaultAnalysisNodesQuery;
   defaultQuery: typeof DefaultAnalysisNodesQuery;
-}> = ({ teamSlug, projectSlug, initialQuery, defaultQuery }) => {
+}> = ({ teamSlug, initialQuery, defaultQuery }) => {
   const [filters, setFilters] = useState(initialQuery);
   const { debouncedState, timerRef, isWaiting } = useDebouncedState(filters);
 
@@ -77,8 +76,6 @@ export const AnalysisNodesView: React.FC<{
               <AnalysisVersionElement
                 key={analysis.id + String(ind)}
                 analysisVersion={analysis}
-                teamSlug={teamSlug}
-                projectSlug={projectSlug}
                 isDisabled={isWaiting}
               />
             ))}

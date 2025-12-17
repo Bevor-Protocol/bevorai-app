@@ -1,6 +1,6 @@
 "use client";
 
-import { analysisActions, codeActions } from "@/actions/bevor";
+import { analysisActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -8,10 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
+import { generateQueryKey } from "@/utils/constants";
 import { FindingFeedbackBody } from "@/utils/schema";
-import { FindingSchemaI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FindingSchemaI, NodeSchemaI } from "@/utils/types";
+import { useMutation, useQueryClient, UseQueryResult } from "@tanstack/react-query";
 import { Check, ExternalLink, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -20,11 +20,16 @@ import { toast } from "sonner";
 import { FindingWithScope, getSeverityBadgeClasses, getSeverityColor } from "./scopes";
 
 export const FindingMetadata: React.FC<{
+  teamSlug: string;
+  projectSlug: string;
   finding: FindingWithScope;
-}> = ({ finding }) => {
+  nodeQuery: UseQueryResult<NodeSchemaI, Error>;
+}> = ({ teamSlug, projectSlug, finding, nodeQuery }) => {
   const isValidated = !!finding.validated_at;
   const isInvalidated = !!finding.invalidated_at;
   const isNotAcknowledged = !isValidated && !isInvalidated;
+
+  const sourceHref = `/${teamSlug}/${projectSlug}/codes/${nodeQuery.data?.code_version_id}?source=${nodeQuery.data?.source_id}&node=${nodeQuery.data?.id}`;
 
   return (
     <div className="flex items-center gap-3">
@@ -61,33 +66,29 @@ export const FindingMetadata: React.FC<{
           finding not acknowledged
         </Badge>
       )}
+      <Button variant="ghost" size="sm" asChild className="ml-auto">
+        <Link href={sourceHref}>
+          Source <ExternalLink className="size-3" />
+        </Link>
+      </Button>
     </div>
   );
 };
 
 export const CodeSnippet: React.FC<{
-  teamSlug: string;
-  projectSlug: string;
-  codeVersionId: string;
-  codeVersionNodeId: string;
-}> = ({ teamSlug, projectSlug, codeVersionId, codeVersionNodeId }) => {
-  const { data: nodeData, isLoading: isLoadingNode } = useQuery({
-    queryKey: [QUERY_KEYS.CODES, codeVersionId, "nodes", codeVersionNodeId],
-    queryFn: () => codeActions.getNode(teamSlug, codeVersionId, codeVersionNodeId),
-    enabled: !!codeVersionNodeId,
-  });
-
+  nodeQuery: UseQueryResult<NodeSchemaI, Error>;
+}> = ({ nodeQuery }) => {
   const [html, setHtml] = useState<string>("");
 
   useEffect(() => {
-    if (!nodeData?.content) {
+    if (!nodeQuery.data?.content) {
       setHtml("");
       return;
     }
 
     const highlightCode = async (): Promise<void> => {
       try {
-        const result = await codeToHtml(nodeData.content, {
+        const result = await codeToHtml(nodeQuery.data.content, {
           lang: "solidity",
           theme: "github-dark",
           colorReplacements: {},
@@ -95,27 +96,18 @@ export const CodeSnippet: React.FC<{
         setHtml(result);
       } catch (error) {
         console.error("Error highlighting code:", error);
-        const fallbackHtml = `<pre><code>${nodeData.content}</code></pre>`;
+        const fallbackHtml = `<pre><code>${nodeQuery.data.content}</code></pre>`;
         setHtml(fallbackHtml);
       }
     };
 
     highlightCode();
-  }, [nodeData?.content]);
-
-  const sourceHref = `/${teamSlug}/${projectSlug}/codes/${codeVersionId}?source=${nodeData?.source_id}&node=${nodeData?.id}`;
+  }, [nodeQuery.data?.content]);
 
   return (
-    <div className="border rounded-lg relative">
-      <div className="absolute top-0 right-0 z-10">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={sourceHref}>
-            Source <ExternalLink className="size-3" />
-          </Link>
-        </Button>
-      </div>
+    <div className="border rounded-lg">
       <ScrollArea className="p-2 h-[200px]">
-        {isLoadingNode || !html ? (
+        {nodeQuery.isLoading || !html ? (
           <Skeleton className="h-48 w-full" />
         ) : (
           <div
