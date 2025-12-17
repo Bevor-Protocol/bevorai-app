@@ -38,9 +38,10 @@ export const DefaultAnalysisNodesQuery = {
   user_id: "",
   project_id: "",
   project_slug: "",
-  code_mapping_id: "",
+  code_version_id: "",
   trigger: "",
   is_leaf: "",
+  is_root: "",
 };
 
 export const DefaultChatsQuery = {
@@ -50,7 +51,7 @@ export const DefaultChatsQuery = {
   order_by: "created_at",
   project_id: "",
   project_slug: "",
-  code_mapping_id: "",
+  code_version_id: "",
   analysis_node_id: "",
   chat_type: "",
 };

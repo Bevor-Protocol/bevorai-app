@@ -1,6 +1,8 @@
 "use client";
 
+import { teamActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import {
   Select,
   SelectContent,
@@ -11,7 +13,9 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { cn } from "@/lib/utils";
+import { generateQueryKey } from "@/utils/constants";
 import { DefaultAnalysisNodesQuery } from "@/utils/query-params";
+import { useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, X } from "lucide-react";
 import React, { useState } from "react";
 
@@ -23,12 +27,32 @@ const FilterContent: React.FC<{
   setFilters: React.Dispatch<React.SetStateAction<typeof DefaultAnalysisNodesQuery>>;
   includeProject: boolean;
   variant?: "mobile" | "desktop";
-}> = ({ filters, setFilters, variant = "mobile" }) => {
+}> = ({ teamSlug, filters, setFilters, variant = "mobile" }) => {
   const isMobile = variant === "mobile";
   const selectWidth = isMobile ? "w-full" : "w-[180px]";
   const containerClass = isMobile
     ? "flex flex-col gap-4"
     : "hidden md:flex items-center justify-start gap-2 md:gap-4 flex-wrap";
+
+  const [rootType, setRootType] = useState<"root" | "leaf" | "any">(
+    filters.is_leaf ? "leaf" : filters.is_root ? "root" : "any",
+  );
+
+  const { data: members } = useQuery({
+    queryKey: generateQueryKey.members(teamSlug),
+    queryFn: () => teamActions.getMembers(teamSlug),
+  });
+
+  const handleNodeRoot = (leafOrRoot: "root" | "leaf" | "any"): void => {
+    setRootType(leafOrRoot);
+    if (leafOrRoot === "root") {
+      setFilters((prev) => ({ ...prev, is_root: "true", is_leaf: "" }));
+    } else if (leafOrRoot === "leaf") {
+      setFilters((prev) => ({ ...prev, is_leaf: "true", is_root: "" }));
+    } else {
+      setFilters((prev) => ({ ...prev, is_leaf: "", is_root: "" }));
+    }
+  };
 
   return (
     <div className={containerClass}>
@@ -39,12 +63,13 @@ const FilterContent: React.FC<{
           key={`user-${filters.user_id || "empty"}`}
         >
           <SelectTrigger className={cn(selectWidth, filters.user_id && "pr-7")}>
-            <SelectValue placeholder="Trigger" />
+            <SelectValue placeholder="User" />
           </SelectTrigger>
           <SelectContent>
-            {triggerItems?.map((trigger) => (
-              <SelectItem key={trigger} value={trigger}>
-                {trigger.replace("_", " ")}
+            {members?.map((member) => (
+              <SelectItem key={member.user.id} value={member.user.id}>
+                <Icon size="sm" seed={member.user.id} />
+                {member.user.username}
               </SelectItem>
             ))}
           </SelectContent>
@@ -63,20 +88,49 @@ const FilterContent: React.FC<{
           </Button>
         )}
       </div>
-      <div className="relative">
-        <Select
-          value={filters.order || "desc"}
-          onValueChange={(value) => setFilters((prev) => ({ ...prev, order: value }))}
-        >
-          <SelectTrigger className={selectWidth}>
-            <SelectValue placeholder="Order" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="desc">Descending</SelectItem>
-            <SelectItem value="asc">Ascending</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Select
+        value={filters.trigger}
+        onValueChange={(value) => setFilters((prev) => ({ ...prev, trigger: value }))}
+        key={`user-${filters.trigger || "empty"}`}
+      >
+        <SelectTrigger className={cn(selectWidth)}>
+          <SelectValue placeholder="Trigger" />
+        </SelectTrigger>
+        <SelectContent>
+          {triggerItems?.map((trigger) => (
+            <SelectItem key={trigger} value={trigger}>
+              {trigger.replace("_", " ")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select
+        value={rootType}
+        onValueChange={(value) => handleNodeRoot(value as "root" | "leaf" | "any")}
+        key={`user-${rootType || "empty"}`}
+      >
+        <SelectTrigger className={cn(selectWidth)}>
+          <SelectValue placeholder="Node Type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="root">Root</SelectItem>
+          <SelectItem value="leaf">Leaf</SelectItem>
+          <SelectItem value="any">Any</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={filters.order || "desc"}
+        onValueChange={(value) => setFilters((prev) => ({ ...prev, order: value }))}
+      >
+        <SelectTrigger className={selectWidth}>
+          <SelectValue placeholder="Order" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="desc">Descending</SelectItem>
+          <SelectItem value="asc">Ascending</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 };

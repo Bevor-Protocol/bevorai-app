@@ -1,3 +1,4 @@
+import { userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { AnalysisNodesView } from "@/components/screens/nodes";
 import ProjectSubnav from "@/components/subnav/project";
@@ -11,17 +12,23 @@ type ResolvedParams = {
 
 interface PageProps {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<{ [key: string]: string }>;
+  searchParams: Promise<Partial<typeof DefaultAnalysisNodesQuery> & { user?: string }>;
 }
 
 const AnalysisNodesPage: AsyncComponent<PageProps> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
+  const { user, ...resolvedSearchParams } = await searchParams;
 
   const initialQuery = extractAnalysisNodesQuery({
     ...resolvedSearchParams,
     project_slug: resolvedParams.projectSlug,
+    is_leaf: "true",
   });
+
+  if (user !== "unset") {
+    const currentUser = await userActions.get();
+    initialQuery.user_id = currentUser.id;
+  }
 
   const defaultQuery = {
     ...DefaultAnalysisNodesQuery,

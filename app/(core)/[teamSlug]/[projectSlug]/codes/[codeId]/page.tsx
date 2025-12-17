@@ -6,7 +6,6 @@ import CodeVersionSubnav from "@/components/subnav/code-version";
 import { getQueryClient } from "@/lib/config/query";
 import { CodeProvider } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
-import { extractAnalysisNodesQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
@@ -26,14 +25,14 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const { source, node } = await searchParams;
 
-  const [version, tree, user] = await Promise.all([
+  const [version, sources, user] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(resolvedParams.codeId),
       queryFn: () => codeActions.getCodeVersion(resolvedParams.teamSlug, resolvedParams.codeId),
     }),
     queryClient.fetchQuery({
-      queryKey: generateQueryKey.codeTree(resolvedParams.codeId),
-      queryFn: () => codeActions.getTree(resolvedParams.teamSlug, resolvedParams.codeId),
+      queryKey: generateQueryKey.codeSources(resolvedParams.codeId),
+      queryFn: () => codeActions.getSources(resolvedParams.teamSlug, resolvedParams.codeId),
     }),
     queryClient.fetchQuery({
       queryKey: generateQueryKey.currentUser(),
@@ -45,43 +44,22 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   let initialSourceId = source ?? null;
   if (initialSourceId) {
     // validate that the query param exists on this code version. If not, unset it, default to first.
-    if (!tree.find((s) => s.id == source)) {
+    if (!sources.find((s) => s.id == source)) {
       initialSourceId = null;
     }
   }
   if (!initialSourceId) {
-    initialSourceId = tree.length ? tree[0].id : null;
-  }
-  if (initialSourceId) {
-    await queryClient.fetchQuery({
-      queryKey: generateQueryKey.codeSource(resolvedParams.codeId, initialSourceId),
-      queryFn: () =>
-        codeActions.getCodeVersionSource(
-          resolvedParams.teamSlug,
-          resolvedParams.codeId,
-          initialSourceId,
-        ),
-    });
+    initialSourceId = sources.length ? sources[0].id : null;
   }
 
   let position: { start: number; end: number } | undefined;
   if (node) {
-    for (const s of tree) {
-      for (const c of s.contracts) {
-        for (const f of c.functions) {
-          if (f.id == node) {
-            position = { start: f.src_start_pos, end: f.src_end_pos };
-          }
-        }
-      }
-    }
+    const fetchedNode = await queryClient.fetchQuery({
+      queryKey: generateQueryKey.codeNode(node),
+      queryFn: () => codeActions.getNode(resolvedParams.teamSlug, resolvedParams.codeId, node),
+    });
+    position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
   }
-
-  const analysisQuery = extractAnalysisNodesQuery({
-    project_slug: resolvedParams.projectSlug,
-    user_id: user.id,
-    code_mapping_id: resolvedParams.codeId,
-  });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
@@ -91,13 +69,8 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         {...resolvedParams}
       >
         <Container subnav={<CodeVersionSubnav />}>
-          <CodeMetadata
-            teamSlug={resolvedParams.teamSlug}
-            projectSlug={resolvedParams.projectSlug}
-            analysisQuery={analysisQuery}
-            version={version}
-          />
-          <SourcesViewer tree={tree} teamSlug={resolvedParams.teamSlug} codeId={version.id} />
+          <CodeMetadata version={version} userId={user.id} {...resolvedParams} />
+          <SourcesViewer sources={sources} {...resolvedParams} />
         </Container>
       </CodeProvider>
     </HydrationBoundary>

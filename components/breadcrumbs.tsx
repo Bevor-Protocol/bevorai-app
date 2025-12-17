@@ -216,23 +216,6 @@ const ContainerBreadcrumb: React.FC<{
                   </BreadcrumbSeparator>
 
                   <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link
-                        href={`/${teamSlug}/${projectSlug}/analyses/${nodeId}`}
-                        className="flex gap-1.5 items-center"
-                      >
-                        <LucideIcon
-                          assetType="analysis"
-                          className="size-4 text-purple-foreground"
-                        />
-                        {truncateId(nodeId as string)}
-                      </Link>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator>
-                    <SlashIcon className="-rotate-25" />
-                  </BreadcrumbSeparator>
-                  <BreadcrumbItem>
                     <LucideIcon
                       assetType="analysis_node"
                       className="size-4 text-muted-foreground"

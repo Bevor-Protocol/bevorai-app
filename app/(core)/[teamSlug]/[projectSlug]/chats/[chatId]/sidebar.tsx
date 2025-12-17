@@ -123,7 +123,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
             </Link>
             {chatQuery.data.analysis_node && (
               <Link
-                href={`/${teamSlug}/${projectSlug}/nodes/${chatQuery.data.analysis_node_id}`}
+                href={`/${teamSlug}/${projectSlug}/analyses/${chatQuery.data.analysis_node_id}`}
                 className="block hover:opacity-80 transition-opacity"
               >
                 <AnalysisVersionElementCompact analysisVersion={chatQuery.data.analysis_node} />

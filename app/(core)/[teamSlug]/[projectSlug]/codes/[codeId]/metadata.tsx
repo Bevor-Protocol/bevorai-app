@@ -1,14 +1,12 @@
 "use client";
 
 import { chatActions, codeActions } from "@/actions/bevor";
-import NodeSearch from "@/app/(core)/[teamSlug]/[projectSlug]/codes/[codeId]/search";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CodeVersionElementCompact } from "@/components/versions/element";
-import { useCode } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate, truncateVersion } from "@/utils/helpers";
-import { DefaultAnalysisNodesQuery, extractChatsQuery } from "@/utils/query-params";
+import { extractChatsQuery } from "@/utils/query-params";
 import { CodeMappingSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, GitBranch, MessageSquare, Network } from "lucide-react";
@@ -21,16 +19,15 @@ import Relations from "./relations";
 const CodeMetadata: React.FC<{
   teamSlug: string;
   projectSlug: string;
+  userId: string;
   version: CodeMappingSchemaI;
-  analysisQuery: typeof DefaultAnalysisNodesQuery;
-}> = ({ teamSlug, projectSlug, version, analysisQuery }) => {
-  const { isSticky } = useCode();
+}> = ({ teamSlug, projectSlug, version, userId }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
   const chatQuery = extractChatsQuery({
     project_slug: projectSlug,
-    code_mapping_id: version.id,
+    code_version_id: version.id,
     chat_type: "code",
   });
 
@@ -92,13 +89,6 @@ const CodeMetadata: React.FC<{
     <div className="grid pb-4 lg:pt-4 px-2" style={{ gridTemplateColumns: "250px 1fr" }}>
       <h3>{version.inferred_name}</h3>
       <div className="flex justify-between gap-10">
-        {!isSticky && (
-          <NodeSearch
-            teamSlug={teamSlug}
-            codeId={version.id}
-            className="flex-1 justify-start basis-1/2"
-          />
-        )}
         <div className="flex items-center justify-end w-full gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1 whitespace-nowrap">
             <span>Method: {version.version.source_type}</span>
@@ -189,7 +179,7 @@ const CodeMetadata: React.FC<{
             version={version}
             teamSlug={teamSlug}
             projectSlug={projectSlug}
-            analysisQuery={analysisQuery}
+            userId={userId}
           />
         </div>
       </div>

@@ -61,7 +61,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   let defaultParentVersion: AnalysisNodeSchemaI | undefined;
   let scope: AnalysisStatusSchemaI | undefined;
 
-  if (parentVersionId) {
+  if (parentVersionId && !codeVersionId) {
     defaultParentVersion = await analysisActions.getAnalysisVersion(
       resolvedParams.teamSlug,
       parentVersionId,
@@ -70,6 +70,13 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
       resolvedParams.teamSlug,
       defaultParentVersion.code_version_id,
     );
+    scope = await analysisActions.getScope(resolvedParams.teamSlug, parentVersionId);
+  } else if (parentVersionId && codeVersionId) {
+    defaultParentVersion = await analysisActions.getAnalysisVersion(
+      resolvedParams.teamSlug,
+      parentVersionId,
+    );
+    defaultCodeVersion = await codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId!);
     scope = await analysisActions.getScope(resolvedParams.teamSlug, parentVersionId);
   } else {
     defaultCodeVersion = await codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId!);

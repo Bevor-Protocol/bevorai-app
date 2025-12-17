@@ -13,7 +13,8 @@ import {
   CodeCreateSchemaI,
   CodeMappingSchemaI,
   CodeRelationSchemaI,
-  CodeSourceContentSchemaI,
+  CodeSourceSchemaI,
+  CodeSourceWithContentSchemaI,
   CodeVersionsPaginationI,
   NodeSchemaI,
   NodeSearchResponseI,
@@ -157,11 +158,24 @@ export const getCodeVersionSimilar = async (
     });
 };
 
-export const getCodeVersionSource = async (
+export const getSources = async (
+  teamSlug: string,
+  codeId: string,
+): Promise<CodeSourceSchemaI[]> => {
+  return api
+    .get(`/code-versions/${codeId}/sources`, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then((response) => {
+      return response.data.results;
+    });
+};
+
+export const getSource = async (
   teamSlug: string,
   codeId: string,
   sourceId: string,
-): Promise<CodeSourceContentSchemaI> => {
+): Promise<CodeSourceWithContentSchemaI> => {
   return api
     .get(`/code-versions/${codeId}/sources/${sourceId}`, {
       headers: { "bevor-team-slug": teamSlug },

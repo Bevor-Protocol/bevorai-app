@@ -35,7 +35,7 @@ const AnalysisVersionMenu: React.FC<{
   const queryClient = useQueryClient();
   const router = useRouter();
   const codePath = `/${teamSlug}/${projectSlug}/codes/${version.code_version_id}`;
-  const analysisPath = `/${teamSlug}/${projectSlug}/nodes/new?parentVersionId=${version.id}`;
+  const analysisPath = `/${teamSlug}/${projectSlug}/analyses/new?parentVersionId=${version.id}`;
 
   const forkMutation = useMutation({
     mutationFn: async () => analysisActions.forkAnalysis(teamSlug, version.id),
@@ -45,7 +45,7 @@ const AnalysisVersionMenu: React.FC<{
       });
       setShowForkDialog(false);
       toast.success("Analysis forked successfully");
-      router.push(`/${teamSlug}/${projectSlug}/analysis-nodes/${id}`);
+      router.push(`/${teamSlug}/${projectSlug}/analyses/${id}`);
     },
     onError: () => {
       toast.error("Failed to fork analysis", {

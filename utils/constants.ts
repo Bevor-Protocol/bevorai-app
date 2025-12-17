@@ -81,6 +81,7 @@ export const generateQueryKey = {
   codeNode: (codeNodeId: string): QueryKey => [QUERY_KEYS.CODES, codeNodeId, "node"],
   codeRelations: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "relations"],
   codeSimilarity: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "similarity"],
+  codeSources: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "sources"],
   codeSource: (codeId: string, sourceId: string): QueryKey => [
     QUERY_KEYS.CODES,
     codeId,

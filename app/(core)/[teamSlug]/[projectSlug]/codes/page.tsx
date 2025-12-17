@@ -15,7 +15,7 @@ interface ResolvedParams {
 
 interface ProjectPageProps {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<{ [key: string]: string }>;
+  searchParams: Promise<Partial<typeof DefaultCodesQuery>>;
 }
 
 const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params, searchParams }) => {

@@ -8,14 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/helpers";
-import { AnalysisNodeSchemaI, AnalysisThreadSchemaI } from "@/utils/types";
+import { AnalysisNodeSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  BrickWallShieldIcon,
   Clock,
   GitBranch,
   Lock,
@@ -28,13 +26,6 @@ import {
 import Link from "next/link";
 import React from "react";
 import { toast } from "sonner";
-
-type AnalysisElementProps = {
-  analysis: AnalysisThreadSchemaI & { n: number };
-  teamSlug: string;
-  isDisabled?: boolean;
-  isPreview?: boolean;
-};
 
 export const AnalysisElementLoader: React.FC = () => {
   return (
@@ -152,11 +143,15 @@ export const AnalysisVersionElementBare: React.FC<
   const shortId = analysisVersion.id.slice(0, 8);
   const status = "unknown"; // TODO: come back to this, if i want it.
   const statusIndicator = getStatusIndicator(status);
+  const isRoot = !analysisVersion.parent_node_id;
+  const isLeaf = analysisVersion.is_leaf;
 
   return (
     <div
       className={cn(
         "grid grid-cols-[24px_minmax(0,120px)_auto_minmax(100px,1fr)_auto] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
+        isRoot && "border-r-4 border-r-blue-500",
+        isLeaf && "border-r-4 border-r-green-500",
         className,
       )}
       {...props}
@@ -165,7 +160,19 @@ export const AnalysisVersionElementBare: React.FC<
         <Shield className="size-4 text-purple-400" />
       </div>
       <div className="min-w-0">
-        <p className="font-medium text-sm font-mono truncate">{shortId}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-sm font-mono truncate">{shortId}</p>
+          {isRoot && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap">
+              ROOT
+            </span>
+          )}
+          {isLeaf && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap">
+              LEAF
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex flex-col shrink-0 justify-center">
         <div className="flex items-center gap-2">
@@ -203,7 +210,7 @@ export const AnalysisVersionElement: React.FC<{
 }> = ({ analysisVersion, isDisabled = false }) => {
   return (
     <Link
-      href={`/${analysisVersion.team_slug}/${analysisVersion.project_slug}/nodes/${analysisVersion.id}`}
+      href={`/${analysisVersion.team_slug}/${analysisVersion.project_slug}/analyses/${analysisVersion.id}`}
       aria-disabled={isDisabled}
       className={cn("block group", isDisabled ? "cursor-default opacity-50" : "cursor-pointer")}
     >
@@ -212,8 +219,8 @@ export const AnalysisVersionElement: React.FC<{
   );
 };
 
-const AnalysisElementMenu: React.FC<{
-  analysis: AnalysisThreadSchemaI;
+export const AnalysisElementMenu: React.FC<{
+  analysis: AnalysisNodeSchemaI;
   teamSlug: string;
 }> = ({ analysis, teamSlug }) => {
   const queryClient = useQueryClient();
@@ -273,102 +280,5 @@ const AnalysisElementMenu: React.FC<{
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-};
-
-export const AnalysisElementCompact: React.FC<
-  {
-    analysis: AnalysisThreadSchemaI;
-  } & React.ComponentProps<"div">
-> = ({ analysis, className, ...props }) => {
-  return (
-    <div className={cn("flex items-center gap-2 py-2 px-3 rounded-md", className)} {...props}>
-      <BrickWallShieldIcon className="size-3.5 text-purple-400 shrink-0" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="font-medium text-sm truncate">{analysis.name || "Untitled"}</p>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-          <GitBranch className="size-3" />
-          <span>
-            {analysis.n_versions} version{analysis.n_versions !== 1 ? "s" : ""}
-          </span>
-          <span>•</span>
-          <Icon size="sm" seed={analysis.user.id} />
-          <span>{analysis.user.username}</span>
-        </div>
-      </div>
-      {analysis.is_public ? (
-        <Unlock className="size-3.5 text-green-500 shrink-0" />
-      ) : (
-        <Lock className="size-3.5 text-purple-400 shrink-0" />
-      )}
-    </div>
-  );
-};
-
-export const AnalysisElementBare: React.FC<
-  {
-    analysis: AnalysisThreadSchemaI;
-    teamSlug: string;
-  } & React.ComponentProps<"div">
-> = ({ analysis, teamSlug, className, ...props }) => {
-  return (
-    <div
-      className={cn(
-        "grid grid-cols-[24px_1fr_120px_140px_160px_64px] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
-        className,
-      )}
-      {...props}
-    >
-      <div className="flex justify-center">
-        <BrickWallShieldIcon className="size-4 text-purple-foreground" />
-      </div>
-      <div className="min-w-0">
-        <h3 className="text-sm font-medium truncate">{analysis.name || "Untitled"}</h3>
-      </div>
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
-        <GitBranch className="size-3" />
-        <span>
-          {analysis.n_versions} version{analysis.n_versions !== 1 ? "s" : ""}
-        </span>
-      </div>
-      <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
-        <Icon size="sm" seed={analysis.user.id} />
-        <span>{analysis.user.username}</span>
-      </div>
-      <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
-        <Clock className="size-3" />
-        <span>{formatDate(analysis.created_at)}</span>
-      </div>
-      <div className="flex items-center justify-center gap-1.5">
-        {analysis.is_public ? (
-          <Unlock className="size-4 text-green-500 shrink-0" />
-        ) : (
-          <Lock className="size-4 text-purple-400 shrink-0" />
-        )}
-        {analysis.is_owner ? (
-          <AnalysisElementMenu analysis={analysis} teamSlug={teamSlug} />
-        ) : (
-          <div className="w-8" />
-        )}
-      </div>
-    </div>
-  );
-};
-
-export const AnalysisElement: React.FC<AnalysisElementProps> = ({
-  analysis,
-  teamSlug,
-  isDisabled = false,
-}) => {
-  return (
-    <Link
-      href={`/${teamSlug}/${analysis.project_slug}/analysis-threads/${analysis.id}`}
-      aria-disabled={isDisabled}
-      className={cn("block group", isDisabled ? "cursor-default opacity-50" : "cursor-pointer")}
-    >
-      <AnalysisElementBare analysis={analysis} teamSlug={teamSlug} />
-    </Link>
   );
 };

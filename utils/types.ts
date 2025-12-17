@@ -470,13 +470,16 @@ export interface RecentCodeVersionSchemaI {
   code_version?: CodeMappingSchemaI;
 }
 
-export interface CodeSourceContentSchemaI extends BaseSchema {
-  content: string;
+export interface CodeSourceSchemaI extends BaseSchema {
   solc_version: string;
-  content_hash: string;
   path: string;
   is_imported: boolean;
   is_known_target: boolean;
+  n_entry_points: number;
+}
+
+export interface CodeSourceWithContentSchemaI extends CodeSourceSchemaI {
+  content: string;
 }
 
 /*    */

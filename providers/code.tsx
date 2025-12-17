@@ -2,8 +2,8 @@
 
 import { codeActions } from "@/actions/bevor";
 import { generateQueryKey } from "@/utils/constants";
-import { CodeSourceContentSchemaI } from "@/utils/types";
-import { useQuery } from "@tanstack/react-query";
+import { CodeSourceWithContentSchemaI, NodeSearchResponseI } from "@/utils/types";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import React, {
   createContext,
   useCallback,
@@ -29,11 +29,8 @@ interface CodeContextValue {
   containerRef: React.RefObject<HTMLDivElement>;
   isSticky: boolean;
   handleSourceChange: (sourceId: string, positions?: { start: number; end: number }) => void;
-  sourceQuery: {
-    data: CodeSourceContentSchemaI | undefined;
-    isLoading: boolean;
-    error: Error | null;
-  };
+  sourceQuery: UseQueryResult<CodeSourceWithContentSchemaI, Error>;
+  nodesQuery: UseQueryResult<NodeSearchResponseI[], Error>;
 }
 
 const CodeContext = createContext<CodeContextValue | undefined>(undefined);
@@ -56,7 +53,14 @@ export const CodeProvider: React.FC<{
 
   const sourceQuery = useQuery({
     queryKey: generateQueryKey.codeSource(codeVersionId ?? "", sourceId ?? ""),
-    queryFn: () => codeActions.getCodeVersionSource(teamSlug, codeVersionId ?? "", sourceId ?? ""),
+    queryFn: () => codeActions.getSource(teamSlug, codeVersionId ?? "", sourceId ?? ""),
+    enabled: !!sourceId && !!codeVersionId,
+    staleTime: Infinity,
+  });
+
+  const nodesQuery = useQuery({
+    queryKey: generateQueryKey.codeNodes(codeVersionId ?? "", { source_id: sourceId! }),
+    queryFn: () => codeActions.getNodes(teamSlug, codeVersionId ?? "", { source_id: sourceId! }),
     enabled: !!sourceId && !!codeVersionId,
     staleTime: Infinity,
   });
@@ -162,15 +166,6 @@ export const CodeProvider: React.FC<{
     });
   }, []);
 
-  const sourceQueryValue = useMemo(
-    () => ({
-      data: sourceQuery.data,
-      isLoading: sourceQuery.isLoading,
-      error: sourceQuery.error,
-    }),
-    [sourceQuery.data, sourceQuery.isLoading, sourceQuery.error],
-  );
-
   const value = useMemo(
     () => ({
       positions,
@@ -187,7 +182,8 @@ export const CodeProvider: React.FC<{
       handleSourceChange,
       codeVersionId,
       setCodeVersionId,
-      sourceQuery: sourceQueryValue,
+      sourceQuery,
+      nodesQuery,
     }),
     [
       positions,
@@ -201,7 +197,8 @@ export const CodeProvider: React.FC<{
       setCodeVersionId,
       isSticky,
       containerRef,
-      sourceQueryValue,
+      sourceQuery,
+      nodesQuery,
     ],
   );
 

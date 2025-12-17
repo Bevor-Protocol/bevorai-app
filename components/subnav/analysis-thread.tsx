@@ -21,7 +21,7 @@ const AnalysisSubnav: React.FC = () => {
     },
     {
       label: "Nodes",
-      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}/nodes`,
+      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}`,
     },
   ];
 

@@ -2,30 +2,40 @@
 
 import NodeSearch from "@/app/(core)/[teamSlug]/[projectSlug]/codes/[codeId]/search";
 import ShikiViewer from "@/components/shiki-viewer";
-import { Badge } from "@/components/ui/badge";
 import {
   CodeContent,
-  CodeCounter,
+  CodeDisplay,
   CodeHeader,
   CodeHolder,
-  CodeSource,
+  CodeMetadata,
+  CodeNodeList,
+  CodeSourceItem,
   CodeSources,
+  CodeSourceToggle,
+  getSourceColor,
 } from "@/components/ui/code";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
-import { TreeResponseI } from "@/utils/types";
+import { CodeSourceSchemaI, NodeSearchResponseI } from "@/utils/types";
 import React from "react";
 
 interface SourcesViewerProps {
-  tree: TreeResponseI[];
+  sources: CodeSourceSchemaI[];
   teamSlug: string;
   codeId: string;
 }
 
-const SourcesViewer: React.FC<SourcesViewerProps> = ({ tree, teamSlug, codeId }) => {
-  const { handleSourceChange, sourceQuery, containerRef, isSticky } = useCode();
+const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId }) => {
+  const { handleSourceChange, sourceQuery, nodesQuery, containerRef, sourceId } = useCode();
 
-  if (tree.length === 0) {
+  if (sources.length === 0) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 pr-2">
         <div className="border border-border rounded-lg p-6">
@@ -38,38 +48,78 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ tree, teamSlug, codeId })
     );
   }
 
+  const contracts = nodesQuery.data?.filter((n) => n.node_type === "ContractDefinition");
+  const callables = nodesQuery.data?.filter(
+    (n) => n.node_type === "FunctionDefinition" || n.node_type === "ModifierDefinition",
+  );
+  const declarations = nodesQuery.data?.filter(
+    (n) =>
+      n.node_type !== "ContractDefinition" &&
+      n.node_type !== "FunctionDefinition" &&
+      n.node_type !== "ModifierDefinition",
+  );
+
+  const currentSource = sources.find((s) => s.id === sourceId)!;
+  const currentFileName = currentSource.path.split("/").pop() ?? "";
+  const currentSourceColor = getSourceColor(currentSource);
+
+  const handleNodeClick = (node: NodeSearchResponseI): void => {
+    handleSourceChange(node.code_version_source_id, {
+      start: node.src_start_pos,
+      end: node.src_end_pos,
+    });
+  };
+
   return (
     <CodeHolder ref={containerRef} className="pr-2">
-      <CodeCounter>
-        <Badge variant="green" size="sm">
-          {tree.length} sources
-        </Badge>
-      </CodeCounter>
-      <CodeHeader path={sourceQuery.data?.path}>
-        {isSticky && (
-          <NodeSearch
-            teamSlug={teamSlug}
-            codeId={codeId}
-            className={cn(
-              "basis-1/3 shrink min-w-[150px] h-full border-0 border-l",
-              isSticky ? "animate-appear" : "hidden animate-disappear",
-            )}
+      <CodeMetadata>
+        <CodeSourceToggle>
+          <NodeSearch teamSlug={teamSlug} codeId={codeId} className="w-full" />
+          <Select value={sourceId!} onValueChange={(sourceId) => handleSourceChange(sourceId)}>
+            <SelectTrigger className="max-w-full w-full px-2">
+              <SelectValue>
+                <div className="flex gap-2 items-center">
+                  <div className={cn("w-2 h-2 rounded-full shrink-0", currentSourceColor)} />
+                  {currentFileName}
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="w-[300px] overflow-hidden">
+              {sources.map((source) => (
+                <SelectItem key={source.id} value={source.id}>
+                  <CodeSourceItem source={source} />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CodeSourceToggle>
+        <CodeSources>
+          <CodeNodeList
+            title="Contracts"
+            nodes={contracts}
+            onNodeClick={handleNodeClick}
+            isLoading={nodesQuery.isLoading}
           />
-        )}
-      </CodeHeader>
-      <CodeSources>
-        {tree.map((source) => (
-          <CodeSource
-            key={source.id}
-            source={source}
-            isActive={source.id === sourceQuery.data?.id}
-            onClick={() => handleSourceChange(source.id)}
+          <CodeNodeList
+            title="Callables"
+            nodes={callables}
+            onNodeClick={handleNodeClick}
+            isLoading={nodesQuery.isLoading}
           />
-        ))}
-      </CodeSources>
-      <CodeContent>
-        <ShikiViewer className={sourceQuery.isLoading ? "opacity-50" : ""} />
-      </CodeContent>
+          <CodeNodeList
+            title="Declarations"
+            nodes={declarations}
+            onNodeClick={handleNodeClick}
+            isLoading={nodesQuery.isLoading}
+          />
+        </CodeSources>
+      </CodeMetadata>
+      <CodeDisplay>
+        <CodeHeader path={sourceQuery.data?.path} />
+        <CodeContent>
+          <ShikiViewer className={sourceQuery.isLoading ? "opacity-50" : ""} />
+        </CodeContent>
+      </CodeDisplay>
     </CodeHolder>
   );
 };

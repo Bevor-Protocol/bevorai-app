@@ -48,7 +48,7 @@ const Relations: React.FC<{
               {analysisVersion.children.map((child) => (
                 <Badge key={child} variant="outline" size="sm">
                   <Link
-                    href={`/${teamSlug}/${projectSlug}/nodes/${child}`}
+                    href={`/${teamSlug}/${projectSlug}/analyses/${child}`}
                     className="text-blue-400"
                   >
                     {child.slice(0, 7)}
