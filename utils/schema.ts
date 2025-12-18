@@ -25,21 +25,6 @@ export const projectFormSchema = z
   });
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
-export const createAnalysisThreadSchema = z.object({
-  project_id: z.string().min(1, "Project ID is required"),
-  name: z
-    .string()
-    .transform((v) => (v === "" ? undefined : v))
-    .optional(),
-  description: z
-    .string()
-    .transform((v) => (v === "" ? undefined : v))
-    .optional(),
-  is_public: z.boolean(),
-});
-
-export type CreateAnalysisThreadFormValues = z.infer<typeof createAnalysisThreadSchema>;
-
 export const createAnalysisVersionSchema = z
   .object({
     project_id: z.string().min(1, "project_id is required"),

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import * as Chat from "@/components/ui/chat";
 import { Textarea } from "@/components/ui/textarea";
 import { generateQueryKey } from "@/utils/constants";
-import { NodeSearchResponseI } from "@/utils/types";
+import { NodeSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Send } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -128,7 +128,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     adjustTextareaHeight();
   };
 
-  const insertAutocompleteItem = (item: NodeSearchResponseI): void => {
+  const insertAutocompleteItem = (item: NodeSchemaI): void => {
     const cursorPosition = textareaRef.current?.selectionStart || 0;
     const textBeforeCursor = inputValue.substring(0, cursorPosition);
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");

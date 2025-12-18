@@ -1,6 +1,5 @@
 import { analysisActions, codeActions } from "@/actions/bevor";
 import Container from "@/components/container";
-import AnalysisThreadSubnav from "@/components/subnav/analysis-thread";
 import { CodeProvider } from "@/providers/code";
 import {
   AnalysisNodeSchemaI,
@@ -23,30 +22,6 @@ type Props = {
     parentVersionId?: string;
   }>;
 };
-
-/*
-Multiple ways to enter this page, to create a better UX:
-1. from the analysis thread.
-2. from an existing analysis version.
-3. from a code version (we'll require they select an analysis thread prior to navigation).
-
-To create an analysis version, we need 2 things:
-1. the code version
-2. the parent analysis version (nullable)
-
-Now consider:
-1. Neither query param is passed
--> use most recent analysis version as the default parent. Use its associated code version as the default
-code version. If no recent analysis version exists, then leave parent blank, and use most recent code
-version as the default code version. If no recent code version exists, add a CTA to create one.
-2. Both query params are passed
--> validate that both are valid
-3. code version only
--> validate it. Use the most recent analysis version as the default parent
-4. parent only
--> validate it. Use the associated code version as the default code version.
-
-*/
 
 const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
@@ -82,9 +57,9 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
     defaultCodeVersion = await codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId!);
   }
 
-  const tree = await codeActions.getTree(resolvedParams.teamSlug, defaultCodeVersion.id);
+  const sources = await codeActions.getSources(resolvedParams.teamSlug, defaultCodeVersion.id);
 
-  const initialSourceId = tree.length ? tree[0].id : null;
+  const initialSourceId = sources.length ? sources[0].id : null;
 
   return (
     <CodeProvider
@@ -92,10 +67,10 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
       teamSlug={resolvedParams.teamSlug}
       codeId={defaultCodeVersion?.id ?? null}
     >
-      <Container subnav={<AnalysisThreadSubnav />}>
+      <Container>
         <NewVersionClient
           {...resolvedParams}
-          tree={tree}
+          sources={sources}
           scope={scope}
           defaultParentVersion={defaultParentVersion}
           defaultCodeVersion={defaultCodeVersion}

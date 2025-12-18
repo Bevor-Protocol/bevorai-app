@@ -75,8 +75,8 @@ const ContainerBreadcrumb: React.FC<{
     if (!teamSlug || !projectSlug) return null;
     const basePath = `/${teamSlug}/${projectSlug}`;
 
-    if (pathname.startsWith(`${basePath}/analysis-threads`)) {
-      return "analysis-threads";
+    if (pathname.startsWith(`${basePath}/analyses`)) {
+      return "analyses";
     }
     if (pathname.startsWith(`${basePath}/codes`)) {
       return "codes";
@@ -99,8 +99,8 @@ const ContainerBreadcrumb: React.FC<{
   const projectLink = useMemo(() => {
     const basePath = `/${teamSlug}/${projectSlug}`;
 
-    if (pathname.startsWith(`${basePath}/analysis-threads/`)) {
-      return `${basePath}/analysis-threads`;
+    if (pathname.startsWith(`${basePath}/analyses/`)) {
+      return `${basePath}/analyses`;
     }
 
     if (pathname.startsWith(`${basePath}/codes/`)) {

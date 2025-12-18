@@ -17,7 +17,7 @@ import {
   CodeSourceWithContentSchemaI,
   CodeVersionsPaginationI,
   NodeSchemaI,
-  NodeSearchResponseI,
+  NodeWithContentSchemaI,
   TreeResponseI,
 } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
@@ -197,7 +197,7 @@ export const getNode = async (
   teamSlug: string,
   codeId: string,
   nodeId: string,
-): Promise<NodeSchemaI> => {
+): Promise<NodeWithContentSchemaI> => {
   return api
     .get(`/code-versions/${codeId}/nodes/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
@@ -213,7 +213,7 @@ export const getNodes = async (
     source_id?: string;
     node_type?: string;
   },
-): Promise<NodeSearchResponseI[]> => {
+): Promise<NodeSchemaI[]> => {
   const searchParams = new URLSearchParams(data);
   let url = `/code-versions/${codeId}/nodes`;
   if (searchParams) {

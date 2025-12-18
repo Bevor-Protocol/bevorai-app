@@ -86,8 +86,8 @@ const AnalysisVersionMenu: React.FC<{
           <AlertDialogHeader>
             <AlertDialogTitle>Fork Analysis</AlertDialogTitle>
             <AlertDialogDescription>
-              This will create a new analysis thread in the current project, and use this version as
-              the root.
+              This will create a new analysis in the current project, and use this version as the
+              root.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

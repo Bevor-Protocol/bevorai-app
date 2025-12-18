@@ -2,7 +2,7 @@
 
 import { codeActions } from "@/actions/bevor";
 import { generateQueryKey } from "@/utils/constants";
-import { CodeSourceWithContentSchemaI, NodeSearchResponseI } from "@/utils/types";
+import { CodeSourceWithContentSchemaI, NodeSchemaI } from "@/utils/types";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import React, {
   createContext,
@@ -30,7 +30,7 @@ interface CodeContextValue {
   isSticky: boolean;
   handleSourceChange: (sourceId: string, positions?: { start: number; end: number }) => void;
   sourceQuery: UseQueryResult<CodeSourceWithContentSchemaI, Error>;
-  nodesQuery: UseQueryResult<NodeSearchResponseI[], Error>;
+  nodesQuery: UseQueryResult<NodeSchemaI[], Error>;
 }
 
 const CodeContext = createContext<CodeContextValue | undefined>(undefined);

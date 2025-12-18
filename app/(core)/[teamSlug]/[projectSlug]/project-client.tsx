@@ -5,7 +5,6 @@ import ActivityList from "@/components/activity";
 import { AnalysisVersionElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
 import LucideIcon from "@/components/lucide-icon";
-import CreateAnalysisModal from "@/components/Modal/create-analysis";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +59,6 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
 }) => {
   const [editOpen, setEditOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
-  const [analysisOpen, setAnalysisOpen] = React.useState(false);
 
   const { data: project } = useQuery({
     queryKey: generateQueryKey.project(projectSlug),
@@ -83,10 +81,6 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
                 Upload new code
                 <LucideIcon assetType="code" />
               </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="[&_svg]:ml-auto" onSelect={() => setAnalysisOpen(true)}>
-              Create new analysis thread
-              <LucideIcon assetType="analysis" />
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuGroup>
@@ -125,11 +119,6 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
           project={project}
         />
       )}
-      <Dialog open={analysisOpen} onOpenChange={setAnalysisOpen}>
-        <DialogContent>
-          <CreateAnalysisModal teamSlug={teamSlug} project={project} />
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

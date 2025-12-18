@@ -109,6 +109,7 @@ export const AnalysisVersionClient: React.FC<{
             <FindingMetadata
               teamSlug={teamSlug}
               projectSlug={projectSlug}
+              codeId={analysisVersion.code_version_id}
               finding={selectedFinding}
               nodeQuery={nodeQuery}
             />

@@ -36,7 +36,7 @@ export interface AnalysisStatusSchemaI {
     id: string;
     n_findings: number;
     status: "waiting" | "processing" | "success" | "failed" | "partial";
-    callable: CallableSchemaI;
+    node: NodeSchemaI;
   }[];
 }
 
@@ -128,11 +128,19 @@ export interface TreeResponseI {
 
 export interface NodeSchemaI {
   id: string;
-  code_version_id: string;
   source_id: string;
+  contract_id?: string;
+  generic_id?: string;
   node_type: string;
   src_start_pos: number;
   src_end_pos: number;
+  name: string;
+  signature?: string;
+  path: string;
+  is_auditable: boolean;
+}
+
+export interface NodeWithContentSchemaI extends NodeSchemaI {
   content: string;
   children: object;
 }
@@ -200,17 +208,6 @@ export interface DraftFindingSchemaI {
     base_finding_id?: string;
     code_version_node_id: string;
   }[];
-}
-
-export interface NodeSearchResponseI {
-  id: string;
-  code_version_source_id: string;
-  node_type: string;
-  src_start_pos: number;
-  src_end_pos: number;
-  name: string;
-  signature?: string;
-  path: string;
 }
 
 export interface CodeRelationSchemaI {

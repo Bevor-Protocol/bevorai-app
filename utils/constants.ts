@@ -25,7 +25,6 @@ export const QUERY_KEYS = {
   PROJECTS: "projects",
   TEAMS: "teams",
   CODES: "codes",
-  ANALYSIS_VERSIONS: "analysis_versions",
   MEMBERS: "members",
   CHATS: "chats",
   USERS: "users",
@@ -103,41 +102,25 @@ export const generateQueryKey = {
     filter,
   ],
 
-  analysis: (threadId: string): QueryKey => [QUERY_KEYS.ANALYSES, threadId],
+  analysis: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId],
   analyses: (teamSlug: string, filter?: { [key: string]: string | undefined }): QueryKey => [
     QUERY_KEYS.ANALYSES,
     teamSlug,
     filter,
   ],
 
-  analysisHead: (threadId: string): QueryKey => [QUERY_KEYS.ANALYSES, threadId, "head"],
+  analysisHead: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "head"],
 
-  analysisLeafs: (threadId: string): QueryKey => [QUERY_KEYS.ANALYSES, threadId, "leafs"],
-  analysisDag: (threadId: string): QueryKey => [QUERY_KEYS.ANALYSES, threadId, "dag"],
-  analysisVersion: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSIS_VERSIONS, nodeId],
-  analysisVersionStatus: (nodeId: string): QueryKey => [
-    QUERY_KEYS.ANALYSIS_VERSIONS,
-    nodeId,
-    "status",
-  ],
-  analysisVersionFindings: (nodeId: string): QueryKey => [
-    QUERY_KEYS.ANALYSIS_VERSIONS,
-    nodeId,
-    "findings",
-  ],
-  analysisVersionDraft: (nodeId: string): QueryKey => [
-    QUERY_KEYS.ANALYSIS_VERSIONS,
-    nodeId,
-    "draft",
-  ],
-  analysisVersionScope: (nodeId: string): QueryKey => [
-    QUERY_KEYS.ANALYSIS_VERSIONS,
-    nodeId,
-    "scope",
-  ],
+  analysisLeafs: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "leafs"],
+  analysisDag: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "dag"],
+  analysisVersion: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId],
+  analysisVersionStatus: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "status"],
+  analysisVersionFindings: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "findings"],
+  analysisVersionDraft: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "draft"],
+  analysisVersionScope: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "scope"],
 
   analysisVersions: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
-    QUERY_KEYS.ANALYSIS_VERSIONS,
+    QUERY_KEYS.ANALYSES,
     teamSlug,
     filter,
   ],

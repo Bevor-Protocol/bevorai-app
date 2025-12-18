@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
 import { FindingFeedbackBody } from "@/utils/schema";
-import { FindingSchemaI, NodeSchemaI } from "@/utils/types";
+import { FindingSchemaI, NodeSchemaI, NodeWithContentSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient, UseQueryResult } from "@tanstack/react-query";
 import { Check, ExternalLink, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import Link from "next/link";
@@ -22,14 +22,15 @@ import { FindingWithScope, getSeverityBadgeClasses, getSeverityColor } from "./s
 export const FindingMetadata: React.FC<{
   teamSlug: string;
   projectSlug: string;
+  codeId: string;
   finding: FindingWithScope;
   nodeQuery: UseQueryResult<NodeSchemaI, Error>;
-}> = ({ teamSlug, projectSlug, finding, nodeQuery }) => {
+}> = ({ teamSlug, projectSlug, codeId, finding, nodeQuery }) => {
   const isValidated = !!finding.validated_at;
   const isInvalidated = !!finding.invalidated_at;
   const isNotAcknowledged = !isValidated && !isInvalidated;
 
-  const sourceHref = `/${teamSlug}/${projectSlug}/codes/${nodeQuery.data?.code_version_id}?source=${nodeQuery.data?.source_id}&node=${nodeQuery.data?.id}`;
+  const sourceHref = `/${teamSlug}/${projectSlug}/codes/${codeId}?source=${nodeQuery.data?.source_id}&node=${nodeQuery.data?.id}`;
 
   return (
     <div className="flex items-center gap-3">
@@ -76,7 +77,7 @@ export const FindingMetadata: React.FC<{
 };
 
 export const CodeSnippet: React.FC<{
-  nodeQuery: UseQueryResult<NodeSchemaI, Error>;
+  nodeQuery: UseQueryResult<NodeWithContentSchemaI, Error>;
 }> = ({ nodeQuery }) => {
   const [html, setHtml] = useState<string>("");
 
@@ -106,7 +107,7 @@ export const CodeSnippet: React.FC<{
 
   return (
     <div className="border rounded-lg">
-      <ScrollArea className="p-2 h-[200px]">
+      <ScrollArea className="p-2 h-[300px]">
         {nodeQuery.isLoading || !html ? (
           <Skeleton className="h-48 w-full" />
         ) : (

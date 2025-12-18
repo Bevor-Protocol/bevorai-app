@@ -1,7 +1,7 @@
 import LucideIcon from "@/components/lucide-icon";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { ChatMessageI, NodeSearchResponseI } from "@/utils/types";
+import { ChatMessageI, NodeSchemaI } from "@/utils/types";
 import {
   AlertTriangle,
   Calendar,
@@ -18,9 +18,9 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 
 type AutocompleteProps = {
-  attributes: NodeSearchResponseI[];
+  attributes: NodeSchemaI[];
   selectedAutocompleteIndex: number;
-  insertAutocompleteItem: (item: NodeSearchResponseI) => void;
+  insertAutocompleteItem: (item: NodeSchemaI) => void;
 };
 
 const AutoComplete: React.FC<AutocompleteProps> = ({

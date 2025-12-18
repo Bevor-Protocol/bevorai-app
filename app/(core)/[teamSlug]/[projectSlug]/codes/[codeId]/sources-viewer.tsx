@@ -21,9 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
-import { CodeSourceSchemaI, NodeSearchResponseI } from "@/utils/types";
+import { CodeSourceSchemaI, NodeSchemaI } from "@/utils/types";
 import React from "react";
 
 interface SourcesViewerProps {
@@ -48,23 +49,25 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId
     );
   }
 
-  const contracts = nodesQuery.data?.filter((n) => n.node_type === "ContractDefinition");
-  const callables = nodesQuery.data?.filter(
-    (n) => n.node_type === "FunctionDefinition" || n.node_type === "ModifierDefinition",
-  );
-  const declarations = nodesQuery.data?.filter(
-    (n) =>
-      n.node_type !== "ContractDefinition" &&
-      n.node_type !== "FunctionDefinition" &&
-      n.node_type !== "ModifierDefinition",
-  );
+  const contracts = nodesQuery.data?.filter((n) => n.node_type === "ContractDefinition") ?? [];
+  const callables =
+    nodesQuery.data?.filter(
+      (n) => n.node_type === "FunctionDefinition" || n.node_type === "ModifierDefinition",
+    ) ?? [];
+  const declarations =
+    nodesQuery.data?.filter(
+      (n) =>
+        n.node_type !== "ContractDefinition" &&
+        n.node_type !== "FunctionDefinition" &&
+        n.node_type !== "ModifierDefinition",
+    ) ?? [];
 
-  const currentSource = sources.find((s) => s.id === sourceId)!;
-  const currentFileName = currentSource.path.split("/").pop() ?? "";
-  const currentSourceColor = getSourceColor(currentSource);
+  const currentSource = sources.find((s) => s.id === sourceId);
+  const currentFileName = currentSource?.path.split("/").pop() ?? "";
+  const currentSourceColor = currentSource ? getSourceColor(currentSource) : "";
 
-  const handleNodeClick = (node: NodeSearchResponseI): void => {
-    handleSourceChange(node.code_version_source_id, {
+  const handleNodeClick = (node: NodeSchemaI): void => {
+    handleSourceChange(node.source_id, {
       start: node.src_start_pos,
       end: node.src_end_pos,
     });
@@ -94,24 +97,75 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId
           </Select>
         </CodeSourceToggle>
         <CodeSources>
-          <CodeNodeList
-            title="Contracts"
-            nodes={contracts}
-            onNodeClick={handleNodeClick}
-            isLoading={nodesQuery.isLoading}
-          />
-          <CodeNodeList
-            title="Callables"
-            nodes={callables}
-            onNodeClick={handleNodeClick}
-            isLoading={nodesQuery.isLoading}
-          />
-          <CodeNodeList
-            title="Declarations"
-            nodes={declarations}
-            onNodeClick={handleNodeClick}
-            isLoading={nodesQuery.isLoading}
-          />
+          {nodesQuery.isLoading ? (
+            <>
+              <div className="py-2 w-full">
+                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Contracts</div>
+                <div className="space-y-0.5">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="px-2 py-1.5">
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="py-2 w-full">
+                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Callables</div>
+                <div className="space-y-0.5">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="px-2 py-1.5">
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="py-2 w-full">
+                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                  Declarations
+                </div>
+                <div className="space-y-0.5">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="px-2 py-1.5">
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {contracts.length > 0 && (
+                <div className="py-2 w-full">
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                    Contracts ({contracts.length})
+                  </div>
+                  {contracts.map((node) => (
+                    <CodeNodeList key={node.id} node={node} onNodeClick={handleNodeClick} />
+                  ))}
+                </div>
+              )}
+              {callables.length > 0 && (
+                <div className="py-2 w-full">
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                    Callables ({callables.length})
+                  </div>
+                  {callables.map((node) => (
+                    <CodeNodeList key={node.id} node={node} onNodeClick={handleNodeClick} />
+                  ))}
+                </div>
+              )}
+              {declarations.length > 0 && (
+                <div className="py-2 w-full">
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                    Declarations ({declarations.length})
+                  </div>
+                  {declarations.map((node) => (
+                    <CodeNodeList key={node.id} node={node} onNodeClick={handleNodeClick} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </CodeSources>
       </CodeMetadata>
       <CodeDisplay>

@@ -27,7 +27,7 @@ export const createAnalysisVersion = async (
   id: string;
   toInvalidate: QueryKey[];
 }> => {
-  const toInvalidate = [[QUERY_KEYS.ANALYSIS_VERSIONS, teamSlug]];
+  const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
   return api
     .post("/analysis-nodes", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
@@ -99,7 +99,7 @@ export const updateFindings = async (
   id: string;
   toInvalidate: QueryKey[];
 }> => {
-  const toInvalidate = [[QUERY_KEYS.ANALYSIS_VERSIONS, teamSlug]];
+  const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
   return api
     .patch(`/analysis-nodes/${nodeId}/findings`, data, {
       headers: { "bevor-team-slug": teamSlug },
@@ -166,7 +166,7 @@ export const forkAnalysis = async (
   id: string;
   toInvalidate: QueryKey[];
 }> => {
-  const toInvalidate = [[QUERY_KEYS.ANALYSIS_VERSIONS, teamSlug]];
+  const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
   return api
     .post(
       `/analysis-nodes/${analysisNodeId}/fork`,

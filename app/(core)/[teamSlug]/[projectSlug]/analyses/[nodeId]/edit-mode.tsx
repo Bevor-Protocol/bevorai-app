@@ -800,7 +800,7 @@ const EditCodeSnippet: React.FC<{
 
   return (
     <div className="border rounded-lg relative">
-      <ScrollArea className="p-2 h-[200px]">
+      <ScrollArea className="p-2 h-[300px]">
         {isLoadingNode || !html ? (
           <Skeleton className="h-48 w-full" />
         ) : (

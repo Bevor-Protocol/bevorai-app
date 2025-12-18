@@ -40,7 +40,7 @@ const AnalysisNodeMetadata: React.FC<{
 
   const chatQuery = extractChatsQuery({
     project_slug: projectSlug,
-    code_mapping_id: version.id,
+    code_version_id: version.id,
     analysis_node_id: version.id,
     chat_type: "analysis",
   });

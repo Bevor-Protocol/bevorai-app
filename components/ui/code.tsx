@@ -1,7 +1,8 @@
+import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { CodeSourceSchemaI, NodeSearchResponseI } from "@/utils/types";
+import { CodeSourceSchemaI, NodeSchemaI } from "@/utils/types";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { FileText } from "lucide-react";
 import React from "react";
@@ -189,47 +190,35 @@ export const getNodeTypeColor = (nodeType: string): string => {
 };
 
 export const CodeNodeList: React.FC<{
-  title: string;
-  nodes: NodeSearchResponseI[] | undefined;
-  onNodeClick: (node: NodeSearchResponseI) => void;
-  isLoading: boolean;
-}> = ({ title, nodes, onNodeClick, isLoading }) => {
-  if (isLoading) {
-    return (
-      <div>
-        <div className="px-2 py-1 text-xs font-medium text-muted-foreground">{title}</div>
-        <div className="space-y-0.5">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="px-2 py-1.5">
-              <Skeleton className="h-4 w-full" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!nodes || nodes.length === 0) {
-    return null;
-  }
-
+  node: NodeSchemaI;
+  onNodeClick: (node: NodeSchemaI) => void;
+}> = ({ node, onNodeClick }) => {
   return (
-    <div className="py-2 w-full">
-      <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-        {title} ({nodes.length})
-      </div>
-      {nodes.map((node) => (
-        <div
-          key={node.id}
-          className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm text-sm transition-colors"
-          onClick={() => onNodeClick(node)}
-        >
-          <div
-            className={cn("w-1.5 h-1.5 rounded-full shrink-0", getNodeTypeColor(node.node_type))}
-          />
-          <span className="truncate">{node.name}</span>
-        </div>
-      ))}
+    <div
+      className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm text-sm transition-colors"
+      onClick={() => onNodeClick(node)}
+    >
+      <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", getNodeTypeColor(node.node_type))} />
+      <span className="truncate">{node.name}</span>
+    </div>
+  );
+};
+
+export const CodeNodeCheckList: React.FC<{
+  node: NodeSchemaI;
+  isChecked: boolean;
+  isDisabled: boolean;
+  onNodeToggle: (node: NodeSchemaI) => void;
+  onNodeClick: (node: NodeSchemaI) => void;
+}> = ({ node, isChecked, isDisabled, onNodeToggle, onNodeClick }) => {
+  return (
+    <div className="flex items-center gap-2">
+      <Checkbox
+        disabled={isDisabled || !node.is_auditable}
+        checked={isChecked}
+        onCheckedChange={() => onNodeToggle(node)}
+      />
+      <CodeNodeList node={node} onNodeClick={onNodeClick} />
     </div>
   );
 };
