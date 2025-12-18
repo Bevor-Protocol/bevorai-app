@@ -17,7 +17,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 import { toast } from "sonner";
-import { FindingWithScope, getSeverityBadgeClasses, getSeverityColor } from "./scopes";
+import { FindingWithScope, getSeverityBadgeClasses } from "./scopes";
 
 export const FindingMetadata: React.FC<{
   teamSlug: string;
@@ -189,7 +189,7 @@ export const FindingTabs: React.FC<{
   };
 
   return (
-    <div className={cn("border rounded-lg p-4", getSeverityColor(finding.level), "finding")}>
+    <div className={cn("border rounded-lg p-4", "finding")}>
       <Subnav className="w-fit px-0 mb-4">
         <SubnavButton
           isActive={tab === "description"}

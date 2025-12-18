@@ -13,6 +13,11 @@ const MainPage: AsyncComponent<MainProps> = async ({ searchParams }) => {
   const { is_signup } = await searchParams;
   const cookieStore = await cookies();
   const recentTeamSlug = cookieStore.get("bevor-recent-team");
+  const token = cookieStore.get("bevor-token");
+
+  if (!token) {
+    redirect("/sign-in");
+  }
 
   const querySuffix = is_signup === "true" ? "?is_signup=true" : "";
 
@@ -20,8 +25,13 @@ const MainPage: AsyncComponent<MainProps> = async ({ searchParams }) => {
     redirect(`/${recentTeamSlug.value}${querySuffix}`);
   }
 
-  const teams = await userActions.teams();
-  const defaultTeam = teams.find((team) => team.is_default);
+  let defaultTeam;
+  try {
+    const teams = await userActions.teams();
+    defaultTeam = teams.find((team) => team.is_default);
+  } catch {
+    redirect("/sign-in");
+  }
 
   if (defaultTeam) {
     redirect(`/${defaultTeam.slug}${querySuffix}`);

@@ -135,7 +135,7 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
 
 // Configure which routes the middleware should run on
 export const config = {
-  matcher: ["/user/:path*", "/admin/:path*", "/sign-in", "/:teamSlug/:path*"],
+  matcher: ["/user/:path*", "/admin/:path*", "/sign-in", "/:teamSlug/:path*", "/"],
 };
 
 export default proxy;
