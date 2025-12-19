@@ -10,7 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
 import { FindingFeedbackBody } from "@/utils/schema";
-import { AnalysisResultSchemaI, NodeSchemaI, NodeWithContentSchemaI } from "@/utils/types";
+import {
+  AnalysisResultSchemaI,
+  FindingSchemaI,
+  NodeSchemaI,
+  NodeWithContentSchemaI,
+} from "@/utils/types";
 import { useMutation, useQueryClient, UseQueryResult } from "@tanstack/react-query";
 import { Check, ExternalLink, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import Link from "next/link";
@@ -18,7 +23,6 @@ import React, { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 import { toast } from "sonner";
 import { getSeverityBadgeClasses } from "./scopes";
-import { FindingSchemaI } from "@/utils/types";
 
 export const FindingMetadata: React.FC<{
   teamSlug: string;
@@ -145,7 +149,9 @@ export const FindingTabs: React.FC<{
           if (!oldData) return oldData;
           const oldFindings = oldData.findings;
           const newFindings = oldFindings.map((finding) => {
-            const scope = oldData.scopes.find((scope) => finding.scope_id == scope.id);
+            const scope = oldData.scopes.find(
+              (scope) => finding.code_version_node_id == scope.code_version_node_id,
+            );
             if (finding.id === findingId && scope) {
               const newFinding = {
                 ...finding,
@@ -153,10 +159,7 @@ export const FindingTabs: React.FC<{
                 validated_at: data.is_verified ? new Date() : undefined,
                 invalidated_at: !data.is_verified ? new Date() : undefined,
               };
-              setSelectedFinding({
-                ...newFinding,
-                scope,
-              });
+              setSelectedFinding(newFinding);
               return newFinding;
             }
             return finding;
