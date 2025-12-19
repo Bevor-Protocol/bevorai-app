@@ -37,10 +37,12 @@ import { generateQueryKey } from "@/utils/constants";
 import { CreateAnalysisVersionFormValues, createAnalysisVersionSchema } from "@/utils/schema";
 import {
   AnalysisNodeSchemaI,
-  AnalysisStatusSchemaI,
+  AnalysisResultSchemaI,
   CodeMappingSchemaI,
   CodeSourceSchemaI,
+  FindingSchemaI,
   NodeSchemaI,
+  ScopeSchemaI,
 } from "@/utils/types";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useMutation, UseMutationResult, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -60,7 +62,7 @@ import { toast } from "sonner";
 
 interface AnalysisScopeSelectorProps {
   sources: CodeSourceSchemaI[];
-  scope?: AnalysisStatusSchemaI;
+  parentScopes: ScopeSchemaI[];
   teamSlug: string;
   projectSlug: string;
   defaultParentVersion?: AnalysisNodeSchemaI;
@@ -69,7 +71,7 @@ interface AnalysisScopeSelectorProps {
 }
 
 const getStatusIcon = (
-  scopeStatus: AnalysisStatusSchemaI["scopes"][0]["status"],
+  scopeStatus: AnalysisResultSchemaI["scopes"][0]["status"],
 ): React.ReactNode => {
   switch (scopeStatus) {
     case "waiting":
@@ -88,12 +90,17 @@ const getStatusIcon = (
 };
 
 const AnalysisStatusDisplay: React.FC<{
-  status: AnalysisStatusSchemaI;
+  status: AnalysisResultSchemaI;
   teamSlug: string;
   projectSlug: string;
   nodeId: string;
 }> = ({ status, teamSlug, projectSlug, nodeId }) => {
   const newAnalysisRoute = `/${teamSlug}/${projectSlug}/analyses/${nodeId}`;
+
+  const getNFindingsPerScope = (nodeId: string): number => {
+    return status.findings.filter((f) => f.code_version_node_id === nodeId).length;
+  };
+
   return (
     <div className="flex flex-col gap-4 my-8 max-w-5xl m-auto">
       <div className="space-y-4">
@@ -114,20 +121,23 @@ const AnalysisStatusDisplay: React.FC<{
           )}
         </div>
         <div className="space-y-2">
-          {status.scopes.map((scope) => (
-            <div key={scope.id} className="flex items-center gap-3 p-3 rounded-lg border">
-              {getStatusIcon(scope.status)}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">{scope.node.name}</p>
-                <p className="text-xs text-muted-foreground font-mono truncate">
-                  {scope.node.signature}
-                </p>
+          {status.scopes.map((scope) => {
+            const nFindings = getNFindingsPerScope(scope.code_version_node_id);
+            return (
+              <div key={scope.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                {getStatusIcon(scope.status)}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{scope.name}</p>
+                  <p className="text-xs text-muted-foreground font-mono truncate">
+                    {scope.signature}
+                  </p>
+                </div>
+                <Badge variant="outline" size="sm" className="shrink-0">
+                  {nFindings} finding{nFindings !== 1 ? "s" : ""}
+                </Badge>
               </div>
-              <Badge variant="outline" size="sm" className="shrink-0">
-                {scope.n_findings} finding{scope.n_findings !== 1 ? "s" : ""}
-              </Badge>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -544,7 +554,7 @@ const CodeTreeViewer: React.FC<{
 
 const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   sources,
-  scope,
+  parentScopes,
   teamSlug,
   projectSlug,
   defaultParentVersion,
@@ -562,6 +572,8 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
       // this comes directly from the SSE
       if (!analysisNodeIdRef.current) return;
 
+      console.log("RAW");
+
       let parsed;
       try {
         parsed = JSON.parse(event.data);
@@ -569,9 +581,23 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
         return;
       }
 
+      console.log("PARSED", parsed);
+
       if (!parsed.scope_id || !parsed.status) return;
       const scopeQueryKey = generateQueryKey.analysisVersionScope(analysisNodeIdRef.current);
-      queryClient.setQueryData<AnalysisStatusSchemaI>(scopeQueryKey, (oldData) => {
+
+      let findings: FindingSchemaI[] = [];
+      if (parsed.findings && typeof parsed.findings === "string") {
+        try {
+          findings = JSON.parse(parsed.findings);
+        } catch {
+          findings = [];
+        }
+      }
+
+      console.log("FINDINGS", findings);
+
+      queryClient.setQueryData<AnalysisResultSchemaI>(scopeQueryKey, (oldData) => {
         if (!oldData) return oldData;
 
         const updatedScopes = oldData.scopes.map((scope) =>
@@ -579,10 +605,11 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
             ? {
                 ...scope,
                 status: parsed.status,
-                n_findings: parsed.n_findings ?? scope.n_findings,
               }
             : scope,
         );
+
+        const updatedFindings = oldData.findings.concat(findings);
 
         const allScopesStatus = updatedScopes.map((s) => s.status);
         const hasProcessing = allScopesStatus.includes("processing");
@@ -591,7 +618,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
         const allSuccess = allScopesStatus.every((s) => s === "success");
         const hasPartial = allScopesStatus.some((s) => s === "partial");
 
-        let overallStatus: AnalysisStatusSchemaI["status"];
+        let overallStatus: AnalysisResultSchemaI["status"];
         if (hasFailed) {
           overallStatus = "failed";
         } else if (hasProcessing || hasWaiting) {
@@ -608,6 +635,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
           ...oldData,
           status: overallStatus,
           scopes: updatedScopes,
+          findings: updatedFindings,
         };
       });
     },
@@ -641,7 +669,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
   const { data: scopeStatus } = useQuery({
     queryKey: generateQueryKey.analysisVersionScope(analysisNodeId ?? ""),
-    queryFn: async () => analysisActions.getScope(teamSlug, analysisNodeId!),
+    queryFn: async () => analysisActions.getFindings(teamSlug, analysisNodeId!),
     enabled: !!analysisNodeId,
     staleTime: Infinity,
   });
@@ -652,10 +680,10 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   }, [nodesQuery.data]);
 
   const overlappingScopes = useMemo(() => {
-    if (!scope || !allAuditableNodes) return [];
-    const existingGenericIds = scope.scopes.map((s) => s.node.generic_id).filter(Boolean);
+    if (!parentScopes.length || !allAuditableNodes) return [];
+    const existingGenericIds = parentScopes.map((s) => s.generic_id).filter(Boolean);
     return allAuditableNodes.filter((node) => existingGenericIds.includes(node.generic_id));
-  }, [scope, allAuditableNodes]);
+  }, [parentScopes, allAuditableNodes]);
 
   React.useEffect(() => {
     if (scopeStrategy === "all" && codeVersionId) {
@@ -676,9 +704,9 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     }
     setSelectedNodes(newScopes);
 
-    if (scopeStrategy === "parent" && scope) {
+    if (scopeStrategy === "parent" && parentScopes.length) {
       const scopesMatch =
-        JSON.stringify([...newScopes].sort()) === JSON.stringify([...scope.scopes].sort());
+        JSON.stringify([...newScopes].sort()) === JSON.stringify([...parentScopes].sort());
       if (!scopesMatch) {
         setScopeStrategy("explicit");
       }

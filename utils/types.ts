@@ -1,4 +1,4 @@
-import { FindingLevel, PlanStatusEnum } from "./enums";
+import { FindingLevel, FindingType, PlanStatusEnum } from "./enums";
 
 export interface DropdownOption {
   name: string;
@@ -27,17 +27,6 @@ export interface UserDetailedSchemaI extends UserSchemaI {
   wallet?: string;
   is_google_oauth_connected: boolean;
   is_github_oauth_connected: boolean;
-}
-
-export interface AnalysisStatusSchemaI {
-  id: string;
-  status: "waiting" | "processing" | "success" | "failed" | "partial";
-  scopes: {
-    id: string;
-    n_findings: number;
-    status: "waiting" | "processing" | "success" | "failed" | "partial";
-    node: NodeSchemaI;
-  }[];
 }
 
 export interface HeadSchema {
@@ -145,69 +134,44 @@ export interface NodeWithContentSchemaI extends NodeSchemaI {
   children: object;
 }
 
-interface CallableSchemaI {
-  generic_id: string;
-  name: string;
-  signature: string;
+export interface ScopeSchemaI extends NodeSchemaI {
+  code_version_node_id: string;
+  status: "waiting" | "processing" | "success" | "failed" | "partial";
 }
 
 export interface FindingSchemaI {
   id: string;
   code_version_node_id: string;
-  status: "waiting" | "processing" | "success" | "failed" | "partial";
-  callable: CallableSchemaI;
-  findings: {
-    id: string;
-    type: string;
-    level: FindingLevel;
-    name: string;
-    explanation: string;
-    recommendation: string;
-    reference: string;
-    validated_at?: Date;
-    invalidated_at?: Date;
-    feedback?: string;
-  }[];
+  type: FindingType;
+  level: FindingLevel;
+  name: string;
+  explanation: string;
+  recommendation: string;
+  reference: string;
+  validated_at?: Date;
+  invalidated_at?: Date;
+  feedback?: string;
 }
 
-export interface DraftFindingSchemaI {
+export interface DraftFindingSchemaI extends FindingSchemaI {
+  is_draft: boolean;
+  draft_id?: string;
+  draft_type?: "add" | "delete" | "update";
+  base_finding_id?: string;
+}
+
+export interface AnalysisResultSchemaI {
   id: string;
-  code_version_node_id: string;
   status: "waiting" | "processing" | "success" | "failed" | "partial";
-  callable: CallableSchemaI;
-  findings: {
-    id: string;
-    type: string;
-    level: FindingLevel;
-    name: string;
-    explanation: string;
-    recommendation: string;
-    reference: string;
-    validated_at?: Date;
-    invalidated_at?: Date;
-    feedback?: string;
-    is_draft: boolean;
-    draft_id?: string;
-    draft_type?: "add" | "updated" | "delete";
-    base_finding_id?: string;
-  }[];
-  staged: {
-    id: string;
-    type: string;
-    level: FindingLevel;
-    name: string;
-    explanation: string;
-    recommendation: string;
-    reference: string;
-    validated_at?: Date;
-    invalidated_at?: Date;
-    feedback?: string;
-    is_draft: boolean;
-    draft_id?: string;
-    draft_type?: "add" | "updated" | "delete";
-    base_finding_id?: string;
-    code_version_node_id: string;
-  }[];
+  scopes: ScopeSchemaI[];
+  findings: FindingSchemaI[];
+}
+
+export interface DraftSchemaI {
+  id: string;
+  scopes: ScopeSchemaI[];
+  findings: DraftFindingSchemaI[];
+  staged: DraftFindingSchemaI[];
 }
 
 export interface CodeRelationSchemaI {

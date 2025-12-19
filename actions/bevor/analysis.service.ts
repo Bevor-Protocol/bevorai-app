@@ -13,10 +13,9 @@ import {
 import {
   AnalysisDagSchemaI,
   AnalysisNodeSchemaI,
-  AnalysisStatusSchemaI,
+  AnalysisResultSchemaI,
   AnalysisVersionPaginationI,
-  DraftFindingSchemaI,
-  FindingSchemaI,
+  DraftSchemaI,
 } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
@@ -68,26 +67,16 @@ export const getAnalysisVersion = async (
     });
 };
 
-export const getScope = async (
+export const getFindings = async (
   teamSlug: string,
   nodeId: string,
-): Promise<AnalysisStatusSchemaI> => {
-  return api
-    .get(`/analysis-nodes/${nodeId}/scope`, {
-      headers: { "bevor-team-slug": teamSlug },
-    })
-    .then((response) => {
-      return response.data;
-    });
-};
-
-export const getFindings = async (teamSlug: string, nodeId: string): Promise<FindingSchemaI[]> => {
+): Promise<AnalysisResultSchemaI> => {
   return api
     .get(`/analysis-nodes/${nodeId}/findings`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
-      return response.data.results;
+      return response.data;
     });
 };
 
@@ -181,14 +170,11 @@ export const forkAnalysis = async (
     });
 };
 
-export const getDraft = async (
-  teamSlug: string,
-  analysisNodeId: string,
-): Promise<DraftFindingSchemaI[]> => {
+export const getDraft = async (teamSlug: string, analysisNodeId: string): Promise<DraftSchemaI> => {
   return api
     .get(`/analysis-nodes/${analysisNodeId}/draft`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data.results;
+      return response.data;
     });
 };
 

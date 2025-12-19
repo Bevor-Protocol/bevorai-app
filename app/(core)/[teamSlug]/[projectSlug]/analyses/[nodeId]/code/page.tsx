@@ -1,6 +1,6 @@
-import { codeActions, userActions } from "@/actions/bevor";
+import { analysisActions, codeActions, userActions } from "@/actions/bevor";
 import Container from "@/components/container";
-import CodeVersionSubnav from "@/components/subnav/code-version";
+import AnalysisSubnav from "@/components/subnav/analysis";
 import { getQueryClient } from "@/lib/config/query";
 import { CodeProvider } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
@@ -10,7 +10,7 @@ import CodeMetadata from "./metadata";
 import SourcesViewer from "./sources-viewer";
 
 type ResolvedParams = {
-  codeId: string;
+  nodeId: string;
   projectSlug: string;
   teamSlug: string;
 };
@@ -25,14 +25,19 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const { source, node } = await searchParams;
 
+  const analysis = await analysisActions.getAnalysisVersion(
+    resolvedParams.teamSlug,
+    resolvedParams.nodeId,
+  );
+
   const [version, sources, user] = await Promise.all([
     queryClient.fetchQuery({
-      queryKey: generateQueryKey.code(resolvedParams.codeId),
-      queryFn: () => codeActions.getCodeVersion(resolvedParams.teamSlug, resolvedParams.codeId),
+      queryKey: generateQueryKey.code(analysis.code_version_id),
+      queryFn: () => codeActions.getCodeVersion(resolvedParams.teamSlug, analysis.code_version_id),
     }),
     queryClient.fetchQuery({
-      queryKey: generateQueryKey.codeSources(resolvedParams.codeId),
-      queryFn: () => codeActions.getSources(resolvedParams.teamSlug, resolvedParams.codeId),
+      queryKey: generateQueryKey.codeSources(analysis.code_version_id),
+      queryFn: () => codeActions.getSources(resolvedParams.teamSlug, analysis.code_version_id),
     }),
     queryClient.fetchQuery({
       queryKey: generateQueryKey.currentUser(),
@@ -56,7 +61,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   if (node) {
     const fetchedNode = await queryClient.fetchQuery({
       queryKey: generateQueryKey.codeNode(node),
-      queryFn: () => codeActions.getNode(resolvedParams.teamSlug, resolvedParams.codeId, node),
+      queryFn: () => codeActions.getNode(resolvedParams.teamSlug, analysis.code_version_id, node),
     });
     position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
   }
@@ -66,11 +71,12 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
       <CodeProvider
         initialSourceId={initialSourceId}
         initialPosition={position}
+        codeId={analysis.code_version_id}
         {...resolvedParams}
       >
-        <Container subnav={<CodeVersionSubnav />}>
+        <Container subnav={<AnalysisSubnav />}>
           <CodeMetadata version={version} userId={user.id} {...resolvedParams} />
-          <SourcesViewer sources={sources} {...resolvedParams} />
+          <SourcesViewer sources={sources} {...resolvedParams} codeId={analysis.code_version_id} />
         </Container>
       </CodeProvider>
     </HydrationBoundary>

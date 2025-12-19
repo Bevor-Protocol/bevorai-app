@@ -10,27 +10,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
 import { FindingFeedbackBody } from "@/utils/schema";
-import { FindingSchemaI, NodeSchemaI, NodeWithContentSchemaI } from "@/utils/types";
+import { AnalysisResultSchemaI, NodeSchemaI, NodeWithContentSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient, UseQueryResult } from "@tanstack/react-query";
 import { Check, ExternalLink, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 import { toast } from "sonner";
-import { FindingWithScope, getSeverityBadgeClasses } from "./scopes";
+import { getSeverityBadgeClasses } from "./scopes";
+import { FindingSchemaI } from "@/utils/types";
 
 export const FindingMetadata: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  codeId: string;
-  finding: FindingWithScope;
+  nodeId: string;
+  finding: FindingSchemaI;
   nodeQuery: UseQueryResult<NodeSchemaI, Error>;
-}> = ({ teamSlug, projectSlug, codeId, finding, nodeQuery }) => {
+}> = ({ teamSlug, projectSlug, nodeId, finding, nodeQuery }) => {
   const isValidated = !!finding.validated_at;
   const isInvalidated = !!finding.invalidated_at;
   const isNotAcknowledged = !isValidated && !isInvalidated;
 
-  const sourceHref = `/${teamSlug}/${projectSlug}/codes/${codeId}?source=${nodeQuery.data?.source_id}&node=${nodeQuery.data?.id}`;
+  const sourceHref = `/${teamSlug}/${projectSlug}/analyses/${nodeId}/code?source=${nodeQuery.data?.source_id}&node=${nodeQuery.data?.id}`;
 
   return (
     <div className="flex items-center gap-3">
@@ -125,8 +126,8 @@ export const CodeSnippet: React.FC<{
 export const FindingTabs: React.FC<{
   teamSlug: string;
   nodeId: string;
-  finding: FindingWithScope;
-  setSelectedFinding: React.Dispatch<React.SetStateAction<FindingWithScope | null>>;
+  finding: FindingSchemaI;
+  setSelectedFinding: React.Dispatch<React.SetStateAction<FindingSchemaI | null>>;
 }> = ({ teamSlug, nodeId, finding, setSelectedFinding }) => {
   const [tab, setTab] = useState("description");
   const [feedbackText, setFeedbackText] = useState<string>("");
@@ -138,29 +139,30 @@ export const FindingTabs: React.FC<{
       return analysisActions.submitFindingFeedback(teamSlug, nodeId, findingId, data);
     },
     onSuccess: (_, { findingId, data }) => {
-      queryClient.setQueryData<FindingSchemaI[]>(
+      queryClient.setQueryData<AnalysisResultSchemaI>(
         generateQueryKey.analysisVersionFindings(nodeId),
         (oldData) => {
           if (!oldData) return oldData;
-          return oldData.map((scope) => ({
-            ...scope,
-            findings: scope.findings.map((finding) => {
-              if (finding.id === findingId) {
-                const newFinding = {
-                  ...finding,
-                  feedback: data.feedback,
-                  validated_at: data.is_verified ? new Date() : undefined,
-                  invalidated_at: !data.is_verified ? new Date() : undefined,
-                };
-                setSelectedFinding({
-                  ...newFinding,
-                  scope,
-                });
-                return newFinding;
-              }
-              return finding;
-            }),
-          }));
+          const oldFindings = oldData.findings;
+          const newFindings = oldFindings.map((finding) => {
+            const scope = oldData.scopes.find((scope) => finding.scope_id == scope.id);
+            if (finding.id === findingId && scope) {
+              const newFinding = {
+                ...finding,
+                feedback: data.feedback,
+                validated_at: data.is_verified ? new Date() : undefined,
+                invalidated_at: !data.is_verified ? new Date() : undefined,
+              };
+              setSelectedFinding({
+                ...newFinding,
+                scope,
+              });
+              return newFinding;
+            }
+            return finding;
+          });
+          oldData.findings = newFindings;
+          return oldData;
         },
       );
       toast.success("Feedback submitted successfully");
@@ -189,8 +191,8 @@ export const FindingTabs: React.FC<{
   };
 
   return (
-    <div className={cn("border rounded-lg p-4", "finding")}>
-      <Subnav className="w-fit px-0 mb-4">
+    <div className={cn("border rounded-lg overflow-hidden", "finding")}>
+      <Subnav className="w-fit px-0">
         <SubnavButton
           isActive={tab === "description"}
           shouldHighlight
@@ -214,14 +216,12 @@ export const FindingTabs: React.FC<{
         </SubnavButton>
       </Subnav>
       {tab === "description" && (
-        <div className="space-y-4">
-          {finding.explanation && (
-            <p className="text-sm text-muted-foreground leading-relaxed">{finding.explanation}</p>
-          )}
+        <div className="space-y-4 p-4">
+          {finding.explanation && <p className="text-sm leading-relaxed">{finding.explanation}</p>}
           {finding.reference && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium">Reference</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">{finding.reference}</p>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase ">Reference</h4>
+              <p className="text-sm leading-relaxed">{finding.reference}</p>
             </div>
           )}
           {!finding.explanation && !finding.reference && (
@@ -230,18 +230,16 @@ export const FindingTabs: React.FC<{
         </div>
       )}
       {tab === "recommendation" && (
-        <div className="space-y-2">
+        <div className="space-y-2 px-4 py-2">
           {finding.recommendation ? (
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {finding.recommendation}
-            </p>
+            <p className="text-sm leading-relaxed">{finding.recommendation}</p>
           ) : (
-            <p className="text-sm text-muted-foreground">No recommendation available.</p>
+            <p className="text-sm">No recommendation available.</p>
           )}
         </div>
       )}
       {tab === "feedback" && (
-        <div className="space-y-4">
+        <div className="space-y-4 px-4 py-2">
           <Textarea
             value={feedbackText}
             onChange={(e) => setFeedbackText(e.target.value)}

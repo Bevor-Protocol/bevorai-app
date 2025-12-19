@@ -3,7 +3,7 @@ import Container from "@/components/container";
 import { CodeProvider } from "@/providers/code";
 import {
   AnalysisNodeSchemaI,
-  AnalysisStatusSchemaI,
+  AnalysisResultSchemaI,
   AsyncComponent,
   CodeMappingSchemaI,
 } from "@/utils/types";
@@ -34,7 +34,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
 
   let defaultCodeVersion: CodeMappingSchemaI;
   let defaultParentVersion: AnalysisNodeSchemaI | undefined;
-  let scope: AnalysisStatusSchemaI | undefined;
+  let findings: AnalysisResultSchemaI | undefined;
 
   if (parentVersionId && !codeVersionId) {
     defaultParentVersion = await analysisActions.getAnalysisVersion(
@@ -45,14 +45,14 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
       resolvedParams.teamSlug,
       defaultParentVersion.code_version_id,
     );
-    scope = await analysisActions.getScope(resolvedParams.teamSlug, parentVersionId);
+    findings = await analysisActions.getFindings(resolvedParams.teamSlug, parentVersionId);
   } else if (parentVersionId && codeVersionId) {
     defaultParentVersion = await analysisActions.getAnalysisVersion(
       resolvedParams.teamSlug,
       parentVersionId,
     );
     defaultCodeVersion = await codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId!);
-    scope = await analysisActions.getScope(resolvedParams.teamSlug, parentVersionId);
+    findings = await analysisActions.getFindings(resolvedParams.teamSlug, parentVersionId);
   } else {
     defaultCodeVersion = await codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId!);
   }
@@ -71,7 +71,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
         <NewVersionClient
           {...resolvedParams}
           sources={sources}
-          scope={scope}
+          parentScopes={findings?.scopes ?? []}
           defaultParentVersion={defaultParentVersion}
           defaultCodeVersion={defaultCodeVersion}
           allowCodeVersionChange={!codeVersionId}

@@ -7,12 +7,11 @@ import { formatDate } from "@/utils/helpers";
 import { extractChatsQuery } from "@/utils/query-params";
 import { AnalysisNodeSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Clock, MessageSquare, Shield, Users } from "lucide-react";
+import { BotMessageSquare, Calendar, Clock, Pencil, Shield, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import AnalysisVersionMenu from "./menu";
-import Relations from "./relations";
 
 const getTriggerIcon = (trigger: string): React.ReactElement => {
   switch (trigger) {
@@ -96,17 +95,16 @@ const AnalysisNodeMetadata: React.FC<{
         <Calendar className="size-3" />
         <span>{formatDate(version.created_at)}</span>
       </div>
-      <Relations analysisVersion={version} teamSlug={teamSlug} projectSlug={projectSlug} />
       <Button
         variant="outline"
         size="sm"
         onClick={handleChatClick}
         disabled={createChatMutation.isPending}
       >
-        <MessageSquare className="size-4" />
+        <BotMessageSquare className="size-4" />
         {chats && chats.results.length > 0 ? "Continue" : "Start"}
       </Button>
-      <Button variant="outline" asChild>
+      <Button variant="outline" size="sm" asChild>
         <Link
           href={
             isEditMode
@@ -114,7 +112,17 @@ const AnalysisNodeMetadata: React.FC<{
               : `/${teamSlug}/${projectSlug}/analyses/${version.id}?mode=edit`
           }
         >
-          {isEditMode ? "Exit Edit Mode" : "Edit Mode"}
+          {isEditMode ? (
+            <>
+              <X className="size-4" />
+              Exit Edit
+            </>
+          ) : (
+            <>
+              <Pencil className="size-4" />
+              Edit
+            </>
+          )}
         </Link>
       </Button>
       <AnalysisVersionMenu teamSlug={teamSlug} projectSlug={projectSlug} version={version} />

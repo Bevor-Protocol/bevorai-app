@@ -63,7 +63,6 @@ const NotificationsDropdown: React.FC<{ invites: MemberInviteSchema[] }> = ({ in
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
-      setSelectedInvite(null);
     },
   });
 
@@ -74,7 +73,6 @@ const NotificationsDropdown: React.FC<{ invites: MemberInviteSchema[] }> = ({ in
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
-      setSelectedInvite(null);
     },
   });
 

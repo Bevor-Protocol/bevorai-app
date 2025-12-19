@@ -7,13 +7,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CodeVersionElementCompact } from "@/components/versions/element";
 import { cn } from "@/lib/utils";
+import { useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
 import { DefaultChatsQuery } from "@/utils/query-params";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface SidebarProps {
@@ -25,6 +26,8 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, chatId }) => {
   const [isPromptHidden, setIsPromptHidden] = useState(false);
+  const [isAnalysisPromptHidden, setIsAnalysisPromptHidden] = useState(false);
+  const [newAnalysisNodeId, setNewAnalysisNodeId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -59,6 +62,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
       toast.error("Failed to create chat");
     },
   });
+
+  useSSE({
+    eventTypes: ["analysis"],
+    onMessage: (event: MessageEvent) => {
+      let parsed;
+
+      try {
+        parsed = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+
+      if (parsed.analysis_node_id && typeof parsed.analysis_node_id === "string") {
+        setNewAnalysisNodeId(parsed.analysis_node_id);
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (chatQuery.data?.analysis_node_id && newAnalysisNodeId === chatQuery.data.analysis_node_id) {
+      setNewAnalysisNodeId(null);
+    }
+  }, [chatQuery.data?.analysis_node_id, newAnalysisNodeId]);
 
   const newCodeVersion = useMemo(() => {
     if (!chatsQuery.data || !relationQuery.data) return;
@@ -132,38 +158,59 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
           </div>
         </div>
       )}
-      {!!newCodeVersion && !isPromptHidden && (
-        <div className="border py-2 px-4 text-sm rounded absolute bottom-0 right-0 bg-background items-center w-72 space-y-2">
-          <div className="flex justify-between items-start">
-            <span>New code version available</span>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setIsPromptHidden(true)}
-              className="size-4 self-start"
-            >
-              <X className="size-3 text-muted-foreground" />
-            </Button>
-          </div>
-          {newCodeVersion.chat_id ? (
+      <div className="absolute bottom-0 right-0 w-72 space-y-2">
+        {newAnalysisNodeId && !isAnalysisPromptHidden && (
+          <div className="border py-2 px-4 text-sm rounded bg-background items-center space-y-2">
+            <div className="flex justify-between items-start">
+              <span>New analysis available</span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setIsAnalysisPromptHidden(true)}
+                className="size-4 self-start"
+              >
+                <X className="size-3 text-muted-foreground" />
+              </Button>
+            </div>
             <Button size="sm" className="text-xs h-7" asChild>
-              <Link href={`/${teamSlug}/${projectSlug}/chats/${newCodeVersion.chat_id}`}>
-                Go to Chat
+              <Link href={`/${teamSlug}/${projectSlug}/analyses/${newAnalysisNodeId}`}>
+                View Analysis
               </Link>
             </Button>
-          ) : (
-            <Button
-              size="sm"
-              className="text-xs h-7"
-              onClick={() => createChatMutation.mutate(newCodeVersion.code_mapping_id)}
-              disabled={createChatMutation.isPending}
-            >
-              {}
-              {createChatMutation.isPending ? "Starting..." : "Start new chat"}
-            </Button>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+        {!!newCodeVersion && !isPromptHidden && (
+          <div className="border py-2 px-4 text-sm rounded bg-background items-center space-y-2">
+            <div className="flex justify-between items-start">
+              <span>New code version available</span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setIsPromptHidden(true)}
+                className="size-4 self-start"
+              >
+                <X className="size-3 text-muted-foreground" />
+              </Button>
+            </div>
+            {newCodeVersion.chat_id ? (
+              <Button size="sm" className="text-xs h-7" asChild>
+                <Link href={`/${teamSlug}/${projectSlug}/chats/${newCodeVersion.chat_id}`}>
+                  Go to Chat
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="text-xs h-7"
+                onClick={() => createChatMutation.mutate(newCodeVersion.code_mapping_id)}
+                disabled={createChatMutation.isPending}
+              >
+                {createChatMutation.isPending ? "Starting..." : "Start new chat"}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </aside>
   );
 };

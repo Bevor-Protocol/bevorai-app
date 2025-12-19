@@ -20,6 +20,10 @@ const CodeVersionSubnav: React.FC = () => {
       href: `/${teamSlug}/${projectSlug}/codes/${codeId}`,
     },
     {
+      label: "Analyses",
+      href: `/${teamSlug}/${projectSlug}/codes/${codeId}/analyses`,
+    },
+    {
       label: "Chat",
       href: `/${teamSlug}/${projectSlug}/codes/${codeId}/chat`,
     },

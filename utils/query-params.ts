@@ -42,6 +42,7 @@ export const DefaultAnalysisNodesQuery = {
   trigger: "",
   is_leaf: "",
   is_root: "",
+  root_node_id: "",
 };
 
 export const DefaultChatsQuery = {

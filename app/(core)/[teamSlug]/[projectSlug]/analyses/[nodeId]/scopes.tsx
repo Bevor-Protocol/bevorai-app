@@ -1,6 +1,5 @@
 "use client";
 
-import { analysisActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,12 +12,10 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { generateQueryKey } from "@/utils/constants";
 import { FindingLevel } from "@/utils/enums";
-import { FindingSchemaI } from "@/utils/types";
-import { useQuery } from "@tanstack/react-query";
+import { AnalysisResultSchemaI, FindingSchemaI, ScopeSchemaI } from "@/utils/types";
 import { AlertTriangle, ChevronDown, Info, XCircle } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 export const getSeverityIcon = (level: FindingLevel): React.ReactElement => {
   switch (level.toLowerCase()) {
@@ -79,12 +76,17 @@ const severityScoreMap: Record<FindingLevel, number> = {
   [FindingLevel.LOW]: 1,
 };
 
-export type FindingWithScope = FindingSchemaI["findings"][0] & {
-  scope: {
-    id: string;
-    code_version_node_id: string;
-    callable: FindingSchemaI["callable"];
-  };
+export const getScopeForFinding = (
+  finding: FindingSchemaI,
+  analysisResult: AnalysisResultSchemaI,
+): ScopeSchemaI => {
+  const scope = analysisResult.scopes.find(
+    (s) => s.code_version_node_id === finding.code_version_node_id,
+  );
+  if (!scope) {
+    throw new Error(`Scope not found for finding ${finding.id}`);
+  }
+  return scope;
 };
 
 type GroupingMode = "scope" | "severity" | "type";
@@ -92,26 +94,24 @@ type GroupingMode = "scope" | "severity" | "type";
 type GroupedData =
   | {
       mode: "scope";
-      groups: FindingSchemaI[];
+      groups: Array<{ scope: ScopeSchemaI; findings: FindingSchemaI[] }>;
     }
   | {
       mode: "severity";
       groups: Array<{
         key: FindingLevel;
-        findings: FindingWithScope[];
+        findings: FindingSchemaI[];
       }>;
     }
   | {
       mode: "type";
       groups: Array<{
         key: string;
-        findings: FindingWithScope[];
+        findings: FindingSchemaI[];
       }>;
     };
 
-const getFindingsCountByLevel = (
-  findings: FindingSchemaI["findings"],
-): Record<FindingLevel, number> => {
+const getFindingsCountByLevel = (findings: FindingSchemaI[]): Record<FindingLevel, number> => {
   const counts = {
     [FindingLevel.CRITICAL]: 0,
     [FindingLevel.HIGH]: 0,
@@ -131,44 +131,38 @@ const getFindingsCountByLevel = (
 export const ScopesList: React.FC<{
   teamSlug: string;
   nodeId: string;
-  selectedFinding: FindingWithScope | null;
-  onSelectFinding: (finding: FindingWithScope) => void;
-}> = ({ teamSlug, nodeId, selectedFinding, onSelectFinding }) => {
+  analysisResult: AnalysisResultSchemaI | undefined;
+  selectedFinding: FindingSchemaI | null;
+  onSelectFinding: (finding: FindingSchemaI) => void;
+}> = ({ analysisResult, selectedFinding, onSelectFinding }) => {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [groupingMode, setGroupingMode] = useState<GroupingMode>("scope");
 
-  const { data: scopes = [], isLoading } = useQuery<FindingSchemaI[]>({
-    queryKey: generateQueryKey.analysisVersionFindings(nodeId),
-    queryFn: () => analysisActions.getFindings(teamSlug, nodeId),
-  });
+  const isLoading = !analysisResult;
 
   const groupedData = useMemo((): GroupedData => {
-    if (groupingMode === "scope") {
-      return {
-        mode: "scope",
-        groups: scopes,
-      };
+    if (!analysisResult) {
+      return { mode: "scope", groups: [] };
     }
 
-    const allFindings: FindingWithScope[] = [];
-    scopes.forEach((scope) => {
-      scope.findings.forEach((finding) => {
-        allFindings.push({
-          ...finding,
-          scope: {
-            id: scope.id,
-            code_version_node_id: scope.code_version_node_id,
-            callable: scope.callable,
-          },
-        });
-      });
-    });
+    if (groupingMode === "scope") {
+      const scopeGroups = analysisResult.scopes.map((scope) => ({
+        scope,
+        findings: analysisResult.findings.filter(
+          (f) => f.code_version_node_id === scope.code_version_node_id,
+        ),
+      }));
+      return {
+        mode: "scope",
+        groups: scopeGroups,
+      };
+    }
 
     if (groupingMode === "severity") {
       const groups = levelOrder
         .map((level) => ({
           key: level,
-          findings: allFindings.filter((f) => f.level === level),
+          findings: analysisResult.findings.filter((f) => f.level === level),
         }))
         .filter((group) => group.findings.length > 0);
 
@@ -178,8 +172,8 @@ export const ScopesList: React.FC<{
       };
     }
 
-    const typeGroups = new Map<string, FindingWithScope[]>();
-    allFindings.forEach((finding) => {
+    const typeGroups = new Map<string, FindingSchemaI[]>();
+    analysisResult.findings.forEach((finding) => {
       const type = finding.type;
       if (!typeGroups.has(type)) {
         typeGroups.set(type, []);
@@ -212,14 +206,16 @@ export const ScopesList: React.FC<{
       mode: "type",
       groups,
     };
-  }, [scopes, groupingMode]);
+  }, [analysisResult, groupingMode]);
 
-  React.useEffect(() => {
-    if (!selectedFinding) return;
+  useEffect(() => {
+    if (!selectedFinding || !analysisResult) return;
+
+    const scope = getScopeForFinding(selectedFinding, analysisResult);
 
     if (groupingMode === "scope") {
-      if (!openGroups.has(selectedFinding.scope.id)) {
-        setOpenGroups(new Set([...openGroups, selectedFinding.scope.id]));
+      if (!openGroups.has(scope.id)) {
+        setOpenGroups(new Set([...openGroups, scope.id]));
       }
     } else if (groupingMode === "severity") {
       const groupKey = selectedFinding.level;
@@ -232,7 +228,7 @@ export const ScopesList: React.FC<{
         setOpenGroups(new Set([...openGroups, groupKey]));
       }
     }
-  }, [selectedFinding, groupingMode, openGroups]);
+  }, [selectedFinding, groupingMode, openGroups, analysisResult]);
 
   if (isLoading) {
     return (
@@ -269,9 +265,14 @@ export const ScopesList: React.FC<{
       <ScrollArea className="flex flex-col space-y-4 pr-2 overflow-y-auto max-h-[calc(100svh-var(--spacing-header)-var(--spacing-subheader)-9rem-1.5rem-2rem)]">
         <div className="w-[350px]">
           {groupingMode === "scope"
-            ? (groupedData as { mode: "scope"; groups: FindingSchemaI[] }).groups.map((scope) => {
-                const counts = getFindingsCountByLevel(scope.findings);
-                const hasFindings = scope.findings.length > 0;
+            ? (
+                groupedData as {
+                  mode: "scope";
+                  groups: Array<{ scope: ScopeSchemaI; findings: FindingSchemaI[] }>;
+                }
+              ).groups.map(({ scope, findings }) => {
+                const counts = getFindingsCountByLevel(findings);
+                const hasFindings = findings.length > 0;
                 const isOpen = openGroups.has(scope.id);
 
                 return (
@@ -289,7 +290,7 @@ export const ScopesList: React.FC<{
                     }}
                     className="group"
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-2 pr-2">
                       <CollapsibleTrigger
                         className={cn(
                           "w-full text-left flex items-start gap-2 p-2 data-[state=open]:[&>svg]:rotate-180",
@@ -298,9 +299,7 @@ export const ScopesList: React.FC<{
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <div className="font-medium  truncate min-w-0 flex-1">
-                              {scope.callable.name}
-                            </div>
+                            <div className="font-medium truncate min-w-0 flex-1">{scope.name}</div>
                             {hasFindings ? (
                               <div className="flex items-center gap-2 shrink-0">
                                 {levelOrder.map((level) => {
@@ -324,7 +323,7 @@ export const ScopesList: React.FC<{
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground font-mono truncate mt-1">
-                            {scope.callable.signature}
+                            {scope.signature}
                           </div>
                         </div>
                         <ChevronDown className="size-4 mt-1 transition-transform shrink-0" />
@@ -337,30 +336,19 @@ export const ScopesList: React.FC<{
                             </div>
                           ) : (
                             levelOrder.map((level) => {
-                              const levelFindings = scope.findings.filter((f) => f.level === level);
+                              const levelFindings = findings.filter((f) => f.level === level);
                               if (levelFindings.length === 0) return null;
 
                               return (
                                 <div key={level} className="space-y-2">
-                                  <div className="text-xs font-medium text-muted-foreground capitalize">
-                                    {level}
-                                  </div>
                                   {levelFindings.map((finding, index) => {
-                                    const findingWithScope: FindingWithScope = {
-                                      ...finding,
-                                      scope: {
-                                        id: scope.id,
-                                        code_version_node_id: scope.code_version_node_id,
-                                        callable: scope.callable,
-                                      },
-                                    };
                                     const isSelected = selectedFinding?.id === finding.id;
 
                                     return (
                                       <div
                                         key={finding.id || index}
                                         onClick={() => {
-                                          onSelectFinding(findingWithScope);
+                                          onSelectFinding(finding);
                                           if (!openGroups.has(scope.id)) {
                                             setOpenGroups(new Set([...openGroups, scope.id]));
                                           }
@@ -396,7 +384,7 @@ export const ScopesList: React.FC<{
               ? (
                   groupedData as {
                     mode: "severity";
-                    groups: Array<{ key: FindingLevel; findings: FindingWithScope[] }>;
+                    groups: Array<{ key: FindingLevel; findings: FindingSchemaI[] }>;
                   }
                 ).groups.map((group) => {
                   const isOpen = openGroups.has(group.key);
@@ -445,6 +433,9 @@ export const ScopesList: React.FC<{
                           <div className="space-y-2 ml-6 pr-4">
                             {group.findings.map((finding, index) => {
                               const isSelected = selectedFinding?.id === finding.id;
+                              const findingScope = analysisResult
+                                ? getScopeForFinding(finding, analysisResult)
+                                : null;
                               return (
                                 <div
                                   key={finding.id || index}
@@ -468,9 +459,11 @@ export const ScopesList: React.FC<{
                                         {finding.name}
                                       </span>
                                     </div>
-                                    <div className="text-xs text-muted-foreground font-mono truncate">
-                                      {finding.scope.callable.name}
-                                    </div>
+                                    {findingScope && (
+                                      <div className="text-xs text-muted-foreground font-mono truncate">
+                                        {findingScope.name}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               );
@@ -484,7 +477,7 @@ export const ScopesList: React.FC<{
               : (
                   groupedData as {
                     mode: "type";
-                    groups: Array<{ key: string; findings: FindingWithScope[] }>;
+                    groups: Array<{ key: string; findings: FindingSchemaI[] }>;
                   }
                 ).groups.map((group) => {
                   const isOpen = openGroups.has(group.key);
@@ -550,6 +543,9 @@ export const ScopesList: React.FC<{
                                   </div>
                                   {levelFindings.map((finding, index) => {
                                     const isSelected = selectedFinding?.id === finding.id;
+                                    const findingScope = analysisResult
+                                      ? getScopeForFinding(finding, analysisResult)
+                                      : null;
                                     return (
                                       <div
                                         key={finding.id || index}
@@ -574,9 +570,11 @@ export const ScopesList: React.FC<{
                                               {finding.name}
                                             </span>
                                           </div>
-                                          <div className="text-xs text-muted-foreground font-mono truncate">
-                                            {finding.scope.callable.name}
-                                          </div>
+                                          {findingScope && (
+                                            <div className="text-xs text-muted-foreground font-mono truncate">
+                                              {findingScope.name}
+                                            </div>
+                                          )}
                                         </div>
                                       </div>
                                     );

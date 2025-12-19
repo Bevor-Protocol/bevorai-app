@@ -150,8 +150,6 @@ export const AnalysisVersionElementBare: React.FC<
     <div
       className={cn(
         "grid grid-cols-[24px_minmax(0,120px)_auto_minmax(100px,1fr)_auto] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
-        isRoot && "border-r-4 border-r-blue-500",
-        isLeaf && "border-r-4 border-r-green-500",
         className,
       )}
       {...props}
@@ -204,17 +202,23 @@ export const AnalysisVersionElementBare: React.FC<
   );
 };
 
-export const AnalysisVersionElement: React.FC<{
-  analysisVersion: AnalysisNodeSchemaI;
-  isDisabled?: boolean;
-}> = ({ analysisVersion, isDisabled = false }) => {
+export const AnalysisVersionElement: React.FC<
+  {
+    analysisVersion: AnalysisNodeSchemaI;
+    isDisabled?: boolean;
+  } & React.ComponentProps<"div">
+> = ({ analysisVersion, isDisabled = false, className, ...props }) => {
   return (
     <Link
       href={`/${analysisVersion.team_slug}/${analysisVersion.project_slug}/analyses/${analysisVersion.id}`}
       aria-disabled={isDisabled}
       className={cn("block group", isDisabled ? "cursor-default opacity-50" : "cursor-pointer")}
     >
-      <AnalysisVersionElementBare analysisVersion={analysisVersion} />
+      <AnalysisVersionElementBare
+        analysisVersion={analysisVersion}
+        className={className}
+        {...props}
+      />
     </Link>
   );
 };

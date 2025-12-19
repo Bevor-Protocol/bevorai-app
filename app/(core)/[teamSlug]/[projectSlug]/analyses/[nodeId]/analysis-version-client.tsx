@@ -3,12 +3,12 @@
 import { analysisActions, codeActions } from "@/actions/bevor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generateQueryKey } from "@/utils/constants";
-import { AnalysisNodeSchemaI, FindingSchemaI } from "@/utils/types";
+import { AnalysisNodeSchemaI, AnalysisResultSchemaI, FindingSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { Shield } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CodeSnippet, FindingMetadata, FindingTabs } from "./finding";
-import { FindingWithScope, levelOrder, ScopesList } from "./scopes";
+import { levelOrder, ScopesList } from "./scopes";
 
 export const AnalysisVersionClient: React.FC<{
   nodeId: string;
@@ -16,57 +16,40 @@ export const AnalysisVersionClient: React.FC<{
   projectSlug: string;
   analysisVersion: AnalysisNodeSchemaI;
 }> = ({ teamSlug, projectSlug, analysisVersion }) => {
-  const [selectedFinding, setSelectedFinding] = useState<FindingWithScope | null>(null);
+  const [selectedFinding, setSelectedFinding] = useState<FindingSchemaI | null>(null);
 
-  const { data: scopes = [], isLoading } = useQuery<FindingSchemaI[]>({
+  const { data: analysisResult, isLoading } = useQuery<AnalysisResultSchemaI>({
     queryKey: generateQueryKey.analysisVersionFindings(analysisVersion.id),
     queryFn: () => analysisActions.getFindings(teamSlug, analysisVersion.id),
   });
 
   const nodeQuery = useQuery({
-    queryKey: generateQueryKey.codeNode(selectedFinding?.scope.code_version_node_id ?? ""),
+    queryKey: generateQueryKey.codeNode(selectedFinding?.code_version_node_id ?? ""),
     queryFn: () =>
       codeActions.getNode(
         teamSlug,
         analysisVersion.code_version_id,
-        selectedFinding?.scope.code_version_node_id ?? "",
+        selectedFinding?.code_version_node_id ?? "",
       ),
     enabled: !!selectedFinding,
   });
 
-  const allFindings = useMemo(() => {
-    const flattened: FindingWithScope[] = [];
-    scopes.forEach((scope) => {
-      scope.findings.forEach((finding) => {
-        flattened.push({
-          ...finding,
-          scope: {
-            id: scope.id,
-            code_version_node_id: scope.code_version_node_id,
-            callable: scope.callable,
-          },
-        });
-      });
-    });
-    return flattened;
-  }, [scopes]);
-
-  const initialFinding = useMemo(() => {
-    if (allFindings.length === 0) return null;
-    for (const level of levelOrder) {
-      const firstFinding = allFindings.find((finding) => finding.level === level);
-      if (firstFinding) {
-        return firstFinding;
+  useEffect(() => {
+    if (!selectedFinding && analysisResult && analysisResult.findings.length > 0) {
+      for (const scope of analysisResult.scopes) {
+        const findings = analysisResult.findings.filter(
+          (f) => f.code_version_node_id === scope.code_version_node_id,
+        );
+        for (const level of levelOrder) {
+          const firstFinding = findings.find((finding) => finding.level === level);
+          if (firstFinding) {
+            setSelectedFinding(firstFinding);
+            break;
+          }
+        }
       }
     }
-    return null;
-  }, [allFindings]);
-
-  React.useEffect(() => {
-    if (initialFinding && !selectedFinding) {
-      setSelectedFinding(initialFinding);
-    }
-  }, [initialFinding, selectedFinding]);
+  }, [selectedFinding, analysisResult]);
 
   if (isLoading) {
     return (
@@ -91,6 +74,7 @@ export const AnalysisVersionClient: React.FC<{
         <ScopesList
           teamSlug={teamSlug}
           nodeId={analysisVersion.id}
+          analysisResult={analysisResult}
           selectedFinding={selectedFinding}
           onSelectFinding={setSelectedFinding}
         />
@@ -109,7 +93,7 @@ export const AnalysisVersionClient: React.FC<{
             <FindingMetadata
               teamSlug={teamSlug}
               projectSlug={projectSlug}
-              codeId={analysisVersion.code_version_id}
+              nodeId={analysisVersion.id}
               finding={selectedFinding}
               nodeQuery={nodeQuery}
             />

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AnalysisNodeSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Code, GitBranch, MoreHorizontal, Shield } from "lucide-react";
+import { GitFork, MoreHorizontal, Shield } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -34,7 +34,6 @@ const AnalysisVersionMenu: React.FC<{
   const [showForkDialog, setShowForkDialog] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
-  const codePath = `/${teamSlug}/${projectSlug}/codes/${version.code_version_id}`;
   const analysisPath = `/${teamSlug}/${projectSlug}/analyses/new?parentVersionId=${version.id}`;
 
   const forkMutation = useMutation({
@@ -64,19 +63,13 @@ const AnalysisVersionMenu: React.FC<{
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
-            <Link href={codePath}>
-              <Code className="size-4" />
-              View Full Source
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
             <Link href={analysisPath}>
               <Shield className="size-4" />
               Create New Analysis
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setShowForkDialog(true)}>
-            <GitBranch className="size-4" />
+            <GitFork className="size-4" />
             Fork
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -16,12 +16,12 @@ const ProjectSubnav: React.FC = () => {
       href: `/${teamSlug}/${projectSlug}`,
     },
     {
-      label: "Analyses",
-      href: `/${teamSlug}/${projectSlug}/analyses`,
-    },
-    {
       label: "Codes",
       href: `/${teamSlug}/${projectSlug}/codes`,
+    },
+    {
+      label: "Analyses",
+      href: `/${teamSlug}/${projectSlug}/analyses`,
     },
     {
       label: "My Chats",

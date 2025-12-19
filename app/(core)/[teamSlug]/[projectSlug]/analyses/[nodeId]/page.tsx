@@ -1,6 +1,7 @@
 import { analysisActions } from "@/actions/bevor";
 import AnalysisNodeMetadata from "@/app/(core)/[teamSlug]/[projectSlug]/analyses/[nodeId]/metadata";
 import Container from "@/components/container";
+import AnalysisSubnav from "@/components/subnav/analysis";
 import { AsyncComponent } from "@/utils/types";
 import { AnalysisVersionClient } from "./analysis-version-client";
 import { EditClient } from "./edit-mode";
@@ -28,7 +29,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const isEditMode = resolvedSearchParams.mode === "edit";
 
   return (
-    <Container>
+    <Container subnav={<AnalysisSubnav />}>
       <AnalysisNodeMetadata {...resolvedParams} version={analysisVersion} isEditMode={isEditMode} />
       {isEditMode ? (
         <EditClient

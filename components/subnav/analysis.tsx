@@ -4,33 +4,33 @@ import { Subnav, SubnavItem } from "@/components/ui/subnav";
 import { useParams, usePathname } from "next/navigation";
 import React from "react";
 
-const TeamSubnav: React.FC = () => {
-  const { teamSlug } = useParams<{ teamSlug: string }>();
+const AnalysisSubnav: React.FC = () => {
+  const { teamSlug, projectSlug, nodeId } = useParams<{
+    teamSlug: string;
+    projectSlug: string;
+    nodeId: string;
+  }>();
   const pathname = usePathname();
 
   if (!teamSlug) return null;
 
   const navItems = [
     {
-      label: "Projects",
-      href: `/${teamSlug}`,
+      label: "Analysis",
+      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}`,
     },
     {
-      label: "Codes",
-      href: `/${teamSlug}/codes`,
+      label: "Source Code",
+      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}/code`,
     },
     {
-      label: "Analyses",
-      href: `/${teamSlug}/analyses`,
-    },
-    {
-      label: "Settings",
-      href: `/${teamSlug}/settings`,
+      label: "History",
+      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}/history`,
     },
   ];
 
   const isActive = (href: string): boolean => {
-    if (href === `/${teamSlug}`) {
+    if (href === `/${teamSlug}/${projectSlug}/analyses/${nodeId}`) {
       return pathname === href;
     }
     return pathname.startsWith(href);
@@ -52,4 +52,4 @@ const TeamSubnav: React.FC = () => {
   );
 };
 
-export default TeamSubnav;
+export default AnalysisSubnav;
