@@ -16,7 +16,6 @@ const entityTypeToAssetType: Record<string, ItemType> = {
   code_version: "code",
   project: "project",
   team: "team",
-  analysis: "analysis",
   analysis_node: "analysis_node",
   chat: "chat",
   member: "member",
@@ -26,8 +25,7 @@ const entityTypeToText: Record<string, string> = {
   code_version: "code version",
   project: "project",
   team: "team",
-  analysis: "analysis",
-  analysis_node: "analysis node",
+  analysis_node: "analysis",
   chat: "chat",
   member: "member",
 };
@@ -47,6 +45,8 @@ const getEntityRoute = (activity: ActivitySchemaI): string => {
       return `/team/${team_slug}`;
     case "member":
       return `/team/${team_slug}/settings/members`;
+    case "chat":
+      return `/team/${team_slug}/${project_slug}/chats/${related_id}`;
     default:
       return "#";
   }

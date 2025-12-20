@@ -33,8 +33,7 @@ const AnalysisNodeMetadata: React.FC<{
   projectSlug: string;
   version: AnalysisNodeSchemaI;
   isEditMode: boolean;
-  allowEditMode?: boolean;
-}> = ({ teamSlug, projectSlug, version, isEditMode, allowEditMode = false }) => {
+}> = ({ teamSlug, projectSlug, version, isEditMode }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -105,29 +104,27 @@ const AnalysisNodeMetadata: React.FC<{
         <BotMessageSquare className="size-4" />
         {chats && chats.results.length > 0 ? "Continue" : "Start"}
       </Button>
-      {allowEditMode && (
-        <Button variant="outline" size="sm" asChild>
-          <Link
-            href={
-              isEditMode
-                ? `/team/${teamSlug}/${projectSlug}/analyses/${version.id}`
-                : `/team/${teamSlug}/${projectSlug}/analyses/${version.id}?mode=edit`
-            }
-          >
-            {isEditMode ? (
-              <>
-                <X className="size-4" />
-                Exit Edit
-              </>
-            ) : (
-              <>
-                <Pencil className="size-4" />
-                Edit
-              </>
-            )}
-          </Link>
-        </Button>
-      )}
+      <Button variant="outline" size="sm" asChild>
+        <Link
+          href={
+            isEditMode
+              ? `/team/${teamSlug}/${projectSlug}/analyses/${version.id}`
+              : `/team/${teamSlug}/${projectSlug}/analyses/${version.id}?mode=edit`
+          }
+        >
+          {isEditMode ? (
+            <>
+              <X className="size-4" />
+              Exit Edit
+            </>
+          ) : (
+            <>
+              <Pencil className="size-4" />
+              Edit
+            </>
+          )}
+        </Link>
+      </Button>
       <AnalysisVersionMenu teamSlug={teamSlug} projectSlug={projectSlug} version={version} />
     </div>
   );

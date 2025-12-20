@@ -1,6 +1,6 @@
 import { chatActions } from "@/actions/bevor";
 import Container from "@/components/container";
-import CodeVersionSubnav from "@/components/subnav/code-version";
+import ChatSubnav from "@/components/subnav/chat";
 import { getQueryClient } from "@/lib/config/query";
 import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
@@ -39,7 +39,7 @@ const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params }) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Container subnav={<CodeVersionSubnav />} contain>
+      <Container subnav={<ChatSubnav />} contain>
         <ChatClient {...resolvedParams} query={chatQuery} />
       </Container>
     </HydrationBoundary>

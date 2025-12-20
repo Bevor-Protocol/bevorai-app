@@ -4,11 +4,11 @@ import { Subnav, SubnavItem } from "@/components/ui/subnav";
 import { useParams, usePathname } from "next/navigation";
 import React from "react";
 
-const CodeVersionSubnav: React.FC = () => {
-  const { teamSlug, projectSlug, codeId } = useParams<{
+const ChatSubnav: React.FC = () => {
+  const { teamSlug, projectSlug, chatId } = useParams<{
     teamSlug: string;
     projectSlug: string;
-    codeId: string;
+    chatId: string;
   }>();
   const pathname = usePathname();
 
@@ -16,17 +16,21 @@ const CodeVersionSubnav: React.FC = () => {
 
   const navItems = [
     {
-      label: "Code Version",
-      href: `/team/${teamSlug}/${projectSlug}/codes/${codeId}`,
+      label: "Chat",
+      href: `/team/${teamSlug}/${projectSlug}/chats/${chatId}`,
     },
     {
-      label: "Analyses",
-      href: `/team/${teamSlug}/${projectSlug}/codes/${codeId}/analyses`,
+      label: "Source Code",
+      href: `/team/${teamSlug}/${projectSlug}/chats/${chatId}/code`,
+    },
+    {
+      label: "Analysis",
+      href: `/team/${teamSlug}/${projectSlug}/chats/${chatId}/analysis`,
     },
   ];
 
   const isActive = (href: string): boolean => {
-    if (href === `/team/${teamSlug}/${projectSlug}/codes/${codeId}`) {
+    if (href === `/team/${teamSlug}/${projectSlug}/chats/${chatId}`) {
       return pathname === href;
     }
     return pathname.startsWith(href);
@@ -48,4 +52,4 @@ const CodeVersionSubnav: React.FC = () => {
   );
 };
 
-export default CodeVersionSubnav;
+export default ChatSubnav;

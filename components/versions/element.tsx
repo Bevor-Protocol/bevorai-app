@@ -12,7 +12,7 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { formatDate, trimAddress } from "@/utils/helpers";
+import { formatDate, formatDateShort, trimAddress } from "@/utils/helpers";
 import { CodeMappingSchemaI, CodeVersionSchemaI, SourceTypeEnum } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -289,14 +289,6 @@ export const CodeVersionElementBare: React.FC<
       return version.version.version_identifier.slice(0, 7);
     }
     return version.version.version_identifier.slice(0, 7);
-  };
-
-  const formatDateShort = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
   };
 
   const getStatusIndicator = (): React.ReactNode => {

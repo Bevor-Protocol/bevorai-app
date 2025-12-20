@@ -49,6 +49,7 @@ export interface AnalysisNodeSchemaI extends BaseSchema {
   is_public: boolean;
   parent_node_id?: string;
   root_node_id: string;
+  merged_from_node_id?: string;
   children: string[];
 }
 
@@ -207,7 +208,7 @@ export interface ChatMessageI extends BaseSchema {
   chat_role: "user" | "system";
   message: string;
   tools: string[];
-  code_mapping_id: string;
+  code_version_id: string;
   analysis_node_id?: string;
 }
 
@@ -223,12 +224,12 @@ export interface ChatSchemaI {
   project: ProjectSchemaI;
   user: UserSchemaI;
   analysis_node_id?: string;
-  code_mapping_id: string;
+  code_version_id: string;
   chat_type: "code" | "analysis";
 }
 
 export interface ChatFullSchemaI extends ChatSchemaI {
-  code_mapping: CodeMappingSchemaI;
+  code_version: CodeMappingSchemaI;
   analysis_node?: AnalysisNodeSchemaI;
 }
 

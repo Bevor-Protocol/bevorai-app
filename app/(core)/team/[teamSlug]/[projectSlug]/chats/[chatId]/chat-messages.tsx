@@ -196,7 +196,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           chat_role: "system",
           message: finalMessage,
           tools: [],
-          code_mapping_id: chatQuery.data.code_mapping_id,
+          code_version_id: chatQuery.data.code_version_id,
           analysis_node_id: chatQuery.data.analysis_node_id,
         };
         // we already optimistically added the user message upon submission.
@@ -234,7 +234,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       chat_role: "user",
       message: message.trim(),
       tools: [],
-      code_mapping_id: chatQuery.data.code_mapping_id,
+      code_version_id: chatQuery.data.code_version_id,
       analysis_node_id: chatQuery.data.analysis_node_id,
     };
 
@@ -261,7 +261,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       chat_role: "user",
       message: "",
       tools: [],
-      code_mapping_id: chatQuery.data.code_mapping_id,
+      code_version_id: chatQuery.data.code_version_id,
       analysis_node_id: chatQuery.data.analysis_node_id,
     };
 
@@ -308,7 +308,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                 <Chat.Message
                   role={message.chat_role}
                   content={message.message}
-                  isDiffVersion={message.code_mapping_id != chatQuery.data.code_mapping_id}
+                  isDiffVersion={message.code_version_id != chatQuery.data.code_version_id}
                   key={message.id}
                 />
               ))}
@@ -341,7 +341,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         )}
         <ChatInput
           teamSlug={teamSlug}
-          codeId={chatQuery.data.code_mapping_id}
+          codeId={chatQuery.data.code_version_id}
           onSendMessage={handleSendMessage}
           messagesContainerRef={messagesContainerRef}
         />

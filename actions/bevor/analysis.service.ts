@@ -166,6 +166,29 @@ export const forkAnalysis = async (
     });
 };
 
+export const mergeAnalysis = async (
+  teamSlug: string,
+  toAnalysisNodeId: string,
+  fromAnalysisNodeId: string,
+): Promise<{
+  id: string;
+  toInvalidate: QueryKey[];
+}> => {
+  const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
+  return api
+    .post(
+      `/analyses/${toAnalysisNodeId}/merge`,
+      { from_analysis_node_id: fromAnalysisNodeId },
+      { headers: { "bevor-team-slug": teamSlug } },
+    )
+    .then((response) => {
+      return {
+        id: response.data.id,
+        toInvalidate,
+      };
+    });
+};
+
 export const getDraft = async (teamSlug: string, analysisNodeId: string): Promise<DraftSchemaI> => {
   return api
     .get(`/analyses/${analysisNodeId}/draft`, { headers: { "bevor-team-slug": teamSlug } })

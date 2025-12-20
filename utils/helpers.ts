@@ -71,6 +71,14 @@ export const formatDateLong = (dateString: string): string => {
   });
 };
 
+export const formatDateShort = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
 export const formatNumber = (n: number): string => {
   if (n < 100) {
     return n.toString();

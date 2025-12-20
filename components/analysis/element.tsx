@@ -8,14 +8,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { formatDate, truncateId } from "@/utils/helpers";
+import { formatDateShort, truncateId } from "@/utils/helpers";
 import { AnalysisNodeSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowUp,
   BotMessageSquare,
   Clock,
+  Code2,
   GitBranch,
   Lock,
   MoreHorizontal,
@@ -24,6 +27,7 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 
@@ -115,6 +119,78 @@ const getTriggerIcon = (trigger: string): React.ReactElement => {
   }
 };
 
+const AnalysisVersionActions: React.FC<{
+  analysisVersion: AnalysisNodeSchemaI;
+}> = ({ analysisVersion }) => {
+  const pathname = usePathname();
+  const codePath = `/team/${analysisVersion.team_slug}/${analysisVersion.project_slug}/codes/${analysisVersion.code_version_id}`;
+  const parentPath = analysisVersion.parent_node_id
+    ? `/team/${analysisVersion.team_slug}/${analysisVersion.project_slug}/analyses/${analysisVersion.parent_node_id}`
+    : null;
+  const historyPath = !pathname.endsWith("history")
+    ? `/team/${analysisVersion.team_slug}/${analysisVersion.project_slug}/analyses/${analysisVersion.id}/history`
+    : null;
+  const mergePath = analysisVersion.merged_from_node_id
+    ? `/team/${analysisVersion.team_slug}/${analysisVersion.project_slug}/analyses/${analysisVersion.merged_from_node_id}`
+    : null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        asChild
+        onClick={(e: React.MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <MoreHorizontal className="size-4 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+        {parentPath && (
+          <DropdownMenuItem asChild>
+            <Link href={parentPath} onClick={(e) => e.stopPropagation()}>
+              <ArrowUp className="size-4" />
+              View parent
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem asChild>
+          <Link href={codePath} onClick={(e) => e.stopPropagation()}>
+            <Code2 className="size-4" />
+            View Soure Code
+          </Link>
+        </DropdownMenuItem>
+        {historyPath && (
+          <DropdownMenuItem asChild>
+            <Link href={historyPath} onClick={(e) => e.stopPropagation()}>
+              <Clock className="size-4" />
+              View History
+            </Link>
+          </DropdownMenuItem>
+        )}
+        {mergePath && (
+          <DropdownMenuItem asChild>
+            <Link href={mergePath} onClick={(e) => e.stopPropagation()}>
+              <GitBranch className="size-4" />
+              View Merge Source
+            </Link>
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 export const AnalysisVersionElementBare: React.FC<
   {
     analysisVersion: AnalysisNodeSchemaI;
@@ -127,7 +203,7 @@ export const AnalysisVersionElementBare: React.FC<
   return (
     <div
       className={cn(
-        "grid grid-cols-[24px_1fr_2fr_1fr_1fr_1fr_100px] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
+        "grid grid-cols-[24px_1fr_1fr_2fr_1fr_1fr_1fr_auto_40px] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
         className,
       )}
       {...props}
@@ -150,6 +226,10 @@ export const AnalysisVersionElementBare: React.FC<
           </span>
         )}
       </div>
+      <div className="text-xs text-muted-foreground font-mono truncate flex items-center gap-2">
+        <Code2 className="size-3" />
+        {truncateId(analysisVersion.code_version_id)}
+      </div>
       <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap justify-center">
         {getTriggerIcon(analysisVersion.trigger)}
         {getTriggerLabel(analysisVersion.trigger)}
@@ -162,9 +242,14 @@ export const AnalysisVersionElementBare: React.FC<
         {analysisVersion.n_findings} finding
         {analysisVersion.n_findings !== 1 ? "s" : ""}
       </div>
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap justify-end">
-        <Clock className="size-3" />
-        <span>{formatDate(analysisVersion.created_at)}</span>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0 whitespace-nowrap">
+        <span>{formatDateShort(analysisVersion.created_at)}</span>
+        <span>by</span>
+        <Icon size="sm" seed={analysisVersion.user.id} className="shrink-0" />
+        <span className="truncate">{analysisVersion.user.username}</span>
+      </div>
+      <div className="flex items-center justify-center">
+        <AnalysisVersionActions analysisVersion={analysisVersion} />
       </div>
     </div>
   );
