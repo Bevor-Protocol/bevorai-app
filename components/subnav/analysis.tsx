@@ -17,20 +17,20 @@ const AnalysisSubnav: React.FC = () => {
   const navItems = [
     {
       label: "Analysis",
-      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}`,
+      href: `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}`,
     },
     {
       label: "Source Code",
-      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}/code`,
+      href: `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}/code`,
     },
     {
       label: "History",
-      href: `/${teamSlug}/${projectSlug}/analyses/${nodeId}/history`,
+      href: `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}/history`,
     },
   ];
 
   const isActive = (href: string): boolean => {
-    if (href === `/${teamSlug}/${projectSlug}/analyses/${nodeId}`) {
+    if (href === `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}`) {
       return pathname === href;
     }
     return pathname.startsWith(href);

@@ -33,7 +33,7 @@ export const DefaultProjectsQuery = {
 
 export const DefaultAnalysisNodesQuery = {
   page: "0",
-  page_size: "12",
+  page_size: "20",
   order: "desc",
   user_id: "",
   project_id: "",

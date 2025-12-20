@@ -11,7 +11,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     } catch (parseError) {
       console.error("Failed to parse request body:", parseError);
       return new Response(
-        JSON.stringify({ error: "Invalid JSON in request body", details: parseError instanceof Error ? parseError.message : String(parseError) }),
+        JSON.stringify({
+          error: "Invalid JSON in request body",
+          details: parseError instanceof Error ? parseError.message : String(parseError),
+        }),
         {
           status: 400,
           headers: {
@@ -34,7 +37,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       async start(controller: ReadableStreamDefaultController): Promise<void> {
         try {
           const response = await streaming_api.post(
-            `/chats/${chatId}`,
+            `/chats/${chatId}/stream`,
             { ...rest },
             {
               headers: {

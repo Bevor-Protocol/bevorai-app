@@ -48,7 +48,7 @@ export const ProjectElement: React.FC<{
   return (
     <Link
       key={project.id}
-      href={`/${project.team.slug}/${project.slug}`}
+      href={`/team/${project.team.slug}/${project.slug}`}
       aria-disabled={isDisabled}
       className={cn(
         "block border rounded-lg transition-colors",

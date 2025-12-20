@@ -37,8 +37,8 @@ const ChatElementMenu: React.FC<{
 
   const viewPath =
     chat.chat_type === "analysis"
-      ? `/${teamSlug}/${projectSlug}/analyses/${chat.analysis_node_id}`
-      : `/${teamSlug}/${projectSlug}/codes/${chat.code_mapping_id}`;
+      ? `/team/${teamSlug}/${projectSlug}/analyses/${chat.analysis_node_id}`
+      : `/team/${teamSlug}/${projectSlug}/codes/${chat.code_mapping_id}`;
 
   const viewLabel = chat.chat_type === "analysis" ? "View analysis" : "View code";
 
@@ -137,7 +137,7 @@ export const ChatElement: React.FC<ChatElementProps> = ({
   projectSlug,
   isDisabled = false,
 }) => {
-  const chatPath = `/${teamSlug}/${projectSlug}/chats/${chat.id}`;
+  const chatPath = `/team/${teamSlug}/${projectSlug}/chats/${chat.id}`;
 
   return (
     <Link

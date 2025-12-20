@@ -206,10 +206,10 @@ const CodeVersionActions: React.FC<{
     },
   });
 
-  const chatPath = `/${teamSlug}/${version.project_slug}/codes/${version.id}/chat`;
-  const uploadNewerPath = `/${teamSlug}/${version.project_slug}/codes/new?parentId=${version.id}`;
+  const chatPath = `/team/${teamSlug}/${version.project_slug}/codes/${version.id}/chat`;
+  const uploadNewerPath = `/team/${teamSlug}/${version.project_slug}/codes/new?parentId=${version.id}`;
   const parentPath = version.parent_id
-    ? `/${teamSlug}/${version.project_slug}/codes/${version.parent_id}`
+    ? `/team/${teamSlug}/${version.project_slug}/codes/${version.parent_id}`
     : null;
 
   return (
@@ -433,7 +433,7 @@ export const CodeVersionElement: React.FC<{
 }> = ({ version, teamSlug, isDisabled = false }) => {
   return (
     <Link
-      href={`/${teamSlug}/${version.project_slug}/codes/${version.id}`}
+      href={`/team/${teamSlug}/${version.project_slug}/codes/${version.id}`}
       className={cn(
         "block transition-colors",
         isDisabled ? "cursor-default opacity-50" : "hover:bg-accent/50 cursor-pointer",

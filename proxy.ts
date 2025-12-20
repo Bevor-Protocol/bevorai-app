@@ -49,7 +49,7 @@ const attemptRefresh = async (
     if (isSignIn) {
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {
-        return NextResponse.redirect(new URL(`/${lastTeam}`, request.url));
+        return NextResponse.redirect(new URL(`/team/${lastTeam}`, request.url));
       } else {
         return NextResponse.redirect(new URL("/", request.url));
       }
@@ -64,7 +64,7 @@ const attemptRefresh = async (
   }
 };
 
-const staticRoots = new Set(["user", "admin", "sign-in", "account", "api"]);
+const staticRoots = new Set(["user", "admin", "sign-in", "account", "api", "team"]);
 
 const proxy = async (request: NextRequest): Promise<NextResponse> => {
   const response = NextResponse.next();
@@ -77,8 +77,12 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length > 0) {
     const first = segments[0];
-    if (!staticRoots.has(first)) {
-      // treat the first segment as the team slug
+    if (first === "team" && segments.length > 1) {
+      // extract team slug from /team/[teamSlug] path
+      const teamSlug = segments[1];
+      response.cookies.set("bevor-recent-team", teamSlug);
+    } else if (!staticRoots.has(first)) {
+      // treat the first segment as the team slug (for backwards compatibility)
       response.cookies.set("bevor-recent-team", first);
     }
   }
@@ -121,7 +125,7 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
       // If we got here, they're already logged in → redirect them away
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {
-        return NextResponse.redirect(new URL(`/${lastTeam.value}`, request.url));
+        return NextResponse.redirect(new URL(`/team/${lastTeam.value}`, request.url));
       } else {
         return NextResponse.redirect(new URL("/", request.url));
       }
@@ -135,7 +139,7 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
 
 // Configure which routes the middleware should run on
 export const config = {
-  matcher: ["/user/:path*", "/admin/:path*", "/sign-in", "/:teamSlug/:path*", "/"],
+  matcher: ["/user/:path*", "/admin/:path*", "/sign-in", "/team/:teamSlug/:path*", "/"],
 };
 
 export default proxy;

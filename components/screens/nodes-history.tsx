@@ -80,6 +80,7 @@ export const AnalysisNodesHistoryView: React.FC<{
                 key={analysis.id + String(ind)}
                 analysisVersion={analysis}
                 isDisabled={isWaiting}
+                link={`/team/${analysis.team_slug}/${analysis.project_slug}/analyses/${analysis.id}/history`}
                 className={cn(
                   analysis.id === node.id &&
                     "border-l-2 border-l-blue-300 group-hover:border-l-blue-300",

@@ -65,7 +65,7 @@ const CreateCodeModal: React.FC<{
           <Button disabled>Create Code</Button>
         ) : (
           <Button asChild>
-            <Link href={`/${teamSlug}/${projectSlug}/codes/new`}>Create Code</Link>
+            <Link href={`/team/${teamSlug}/${projectSlug}/codes/new`}>Create Code</Link>
           </Button>
         )}
       </DialogFooter>

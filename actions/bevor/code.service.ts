@@ -44,7 +44,7 @@ export const contractUploadFolder = async (
   }
 
   return api
-    .post("/code-versions/create/folder", formData, { headers: { "bevor-team-slug": teamSlug } })
+    .post("/codes/create/folder", formData, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return {
         ...response.data,
@@ -73,7 +73,7 @@ export const contractUploadFile = async (
   }
 
   return api
-    .post("/code-versions/create/file", formData, { headers: { "bevor-team-slug": teamSlug } })
+    .post("/codes/create/file", formData, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return {
         ...response.data,
@@ -97,7 +97,7 @@ export const contractUploadPaste = async (
   }
   return api
     .post(
-      "/code-versions/create/paste",
+      "/codes/create/paste",
       { project_id: projectId, ...data },
       { headers: { "bevor-team-slug": teamSlug } },
     )
@@ -124,7 +124,7 @@ export const contractUploadScan = async (
   }
   return api
     .post(
-      "/code-versions/create/scan",
+      "/codes/create/scan",
       { address: data.address, project_id: projectId, parent_id: data.parent_id },
       { headers: { "bevor-team-slug": teamSlug } },
     )
@@ -141,7 +141,7 @@ export const getCodeVersion = async (
   codeId: string,
 ): Promise<CodeMappingSchemaI> => {
   return api
-    .get(`/code-versions/${codeId}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/codes/${codeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
@@ -152,7 +152,7 @@ export const getCodeVersionSimilar = async (
   codeId: string,
 ): Promise<{ score: number; version: CodeMappingSchemaI }[]> => {
   return api
-    .get(`/code-versions/${codeId}/similarity`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/codes/${codeId}/similarity`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data.results;
     });
@@ -163,7 +163,7 @@ export const getSources = async (
   codeId: string,
 ): Promise<CodeSourceSchemaI[]> => {
   return api
-    .get(`/code-versions/${codeId}/sources`, {
+    .get(`/codes/${codeId}/sources`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -177,7 +177,7 @@ export const getSource = async (
   sourceId: string,
 ): Promise<CodeSourceWithContentSchemaI> => {
   return api
-    .get(`/code-versions/${codeId}/sources/${sourceId}`, {
+    .get(`/codes/${codeId}/sources/${sourceId}`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -187,7 +187,7 @@ export const getSource = async (
 
 export const getTree = async (teamSlug: string, codeId: string): Promise<TreeResponseI[]> => {
   return api
-    .get(`/code-versions/${codeId}/tree`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/codes/${codeId}/tree`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data.results;
     });
@@ -199,7 +199,7 @@ export const getNode = async (
   nodeId: string,
 ): Promise<NodeWithContentSchemaI> => {
   return api
-    .get(`/code-versions/${codeId}/nodes/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/codes/${codeId}/nodes/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
@@ -215,7 +215,7 @@ export const getNodes = async (
   },
 ): Promise<NodeSchemaI[]> => {
   const searchParams = new URLSearchParams(data);
-  let url = `/code-versions/${codeId}/nodes`;
+  let url = `/codes/${codeId}/nodes`;
   if (searchParams) {
     url += `?${searchParams.toString()}`;
   }
@@ -230,7 +230,7 @@ export const getRelations = async (
   codeId: string,
 ): Promise<CodeRelationSchemaI> => {
   return api
-    .get(`/code-versions/${codeId}/relations`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/codes/${codeId}/relations`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
@@ -245,7 +245,7 @@ export const getVersions = async (
   const searchParams = buildSearchParams(filters);
 
   return api
-    .get(`/code-versions?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/codes?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return response.data;
     });
@@ -261,7 +261,7 @@ export const retryEmbedding = async (
 > => {
   const toInvalidate = [[QUERY_KEYS.CODES, teamSlug]];
   return api
-    .post(`/code-versions/${codeId}/retry`, {}, { headers: { "bevor-team-slug": teamSlug } })
+    .post(`/codes/${codeId}/retry`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       return {
         ...response.data,
@@ -280,7 +280,7 @@ export const updateCodeVersionParent = async (
   const toInvalidate = [generateQueryKey.codeRelations(codeId)];
   return api
     .patch(
-      `/code-versions/${codeId}`,
+      `/codes/${codeId}`,
       { parent_id: parentId },
       { headers: { "bevor-team-slug": teamSlug } },
     )

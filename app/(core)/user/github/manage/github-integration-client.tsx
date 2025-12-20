@@ -81,7 +81,7 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
       });
       toast.success("Project created successfully");
       if (teamSlug) {
-        router.push(`/${teamSlug}/${project.slug}`);
+        router.push(`/team/${teamSlug}/${project.slug}`);
       }
     },
     onError: (error: Error) => {

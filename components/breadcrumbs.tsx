@@ -73,7 +73,7 @@ const ContainerBreadcrumb: React.FC<{
 
   const currentRouteSegment = useMemo(() => {
     if (!teamSlug || !projectSlug) return null;
-    const basePath = `/${teamSlug}/${projectSlug}`;
+    const basePath = `/team/${teamSlug}/${projectSlug}`;
 
     if (pathname.startsWith(`${basePath}/analyses`)) {
       return "analyses";
@@ -89,7 +89,7 @@ const ContainerBreadcrumb: React.FC<{
 
   // Generate equivalent route for a new team/project
   const getEquivalentRoute = (newTeamSlug: string, newProjectSlug: string): string => {
-    const basePath = `/${newTeamSlug}/${newProjectSlug}`;
+    const basePath = `/team/${newTeamSlug}/${newProjectSlug}`;
     if (currentRouteSegment) {
       return `${basePath}/${currentRouteSegment}`;
     }
@@ -97,7 +97,7 @@ const ContainerBreadcrumb: React.FC<{
   };
 
   const projectLink = useMemo(() => {
-    const basePath = `/${teamSlug}/${projectSlug}`;
+    const basePath = `/team/${teamSlug}/${projectSlug}`;
 
     if (pathname.startsWith(`${basePath}/analyses/`)) {
       return `${basePath}/analyses`;
@@ -161,7 +161,7 @@ const ContainerBreadcrumb: React.FC<{
                       <span className="truncate max-w-40">Account</span>
                     </Link>
                   ) : curTeam ? (
-                    <Link href={`/${curTeam.slug}`} className="flex items-center gap-2">
+                    <Link href={`/team/${curTeam.slug}`} className="flex items-center gap-2">
                       <Icon seed={curTeam.id} size="sm" />
                       <span className="truncate max-w-40">{curTeam.name}</span>
                     </Link>
@@ -250,7 +250,7 @@ const ContainerBreadcrumb: React.FC<{
               {teams.map((team) => (
                 <Link
                   key={team.id}
-                  href={`/${team.slug}`}
+                  href={`/team/${team.slug}`}
                   onMouseEnter={() => handleTeamHover(team.id)}
                   onClick={() => setPopoverOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
@@ -298,7 +298,7 @@ const ContainerBreadcrumb: React.FC<{
               {displayedProjects.map((project) => {
                 const href = currentRouteSegment
                   ? getEquivalentRoute(project.team.slug, project.slug)
-                  : `/${project.team.slug}/${project.slug}`;
+                  : `/team/${project.team.slug}/${project.slug}`;
 
                 return (
                   <Link

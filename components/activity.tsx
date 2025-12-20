@@ -38,15 +38,15 @@ const getEntityRoute = (activity: ActivitySchemaI): string => {
 
   switch (entity_type) {
     case "project":
-      return `/${team_slug}/${project_slug}`;
+      return `/team/${team_slug}/${project_slug}`;
     case "code_version":
-      return `/${team_slug}/${project_slug}/codes/${related_id}`;
+      return `/team/${team_slug}/${project_slug}/codes/${related_id}`;
     case "analysis_node":
-      return `/${team_slug}/${project_slug}/analyses/${related_id}`;
+      return `/team/${team_slug}/${project_slug}/analyses/${related_id}`;
     case "team":
-      return `/${team_slug}`;
+      return `/team/${team_slug}`;
     case "member":
-      return `/${team_slug}/settings/members`;
+      return `/team/${team_slug}/settings/members`;
     default:
       return "#";
   }

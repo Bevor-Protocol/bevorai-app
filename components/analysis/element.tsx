@@ -10,14 +10,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { formatDate } from "@/utils/helpers";
+import { formatDate, truncateId } from "@/utils/helpers";
 import { AnalysisNodeSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  BotMessageSquare,
   Clock,
   GitBranch,
   Lock,
-  MessageSquare,
   MoreHorizontal,
   Shield,
   Unlock,
@@ -83,25 +83,6 @@ export const AnalysisVersionElementCompact: React.FC<
   );
 };
 
-const getStatusIndicator = (
-  status: string,
-): { text: string; circleColor: string; textColor: string } => {
-  switch (status) {
-    case "success":
-      return { text: "Success", circleColor: "bg-green-500", textColor: "text-green-500" };
-    case "failed":
-      return { text: "Failed", circleColor: "bg-red-500", textColor: "text-red-500" };
-    case "processing":
-      return { text: "Processing", circleColor: "bg-blue-500", textColor: "text-blue-500" };
-    case "waiting":
-      return { text: "Waiting", circleColor: "bg-yellow-500", textColor: "text-yellow-500" };
-    case "partial":
-      return { text: "Partial", circleColor: "bg-orange-500", textColor: "text-orange-500" };
-    default:
-      return { text: "Unknown", circleColor: "bg-muted", textColor: "text-muted-foreground" };
-  }
-};
-
 const getTriggerLabel = (trigger: string): string => {
   switch (trigger) {
     case "manual_run":
@@ -122,7 +103,7 @@ const getTriggerLabel = (trigger: string): string => {
 const getTriggerIcon = (trigger: string): React.ReactElement => {
   switch (trigger) {
     case "chat":
-      return <MessageSquare className="size-3" />;
+      return <BotMessageSquare className="size-3" />;
     case "manual_run":
     case "manual_edit":
       return <User className="size-3" />;
@@ -140,61 +121,48 @@ export const AnalysisVersionElementBare: React.FC<
     isPreview?: boolean;
   } & React.ComponentProps<"div">
 > = ({ analysisVersion, className, ...props }) => {
-  const shortId = analysisVersion.id.slice(0, 8);
-  const status = "unknown"; // TODO: come back to this, if i want it.
-  const statusIndicator = getStatusIndicator(status);
   const isRoot = !analysisVersion.parent_node_id;
   const isLeaf = analysisVersion.is_leaf;
 
   return (
     <div
       className={cn(
-        "grid grid-cols-[24px_minmax(0,120px)_auto_minmax(100px,1fr)_auto] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
+        "grid grid-cols-[24px_1fr_2fr_1fr_1fr_1fr_100px] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
         className,
       )}
       {...props}
     >
-      <div className="flex justify-center">
-        <Shield className="size-4 text-purple-400" />
+      <Shield className="size-4 text-purple-400 justify-self-center" />
+      <div className="flex items-center gap-2 min-w-0">
+        <p className={cn("font-medium text-sm font-mono", isRoot || isLeaf ? "" : "truncate")}>
+          {truncateId(analysisVersion.id)}
+        </p>
       </div>
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="font-medium text-sm font-mono truncate">{shortId}</p>
-          {isRoot && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap">
-              ROOT
-            </span>
-          )}
-          {isLeaf && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap">
-              LEAF
-            </span>
-          )}
-        </div>
+      <div className="flex items-center gap-1 justify-start">
+        {isRoot && (
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap shrink-0">
+            ROOT
+          </span>
+        )}
+        {isLeaf && (
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap shrink-0">
+            LEAF
+          </span>
+        )}
       </div>
-      <div className="flex flex-col shrink-0 justify-center">
-        <div className="flex items-center gap-2">
-          <div className={cn("size-2 rounded-full shrink-0", statusIndicator.circleColor)} />
-          <span className={cn("text-xs", statusIndicator.textColor)}>{statusIndicator.text}</span>
-        </div>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap justify-center">
+        {getTriggerIcon(analysisVersion.trigger)}
+        {getTriggerLabel(analysisVersion.trigger)}
       </div>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
-        <div className="flex items-center gap-1 shrink-0">
-          {getTriggerIcon(analysisVersion.trigger)}
-          <span className="whitespace-nowrap">{getTriggerLabel(analysisVersion.trigger)}</span>
-        </div>
-        <span>•</span>
-        <span className="whitespace-nowrap">
-          {analysisVersion.n_scopes} scope
-          {analysisVersion.n_scopes !== 1 ? "s" : ""}
-        </span>
-        <span>•</span>
-        <span className="whitespace-nowrap">
-          {analysisVersion.n_findings} finding
-          {analysisVersion.n_findings !== 1 ? "s" : ""}
-        </span>
+      <div className="text-xs text-muted-foreground whitespace-nowrap justify-center">
+        {analysisVersion.n_scopes} scope
+        {analysisVersion.n_scopes !== 1 ? "s" : ""}
       </div>
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap shrink-0">
+      <div className="text-xs text-muted-foreground whitespace-nowrap justify-center">
+        {analysisVersion.n_findings} finding
+        {analysisVersion.n_findings !== 1 ? "s" : ""}
+      </div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap justify-end">
         <Clock className="size-3" />
         <span>{formatDate(analysisVersion.created_at)}</span>
       </div>
@@ -206,11 +174,15 @@ export const AnalysisVersionElement: React.FC<
   {
     analysisVersion: AnalysisNodeSchemaI;
     isDisabled?: boolean;
+    link?: string;
   } & React.ComponentProps<"div">
-> = ({ analysisVersion, isDisabled = false, className, ...props }) => {
+> = ({ analysisVersion, isDisabled = false, link, className, ...props }) => {
   return (
     <Link
-      href={`/${analysisVersion.team_slug}/${analysisVersion.project_slug}/analyses/${analysisVersion.id}`}
+      href={
+        link ||
+        `/team/${analysisVersion.team_slug}/${analysisVersion.project_slug}/analyses/${analysisVersion.id}`
+      }
       aria-disabled={isDisabled}
       className={cn("block group", isDisabled ? "cursor-default opacity-50" : "cursor-pointer")}
     >

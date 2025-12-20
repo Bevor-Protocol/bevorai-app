@@ -22,7 +22,7 @@ const MainPage: AsyncComponent<MainProps> = async ({ searchParams }) => {
   const querySuffix = is_signup === "true" ? "?is_signup=true" : "";
 
   if (recentTeamSlug?.value) {
-    redirect(`/${recentTeamSlug.value}${querySuffix}`);
+    redirect(`/team/${recentTeamSlug.value}${querySuffix}`);
   }
 
   let defaultTeam;
@@ -34,7 +34,7 @@ const MainPage: AsyncComponent<MainProps> = async ({ searchParams }) => {
   }
 
   if (defaultTeam) {
-    redirect(`/${defaultTeam.slug}${querySuffix}`);
+    redirect(`/team/${defaultTeam.slug}${querySuffix}`);
   }
 
   redirect("/sign-in");
