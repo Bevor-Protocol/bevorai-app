@@ -42,8 +42,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
   });
 
   const relationQuery = useQuery({
-    queryKey: generateQueryKey.codeRelations(chatQuery.data.code_mapping_id),
-    queryFn: () => codeActions.getRelations(teamSlug, chatQuery.data.code_mapping_id),
+    queryKey: generateQueryKey.codeRelations(chatQuery.data.code_version_id),
+    queryFn: () => codeActions.getRelations(teamSlug, chatQuery.data.code_version_id),
   });
 
   const createChatMutation = useMutation({
@@ -91,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
     if (!relationQuery.data.children.length) return;
     const firstChild = relationQuery.data.children[0];
     const chatWithCode = chatsQuery.data.results.find(
-      (chat) => chat.code_mapping_id == firstChild.id,
+      (chat) => chat.code_version_id == firstChild.id,
     );
     return {
       code_mapping_id: firstChild.id,
@@ -142,10 +142,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
           </span>
           <div className="space-y-2">
             <Link
-              href={`/team/${teamSlug}/${projectSlug}/codes/${chatQuery.data.code_mapping.id}`}
+              href={`/team/${teamSlug}/${projectSlug}/codes/${chatQuery.data.code_version_id}`}
               className="block hover:opacity-80 transition-opacity"
             >
-              <CodeVersionElementCompact version={chatQuery.data.code_mapping} />
+              <CodeVersionElementCompact version={chatQuery.data.code_version} />
             </Link>
             {chatQuery.data.analysis_node && (
               <Link
