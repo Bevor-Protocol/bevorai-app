@@ -3,8 +3,8 @@
 import { analysisActions, codeActions } from "@/actions/bevor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generateQueryKey } from "@/utils/constants";
-import { AnalysisNodeSchemaI, AnalysisResultSchemaI, FindingSchemaI } from "@/utils/types";
-import { useQuery } from "@tanstack/react-query";
+import { FindingSchemaI } from "@/utils/types";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Shield } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { CodeSnippet, FindingMetadata, FindingTabs } from "./finding";
@@ -14,13 +14,12 @@ export const AnalysisVersionClient: React.FC<{
   nodeId: string;
   teamSlug: string;
   projectSlug: string;
-  analysisVersion: AnalysisNodeSchemaI;
-}> = ({ teamSlug, projectSlug, analysisVersion }) => {
+}> = ({ teamSlug, projectSlug, nodeId }) => {
   const [selectedFinding, setSelectedFinding] = useState<FindingSchemaI | null>(null);
 
-  const { data: analysisResult, isLoading } = useQuery<AnalysisResultSchemaI>({
-    queryKey: generateQueryKey.analysisFindings(analysisVersion.id),
-    queryFn: () => analysisActions.getFindings(teamSlug, analysisVersion.id),
+  const { data: version, isLoading } = useSuspenseQuery({
+    queryKey: generateQueryKey.analysisDetailed(nodeId),
+    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, nodeId),
   });
 
   const nodeQuery = useQuery({
@@ -28,16 +27,16 @@ export const AnalysisVersionClient: React.FC<{
     queryFn: () =>
       codeActions.getNode(
         teamSlug,
-        analysisVersion.code_version_id,
+        version.code_version_id,
         selectedFinding?.code_version_node_id ?? "",
       ),
     enabled: !!selectedFinding,
   });
 
   useEffect(() => {
-    if (!selectedFinding && analysisResult && analysisResult.findings.length > 0) {
-      for (const scope of analysisResult.scopes) {
-        const findings = analysisResult.findings.filter(
+    if (!selectedFinding && version && version.findings.length > 0) {
+      for (const scope of version.scopes) {
+        const findings = version.findings.filter(
           (f) => f.code_version_node_id === scope.code_version_node_id,
         );
         for (const level of levelOrder) {
@@ -49,7 +48,7 @@ export const AnalysisVersionClient: React.FC<{
         }
       }
     }
-  }, [selectedFinding, analysisResult]);
+  }, [selectedFinding, version]);
 
   if (isLoading) {
     return (
@@ -73,8 +72,8 @@ export const AnalysisVersionClient: React.FC<{
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 min-w-0">
         <ScopesList
           teamSlug={teamSlug}
-          nodeId={analysisVersion.id}
-          analysisResult={analysisResult}
+          nodeId={nodeId}
+          analysisResult={version}
           selectedFinding={selectedFinding}
           onSelectFinding={setSelectedFinding}
         />
@@ -93,14 +92,14 @@ export const AnalysisVersionClient: React.FC<{
             <FindingMetadata
               teamSlug={teamSlug}
               projectSlug={projectSlug}
-              nodeId={analysisVersion.id}
+              nodeId={nodeId}
               finding={selectedFinding}
               nodeQuery={nodeQuery}
             />
             <CodeSnippet nodeQuery={nodeQuery} />
             <FindingTabs
               teamSlug={teamSlug}
-              nodeId={analysisVersion.id}
+              nodeId={nodeId}
               finding={selectedFinding}
               setSelectedFinding={setSelectedFinding}
             />

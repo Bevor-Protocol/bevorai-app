@@ -1,12 +1,11 @@
 "use client";
 
-import { chatActions } from "@/actions/bevor";
+import { analysisActions, chatActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate } from "@/utils/helpers";
 import { extractChatsQuery } from "@/utils/query-params";
-import { AnalysisNodeSchemaI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { BotMessageSquare, Calendar, Clock, Pencil, Shield, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,11 +30,16 @@ const getTriggerIcon = (trigger: string): React.ReactElement => {
 const AnalysisNodeMetadata: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  version: AnalysisNodeSchemaI;
+  nodeId: string;
   isEditMode: boolean;
-}> = ({ teamSlug, projectSlug, version, isEditMode }) => {
+}> = ({ teamSlug, projectSlug, nodeId, isEditMode }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
+
+  const { data: version } = useSuspenseQuery({
+    queryKey: generateQueryKey.analysisDetailed(nodeId),
+    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, nodeId),
+  });
 
   const chatQuery = extractChatsQuery({
     project_slug: projectSlug,

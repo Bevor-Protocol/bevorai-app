@@ -1,5 +1,4 @@
 import { analysisActions } from "@/actions/bevor";
-import AnalysisNodeMetadata from "@/app/(core)/team/[teamSlug]/[projectSlug]/analyses/[nodeId]/metadata";
 import Container from "@/components/container";
 import AnalysisSubnav from "@/components/subnav/analysis";
 import { getQueryClient } from "@/lib/config/query";
@@ -8,6 +7,7 @@ import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { AnalysisVersionClient } from "./analysis-version-client";
 import { EditClient } from "./edit-mode";
+import AnalysisNodeMetadata from "./metadata";
 
 type ResolvedParams = {
   nodeId: string;

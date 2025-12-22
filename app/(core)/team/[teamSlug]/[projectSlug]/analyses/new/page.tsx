@@ -3,9 +3,9 @@ import Container from "@/components/container";
 import { CodeProvider } from "@/providers/code";
 import {
   AnalysisNodeSchemaI,
-  AnalysisResultSchemaI,
   AsyncComponent,
   CodeMappingSchemaI,
+  ScopeSchemaI,
 } from "@/utils/types";
 import { redirect } from "next/navigation";
 import NewVersionClient from "./new-version-client";
@@ -34,7 +34,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
 
   let defaultCodeVersion: CodeMappingSchemaI;
   let defaultParentVersion: AnalysisNodeSchemaI | undefined;
-  let findings: AnalysisResultSchemaI | undefined;
+  let parentScopes: ScopeSchemaI[] | undefined;
 
   if (parentVersionId && !codeVersionId) {
     defaultParentVersion = await analysisActions.getAnalysis(
@@ -45,14 +45,14 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
       resolvedParams.teamSlug,
       defaultParentVersion.code_version_id,
     );
-    findings = await analysisActions.getFindings(resolvedParams.teamSlug, parentVersionId);
+    parentScopes = await analysisActions.getScopes(resolvedParams.teamSlug, parentVersionId);
   } else if (parentVersionId && codeVersionId) {
     defaultParentVersion = await analysisActions.getAnalysis(
       resolvedParams.teamSlug,
       parentVersionId,
     );
     defaultCodeVersion = await codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId!);
-    findings = await analysisActions.getFindings(resolvedParams.teamSlug, parentVersionId);
+    parentScopes = await analysisActions.getScopes(resolvedParams.teamSlug, parentVersionId);
   } else {
     defaultCodeVersion = await codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId!);
   }
@@ -71,7 +71,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
         <NewVersionClient
           {...resolvedParams}
           sources={sources}
-          parentScopes={findings?.scopes ?? []}
+          parentScopes={parentScopes ?? []}
           defaultParentVersion={defaultParentVersion}
           defaultCodeVersion={defaultCodeVersion}
           allowCodeVersionChange={!codeVersionId}

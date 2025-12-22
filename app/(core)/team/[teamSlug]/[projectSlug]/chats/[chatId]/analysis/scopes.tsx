@@ -13,7 +13,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { FindingLevel } from "@/utils/enums";
-import { AnalysisResultSchemaI, FindingSchemaI, ScopeSchemaI } from "@/utils/types";
+import { AnalysisNodeSchemaI, FindingSchemaI, ScopeSchemaI } from "@/utils/types";
 import { AlertTriangle, ChevronDown, Info, XCircle } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 
@@ -78,7 +78,7 @@ const severityScoreMap: Record<FindingLevel, number> = {
 
 export const getScopeForFinding = (
   finding: FindingSchemaI,
-  analysisResult: AnalysisResultSchemaI,
+  analysisResult: AnalysisNodeSchemaI,
 ): ScopeSchemaI => {
   const scope = analysisResult.scopes.find(
     (s) => s.code_version_node_id === finding.code_version_node_id,
@@ -131,7 +131,7 @@ const getFindingsCountByLevel = (findings: FindingSchemaI[]): Record<FindingLeve
 export const ScopesList: React.FC<{
   teamSlug: string;
   nodeId: string;
-  analysisResult: AnalysisResultSchemaI | undefined;
+  analysisResult: AnalysisNodeSchemaI | undefined;
   selectedFinding: FindingSchemaI | null;
   onSelectFinding: (finding: FindingSchemaI) => void;
 }> = ({ analysisResult, selectedFinding, onSelectFinding }) => {

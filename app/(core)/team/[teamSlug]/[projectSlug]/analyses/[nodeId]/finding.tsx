@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
 import { FindingFeedbackBody } from "@/utils/schema";
 import {
-  AnalysisResultSchemaI,
+  AnalysisNodeSchemaI,
   FindingSchemaI,
   NodeSchemaI,
   NodeWithContentSchemaI,
@@ -143,7 +143,7 @@ export const FindingTabs: React.FC<{
       return analysisActions.submitFindingFeedback(teamSlug, nodeId, findingId, data);
     },
     onSuccess: (_, { findingId, data }) => {
-      queryClient.setQueryData<AnalysisResultSchemaI>(
+      queryClient.setQueryData<AnalysisNodeSchemaI>(
         generateQueryKey.analysisFindings(nodeId),
         (oldData) => {
           if (!oldData) return oldData;
