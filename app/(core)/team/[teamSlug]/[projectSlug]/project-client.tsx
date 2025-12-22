@@ -40,7 +40,6 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useFormReducer } from "@/hooks/useFormReducer";
-import { useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
@@ -316,17 +315,9 @@ export const ProjectActivities: React.FC<{ teamSlug: string; projectSlug: string
   teamSlug,
   projectSlug,
 }) => {
-  const { data: activities = [], refetch } = useQuery({
+  const { data: activities = [] } = useQuery({
     queryKey: generateQueryKey.projectActivities(projectSlug),
     queryFn: () => activityActions.getProjectActivities(teamSlug, projectSlug),
-  });
-
-  useSSE({
-    onMessage: (message) => {
-      console.log("PROJECT ACTIVITY MESSAGE", message);
-      refetch();
-    },
-    eventTypes: ["activity"],
   });
 
   return <ActivityList activities={activities} />;
@@ -339,7 +330,7 @@ export const AnalysesPreview: React.FC<{
   const query = { page_size: "3", project_slug: projectSlug };
   const { data: analyses, isLoading } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, query),
-    queryFn: async () => analysisActions.getAnalysisVersions(teamSlug, query),
+    queryFn: async () => analysisActions.getAnalyses(teamSlug, query),
   });
 
   if (analyses?.results.length === 0) {

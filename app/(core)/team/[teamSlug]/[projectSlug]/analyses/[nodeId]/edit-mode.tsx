@@ -45,7 +45,13 @@ import {
   analysisFindingBodySchema,
 } from "@/utils/schema";
 import { DraftFindingSchemaI, DraftSchemaI, ScopeSchemaI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient, UseQueryResult } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseQueryResult,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { ChevronDown, Plus, RotateCcw, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
@@ -1258,13 +1264,13 @@ export const EditClient: React.FC<{
   const [openCommitDialog, setOpenCommitDialog] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: analysisVersion } = useQuery({
-    queryKey: generateQueryKey.analysisVersion(nodeId),
-    queryFn: () => analysisActions.getAnalysisVersion(teamSlug, nodeId),
+  const { data: version } = useSuspenseQuery({
+    queryKey: generateQueryKey.analysisDetailed(nodeId),
+    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, nodeId),
   });
 
   const draftQuery = useQuery<DraftSchemaI>({
-    queryKey: generateQueryKey.analysisVersionDraft(nodeId),
+    queryKey: generateQueryKey.analysisDraft(nodeId),
     queryFn: () => analysisActions.getDraft(teamSlug, nodeId),
   });
 
@@ -1360,7 +1366,7 @@ export const EditClient: React.FC<{
             <EditFindingDetail
               teamSlug={teamSlug}
               nodeId={nodeId}
-              codeVersionId={analysisVersion?.code_version_id ?? ""}
+              codeVersionId={version?.code_version_id ?? ""}
               finding={selectedFinding}
               draftQuery={draftQuery}
               onFindingDeleted={handleFindingDeleted}

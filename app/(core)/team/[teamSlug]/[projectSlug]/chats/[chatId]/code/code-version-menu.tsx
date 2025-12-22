@@ -56,12 +56,12 @@ const CodeVersionMenu: React.FC<{
 
   const { data: analyses } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, analysisQuery),
-    queryFn: () => analysisActions.getAnalysisVersions(teamSlug, analysisQuery),
+    queryFn: () => analysisActions.getAnalyses(teamSlug, analysisQuery),
   });
 
   const { data: parentAnalyses = { results: [] } } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, parentAnalysisQuery),
-    queryFn: () => analysisActions.getAnalysisVersions(teamSlug, parentAnalysisQuery),
+    queryFn: () => analysisActions.getAnalyses(teamSlug, parentAnalysisQuery),
     enabled: !!version.parent_id,
   });
 

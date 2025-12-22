@@ -7,9 +7,6 @@ import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import ProjectClient, { AnalysesPreview, ProjectActivities } from "./project-client";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 interface ProjectPageProps {
   params: Promise<{ teamSlug: string; projectSlug: string }>;
 }

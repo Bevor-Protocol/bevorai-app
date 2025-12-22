@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CodeVersionElementCompact } from "@/components/versions/element";
 import { cn } from "@/lib/utils";
-import { useSSE } from "@/providers/sse";
+import { SSEPayload, useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
 import { DefaultChatsQuery } from "@/utils/query-params";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -30,6 +30,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
   const [newAnalysisNodeId, setNewAnalysisNodeId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
+
+  const { registerCallback } = useSSE();
+
+  useEffect(() => {
+    const unregister = registerCallback("analysis", "chat", chatId, (payload: SSEPayload) => {
+      setNewAnalysisNodeId(payload.id);
+    });
+
+    return unregister;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId]);
 
   const chatsQuery = useQuery({
     queryKey: generateQueryKey.chats(teamSlug, query),
@@ -60,23 +71,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
     },
     onError: () => {
       toast.error("Failed to create chat");
-    },
-  });
-
-  useSSE({
-    eventTypes: ["analysis"],
-    onMessage: (event: MessageEvent) => {
-      let parsed;
-
-      try {
-        parsed = JSON.parse(event.data);
-      } catch {
-        return;
-      }
-
-      if (parsed.analysis_node_id && typeof parsed.analysis_node_id === "string") {
-        setNewAnalysisNodeId(parsed.analysis_node_id);
-      }
     },
   });
 

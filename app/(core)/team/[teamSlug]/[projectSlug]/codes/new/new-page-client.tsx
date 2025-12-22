@@ -19,42 +19,50 @@ const Steps: React.FC<{
   const [currentStep, setCurrentStep] = React.useState(1);
   const [method, setMethod] = React.useState<string | null>(null);
   const sseToastId = React.useRef<string | number | undefined>(undefined);
+  const unregisterRef = React.useRef<() => void | undefined>(undefined);
 
-  const { updateClaims } = useSSE({
-    eventTypes: ["code"],
-    onMessage: (message) => {
-      console.log("NEW CODE MESSAGE RECEIVED", message);
-      let parsed: string;
-      try {
-        parsed = JSON.parse(message.data);
-      } catch {
-        parsed = message.data;
-      }
-
-      if (parsed === "pending" || parsed === "embedding") {
-        sseToastId.current = toast.loading("Post-processing code...");
-      }
-
-      if (parsed === "embedded") {
-        toast.success("Post-processing successful", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      } else if (parsed === "failed") {
-        toast.error("Post-processing failed", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      }
-    },
-  });
+  const { registerCallback } = useSSE();
 
   const handleSuccess = React.useCallback(
-    (id: string): void => {
-      updateClaims({ code_version_id: id });
+    (id: string) => {
+      unregisterRef.current = registerCallback("code", "team", id, (payload) => {
+        if (payload.data.status === "parsing" || payload.data.status === "embedding") {
+          sseToastId.current = toast.loading("Post-processing code...");
+        } else if (payload.data.status == "success") {
+          toast.success("Post-processing successful", {
+            id: sseToastId.current,
+          });
+          sseToastId.current = undefined;
+        } else if (
+          payload.data.status === "failed_parsing" ||
+          payload.data.status === "failed_embedding"
+        ) {
+          toast.error("Post-processing failed", {
+            id: sseToastId.current,
+          });
+          sseToastId.current = undefined;
+        } else {
+          // something else, just handle it.
+          toast.dismiss(sseToastId.current);
+          sseToastId.current = undefined;
+        }
+      });
     },
-    [updateClaims],
+    [registerCallback],
   );
+
+  React.useEffect(() => {
+    // handle the instance that someone navigates away, as we don't want the toast
+    // to persist, and want to kill the callback handler.
+    return (): void => {
+      if (sseToastId.current) {
+        toast.dismiss(sseToastId.current);
+      }
+      if (unregisterRef.current) {
+        unregisterRef.current();
+      }
+    };
+  }, []);
 
   const nextStep = (): void => {
     if (currentStep < steps.length) {

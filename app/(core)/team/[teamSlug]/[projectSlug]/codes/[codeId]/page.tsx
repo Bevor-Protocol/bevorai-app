@@ -25,7 +25,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const { source, node } = await searchParams;
 
-  const [version, sources, user] = await Promise.all([
+  const [, sources, user] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(resolvedParams.codeId),
       queryFn: () => codeActions.getCodeVersion(resolvedParams.teamSlug, resolvedParams.codeId),
@@ -69,7 +69,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         {...resolvedParams}
       >
         <Container subnav={<CodeVersionSubnav />}>
-          <CodeMetadata version={version} userId={user.id} {...resolvedParams} />
+          <CodeMetadata userId={user.id} {...resolvedParams} />
           <SourcesViewer sources={sources} {...resolvedParams} />
         </Container>
       </CodeProvider>

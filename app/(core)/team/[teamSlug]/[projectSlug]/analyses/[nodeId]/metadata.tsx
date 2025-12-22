@@ -1,13 +1,23 @@
 "use client";
 
-import { chatActions } from "@/actions/bevor";
+import { analysisActions, chatActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate } from "@/utils/helpers";
 import { extractChatsQuery } from "@/utils/query-params";
 import { AnalysisNodeSchemaI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BotMessageSquare, Calendar, Clock, Pencil, Shield, Users, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  AlertCircle,
+  BotMessageSquare,
+  Calendar,
+  Clock,
+  Pencil,
+  Shield,
+  Users,
+  X,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -28,19 +38,59 @@ const getTriggerIcon = (trigger: string): React.ReactElement => {
   }
 };
 
+const getStatusIndicator = (status: AnalysisNodeSchemaI["status"]): React.ReactNode => {
+  switch (status) {
+    case "waiting":
+      return (
+        <div className="flex items-center gap-1">
+          <div className="size-2 rounded-full bg-neutral-400 shrink-0 animate-pulse" />
+          <span className="capitalize">Waiting</span>
+        </div>
+      );
+    case "processing":
+      return (
+        <div className="flex items-center gap-1">
+          <div className="size-3 rounded-full bg-blue-400 shrink-0 animate-pulse" />
+          <span className="capitalize">Processing</span>
+        </div>
+      );
+    case "failed":
+      return (
+        <div className="flex items-center gap-1">
+          <XCircle className="size-3 text-destructive shrink-0" />
+          <span className="capitalize">Failed</span>
+        </div>
+      );
+    case "partial":
+      return (
+        <div className="flex items-center gap-1">
+          <AlertCircle className="size-3 text-yellow-400 shrink-0" />
+          <span className="capitalize">Partial</span>
+        </div>
+      );
+    default:
+      return null;
+  }
+};
+
 const AnalysisNodeMetadata: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  version: AnalysisNodeSchemaI;
+  nodeId: string;
   isEditMode: boolean;
   allowEditMode?: boolean;
-}> = ({ teamSlug, projectSlug, version, isEditMode, allowEditMode = false }) => {
+}> = ({ teamSlug, projectSlug, nodeId, isEditMode, allowEditMode = false }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  const { data: version } = useSuspenseQuery({
+    queryKey: generateQueryKey.analysisDetailed(nodeId),
+    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, nodeId),
+  });
+
   const chatQuery = extractChatsQuery({
     project_slug: projectSlug,
-    code_version_id: version.id,
+    code_version_id: version.code_version_id,
     analysis_node_id: version.id,
     chat_type: "analysis",
   });
@@ -80,6 +130,7 @@ const AnalysisNodeMetadata: React.FC<{
 
   return (
     <div className="flex items-center justify-end gap-4 text-sm text-muted-foreground">
+      {version.status !== "success" && getStatusIndicator(version.status)}
       <div className="flex items-center gap-1">
         {getTriggerIcon(version.trigger)}
         <span className="capitalize">{version.trigger.replace("_", " ")}</span>
@@ -128,7 +179,7 @@ const AnalysisNodeMetadata: React.FC<{
           </Link>
         </Button>
       )}
-      <AnalysisVersionMenu teamSlug={teamSlug} projectSlug={projectSlug} version={version} />
+      <AnalysisVersionMenu teamSlug={teamSlug} projectSlug={projectSlug} nodeId={nodeId} />
     </div>
   );
 };

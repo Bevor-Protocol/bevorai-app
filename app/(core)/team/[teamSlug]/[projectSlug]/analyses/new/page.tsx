@@ -37,7 +37,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   let findings: AnalysisResultSchemaI | undefined;
 
   if (parentVersionId && !codeVersionId) {
-    defaultParentVersion = await analysisActions.getAnalysisVersion(
+    defaultParentVersion = await analysisActions.getAnalysis(
       resolvedParams.teamSlug,
       parentVersionId,
     );
@@ -47,7 +47,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
     );
     findings = await analysisActions.getFindings(resolvedParams.teamSlug, parentVersionId);
   } else if (parentVersionId && codeVersionId) {
-    defaultParentVersion = await analysisActions.getAnalysisVersion(
+    defaultParentVersion = await analysisActions.getAnalysis(
       resolvedParams.teamSlug,
       parentVersionId,
     );

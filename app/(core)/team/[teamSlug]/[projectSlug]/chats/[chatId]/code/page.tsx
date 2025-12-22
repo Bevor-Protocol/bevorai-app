@@ -27,7 +27,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
 
   const chat = await chatActions.getChat(resolvedParams.teamSlug, resolvedParams.chatId);
 
-  const [version, sources, user] = await Promise.all([
+  const [, sources, user] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(chat.code_version_id),
       queryFn: () => codeActions.getCodeVersion(resolvedParams.teamSlug, chat.code_version_id),
@@ -72,7 +72,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         {...resolvedParams}
       >
         <Container subnav={<ChatSubnav />}>
-          <CodeMetadata version={version} userId={user.id} {...resolvedParams} />
+          <CodeMetadata codeId={chat.code_version_id} userId={user.id} {...resolvedParams} />
           <SourcesViewer sources={sources} {...resolvedParams} codeId={chat.code_version_id} />
         </Container>
       </CodeProvider>

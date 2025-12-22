@@ -14,9 +14,7 @@ interface TeamPageProps {
 
 const TeamPage: AsyncComponent<TeamPageProps> = async ({ params, searchParams }) => {
   const { teamSlug } = await params;
-  const { is_signup } = await searchParams;
-
-  console.log("IS SIGNUP", is_signup ?? false);
+  await searchParams;
 
   const team = await teamActions.getTeam(teamSlug);
 

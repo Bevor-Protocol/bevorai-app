@@ -44,6 +44,7 @@ export interface AnalysisNodeSchemaI extends BaseSchema {
   project_slug: string;
   code_version_id: string;
   is_owner: boolean;
+  status: "waiting" | "processing" | "success" | "failed" | "partial";
   trigger: "manual_run" | "chat" | "manual_edit" | "fork" | "merge";
   is_leaf: boolean;
   is_public: boolean;
@@ -51,13 +52,8 @@ export interface AnalysisNodeSchemaI extends BaseSchema {
   root_node_id: string;
   merged_from_node_id?: string;
   children: string[];
-}
-
-export interface AnalysisVersionSchemaI extends BaseSchema {
-  status: "waiting" | "processing" | "success" | "failed" | "partial";
-  n_findings: number;
-  n_scopes: number;
-  code_version_id: string;
+  scopes: ScopeSchemaI[];
+  findings: FindingSchemaI[];
 }
 
 export interface AnalysisVersionPaginationI extends PaginationI {
@@ -159,13 +155,6 @@ export interface DraftFindingSchemaI extends FindingSchemaI {
   draft_id?: string;
   draft_type?: "add" | "delete" | "update";
   base_finding_id?: string;
-}
-
-export interface AnalysisResultSchemaI {
-  id: string;
-  status: "waiting" | "processing" | "success" | "failed" | "partial";
-  scopes: ScopeSchemaI[];
-  findings: FindingSchemaI[];
 }
 
 export interface DraftSchemaI {

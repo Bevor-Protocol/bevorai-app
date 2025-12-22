@@ -1,6 +1,7 @@
 "use client";
 
 import { analysisActions, codeActions } from "@/actions/bevor";
+import NodeSearch from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/[codeId]/search";
 import { AnalysisVersionElementCompact } from "@/components/analysis/element";
 import ShikiViewer from "@/components/shiki-viewer";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/code";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -32,33 +33,21 @@ import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { CodeVersionElementCompact } from "@/components/versions/element";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
-import { useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
-import { CreateAnalysisVersionFormValues, createAnalysisVersionSchema } from "@/utils/schema";
+import { createAnalysisFormValues, createAnalysisSchema } from "@/utils/schema";
 import {
   AnalysisNodeSchemaI,
-  AnalysisResultSchemaI,
   CodeMappingSchemaI,
   CodeSourceSchemaI,
-  FindingSchemaI,
   NodeSchemaI,
   ScopeSchemaI,
 } from "@/utils/types";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useMutation, UseMutationResult, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronDown,
-  Code,
-  Eye,
-  InfoIcon,
-  Loader2,
-  XCircle,
-} from "lucide-react";
-import Link from "next/link";
-import React, { useMemo, useRef, useState } from "react";
+import { ChevronDown, Code, InfoIcon, XCircle } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import AnalysisStatusDisplay from "./status";
 
 interface AnalysisScopeSelectorProps {
   sources: CodeSourceSchemaI[];
@@ -69,80 +58,6 @@ interface AnalysisScopeSelectorProps {
   defaultCodeVersion: CodeMappingSchemaI;
   allowCodeVersionChange: boolean;
 }
-
-const getStatusIcon = (
-  scopeStatus: AnalysisResultSchemaI["scopes"][0]["status"],
-): React.ReactNode => {
-  switch (scopeStatus) {
-    case "waiting":
-      return <Loader2 className="size-4 text-neutral-400 animate-spin shrink-0" />;
-    case "processing":
-      return <Loader2 className="size-4 text-blue-400 animate-spin shrink-0" />;
-    case "success":
-      return <CheckCircle2 className="size-4 text-green-400 shrink-0" />;
-    case "failed":
-      return <XCircle className="size-4 text-destructive shrink-0" />;
-    case "partial":
-      return <AlertCircle className="size-4 text-yellow-400 shrink-0" />;
-    default:
-      return null;
-  }
-};
-
-const AnalysisStatusDisplay: React.FC<{
-  status: AnalysisResultSchemaI;
-  teamSlug: string;
-  projectSlug: string;
-  nodeId: string;
-}> = ({ status, teamSlug, projectSlug, nodeId }) => {
-  const newAnalysisRoute = `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}`;
-
-  const getNFindingsPerScope = (nodeId: string): number => {
-    return status.findings.filter((f) => f.code_version_node_id === nodeId).length;
-  };
-
-  return (
-    <div className="flex flex-col gap-4 my-8 max-w-5xl m-auto">
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 justify-between">
-          <div className="flex gap-2 items-center pl-3">
-            {getStatusIcon(status.status)}
-            <span className="text-lg font-semibold">
-              {status.status.charAt(0).toUpperCase() + status.status.slice(1)}
-            </span>
-          </div>
-          {(status.status === "partial" || status.status === "success") && (
-            <Button asChild>
-              <Link href={newAnalysisRoute}>
-                View Results
-                <Eye />
-              </Link>
-            </Button>
-          )}
-        </div>
-        <div className="space-y-2">
-          {status.scopes.map((scope) => {
-            const nFindings = getNFindingsPerScope(scope.code_version_node_id);
-            return (
-              <div key={scope.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                {getStatusIcon(scope.status)}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{scope.name}</p>
-                  <p className="text-xs text-muted-foreground font-mono truncate">
-                    {scope.signature}
-                  </p>
-                </div>
-                <Badge variant="outline" size="sm" className="shrink-0">
-                  {nFindings} finding{nFindings !== 1 ? "s" : ""}
-                </Badge>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const CodeVersionSelector: React.FC<{
   defaultCodeVersion?: CodeMappingSchemaI;
@@ -262,13 +177,12 @@ const AnalysisVersionSelector: React.FC<{
 
 const ScopeSelectionControls: React.FC<{
   selectedNodes: NodeSchemaI[];
-  onNodeRemove: (node: NodeSchemaI) => void;
   onDeselectAll: () => void;
   onSubmit: () => void;
   mutation: UseMutationResult<
     { id: string; toInvalidate: unknown[] },
     Error,
-    CreateAnalysisVersionFormValues,
+    createAnalysisFormValues,
     unknown
   >;
   className?: string;
@@ -278,7 +192,6 @@ const ScopeSelectionControls: React.FC<{
   hasParentVersion: boolean;
 }> = ({
   selectedNodes,
-  onNodeRemove,
   onDeselectAll,
   onSubmit,
   mutation,
@@ -320,48 +233,6 @@ const ScopeSelectionControls: React.FC<{
           Submit Analysis
         </Button>
       </div>
-      {selectedScopesCount > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="text-xs font-medium text-muted-foreground flex gap-1 items-center">
-            <span>Selected scopes:</span>
-            <Tooltip>
-              <TooltipTrigger>
-                <InfoIcon className="size-3" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[350px] text-muted-foreground">
-                <p className="text-muted-foreground leading-[1.5] text-sm">
-                  Scopes define the entry point functions that you want to analyze. You must select
-                  at least one scope to proceed. Child functions will automatically be included if
-                  they are part of the call chain.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="overflow-x-auto">
-            <div className="flex items-center gap-2 flex-nowrap min-w-max">
-              {selectedNodes.map((node) => (
-                <Badge
-                  key={node.id}
-                  variant="outline"
-                  className="text-xs font-mono flex items-center gap-1.5 shrink-0"
-                >
-                  <span>{node.name}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNodeRemove(node);
-                    }}
-                    className="hover:bg-muted rounded-full p-0.5 transition-colors"
-                  >
-                    <XCircle className="size-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -371,7 +242,7 @@ const CodeTreeViewer: React.FC<{
   sources: CodeSourceSchemaI[];
   selectedNodes: NodeSchemaI[];
   onNodeToggle: (node: NodeSchemaI) => void;
-}> = ({ sources, selectedNodes, onNodeToggle }) => {
+}> = ({ teamSlug, sources, selectedNodes, onNodeToggle }) => {
   const { handleSourceChange, sourceQuery, containerRef, codeVersionId, nodesQuery, sourceId } =
     useCode();
 
@@ -431,6 +302,7 @@ const CodeTreeViewer: React.FC<{
     <CodeHolder ref={containerRef} className="pr-2">
       <CodeMetadata>
         <CodeSourceToggle>
+          <NodeSearch teamSlug={teamSlug} codeId={codeVersionId} className="w-full" />
           <Select value={sourceId!} onValueChange={(sourceId) => handleSourceChange(sourceId)}>
             <SelectTrigger className="max-w-full w-full px-2">
               <SelectValue>
@@ -562,101 +434,26 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   allowCodeVersionChange,
 }) => {
   const queryClient = useQueryClient();
+
   const { codeVersionId, nodesQuery } = useCode();
-  const analysisNodeIdRef = useRef<string | null>(null);
-
-  const { updateClaims } = useSSE({
-    eventTypes: ["analysis"],
-    onMessage: (event: MessageEvent) => {
-      // as events come in, we'll update the scopeStatus directly with the new statuses per-scope.
-      // this comes directly from the SSE
-      if (!analysisNodeIdRef.current) return;
-
-      console.log("RAW");
-
-      let parsed;
-      try {
-        parsed = JSON.parse(event.data);
-      } catch {
-        return;
-      }
-
-      console.log("PARSED", parsed);
-
-      if (!parsed.scope_id || !parsed.status) return;
-      const scopeQueryKey = generateQueryKey.analysisVersionScope(analysisNodeIdRef.current);
-
-      let findings: FindingSchemaI[] = [];
-      if (parsed.findings && typeof parsed.findings === "string") {
-        try {
-          findings = JSON.parse(parsed.findings);
-        } catch {
-          findings = [];
-        }
-      }
-
-      console.log("FINDINGS", findings);
-
-      queryClient.setQueryData<AnalysisResultSchemaI>(scopeQueryKey, (oldData) => {
-        if (!oldData) return oldData;
-
-        const updatedScopes = oldData.scopes.map((scope) =>
-          scope.id === parsed.scope_id
-            ? {
-                ...scope,
-                status: parsed.status,
-              }
-            : scope,
-        );
-
-        const updatedFindings = oldData.findings.concat(findings);
-
-        const allScopesStatus = updatedScopes.map((s) => s.status);
-        const hasProcessing = allScopesStatus.includes("processing");
-        const hasWaiting = allScopesStatus.includes("waiting");
-        const hasFailed = allScopesStatus.includes("failed");
-        const allSuccess = allScopesStatus.every((s) => s === "success");
-        const hasPartial = allScopesStatus.some((s) => s === "partial");
-
-        let overallStatus: AnalysisResultSchemaI["status"];
-        if (hasFailed) {
-          overallStatus = "failed";
-        } else if (hasProcessing || hasWaiting) {
-          overallStatus = hasProcessing ? "processing" : "waiting";
-        } else if (allSuccess) {
-          overallStatus = "success";
-        } else if (hasPartial) {
-          overallStatus = "partial";
-        } else {
-          overallStatus = oldData.status;
-        }
-
-        return {
-          ...oldData,
-          status: overallStatus,
-          scopes: updatedScopes,
-          findings: updatedFindings,
-        };
-      });
-    },
-  });
+  const toastRefId = useRef<string | undefined>(undefined);
 
   const [selectedNodes, setSelectedNodes] = useState<NodeSchemaI[]>([]);
   const [scopeStrategy, setScopeStrategy] = useState<"all" | "explicit" | "parent">(
     defaultParentVersion ? "parent" : "explicit",
   );
 
-  const createAnalysisVersionMutation = useMutation({
-    mutationFn: async (data: CreateAnalysisVersionFormValues) => {
-      const payload = createAnalysisVersionSchema.parse(data);
-      return analysisActions.createAnalysisVersion(teamSlug, payload);
+  const createAnalysisMutation = useMutation({
+    mutationFn: async (data: createAnalysisFormValues) => {
+      const payload = createAnalysisSchema.parse(data);
+      return analysisActions.createAnalysis(teamSlug, payload);
     },
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
-      analysisNodeIdRef.current = id;
-      updateClaims({ analysis_node_id: id });
+      toastRefId.current = id;
+      toast.loading("Analyzing functions...", { id });
     },
     onError: () => {
       toast.error("Something went wrong", {
@@ -665,11 +462,20 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     },
   });
 
-  const analysisNodeId = createAnalysisVersionMutation.data?.id;
+  useEffect(() => {
+    // someone might navigate away, and the toast could remain in a loading state. Just kill it.
+    return (): void => {
+      if (toastRefId.current) {
+        toast.dismiss(toastRefId.current);
+      }
+    };
+  }, []);
 
-  const { data: scopeStatus } = useQuery({
-    queryKey: generateQueryKey.analysisVersionScope(analysisNodeId ?? ""),
-    queryFn: async () => analysisActions.getFindings(teamSlug, analysisNodeId!),
+  const analysisNodeId = createAnalysisMutation.data?.id;
+
+  const { data: analysis } = useQuery({
+    queryKey: generateQueryKey.analysisDetailed(analysisNodeId ?? ""),
+    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, analysisNodeId!),
     enabled: !!analysisNodeId,
     staleTime: Infinity,
   });
@@ -721,7 +527,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
   const handleSubmit = (): void => {
     const scopeIds = selectedNodes.map((n) => n.id);
-    createAnalysisVersionMutation.mutate({
+    createAnalysisMutation.mutate({
       project_id: defaultCodeVersion?.project_id,
       scopes: scopeIds,
       scope_strategy: scopeStrategy,
@@ -730,50 +536,88 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     });
   };
 
-  if (scopeStatus) {
+  if (analysis) {
     return (
       <AnalysisStatusDisplay
-        status={scopeStatus}
+        analysis={analysis}
         teamSlug={teamSlug}
         projectSlug={projectSlug}
-        nodeId={createAnalysisVersionMutation.data?.id ?? ""}
+        toastRefId={toastRefId.current}
       />
     );
   }
 
   return (
     <>
-      <div className="my-6">
-        <div className="flex items-start gap-4 flex-wrap justify-between mb-2">
-          <div className="flex items-start gap-4 flex-wrap">
-            <CodeVersionSelector
-              defaultCodeVersion={defaultCodeVersion}
-              teamSlug={teamSlug}
-              projectSlug={projectSlug}
-              allowCodeVersionChange={allowCodeVersionChange}
-            />
-            <AnalysisVersionSelector
-              defaultParentVersion={defaultParentVersion}
-              teamSlug={teamSlug}
-            />
-          </div>
+      <div className="flex items-start gap-4 flex-wrap justify-between mb-2">
+        <div className="flex items-start gap-4 flex-wrap">
+          <CodeVersionSelector
+            defaultCodeVersion={defaultCodeVersion}
+            teamSlug={teamSlug}
+            projectSlug={projectSlug}
+            allowCodeVersionChange={allowCodeVersionChange}
+          />
+          <AnalysisVersionSelector
+            defaultParentVersion={defaultParentVersion}
+            teamSlug={teamSlug}
+          />
         </div>
       </div>
-      <div className="flex flex-col gap-6 mb-6">
-        {codeVersionId && (
-          <ScopeSelectionControls
-            selectedNodes={selectedNodes}
-            onNodeRemove={(node) => handleNodeToggle(node)}
-            onDeselectAll={() => setSelectedNodes([])}
-            onSubmit={handleSubmit}
-            mutation={createAnalysisVersionMutation}
-            canSubmit={canSubmit}
-            scopeStrategy={scopeStrategy}
-            onScopeStrategyChange={setScopeStrategy}
-            hasParentVersion={!!defaultParentVersion}
-          />
-        )}
+      <ScopeSelectionControls
+        selectedNodes={selectedNodes}
+        onDeselectAll={() => setSelectedNodes([])}
+        onSubmit={handleSubmit}
+        mutation={createAnalysisMutation}
+        canSubmit={canSubmit}
+        scopeStrategy={scopeStrategy}
+        onScopeStrategyChange={setScopeStrategy}
+        hasParentVersion={!!defaultParentVersion}
+      />
+      <div className="py-2 sticky top-0 z-10 bg-background border border-background w-full h-subheader">
+        <ScrollArea>
+          <div className="flex gap-4 items-center justify-start">
+            <div className="text-xs font-medium text-muted-foreground flex gap-1 items-center">
+              <span>Selected scopes:</span>
+              <Tooltip>
+                <TooltipTrigger>
+                  <InfoIcon className="size-3" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[350px] text-muted-foreground">
+                  <p className="text-muted-foreground leading-[1.5] text-sm">
+                    Scopes define the entry point functions that you want to analyze. You must
+                    select at least one scope to proceed. Child functions will automatically be
+                    included if they are part of the call chain.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+
+            <div className="flex items-center gap-2 flex-nowrap min-w-max">
+              {selectedNodes.map((node) => (
+                <Badge
+                  key={node.id}
+                  variant="outline"
+                  className="text-xs font-mono flex items-center gap-1.5 shrink-0"
+                >
+                  <span>{node.name}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNodeToggle(node);
+                    }}
+                    className="hover:bg-muted rounded-full p-0.5 transition-colors"
+                  >
+                    <XCircle className="size-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
+
       <CodeTreeViewer
         teamSlug={teamSlug}
         sources={sources}

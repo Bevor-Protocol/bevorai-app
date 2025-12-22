@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
-import { useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
 import { trimAddress } from "@/utils/helpers";
 import { MemberInviteSchema, UserDetailedSchemaI } from "@/utils/types";
@@ -271,17 +270,9 @@ const AppNav: React.FC = () => {
     queryFn: () => userActions.get(),
   });
 
-  const { data: invites = [], refetch } = useQuery({
+  const { data: invites = [] } = useQuery({
     queryKey: generateQueryKey.userInvites(),
     queryFn: async () => userActions.invites(),
-  });
-
-  useSSE({
-    eventTypes: ["invite"],
-    onMessage: (message) => {
-      console.log("USER INVITE MESSAGE RECEIVED", message);
-      refetch();
-    },
   });
 
   return (

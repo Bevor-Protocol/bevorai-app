@@ -25,12 +25,12 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const { source, node } = await searchParams;
 
-  const analysis = await analysisActions.getAnalysisVersion(
+  const analysis = await analysisActions.getAnalysis(
     resolvedParams.teamSlug,
     resolvedParams.nodeId,
   );
 
-  const [version, sources, user] = await Promise.all([
+  const [, sources, user] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(analysis.code_version_id),
       queryFn: () => codeActions.getCodeVersion(resolvedParams.teamSlug, analysis.code_version_id),
@@ -75,7 +75,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         {...resolvedParams}
       >
         <Container subnav={<AnalysisSubnav />}>
-          <CodeMetadata version={version} userId={user.id} {...resolvedParams} />
+          <CodeMetadata userId={user.id} codeId={analysis.code_version_id} {...resolvedParams} />
           <SourcesViewer sources={sources} {...resolvedParams} codeId={analysis.code_version_id} />
         </Container>
       </CodeProvider>

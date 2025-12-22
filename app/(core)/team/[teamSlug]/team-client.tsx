@@ -19,7 +19,6 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
 import { TeamDetailedSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
@@ -63,17 +62,9 @@ export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }
 };
 
 export const TeamActivities: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
-  const { data: activities = [], refetch } = useQuery({
+  const { data: activities = [] } = useQuery({
     queryKey: generateQueryKey.teamActivities(teamSlug),
     queryFn: () => activityActions.getTeamActivities(teamSlug),
-  });
-
-  useSSE({
-    eventTypes: ["activity"],
-    onMessage: (message) => {
-      console.log("TEAM ACTIVITY MESSAGE", message);
-      refetch();
-    },
   });
 
   return <ActivityList activities={activities} className="w-full" />;
@@ -135,7 +126,7 @@ export const AnalysesPreview: React.FC<{
 }> = ({ teamSlug }) => {
   const { data: analyses, isLoading } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, { page_size: "3" }),
-    queryFn: async () => analysisActions.getAnalysisVersions(teamSlug, { page_size: "3" }),
+    queryFn: async () => analysisActions.getAnalyses(teamSlug, { page_size: "3" }),
   });
 
   if (analyses?.results.length === 0) {

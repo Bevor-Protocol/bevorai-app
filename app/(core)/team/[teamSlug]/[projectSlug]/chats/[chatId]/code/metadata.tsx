@@ -7,8 +7,7 @@ import { CodeVersionElementCompact } from "@/components/versions/element";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate, truncateVersion } from "@/utils/helpers";
 import { extractChatsQuery } from "@/utils/query-params";
-import { CodeMappingSchemaI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Calendar, GitBranch, MessageSquare, Network } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,10 +19,15 @@ const CodeMetadata: React.FC<{
   teamSlug: string;
   projectSlug: string;
   userId: string;
-  version: CodeMappingSchemaI;
-}> = ({ teamSlug, projectSlug, version, userId }) => {
+  codeId: string;
+}> = ({ teamSlug, projectSlug, codeId, userId }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
+
+  const { data: version } = useSuspenseQuery({
+    queryKey: generateQueryKey.code(codeId),
+    queryFn: () => codeActions.getCodeVersion(teamSlug, codeId),
+  });
 
   const chatQuery = extractChatsQuery({
     project_slug: projectSlug,

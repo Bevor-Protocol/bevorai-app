@@ -144,7 +144,7 @@ export const FindingTabs: React.FC<{
     },
     onSuccess: (_, { findingId, data }) => {
       queryClient.setQueryData<AnalysisResultSchemaI>(
-        generateQueryKey.analysisVersionFindings(nodeId),
+        generateQueryKey.analysisFindings(nodeId),
         (oldData) => {
           if (!oldData) return oldData;
           const oldFindings = oldData.findings;

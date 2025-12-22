@@ -25,7 +25,7 @@ export const projectFormSchema = z
   });
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
-export const createAnalysisVersionSchema = z
+export const createAnalysisSchema = z
   .object({
     project_id: z.string().min(1, "project_id is required"),
     scopes: z.array(z.string()),
@@ -38,7 +38,7 @@ export const createAnalysisVersionSchema = z
     "Either parent_version_id or code_version_id must be provided",
   );
 
-export type CreateAnalysisVersionFormValues = z.infer<typeof createAnalysisVersionSchema>;
+export type createAnalysisFormValues = z.infer<typeof createAnalysisSchema>;
 
 export const createChatSchema = z.object({
   code_version_id: z.string().optional(),

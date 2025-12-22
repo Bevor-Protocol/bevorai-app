@@ -20,7 +20,7 @@ const AnalysisNodesHistoryPage: AsyncComponent<PageProps> = async ({ params, sea
   const resolvedParams = await params;
   const { user, ...resolvedSearchParams } = await searchParams;
 
-  const analysis = await analysisActions.getAnalysisVersion(
+  const analysis = await analysisActions.getAnalysis(
     resolvedParams.teamSlug,
     resolvedParams.nodeId,
   );

@@ -103,6 +103,7 @@ export const generateQueryKey = {
   ],
 
   analysis: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId],
+  analysisDetailed: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "detailed"],
   analyses: (teamSlug: string, filter?: { [key: string]: string | undefined }): QueryKey => [
     QUERY_KEYS.ANALYSES,
     teamSlug,
@@ -113,17 +114,9 @@ export const generateQueryKey = {
 
   analysisLeafs: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "leafs"],
   analysisDag: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "dag"],
-  analysisVersion: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId],
-  analysisVersionStatus: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "status"],
-  analysisVersionFindings: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "findings"],
-  analysisVersionDraft: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "draft"],
-  analysisVersionScope: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "scope"],
-
-  analysisVersions: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [
-    QUERY_KEYS.ANALYSES,
-    teamSlug,
-    filter,
-  ],
+  analysisDraft: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "draft"],
+  analysisScopes: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "scopes"],
+  analysisFindings: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "findings"],
 
   subscription: (teamSlug: string): QueryKey => [QUERY_KEYS.SUBSCRIPTIONS, teamSlug],
   addons: (teamSlug: string): QueryKey => [QUERY_KEYS.ADD_ONS, teamSlug],

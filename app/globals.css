@@ -339,6 +339,23 @@
   @apply aspect-square z-0 p-[3px] rounded-full;
 }
 
+@utility pulse {
+  background-color: currentColor;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    background-color: currentColor;
+    left: -1px;
+    right: -1px;
+    top: -1px;
+    bottom: -1px;
+    border-radius: 100%;
+    animation: pulse-more 2s linear infinite;
+  }
+}
+
 @utility code-panel {
   --gap: 1.5rem;
   --truncated: 20px;

@@ -13,8 +13,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { FindingLevel } from "@/utils/enums";
-import { AnalysisResultSchemaI, FindingSchemaI, ScopeSchemaI } from "@/utils/types";
-import { AlertTriangle, ChevronDown, Info, XCircle } from "lucide-react";
+import { AnalysisNodeSchemaI, FindingSchemaI, ScopeSchemaI } from "@/utils/types";
+import { AlertCircle, AlertTriangle, ChevronDown, Info, XCircle } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 
 export const getSeverityIcon = (level: FindingLevel): React.ReactElement => {
@@ -78,15 +78,49 @@ const severityScoreMap: Record<FindingLevel, number> = {
 
 export const getScopeForFinding = (
   finding: FindingSchemaI,
-  analysisResult: AnalysisResultSchemaI,
+  version: AnalysisNodeSchemaI,
 ): ScopeSchemaI => {
-  const scope = analysisResult.scopes.find(
-    (s) => s.code_version_node_id === finding.code_version_node_id,
-  );
+  const scope = version.scopes.find((s) => s.code_version_node_id === finding.code_version_node_id);
   if (!scope) {
     throw new Error(`Scope not found for finding ${finding.id}`);
   }
   return scope;
+};
+
+const getScopeStatusIndicator = (status: ScopeSchemaI["status"]): React.ReactNode => {
+  switch (status) {
+    case "waiting":
+      return (
+        <div className="flex items-center gap-1.5 shrink-0">
+          <div className="size-2 rounded-full shrink-0 pulse text-muted-foreground" />
+          <span className="text-xs text-muted-foreground capitalize">Waiting</span>
+        </div>
+      );
+    case "processing":
+      return (
+        <div className="flex items-center gap-1.5 shrink-0">
+          <div className="size-2 rounded-full shrink-0 pulse text-primary" />
+          <span className="text-xs text-muted-foreground capitalize">Processing</span>
+        </div>
+      );
+    case "failed":
+      return (
+        <div className="flex items-center gap-1.5 shrink-0">
+          <XCircle className="size-2 text-destructive shrink-0" />
+          <span className="text-xs text-muted-foreground capitalize">Failed</span>
+        </div>
+      );
+    case "partial":
+      return (
+        <div className="flex items-center gap-1.5 shrink-0">
+          <AlertCircle className="size-3 text-yellow-400 shrink-0" />
+          <span className="text-xs text-muted-foreground capitalize">Partial</span>
+        </div>
+      );
+    case "success":
+    default:
+      return null;
+  }
 };
 
 type GroupingMode = "scope" | "severity" | "type";
@@ -131,24 +165,24 @@ const getFindingsCountByLevel = (findings: FindingSchemaI[]): Record<FindingLeve
 export const ScopesList: React.FC<{
   teamSlug: string;
   nodeId: string;
-  analysisResult: AnalysisResultSchemaI | undefined;
+  version: AnalysisNodeSchemaI | undefined;
   selectedFinding: FindingSchemaI | null;
   onSelectFinding: (finding: FindingSchemaI) => void;
-}> = ({ analysisResult, selectedFinding, onSelectFinding }) => {
+}> = ({ version, selectedFinding, onSelectFinding }) => {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [groupingMode, setGroupingMode] = useState<GroupingMode>("scope");
 
-  const isLoading = !analysisResult;
+  const isLoading = !version;
 
   const groupedData = useMemo((): GroupedData => {
-    if (!analysisResult) {
+    if (!version) {
       return { mode: "scope", groups: [] };
     }
 
     if (groupingMode === "scope") {
-      const scopeGroups = analysisResult.scopes.map((scope) => ({
+      const scopeGroups = version.scopes.map((scope) => ({
         scope,
-        findings: analysisResult.findings.filter(
+        findings: version.findings.filter(
           (f) => f.code_version_node_id === scope.code_version_node_id,
         ),
       }));
@@ -162,7 +196,7 @@ export const ScopesList: React.FC<{
       const groups = levelOrder
         .map((level) => ({
           key: level,
-          findings: analysisResult.findings.filter((f) => f.level === level),
+          findings: version.findings.filter((f) => f.level === level),
         }))
         .filter((group) => group.findings.length > 0);
 
@@ -173,7 +207,7 @@ export const ScopesList: React.FC<{
     }
 
     const typeGroups = new Map<string, FindingSchemaI[]>();
-    analysisResult.findings.forEach((finding) => {
+    version.findings.forEach((finding) => {
       const type = finding.type;
       if (!typeGroups.has(type)) {
         typeGroups.set(type, []);
@@ -206,12 +240,12 @@ export const ScopesList: React.FC<{
       mode: "type",
       groups,
     };
-  }, [analysisResult, groupingMode]);
+  }, [version, groupingMode]);
 
   useEffect(() => {
-    if (!selectedFinding || !analysisResult) return;
+    if (!selectedFinding || !version) return;
 
-    const scope = getScopeForFinding(selectedFinding, analysisResult);
+    const scope = getScopeForFinding(selectedFinding, version);
 
     if (groupingMode === "scope") {
       if (!openGroups.has(scope.id)) {
@@ -228,7 +262,7 @@ export const ScopesList: React.FC<{
         setOpenGroups(new Set([...openGroups, groupKey]));
       }
     }
-  }, [selectedFinding, groupingMode, openGroups, analysisResult]);
+  }, [selectedFinding, groupingMode, openGroups, version]);
 
   if (isLoading) {
     return (
@@ -274,12 +308,14 @@ export const ScopesList: React.FC<{
                 const counts = getFindingsCountByLevel(findings);
                 const hasFindings = findings.length > 0;
                 const isOpen = openGroups.has(scope.id);
+                const isSuccess = scope.status === "success";
 
                 return (
                   <Collapsible
                     key={scope.id}
-                    open={isOpen}
+                    open={isSuccess ? isOpen : false}
                     onOpenChange={(open) => {
+                      if (!isSuccess) return;
                       const newOpenGroups = new Set(openGroups);
                       if (open) {
                         newOpenGroups.add(scope.id);
@@ -292,9 +328,13 @@ export const ScopesList: React.FC<{
                   >
                     <div className="space-y-2 pr-2">
                       <CollapsibleTrigger
+                        disabled={!isSuccess}
                         className={cn(
                           "w-full text-left flex items-start gap-2 p-2 data-[state=open]:[&>svg]:rotate-180",
-                          "rounded-lg hover:bg-accent transition-colors",
+                          "rounded-lg transition-colors",
+                          isSuccess
+                            ? "hover:bg-accent cursor-pointer"
+                            : "cursor-default opacity-60",
                         )}
                       >
                         <div className="flex-1 min-w-0">
@@ -316,10 +356,12 @@ export const ScopesList: React.FC<{
                                   );
                                 })}
                               </div>
-                            ) : (
+                            ) : scope.status === "success" ? (
                               <div className="text-xs text-muted-foreground shrink-0">
                                 No findings
                               </div>
+                            ) : (
+                              getScopeStatusIndicator(scope.status)
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground font-mono truncate mt-1">
@@ -331,8 +373,23 @@ export const ScopesList: React.FC<{
                       <CollapsibleContent>
                         <div className="space-y-2 ml-6 pr-4">
                           {!hasFindings ? (
-                            <div className="text-sm text-muted-foreground py-2">
-                              No findings in this scope
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                              {scope.status === "waiting" ||
+                              scope.status === "processing" ||
+                              scope.status === "failed" ||
+                              scope.status === "partial" ? (
+                                <>
+                                  {getScopeStatusIndicator(scope.status)}
+                                  <span>
+                                    {scope.status === "waiting" && "Waiting for analysis..."}
+                                    {scope.status === "processing" && "Analyzing scope..."}
+                                    {scope.status === "failed" && "Analysis failed"}
+                                    {scope.status === "partial" && "Partial analysis"}
+                                  </span>
+                                </>
+                              ) : (
+                                "No findings in this scope"
+                              )}
                             </div>
                           ) : (
                             levelOrder.map((level) => {
@@ -433,8 +490,8 @@ export const ScopesList: React.FC<{
                           <div className="space-y-2 ml-6 pr-4">
                             {group.findings.map((finding, index) => {
                               const isSelected = selectedFinding?.id === finding.id;
-                              const findingScope = analysisResult
-                                ? getScopeForFinding(finding, analysisResult)
+                              const findingScope = version
+                                ? getScopeForFinding(finding, version)
                                 : null;
                               return (
                                 <div
@@ -543,8 +600,8 @@ export const ScopesList: React.FC<{
                                   </div>
                                   {levelFindings.map((finding, index) => {
                                     const isSelected = selectedFinding?.id === finding.id;
-                                    const findingScope = analysisResult
-                                      ? getScopeForFinding(finding, analysisResult)
+                                    const findingScope = version
+                                      ? getScopeForFinding(finding, version)
                                       : null;
                                     return (
                                       <div

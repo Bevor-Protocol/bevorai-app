@@ -41,8 +41,8 @@ const AnalysisNodesPage: AsyncComponent<PageProps> = async ({ params, searchPara
         <div className="border-b">
           <div className="py-6 flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-semibold mb-1">Analysis Nodes</h1>
-              <p className="text-sm text-muted-foreground">User-scoped security analysis nodes</p>
+              <h1 className="text-2xl font-semibold mb-1">Analyses</h1>
+              <p className="text-sm text-muted-foreground">User-scoped security analyses</p>
             </div>
             {/* <AnalysisCreate {...resolvedParams} /> */}
           </div>

@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { generateQueryKey } from "@/utils/constants";
+import { truncateId } from "@/utils/helpers";
 import { extractAnalysisNodesQuery } from "@/utils/query-params";
 import { CodeMappingSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
@@ -56,12 +57,12 @@ const CodeVersionMenu: React.FC<{
 
   const { data: analyses } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, analysisQuery),
-    queryFn: () => analysisActions.getAnalysisVersions(teamSlug, analysisQuery),
+    queryFn: () => analysisActions.getAnalyses(teamSlug, analysisQuery),
   });
 
   const { data: parentAnalyses = { results: [] } } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, parentAnalysisQuery),
-    queryFn: () => analysisActions.getAnalysisVersions(teamSlug, parentAnalysisQuery),
+    queryFn: () => analysisActions.getAnalyses(teamSlug, parentAnalysisQuery),
     enabled: !!version.parent_id,
   });
 
@@ -129,6 +130,8 @@ const CodeVersionMenu: React.FC<{
     setOpen(false);
   };
 
+  console.log(candidateParents);
+
   return (
     <>
       <DropdownMenu>
@@ -185,12 +188,18 @@ const CodeVersionMenu: React.FC<{
             <div className="py-4">
               <Select value={selectedParentId} onValueChange={setSelectedParentId}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a parent analysis" />
+                  <SelectValue placeholder="Select a parent analysis">
+                    <div className="flex gap-2 items-center">
+                      <Shield className="size-3.5 text-purple-400 shrink-0" />
+                      {truncateId(selectedParentId)}
+                    </div>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Start from scratch (no parent)</SelectItem>
                   {candidateParents.map((analysis) => (
-                    <AnalysisVersionElementCompact analysisVersion={analysis} key={analysis.id} />
+                    <SelectItem value={analysis.id} key={analysis.id}>
+                      <AnalysisVersionElementCompact analysisVersion={analysis} />
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

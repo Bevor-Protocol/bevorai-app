@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { AnalysisNodeSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { GitFork, GitMerge, MoreHorizontal, Shield } from "lucide-react";
 import Link from "next/link";
@@ -31,17 +30,17 @@ import { toast } from "sonner";
 const AnalysisVersionMenu: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  version: AnalysisNodeSchemaI;
-}> = ({ teamSlug, projectSlug, version }) => {
+  nodeId: string;
+}> = ({ teamSlug, projectSlug, nodeId }) => {
   const [showForkDialog, setShowForkDialog] = useState(false);
   const [showMergeDialog, setShowMergeDialog] = useState(false);
   const [fromAnalysisNodeId, setFromAnalysisNodeId] = useState("");
   const queryClient = useQueryClient();
   const router = useRouter();
-  const analysisPath = `/team/${teamSlug}/${projectSlug}/analyses/new?parentVersionId=${version.id}`;
+  const analysisPath = `/team/${teamSlug}/${projectSlug}/analyses/new?parentVersionId=${nodeId}`;
 
   const forkMutation = useMutation({
-    mutationFn: async () => analysisActions.forkAnalysis(teamSlug, version.id),
+    mutationFn: async () => analysisActions.forkAnalysis(teamSlug, nodeId),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -58,7 +57,7 @@ const AnalysisVersionMenu: React.FC<{
   });
 
   const mergeMutation = useMutation({
-    mutationFn: async () => analysisActions.mergeAnalysis(teamSlug, version.id, fromAnalysisNodeId),
+    mutationFn: async () => analysisActions.mergeAnalysis(teamSlug, nodeId, fromAnalysisNodeId),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

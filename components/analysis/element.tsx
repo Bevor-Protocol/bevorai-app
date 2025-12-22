@@ -73,9 +73,7 @@ export const AnalysisVersionElementCompact: React.FC<
       <Shield className="size-3.5 text-purple-400 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-medium text-sm font-mono">
-            v{analysisVersion.id.slice(0, 6)}...{analysisVersion.id.slice(-4)}
-          </p>
+          <p className="font-medium text-sm font-mono">{truncateId(analysisVersion.id)}</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
           <span>{analysisVersion.n_scopes} scopes</span>
@@ -230,7 +228,9 @@ export const AnalysisVersionElementBare: React.FC<
         <Code2 className="size-3" />
         {truncateId(analysisVersion.code_version_id)}
       </div>
+
       <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap justify-center">
+        {analysisVersion.status}
         {getTriggerIcon(analysisVersion.trigger)}
         {getTriggerLabel(analysisVersion.trigger)}
       </div>

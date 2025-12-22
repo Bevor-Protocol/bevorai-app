@@ -19,7 +19,7 @@ export const AnalysisVersionClient: React.FC<{
   const [selectedFinding, setSelectedFinding] = useState<FindingSchemaI | null>(null);
 
   const { data: analysisResult, isLoading } = useQuery<AnalysisResultSchemaI>({
-    queryKey: generateQueryKey.analysisVersionFindings(analysisVersion.id),
+    queryKey: generateQueryKey.analysisFindings(analysisVersion.id),
     queryFn: () => analysisActions.getFindings(teamSlug, analysisVersion.id),
   });
 

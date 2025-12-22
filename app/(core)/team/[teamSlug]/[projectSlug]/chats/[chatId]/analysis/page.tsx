@@ -30,7 +30,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
     );
   }
 
-  const analysisVersion = await analysisActions.getAnalysisVersion(
+  const analysisVersion = await analysisActions.getAnalysis(
     resolvedParams.teamSlug,
     chat.analysis_node_id,
   );

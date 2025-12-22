@@ -32,8 +32,8 @@ export const AnalysisNodesHistoryView: React.FC<{
   const { debouncedState, timerRef, isWaiting } = useDebouncedState(filters);
 
   const nodesQuery = useQuery({
-    queryKey: generateQueryKey.analysisVersions(teamSlug, debouncedState),
-    queryFn: () => analysisActions.getAnalysisVersions(teamSlug, debouncedState),
+    queryKey: generateQueryKey.analyses(teamSlug, debouncedState),
+    queryFn: () => analysisActions.getAnalyses(teamSlug, debouncedState),
     placeholderData: keepPreviousData,
   });
 
