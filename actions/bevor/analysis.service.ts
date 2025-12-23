@@ -145,7 +145,7 @@ export const toggleVisibility = async (
   const toInvalidate = [generateQueryKey.analyses(teamSlug), generateQueryKey.analysis(nodeId)];
 
   return api
-    .patch(`/analysis-node/${nodeId}/visibility`, {}, { headers: { "bevor-team-slug": teamSlug } })
+    .patch(`/analyses/${nodeId}/visibility`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then(() => {
       return {
         toInvalidate,

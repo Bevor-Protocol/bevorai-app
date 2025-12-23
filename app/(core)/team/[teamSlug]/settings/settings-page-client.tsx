@@ -18,16 +18,13 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import {
-  MemberRoleEnum,
-  MemberSchemaI,
-  TeamDetailedSchemaI,
-  UserDetailedSchemaI,
-} from "@/utils/types";
+import { MemberRoleEnum } from "@/utils/enums";
+import { teamFormSchema, TeamFormValues } from "@/utils/schema";
+import { MemberSchemaI, TeamDetailedSchemaI, UserDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Check, Copy, LogOut, Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 
 interface SettingsPageClientProps {
@@ -40,7 +37,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
   const router = useRouter();
   const queryClient = useQueryClient();
   const [teamName, setTeamName] = useState(team.name);
-  const [showError, setShowError] = useState(false);
+  const [error, setError] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
 
@@ -50,7 +47,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
   const { isCopied, copy } = useCopyToClipboard();
 
   const updateTeamMutation = useMutation({
-    mutationFn: async (name: string) => teamActions.updateTeam(team.slug, { name }),
+    mutationFn: async (data: TeamFormValues) => teamActions.updateTeam(team.slug, data),
     onSuccess: ({ team: refreshedTeam, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -59,6 +56,9 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
       if (refreshedTeam.slug !== team.slug) {
         router.push(`/team/${refreshedTeam.slug}/settings`);
       }
+    },
+    onError: () => {
+      toast.error("Failed to update team name. Please try again.");
     },
   });
 
@@ -97,18 +97,18 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
 
   const handleSave = (e: React.FormEvent): void => {
     e.preventDefault();
-    if (team.name === teamName) return;
-    updateTeamMutation.mutate(teamName);
+    if (teamName === team.name) {
+      return;
+    }
+    const parsed = teamFormSchema.safeParse({ name: teamName });
+    if (!parsed.success) {
+      parsed.error.issues.forEach((issue) => {
+        setError(issue.message);
+      });
+      return;
+    }
+    updateTeamMutation.mutate(parsed.data);
   };
-
-  useEffect(() => {
-    if (!updateTeamMutation.isError) return;
-    setShowError(true);
-    const timeout = setTimeout(() => {
-      setShowError(false);
-    }, 1500);
-    return (): void => clearTimeout(timeout);
-  }, [updateTeamMutation.isError]);
 
   return (
     <>
@@ -130,7 +130,10 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
                   name="team-name"
                   type="text"
                   value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
+                  onChange={(e) => {
+                    setError("");
+                    setTeamName(e.target.value);
+                  }}
                   disabled={!isOwner}
                   placeholder="Enter team name"
                   className="w-56"
@@ -151,11 +154,7 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
                   Only team owners can edit the team name
                 </p>
               )}
-              {showError && (
-                <p className="text-sm text-destructive">
-                  Failed to update team name. Please try again.
-                </p>
-              )}
+              {error && <p className="text-sm text-destructive">{error}</p>}
             </Field>
           </FieldGroup>
         </form>

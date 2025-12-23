@@ -11,21 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { InviteMemberBody, MemberRoleEnum } from "@/utils/types";
+import { MemberRoleEnum } from "@/utils/enums";
+import { inviteFormSchema, InviteFormValues, InviteItemValues } from "@/utils/schema/invite";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
-interface Invitee {
-  identifier: string;
-  role: MemberRoleEnum;
-}
-
 const InviteForm: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const queryClient = useQueryClient();
 
-  const [invitees, setInvitees] = useState<Invitee[]>([
+  const [invitees, setInvitees] = useState<InviteItemValues[]>([
     {
       identifier: "",
       role: MemberRoleEnum.MEMBER,
@@ -33,7 +29,7 @@ const InviteForm: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   ]);
 
   const inviteMembersMutation = useMutation({
-    mutationFn: async (params: InviteMemberBody) => teamActions.inviteMembers(teamSlug, params),
+    mutationFn: async (data: InviteFormValues) => teamActions.inviteMembers(teamSlug, data),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -56,7 +52,7 @@ const InviteForm: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
     }
   };
 
-  const updateInvitee = (index: number, field: keyof Invitee, value: string): void => {
+  const updateInvitee = (index: number, field: keyof InviteItemValues, value: string): void => {
     setInvitees(
       invitees.map((invitee, i) => (i === index ? { ...invitee, [field]: value } : invitee)),
     );
@@ -65,15 +61,12 @@ const InviteForm: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
 
-    const validInvitees = invitees.filter((invitee) => invitee.identifier.trim());
-    if (validInvitees.length === 0) return;
+    const parsed = inviteFormSchema.safeParse({ members: invitees });
 
-    const members = validInvitees.map((invitee) => ({
-      identifier: invitee.identifier.trim(),
-      role: invitee.role,
-    }));
-
-    inviteMembersMutation.mutate({ members });
+    if (!parsed.success || (parsed.success && !parsed.data.members.length)) {
+      return;
+    }
+    inviteMembersMutation.mutate(parsed.data);
   };
 
   const isValid = invitees.some((invitee) => invitee.identifier.trim());

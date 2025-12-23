@@ -40,6 +40,40 @@ export const QUERY_KEYS = {
   GITHUB_REPOSITORIES: "github-repositories",
 };
 
+export const NETWORKS = [
+  { value: "eth", label: "Ethereum" },
+  { value: "bsc", label: "BSC" },
+  { value: "polygon", label: "Polygon" },
+  { value: "base", label: "Base" },
+  { value: "avax", label: "Avalanche" },
+  { value: "mode", label: "Mode" },
+  { value: "arb", label: "Arbitrum" },
+  { value: "eth_sepolia", label: "Ethereum Sepolia" },
+  { value: "bsc_test", label: "BSC Testnet" },
+  { value: "polygon_amoy", label: "Polygon Amoy" },
+  { value: "base_sepolia", label: "Base Sepolia" },
+  { value: "avax_fuji", label: "Avalanche Fuji" },
+  { value: "mode_testnet", label: "Mode Testnet" },
+  { value: "arb_sepolia", label: "Arbitrum Sepolia" },
+];
+
+export const BLOCK_EXPLORER_BASE_URLS: Record<string, string> = {
+  eth: "https://etherscan.io",
+  bsc: "https://bscscan.com",
+  polygon: "https://polygonscan.com",
+  base: "https://basescan.org",
+  avax: "https://snowtrace.io",
+  mode: "https://modescan.io",
+  arb: "https://arbiscan.io",
+  eth_sepolia: "https://sepolia.etherscan.io",
+  bsc_test: "https://testnet.bscscan.com",
+  polygon_amoy: "https://amoy.polygonscan.com",
+  base_sepolia: "https://sepolia.basescan.org",
+  avax_fuji: "https://testnet.snowtrace.io",
+  mode_testnet: "https://testnet.modescan.io",
+  arb_sepolia: "https://sepolia.arbiscan.io",
+};
+
 export const generateQueryKey = {
   projectActivities: (projectSlug: string): QueryKey => [
     QUERY_KEYS.ACTIVITIES,

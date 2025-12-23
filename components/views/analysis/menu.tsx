@@ -21,7 +21,7 @@ import {
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { GitFork, GitMerge, MoreHorizontal, Shield } from "lucide-react";
+import { GitFork, GitMerge, Lock, MoreHorizontal, Shield, Unlock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -31,13 +31,27 @@ const AnalysisVersionMenu: React.FC<{
   teamSlug: string;
   projectSlug: string;
   nodeId: string;
-}> = ({ teamSlug, projectSlug, nodeId }) => {
+  isOwner?: boolean;
+  isPublic?: boolean;
+}> = ({ teamSlug, projectSlug, nodeId, isOwner = false, isPublic = false }) => {
   const [showForkDialog, setShowForkDialog] = useState(false);
   const [showMergeDialog, setShowMergeDialog] = useState(false);
   const [fromAnalysisNodeId, setFromAnalysisNodeId] = useState("");
   const queryClient = useQueryClient();
   const router = useRouter();
-  const analysisPath = `/team/${teamSlug}/${projectSlug}/analyses/new?parentVersionId=${nodeId}`;
+
+  const visibilityMutation = useMutation({
+    mutationFn: async () => analysisActions.toggleVisibility(teamSlug, nodeId),
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+      toast.success(isPublic ? "Analysis set to private" : "Analysis set to public");
+    },
+    onError: () => {
+      toast.error("Failed to update visibility");
+    },
+  });
 
   const forkMutation = useMutation({
     mutationFn: async () => analysisActions.forkAnalysis(teamSlug, nodeId),
@@ -83,20 +97,47 @@ const AnalysisVersionMenu: React.FC<{
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <Link href={analysisPath}>
-              <Shield className="size-4" />
-              Create New Analysis
-            </Link>
-          </DropdownMenuItem>
+          {isOwner && (
+            <DropdownMenuItem
+              onClick={() => visibilityMutation.mutate()}
+              disabled={visibilityMutation.isPending}
+            >
+              {isPublic ? (
+                <>
+                  <Lock className="size-4" />
+                  Make Private
+                </>
+              ) : (
+                <>
+                  <Unlock className="size-4" />
+                  Make Public
+                </>
+              )}
+            </DropdownMenuItem>
+          )}
+          {isOwner && (
+            <DropdownMenuItem asChild>
+              <Link
+                href={{
+                  pathname: `/team/${teamSlug}/${projectSlug}/analyses/new`,
+                  query: { parentVersionId: nodeId },
+                }}
+              >
+                <Shield className="size-4" />
+                Create New Analysis
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onSelect={() => setShowForkDialog(true)}>
             <GitFork className="size-4" />
             Fork
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setShowMergeDialog(true)}>
-            <GitMerge className="size-4" />
-            Merge
-          </DropdownMenuItem>
+          {isOwner && (
+            <DropdownMenuItem onSelect={() => setShowMergeDialog(true)}>
+              <GitMerge className="size-4" />
+              Merge
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <AlertDialog open={showForkDialog} onOpenChange={setShowForkDialog}>

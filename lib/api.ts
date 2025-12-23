@@ -5,6 +5,10 @@ const api = axios.create({
   baseURL: process.env.API_URL,
 });
 
+const sharedAPI = axios.create({
+  baseURL: process.env.API_URL,
+});
+
 // Add request interceptor to inject session token
 api.interceptors.request.use(async (config) => {
   if (config.headers.has("skip_token")) {
@@ -42,4 +46,4 @@ const streaming_api = axios.create({
 });
 
 export default api;
-export { idpApi, streaming_api };
+export { idpApi, sharedAPI, streaming_api };

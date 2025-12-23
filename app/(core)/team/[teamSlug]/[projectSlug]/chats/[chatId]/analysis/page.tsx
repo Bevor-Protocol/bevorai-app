@@ -1,12 +1,12 @@
 import { analysisActions, chatActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import ChatSubnav from "@/components/subnav/chat";
+import AnalysisHolder from "@/components/views/analysis/holder";
+import AnalysisMetadata from "@/components/views/analysis/metadata";
 import { getQueryClient } from "@/lib/config/query";
 import { generateQueryKey } from "@/utils/constants";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { AnalysisVersionClient } from "./analysis-version-client";
-import AnalysisNodeMetadata from "./metadata";
 
 type ResolvedParams = {
   chatId: string;
@@ -43,12 +43,8 @@ const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Container subnav={<ChatSubnav />}>
-        <AnalysisNodeMetadata
-          {...resolvedParams}
-          nodeId={chat.analysis_node_id}
-          isEditMode={false}
-        />
-        <AnalysisVersionClient {...resolvedParams} nodeId={chat.analysis_node_id} />
+        <AnalysisMetadata {...resolvedParams} nodeId={chat.analysis_node_id} isEditMode={false} />
+        <AnalysisHolder {...resolvedParams} nodeId={chat.analysis_node_id} />
       </Container>
     </HydrationBoundary>
   );

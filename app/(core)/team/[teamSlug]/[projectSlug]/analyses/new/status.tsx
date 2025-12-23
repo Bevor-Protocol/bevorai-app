@@ -35,7 +35,6 @@ const AnalysisStatusDisplay: React.FC<{
 }> = ({ analysis, teamSlug, projectSlug, toastRefId }) => {
   const router = useRouter();
   const { registerCallback } = useSSE();
-  const newAnalysisRoute = `/team/${teamSlug}/${projectSlug}/analyses/${analysis.id}`;
 
   const getNFindingsPerScope = (nodeId: string): number => {
     return analysis.findings.filter((f) => f.code_version_node_id === nodeId).length;
@@ -75,8 +74,6 @@ const AnalysisStatusDisplay: React.FC<{
     return unregister;
   }, [analysis.id, toastRefId, teamSlug, projectSlug, router, registerCallback]);
 
-  const isComplete = analysis.status === "partial" || analysis.status === "success";
-
   return (
     <div className="flex flex-col gap-4 my-8 max-w-5xl m-auto">
       <div className="flex items-center gap-2 justify-between">
@@ -85,9 +82,10 @@ const AnalysisStatusDisplay: React.FC<{
           <span className="text-lg font-semibold">
             {analysis.status.charAt(0).toUpperCase() + analysis.status.slice(1)}
           </span>
+          <span>total findings: {analysis.n_findings}</span>
         </div>
         <Button asChild className="sticky top-10 z-10" size="lg">
-          <Link href={newAnalysisRoute} aria-disabled={!isComplete}>
+          <Link href={`/team/${teamSlug}/${projectSlug}/analyses/${analysis.id}`}>
             <Eye />
             View Results
           </Link>

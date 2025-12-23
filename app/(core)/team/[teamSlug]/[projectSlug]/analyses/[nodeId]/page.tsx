@@ -1,13 +1,14 @@
 import { analysisActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import AnalysisSubnav from "@/components/subnav/analysis";
+import AnalysisHolder from "@/components/views/analysis/holder";
+import AnalysisMetadata from "@/components/views/analysis/metadata";
 import { getQueryClient } from "@/lib/config/query";
 import { generateQueryKey } from "@/utils/constants";
-import { AsyncComponent } from "@/utils/types";
+import { AnalysisNodeSchemaI, AsyncComponent, FindingSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { AnalysisVersionClient } from "./analysis-version-client";
+import { redirect } from "next/navigation";
 import { EditClient } from "./edit-mode";
-import AnalysisNodeMetadata from "./metadata";
 
 type ResolvedParams = {
   nodeId: string;
@@ -17,7 +18,7 @@ type ResolvedParams = {
 
 type Props = {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<{ mode?: string }>;
+  searchParams: Promise<{ mode?: string; findingId?: string }>;
 };
 
 const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
@@ -26,9 +27,11 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   const resolvedSearchParams = await searchParams;
 
   const isEditMode = resolvedSearchParams.mode === "edit";
+  let analysis: AnalysisNodeSchemaI;
+  let initialFinding: FindingSchemaI | undefined;
 
   if (isEditMode) {
-    await Promise.all([
+    [, analysis] = await Promise.all([
       queryClient.fetchQuery({
         queryKey: generateQueryKey.analysisDraft(resolvedParams.nodeId),
         queryFn: () => analysisActions.getDraft(resolvedParams.teamSlug, resolvedParams.nodeId),
@@ -40,17 +43,39 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
       }),
     ]);
   } else {
-    await queryClient.fetchQuery({
+    analysis = await queryClient.fetchQuery({
       queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),
       queryFn: async () =>
         analysisActions.getAnalysisDetailed(resolvedParams.teamSlug, resolvedParams.nodeId),
     });
   }
 
+  if (!isEditMode && resolvedSearchParams.findingId) {
+    initialFinding = analysis.findings.find(
+      (finding) => finding.id === resolvedSearchParams.findingId,
+    );
+  }
+
+  if (isEditMode && !analysis.is_owner) {
+    // non-owners should not be allowed to edit, strip out the query param.
+    let url = `/team/${resolvedParams.teamSlug}/${resolvedParams.projectSlug}/analyses/${resolvedParams.nodeId}`;
+    if (resolvedSearchParams.findingId) {
+      url += `?findingId=${resolvedSearchParams.findingId}`;
+    }
+    redirect(url);
+  }
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Container subnav={<AnalysisSubnav />}>
-        <AnalysisNodeMetadata {...resolvedParams} isEditMode={isEditMode} />
+        <AnalysisMetadata
+          {...resolvedParams}
+          isEditMode={isEditMode}
+          allowChat={analysis.is_owner}
+          allowEditMode={analysis.is_owner}
+          allowActions
+          isOwner={analysis.is_owner}
+        />
         {isEditMode ? (
           <EditClient
             teamSlug={resolvedParams.teamSlug}
@@ -58,7 +83,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
             projectSlug={resolvedParams.projectSlug}
           />
         ) : (
-          <AnalysisVersionClient {...resolvedParams} />
+          <AnalysisHolder {...resolvedParams} initialFinding={initialFinding} />
         )}
       </Container>
     </HydrationBoundary>

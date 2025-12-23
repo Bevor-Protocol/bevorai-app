@@ -13,7 +13,7 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { CreateKeyBody } from "@/utils/types";
+import { keyFormSchema, KeyFormValues } from "@/utils/schema/key";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Key } from "lucide-react";
 import React, { useState } from "react";
@@ -22,20 +22,19 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const queryClient = useQueryClient();
   const [showKey, setShowKey] = useState(false);
 
-  const [createForm, setCreateForm] = useState<CreateKeyBody>({
+  const [createForm, setCreateForm] = useState<KeyFormValues>({
     name: "",
     scopes: {
       project: "write",
       code: "write",
       analysis: "write",
-      analysis_version: "write",
       chat: "write",
       user: "read",
     },
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async (data: CreateKeyBody) => apiKeyActions.createKey(teamSlug, data),
+    mutationFn: async (data: KeyFormValues) => apiKeyActions.createKey(teamSlug, data),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -47,10 +46,11 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!createForm.name.trim()) return;
+    if (!keyFormSchema.safeParse(createForm).success) return;
     createKeyMutation.mutate(createForm);
   };
 
-  const togglePermission = (permission: keyof CreateKeyBody["scopes"]): void => {
+  const togglePermission = (permission: keyof KeyFormValues["scopes"]): void => {
     if (permission === "user") return;
     setCreateForm({
       ...createForm,
@@ -130,20 +130,6 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
                 id="analysis-toggle"
                 checked={createForm.scopes.analysis === "write"}
                 onCheckedChange={() => togglePermission("analysis")}
-                disabled={createKeyMutation.isPending}
-              />
-            </div>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="analysis-version-toggle">Analysis Version Access</FieldLabel>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {createForm.scopes.analysis_version === "write" ? "Write" : "Read"}
-              </span>
-              <Switch
-                id="analysis-version-toggle"
-                checked={createForm.scopes.analysis_version === "write"}
-                onCheckedChange={() => togglePermission("analysis_version")}
                 disabled={createKeyMutation.isPending}
               />
             </div>

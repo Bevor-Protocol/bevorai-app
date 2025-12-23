@@ -3,21 +3,12 @@
 import api from "@/lib/api";
 import { generateQueryKey } from "@/utils/constants";
 import {
-  CreditSyncResponseI,
   MemberInviteSchema,
   ProjectsPaginationI,
   TeamDetailedSchemaI,
   UserDetailedSchemaI,
 } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
-
-export const syncCredits = async (teamSlug: string): Promise<CreditSyncResponseI> => {
-  return api
-    .post("/auth/sync/credits", {}, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      return response.data;
-    });
-};
 
 export const get = async (): Promise<UserDetailedSchemaI> => {
   return api.get("/user").then((response) => {

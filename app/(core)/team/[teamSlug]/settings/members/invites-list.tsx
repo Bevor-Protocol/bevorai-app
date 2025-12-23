@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,12 +30,13 @@ import {
 } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icon";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generateQueryKey } from "@/utils/constants";
+import { MemberRoleEnum } from "@/utils/enums";
 import { trimAddress } from "@/utils/helpers";
-import { MemberInviteSchema, MemberRoleEnum } from "@/utils/types";
+import { UpdateMemberValues } from "@/utils/schema/invite";
+import { MemberInviteSchema } from "@/utils/types";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Mail, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
@@ -66,7 +68,7 @@ const InvitesList: React.FC<InvitesListProps> = ({ teamSlug, invites, isLoading 
   });
 
   const updateInviteMutation = useMutation({
-    mutationFn: async (data: { inviteId: string; role: MemberRoleEnum }) =>
+    mutationFn: async (data: UpdateMemberValues & { inviteId: string }) =>
       teamActions.updateInvite(teamSlug, data.inviteId, { role: data.role }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
@@ -183,15 +185,10 @@ const InvitesList: React.FC<InvitesListProps> = ({ teamSlug, invites, isLoading 
               </div>
             ))}
           {!invites || invites.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              No pending invites
-            </div>
+            <div className="text-center py-12 text-muted-foreground">No pending invites</div>
           ) : (
             invites.map((invite) => (
-              <div
-                key={invite.id}
-                className="flex items-center gap-4 p-3 border rounded-lg"
-              >
+              <div key={invite.id} className="flex items-center gap-4 p-3 border rounded-lg">
                 <div className="flex items-center">
                   {invite.user_id ? (
                     <Icon size="sm" seed={invite.user_id} />
@@ -203,7 +200,9 @@ const InvitesList: React.FC<InvitesListProps> = ({ teamSlug, invites, isLoading 
                 <Badge variant="outline" size="sm">
                   {invite.role}
                 </Badge>
-                <span className="text-sm text-muted-foreground w-24">{formatDate(invite.created_at)}</span>
+                <span className="text-sm text-muted-foreground w-24">
+                  {formatDate(invite.created_at)}
+                </span>
                 {currentMember.role === MemberRoleEnum.OWNER ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

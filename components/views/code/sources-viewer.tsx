@@ -1,6 +1,5 @@
 "use client";
 
-import NodeSearch from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/[codeId]/search";
 import ShikiViewer from "@/components/shiki-viewer";
 import {
   CodeContent,
@@ -26,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
 import { CodeSourceSchemaI, NodeSchemaI } from "@/utils/types";
 import React from "react";
+import NodeSearch from "./search";
 
 interface SourcesViewerProps {
   sources: CodeSourceSchemaI[];

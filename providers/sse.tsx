@@ -516,10 +516,7 @@ const handleCodeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload): 
     if (!oldData) return oldData;
     return {
       ...oldData,
-      version: {
-        ...oldData.version,
-        status: payload.data.status,
-      },
+      status: payload.data.status,
     };
   });
 

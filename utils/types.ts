@@ -1,4 +1,4 @@
-import { FindingLevel, FindingType, PlanStatusEnum } from "./enums";
+import { FindingLevel, FindingType, MemberRoleEnum, PlanStatusEnum, SourceTypeEnum } from "./enums";
 
 export interface DropdownOption {
   name: string;
@@ -29,11 +29,8 @@ export interface UserDetailedSchemaI extends UserSchemaI {
   is_github_oauth_connected: boolean;
 }
 
-export interface HeadSchema {
-  code_version_id?: string;
-  analysis_version_id?: string;
-}
-
+// users "own" nodes, denoted by the "is_owner". This field is what will impact
+// the actions that can be taken.
 export interface AnalysisNodeSchemaI extends BaseSchema {
   n_findings: number;
   n_scopes: number;
@@ -69,11 +66,6 @@ export interface AnalysisDagSchemaI {
   id: string;
   nodes: AnalysisNodeSchemaI[];
   edges: AnalysisDagEdgeSchemaI[];
-}
-
-export interface HeadFullSchemaI extends HeadSchema {
-  analysis_version?: AnalysisNodeSchemaI;
-  code_version?: CodeMappingSchemaI;
 }
 
 /*  CODE   */
@@ -169,29 +161,6 @@ export interface CodeRelationSchemaI {
   children: CodeMappingSchemaI[];
 }
 
-export interface ContractSourceResponseI extends BaseSchema {
-  is_known_target: boolean;
-  is_imported_dependency: boolean;
-  path: string;
-  content: string;
-  solidity_version: string;
-}
-
-export interface FunctionChunkResponseI {
-  source_id: string;
-  version_id: string;
-  contract_id: string;
-  contract_name: string;
-  function_name: string;
-  chunk: string;
-}
-
-export interface CreditSyncResponseI {
-  total_credits: number;
-  credits_added: number;
-  credits_removed: number;
-}
-
 export interface ChatMessageI extends BaseSchema {
   chat_id: string;
   chat_role: "user" | "system";
@@ -219,7 +188,7 @@ export interface ChatSchemaI {
 
 export interface ChatFullSchemaI extends ChatSchemaI {
   code_version: CodeMappingSchemaI;
-  analysis_node?: AnalysisNodeSchemaI;
+  analysis?: AnalysisNodeSchemaI;
 }
 
 export interface TeamSchemaI extends BaseSchema {
@@ -249,56 +218,6 @@ export interface ActivitySchemaI extends BaseSchema {
   entity_type: string;
 }
 
-export enum MemberRoleEnum {
-  OWNER = "owner",
-  MEMBER = "member",
-}
-
-export enum SourceTypeEnum {
-  SCAN = "scan",
-  PASTE = "paste",
-  UPLOAD_FILE = "upload_file",
-  UPLOAD_FOLDER = "upload_folder",
-  REPOSITORY = "repository",
-}
-
-export interface CreateKeyBody {
-  name: string;
-  scopes: {
-    project: "read" | "write";
-    code: "read" | "write";
-    analysis: "read" | "write";
-    analysis_version: "read" | "write";
-    chat: "read" | "write";
-    user: "read";
-  };
-}
-
-export interface CreateTeamBody {
-  name: string;
-}
-
-export interface UpdateTeamBody {
-  name: string;
-}
-
-export interface InviteMemberBody {
-  members: {
-    identifier: string; // Can be email or wallet address
-    role: MemberRoleEnum;
-  }[];
-}
-
-export interface UpdateMemberBody {
-  role: MemberRoleEnum;
-}
-
-export interface CreateProjectBody {
-  name: string;
-  description?: string;
-  tags?: string[];
-}
-
 export interface MemberSchemaI extends BaseSchema {
   role: MemberRoleEnum;
   user: UserSchemaI;
@@ -326,7 +245,7 @@ export interface ProjectSchemaI extends BaseSchema {
   github_repo_id?: number;
 }
 
-export interface InstallationSchemaI {
+export interface GithubInstallationSchemaI {
   id: number;
   created_at: string;
   updated_at: string;
@@ -338,15 +257,15 @@ export interface InstallationSchemaI {
   deleted_at?: string | null;
 }
 
-export interface RepoSchemaI {
+export interface GithubRepositorySchemaI {
   id: number;
   created_at: string;
   updated_at: string;
   name: string;
-  full_name: string;
   is_private: boolean;
   is_active: boolean;
-  installation: InstallationSchemaI;
+  installation: GithubInstallationSchemaI;
+  full_name: string; // computed field
   url: string; // computed field
 }
 
@@ -355,7 +274,7 @@ export interface ProjectDetailedSchemaI extends ProjectSchemaI {
   n_analyses: number;
   team: TeamSchemaI;
   created_by_user: UserSchemaI;
-  github_repo?: RepoSchemaI | null;
+  github_repo?: GithubRepositorySchemaI | null;
 }
 
 export interface ProjectsPaginationI extends PaginationI {
@@ -375,16 +294,6 @@ export interface CodeCreateSchemaI {
     | "success";
 }
 
-export interface CodeMappingSchemaI extends BaseSchema {
-  name?: string;
-  inferred_name: string;
-  project_id: string;
-  project_slug: string;
-  user: UserSchemaI;
-  parent_id?: string;
-  version: CodeVersionSchemaI;
-}
-
 export interface CodeVersionSchemaI extends BaseSchema {
   network?: string;
   version_method: "tag" | "commit" | "hash" | "address";
@@ -399,11 +308,21 @@ export interface CodeVersionSchemaI extends BaseSchema {
     | "embedding"
     | "failed_embedding"
     | "success";
-  commit?: CommitSchemaI;
-  repository_id?: number;
+  commit?: GithubCommitSchemaI;
+  repository?: GithubRepositorySchemaI;
 }
 
-export interface CommitSchemaI {
+// projects "own" code, not users.
+export interface CodeMappingSchemaI extends BaseSchema, CodeVersionSchemaI {
+  name?: string;
+  inferred_name: string;
+  project_id: string;
+  project_slug: string;
+  user: UserSchemaI;
+  parent_id?: string;
+}
+
+export interface GithubCommitSchemaI {
   sha: string;
   author: string;
   message: string;
@@ -441,7 +360,7 @@ export interface AuthPermissionSchema {
   team: Permission;
   project: Permission;
   contract: Permission;
-  audit: Permission;
+  analysis: Permission;
   user: Permission;
   chat: Permission;
 }
@@ -723,15 +642,7 @@ export interface GithubRepositoriesSchemaI extends GithubBaseSchemaI {
   repository_info?: GithubRepositoriesResponse;
 }
 
-export type ItemType =
-  | "team"
-  | "project"
-  | "code"
-  | "chat"
-  | "analysis"
-  | "analysis_node"
-  | "member"
-  | "settings";
+export type ItemType = "team" | "project" | "code" | "chat" | "analysis" | "member" | "settings";
 
 export type HrefProps = {
   teamSlug?: string;

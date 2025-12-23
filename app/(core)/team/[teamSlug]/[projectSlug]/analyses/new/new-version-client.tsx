@@ -1,8 +1,7 @@
 "use client";
 
 import { analysisActions, codeActions } from "@/actions/bevor";
-import NodeSearch from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/[codeId]/search";
-import { AnalysisVersionElementCompact } from "@/components/analysis/element";
+import { AnalysisVersionPreviewElement } from "@/components/analysis/element";
 import ShikiViewer from "@/components/shiki-viewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { CodeVersionElementCompact } from "@/components/versions/element";
+import NodeSearch from "@/components/views/code/search";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
@@ -167,7 +167,7 @@ const AnalysisVersionSelector: React.FC<{
           </TooltipContent>
         </Tooltip>
       </div>
-      <AnalysisVersionElementCompact
+      <AnalysisVersionPreviewElement
         analysisVersion={defaultParentVersion}
         className="border rounded-lg w-[380px] opacity-75"
       />

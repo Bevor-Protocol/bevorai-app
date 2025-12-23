@@ -311,7 +311,7 @@ const CurrentSubscription: React.FC<{
 
   const getFeatureName = (feature: string): string => {
     switch (feature) {
-      case "audit":
+      case "analysis":
         return "Smart Contract Analyses";
       case "chat":
         return "AI Chat Support";

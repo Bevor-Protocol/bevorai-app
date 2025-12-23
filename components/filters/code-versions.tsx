@@ -14,7 +14,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { cn } from "@/lib/utils";
-import { generateQueryKey } from "@/utils/constants";
+import { generateQueryKey, NETWORKS } from "@/utils/constants";
 import { DefaultCodesQuery } from "@/utils/query-params";
 import { useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, X } from "lucide-react";
@@ -22,27 +22,8 @@ import React, { useState } from "react";
 
 const SOURCE_TYPES = [
   { value: "scan", label: "Scan" },
-  { value: "paste", label: "Paste" },
-  { value: "upload_file", label: "Upload File" },
-  { value: "upload_folder", label: "Upload Folder" },
+  { value: "raw", label: "Raw Upload" },
   { value: "repository", label: "Repository" },
-];
-
-const NETWORKS = [
-  { value: "eth", label: "Ethereum" },
-  { value: "bsc", label: "BSC" },
-  { value: "polygon", label: "Polygon" },
-  { value: "base", label: "Base" },
-  { value: "avax", label: "Avalanche" },
-  { value: "mode", label: "Mode" },
-  { value: "arb", label: "Arbitrum" },
-  { value: "eth_sepolia", label: "Ethereum Sepolia" },
-  { value: "bsc_test", label: "BSC Testnet" },
-  { value: "polygon_amoy", label: "Polygon Amoy" },
-  { value: "base_sepolia", label: "Base Sepolia" },
-  { value: "avax_fuji", label: "Avalanche Fuji" },
-  { value: "mode_testnet", label: "Mode Testnet" },
-  { value: "arb_sepolia", label: "Arbitrum Sepolia" },
 ];
 
 const FilterContent: React.FC<{

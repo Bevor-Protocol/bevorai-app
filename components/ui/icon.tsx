@@ -19,6 +19,7 @@ const iconVariants = cva("inline-flex items-center justify-center", {
   variants: {
     size: {
       default: "size-icon-sm",
+      xs: "size-icon-xs",
       sm: "size-icon-sm",
       md: "size-icon-md",
       lg: "size-icon-lg",

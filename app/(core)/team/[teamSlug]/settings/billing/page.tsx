@@ -1,5 +1,6 @@
 import { teamActions } from "@/actions/bevor";
-import { AsyncComponent, MemberRoleEnum } from "@/utils/types";
+import { MemberRoleEnum } from "@/utils/enums";
+import { AsyncComponent } from "@/utils/types";
 import { Lock } from "lucide-react";
 import BillingPageClient from "./billing-page-client";
 

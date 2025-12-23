@@ -1,7 +1,5 @@
 "use client";
 
-import NodeSearch from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/[codeId]/search";
-import ShikiViewer from "@/components/shiki-viewer";
 import {
   CodeContent,
   CodeDisplay,
@@ -23,17 +21,18 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { useCode } from "@/providers/code";
 import { CodeSourceSchemaI, NodeSchemaI } from "@/utils/types";
 import React from "react";
+import { useCode } from "./provider";
+import NodeSearch from "./search";
+import ShikiViewer from "./viewer";
 
 interface SourcesViewerProps {
   sources: CodeSourceSchemaI[];
-  teamSlug: string;
-  codeId: string;
+  nodeId: string;
 }
 
-const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId }) => {
+const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, nodeId }) => {
   const { handleSourceChange, sourceQuery, nodesQuery, containerRef, sourceId } = useCode();
 
   if (sources.length === 0) {
@@ -77,7 +76,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId
     <CodeHolder ref={containerRef} className="pr-2">
       <CodeMetadata>
         <CodeSourceToggle>
-          <NodeSearch teamSlug={teamSlug} codeId={codeId} className="w-full" />
+          <NodeSearch nodeId={nodeId} className="w-full" />
           <Select value={sourceId!} onValueChange={(sourceId) => handleSourceChange(sourceId)}>
             <SelectTrigger className="max-w-full w-full px-2">
               <SelectValue>

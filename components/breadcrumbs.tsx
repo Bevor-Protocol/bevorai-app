@@ -114,6 +114,31 @@ const ContainerBreadcrumb: React.FC<{
     return basePath;
   }, [teamSlug, projectSlug, pathname]);
 
+  const teamLink = useMemo(() => {
+    const basePath = `/team/${teamSlug}`;
+    if (codeId) {
+      return `${basePath}/codes`;
+    }
+    if (nodeId) {
+      return `${basePath}/analyses`;
+    }
+    if (pathname.includes("/analyses")) {
+      return `${basePath}/analyses`;
+    }
+    if (pathname.includes("/codes")) {
+      return `${basePath}/codes`;
+    }
+    return basePath;
+  }, [teamSlug, pathname, codeId, nodeId]);
+
+  const getEquivalentTeamRoute = (newTeamSlug: string): string => {
+    if (!teamSlug) {
+      return `/team/${newTeamSlug}`;
+    }
+
+    return teamLink.replace(teamSlug as string, newTeamSlug);
+  };
+
   const displayedTeamId =
     hoveredTeamId || curTeam?.id || (teams && teams.length > 0 ? teams[0].id : null);
   const displayedProjects = displayedTeamId ? teamProjectMapping[displayedTeamId] || [] : [];
@@ -161,7 +186,7 @@ const ContainerBreadcrumb: React.FC<{
                       <span className="truncate max-w-40">Account</span>
                     </Link>
                   ) : curTeam ? (
-                    <Link href={`/team/${curTeam.slug}`} className="flex items-center gap-2">
+                    <Link href={teamLink} className="flex items-center gap-2">
                       <Icon seed={curTeam.id} size="sm" />
                       <span className="truncate max-w-40">{curTeam.name}</span>
                     </Link>
@@ -216,10 +241,7 @@ const ContainerBreadcrumb: React.FC<{
                   </BreadcrumbSeparator>
 
                   <BreadcrumbItem>
-                    <LucideIcon
-                      assetType="analysis_node"
-                      className="size-4 text-muted-foreground"
-                    />
+                    <LucideIcon assetType="analysis" className="size-4 text-muted-foreground" />
                     {truncateId(nodeId as string)}
                   </BreadcrumbItem>
                 </>
@@ -250,7 +272,7 @@ const ContainerBreadcrumb: React.FC<{
               {teams.map((team) => (
                 <Link
                   key={team.id}
-                  href={`/team/${team.slug}`}
+                  href={getEquivalentTeamRoute(team.slug)}
                   onMouseEnter={() => handleTeamHover(team.id)}
                   onClick={() => setPopoverOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"

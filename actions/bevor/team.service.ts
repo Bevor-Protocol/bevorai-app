@@ -2,21 +2,14 @@
 
 import api from "@/lib/api";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
-import {
-  CreateTeamBody,
-  InviteMemberBody,
-  MemberInviteSchema,
-  MemberSchemaI,
-  TeamDetailedSchemaI,
-  TeamSchemaI,
-  UpdateMemberBody,
-  UpdateTeamBody,
-} from "@/utils/types";
+import { TeamFormValues } from "@/utils/schema";
+import { InviteFormValues, UpdateMemberValues } from "@/utils/schema/invite";
+import { MemberInviteSchema, MemberSchemaI, TeamDetailedSchemaI, TeamSchemaI } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 import { cookies } from "next/headers";
 
 export const createTeam = async (
-  data: CreateTeamBody,
+  data: TeamFormValues,
 ): Promise<{ id: string; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [[QUERY_KEYS.TEAMS]];
   return api.post("/teams", data).then((response) => {
@@ -48,7 +41,7 @@ export const deleteTeam = async (
 
 export const updateTeam = async (
   teamSlug: string,
-  data: UpdateTeamBody,
+  data: TeamFormValues,
 ): Promise<{
   team: TeamSchemaI;
   toInvalidate: QueryKey[];
@@ -70,7 +63,7 @@ export const getInvites = async (teamSlug: string): Promise<MemberInviteSchema[]
 
 export const inviteMembers = async (
   teamSlug: string,
-  data: InviteMemberBody,
+  data: InviteFormValues,
 ): Promise<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [
     generateQueryKey.invites(teamSlug),
@@ -99,7 +92,7 @@ export const removeInvite = async (
 export const updateInvite = async (
   teamSlug: string,
   inviteId: string,
-  data: UpdateMemberBody,
+  data: UpdateMemberValues,
 ): Promise<{
   toInvalidate: QueryKey[];
 }> => {
@@ -133,7 +126,7 @@ export const acceptInvite = async (
 export const updateMember = async (
   teamSlug: string,
   memberId: string,
-  data: UpdateMemberBody,
+  data: UpdateMemberValues,
 ): Promise<{
   toInvalidate: QueryKey[];
 }> => {

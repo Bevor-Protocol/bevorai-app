@@ -1,13 +1,13 @@
 import { codeActions, userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import CodeVersionSubnav from "@/components/subnav/code-version";
+import CodeMetadata from "@/components/views/code/metadata";
+import SourcesViewer from "@/components/views/code/sources-viewer";
 import { getQueryClient } from "@/lib/config/query";
 import { CodeProvider } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import CodeMetadata from "./metadata";
-import SourcesViewer from "./sources-viewer";
 
 type ResolvedParams = {
   codeId: string;
@@ -56,7 +56,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   if (node) {
     const fetchedNode = await queryClient.fetchQuery({
       queryKey: generateQueryKey.codeNode(node),
-      queryFn: () => codeActions.getNode(resolvedParams.teamSlug, resolvedParams.codeId, node),
+      queryFn: () => codeActions.getNode(resolvedParams.codeId, node),
     });
     position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
   }
@@ -69,7 +69,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         {...resolvedParams}
       >
         <Container subnav={<CodeVersionSubnav />}>
-          <CodeMetadata userId={user.id} {...resolvedParams} />
+          <CodeMetadata userId={user.id} {...resolvedParams} allowActions />
           <SourcesViewer sources={sources} {...resolvedParams} />
         </Container>
       </CodeProvider>

@@ -1,0 +1,248 @@
+"use client";
+
+import { analysisActions, chatActions } from "@/actions/bevor";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { generateQueryKey } from "@/utils/constants";
+import { formatDateShort } from "@/utils/helpers";
+import { extractChatsQuery } from "@/utils/query-params";
+import { AnalysisNodeSchemaI } from "@/utils/types";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  AlertCircle,
+  BotMessageSquare,
+  Check,
+  Copy,
+  Globe,
+  Lock,
+  Pencil,
+  X,
+  XCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import AnalysisVersionMenu from "./menu";
+
+const getStatusIndicator = (status: AnalysisNodeSchemaI["status"]): React.ReactNode => {
+  switch (status) {
+    case "waiting":
+      return (
+        <div className="flex items-center gap-1">
+          <div className="size-2 rounded-full bg-neutral-400 shrink-0 animate-pulse" />
+          <span className="capitalize">Waiting</span>
+        </div>
+      );
+    case "processing":
+      return (
+        <div className="flex items-center gap-1">
+          <div className="size-3 rounded-full bg-blue-400 shrink-0 animate-pulse" />
+          <span className="capitalize">Processing</span>
+        </div>
+      );
+    case "failed":
+      return (
+        <div className="flex items-center gap-1">
+          <XCircle className="size-3 text-destructive shrink-0" />
+          <span className="capitalize">Failed</span>
+        </div>
+      );
+    case "partial":
+      return (
+        <div className="flex items-center gap-1">
+          <AlertCircle className="size-3 text-yellow-400 shrink-0" />
+          <span className="capitalize">Partial</span>
+        </div>
+      );
+    default:
+      return null;
+  }
+};
+
+const AnalysisMetadata: React.FC<{
+  teamSlug: string;
+  projectSlug: string;
+  nodeId: string;
+  isEditMode: boolean;
+  allowChat?: boolean;
+  allowEditMode?: boolean;
+  allowActions?: boolean;
+  isOwner?: boolean;
+}> = ({
+  teamSlug,
+  projectSlug,
+  nodeId,
+  isEditMode,
+  allowChat = false,
+  allowEditMode = false,
+  allowActions = false,
+  isOwner = false,
+}) => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const { isCopied, copy } = useCopyToClipboard();
+
+  const { data: version } = useSuspenseQuery({
+    queryKey: generateQueryKey.analysisDetailed(nodeId),
+    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, nodeId),
+  });
+
+  const chatQuery = extractChatsQuery({
+    project_slug: projectSlug,
+    code_version_id: version.code_version_id,
+    analysis_node_id: version.id,
+    chat_type: "analysis",
+  });
+
+  const { data: chats } = useQuery({
+    queryKey: generateQueryKey.chats(teamSlug, chatQuery),
+    queryFn: () => chatActions.getChats(teamSlug, chatQuery),
+    enabled: allowChat,
+  });
+
+  const createChatMutation = useMutation({
+    mutationFn: async () =>
+      chatActions.initiateChat(teamSlug, {
+        chat_type: "analysis",
+        code_version_id: version.code_version_id,
+        analysis_node_id: version.id,
+      }),
+    onSuccess: ({ id, toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+      router.push(`/team/${teamSlug}/${projectSlug}/chats/${id}`);
+    },
+    onError: () => {
+      toast.error("Failed to create chat");
+    },
+  });
+
+  const handleChatClick = (): void => {
+    if (!allowChat) return;
+    if (chats && chats.results.length > 0) {
+      const firstChatId = chats.results[0].id;
+      const chatPath = `/team/${teamSlug}/${projectSlug}/chats/${firstChatId}`;
+      router.push(chatPath);
+    } else {
+      createChatMutation.mutate();
+    }
+  };
+
+  return (
+    <div className="pt-3 pb-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-wrap text-muted-foreground text-xs">
+          <div className="flex items-center gap-1.5 text-xs">
+            {version.is_public ? (
+              <Globe className="size-3.5 text-blue-400" />
+            ) : (
+              <Lock className="size-3.5 text-muted-foreground" />
+            )}
+            <span className="text-muted-foreground">
+              {version.is_public ? "Public" : "Private"}
+            </span>
+            {version.is_public && (
+              <button
+                onClick={() => copy(`${window.origin}/shared/${nodeId}`)}
+                className="ml-0.5 p-0.5 hover:bg-muted rounded transition-colors"
+                aria-label="Copy link"
+              >
+                {isCopied ? (
+                  <Check className="size-3 text-green-400" />
+                ) : (
+                  <Copy className="size-3 text-muted-foreground" />
+                )}
+              </button>
+            )}
+          </div>
+          <div className="h-4 w-px bg-border" />
+          <div className="flex items-center gap-1.5 capitalize">
+            {version.trigger.replace("_", " ")}
+          </div>
+          {(version.is_leaf || !version.parent_node_id) && (
+            <>
+              <div className="h-4 w-px bg-border" />
+              <div className="flex items-center gap-1 justify-start">
+                {!version.parent_node_id && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap shrink-0">
+                    ROOT
+                  </span>
+                )}
+                {version.is_leaf && version.parent_node_id && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap shrink-0">
+                    LEAF
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+          <div className="h-4 w-px bg-border" />
+          <div className="flex items-center gap-1.5">
+            <Icon size="xs" seed={version.user.id} className="shrink-0" />
+            <span className="truncate">{version.user.username}</span>
+            <span>·</span>
+            <span>{formatDateShort(version.created_at)}</span>
+          </div>
+          {version.status !== "success" && (
+            <>
+              <div className="h-4 w-px bg-border" />
+              {getStatusIndicator(version.status)}
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {allowChat && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleChatClick}
+              disabled={createChatMutation.isPending}
+            >
+              <BotMessageSquare className="size-4" />
+              {chats && chats.results.length > 0 ? "Continue Chat" : "Start Chat"}
+            </Button>
+          )}
+          {allowEditMode && (
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                href={{
+                  pathname: `/team/${teamSlug}/${projectSlug}/analyses/${version.id}`,
+                  query: !isEditMode ? { mode: "edit" } : {},
+                }}
+              >
+                {isEditMode ? (
+                  <>
+                    <X className="size-4" />
+                    Exit Edit
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="size-4" />
+                    Edit
+                  </>
+                )}
+              </Link>
+            </Button>
+          )}
+          {allowActions ? (
+            <AnalysisVersionMenu
+              teamSlug={teamSlug}
+              projectSlug={projectSlug}
+              nodeId={nodeId}
+              isOwner={isOwner}
+              isPublic={version.is_public}
+            />
+          ) : (
+            <Button variant="outline" asChild>
+              <Link href={`/team/${teamSlug}/${projectSlug}/analyses/${nodeId}`}>Go To Source</Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AnalysisMetadata;

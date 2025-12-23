@@ -1,3 +1,4 @@
+import { BLOCK_EXPLORER_BASE_URLS } from "@/utils/constants";
 import { DropdownOption } from "@/utils/types";
 import { Address } from "viem";
 
@@ -18,7 +19,7 @@ export const constructSearchQuery = ({
 }): URLSearchParams => {
   const search = new URLSearchParams();
   if (networks.length) {
-    const params = networks.map((audit) => audit.value);
+    const params = networks.map((network) => network.value);
     search.append("network", params.join(","));
   }
   if (address) {
@@ -89,15 +90,11 @@ export const formatNumber = (n: number): string => {
   return "1,000+";
 };
 
-export const truncateVersion = ({
-  versionMethod,
-  versionIdentifier,
-}: {
-  versionMethod: string;
-  versionIdentifier: string;
-}): string => {
-  if (versionMethod === "tag") {
-    return versionIdentifier;
-  }
-  return versionIdentifier.slice(0, 5) + "..." + versionIdentifier.slice(-5);
+export const truncateVersion = (s: string): string => {
+  return s.slice(0, 5) + "..." + s.slice(-5);
+};
+
+export const explorerUrl = (network: string, address: string): string => {
+  const explorer = BLOCK_EXPLORER_BASE_URLS[network];
+  return explorer + "/address/" + address;
 };

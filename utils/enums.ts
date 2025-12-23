@@ -37,3 +37,16 @@ export enum PlanStatusEnum {
   UNPAID = "unpaid",
   PAUSED = "paused",
 }
+
+export enum MemberRoleEnum {
+  OWNER = "owner",
+  MEMBER = "member",
+}
+
+export enum SourceTypeEnum {
+  SCAN = "scan",
+  PASTE = "paste",
+  UPLOAD_FILE = "upload_file",
+  UPLOAD_FOLDER = "upload_folder",
+  REPOSITORY = "repository",
+}

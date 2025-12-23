@@ -41,7 +41,7 @@ const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
     if (!params.teamSlug || params.nodeId || params.chatId || params.codeId) {
       return `/team/${params.teamSlug}`;
     }
-    return pathname.replace(params.teamSlug, teamItem.id);
+    return pathname.replace(params.teamSlug, teamItem.slug);
   };
 
   return (

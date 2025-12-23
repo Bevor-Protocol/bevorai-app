@@ -14,7 +14,7 @@ import React from "react";
 
 const getFeatureName = (feature: string): string => {
   switch (feature) {
-    case "audit":
+    case "analysis":
       return "Smart Contract Analyses";
     case "chat":
       return "AI Chat Support";
@@ -100,7 +100,7 @@ const PlanCard: React.FC<{
               {plan.usage?.audits && (
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-muted-foreground">
-                    {plan.usage.audits.included} audits included
+                    {plan.usage.audits.included} analyses included
                   </span>
                   <Tooltip>
                     <TooltipTrigger>
@@ -109,11 +109,11 @@ const PlanCard: React.FC<{
                     <TooltipContent side="top" align="center">
                       <div className="max-w-xs">
                         <p className="text-xs">
-                          {plan.usage.audits.included} audits included per month
+                          {plan.usage.audits.included} analyses included per month
                         </p>
                         <p className="text-xs">
-                          Additional audits: {formatCurrency(plan.usage.audits.unit_amount / 100)}/
-                          audit
+                          Additional analyses: {formatCurrency(plan.usage.audits.unit_amount / 100)}
+                          / analysis
                         </p>
                       </div>
                     </TooltipContent>

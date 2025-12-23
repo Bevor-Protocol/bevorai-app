@@ -1,7 +1,7 @@
 "use client";
 
 import { chatActions, codeActions } from "@/actions/bevor";
-import { AnalysisVersionElementCompact } from "@/components/analysis/element";
+import { AnalysisVersionPreviewElement } from "@/components/analysis/element";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -141,12 +141,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
             >
               <CodeVersionElementCompact version={chatQuery.data.code_version} />
             </Link>
-            {chatQuery.data.analysis_node && (
+            {chatQuery.data.analysis && (
               <Link
                 href={`/team/${teamSlug}/${projectSlug}/analyses/${chatQuery.data.analysis_node_id}`}
                 className="block hover:opacity-80 transition-opacity"
               >
-                <AnalysisVersionElementCompact analysisVersion={chatQuery.data.analysis_node} />
+                <AnalysisVersionPreviewElement analysisVersion={chatQuery.data.analysis} />
               </Link>
             )}
           </div>

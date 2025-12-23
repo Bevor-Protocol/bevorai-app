@@ -43,6 +43,7 @@ const TeamCodesPage: AsyncComponent<ProjectPageProps> = async ({ params, searchP
           {...resolvedParams}
           initialQuery={initialQuery}
           defaultQuery={defaultQuery}
+          showRepo
         />
       </div>
     </Container>

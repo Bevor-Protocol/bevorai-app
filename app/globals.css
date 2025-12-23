@@ -78,11 +78,13 @@
   --link-accent: oklch(80.9% 0.105 251.813);
   --spacing-header: 4rem;
   --spacing-subheader: 2.5rem;
+  --size-icon-xs: 15px;
   --size-icon-sm: 20px;
   --size-icon-md: 25px;
   --size-icon-lg: 60px;
 
   @media (width >= theme(--breakpoint-md)) {
+    --size-icon-xs: 15px;
     --size-icon-sm: 20px;
     --size-icon-md: 30px;
     --size-icon-lg: 75px;
@@ -162,6 +164,7 @@
 
   --color-link: var(--link);
   --color-link-accent: var(--link-accent);
+  --spacing-icon-xs: var(--size-icon-xs);
   --spacing-icon-sm: var(--size-icon-sm);
   --spacing-icon-md: var(--size-icon-md);
   --spacing-icon-lg: var(--size-icon-lg);

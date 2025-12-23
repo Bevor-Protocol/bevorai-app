@@ -1,17 +1,17 @@
 "use client";
 
-import { codeActions } from "@/actions/bevor";
+import { sharedActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CommandDialog, CommandEmpty, CommandInput } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { cn } from "@/lib/utils";
-import { useCode } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import React, { useCallback, useState } from "react";
+import { useCode } from "./provider";
 
 const getNodeType = (nodeType: string): React.ReactElement => {
   switch (nodeType) {
@@ -38,10 +38,9 @@ const getNodeType = (nodeType: string): React.ReactElement => {
 };
 
 const NodeSearch: React.FC<{
-  teamSlug: string;
-  codeId: string;
+  nodeId: string;
   className?: string;
-}> = ({ teamSlug, codeId, className }) => {
+}> = ({ nodeId, className }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const { debouncedState, isWaiting } = useDebouncedState(search, {
@@ -66,8 +65,8 @@ const NodeSearch: React.FC<{
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: generateQueryKey.codeNodes(codeId, { name: debouncedState }),
-    queryFn: () => codeActions.getNodes(teamSlug, codeId, { name: debouncedState }),
+    queryKey: generateQueryKey.codeNodes(nodeId, { name: debouncedState }),
+    queryFn: () => sharedActions.getNodes(nodeId, { name: debouncedState }),
     enabled: !!debouncedState,
   });
 

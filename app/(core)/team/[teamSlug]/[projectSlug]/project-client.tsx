@@ -1,8 +1,8 @@
 "use client";
 
-import { activityActions, analysisActions, projectActions } from "@/actions/bevor";
+import { activityActions, analysisActions, codeActions, projectActions } from "@/actions/bevor";
 import ActivityList from "@/components/activity";
-import { AnalysisVersionElement } from "@/components/analysis/element";
+import { AnalysisVersionCompactElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
 import LucideIcon from "@/components/lucide-icon";
 import {
@@ -39,6 +39,8 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { CodeVersionElementCompact } from "@/components/versions/element";
+import { VersionEmpty } from "@/components/versions/empty";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
@@ -340,7 +342,31 @@ export const AnalysesPreview: React.FC<{
   return (
     <div className="flex flex-col gap-3">
       {analyses?.results.map((analysis) => (
-        <AnalysisVersionElement key={analysis.id} analysisVersion={analysis} />
+        <AnalysisVersionCompactElement key={analysis.id} analysisVersion={analysis} />
+      ))}
+      {isLoading && <Skeleton className="w-full h-12" />}
+    </div>
+  );
+};
+
+export const CodePreview: React.FC<{
+  teamSlug: string;
+  projectSlug: string;
+}> = ({ teamSlug, projectSlug }) => {
+  const query = { page_size: "3", project_slug: projectSlug };
+  const { data: codes, isLoading } = useQuery({
+    queryKey: generateQueryKey.codes(teamSlug, query),
+    queryFn: async () => codeActions.getVersions(teamSlug, query),
+  });
+
+  if (codes?.results.length === 0) {
+    return <VersionEmpty />;
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {codes?.results.map((code) => (
+        <CodeVersionElementCompact key={code.id} version={code} />
       ))}
       {isLoading && <Skeleton className="w-full h-12" />}
     </div>

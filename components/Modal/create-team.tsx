@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { teamFormSchema, TeamFormValues } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ const CreateTeamModal: React.FC = () => {
   const [formError, setFormError] = useState("");
 
   const { mutate, error, isSuccess, isPending } = useMutation({
-    mutationFn: async (data: { name: string }) => teamActions.createTeam(data),
+    mutationFn: async (data: TeamFormValues) => teamActions.createTeam(data),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -43,18 +43,20 @@ const CreateTeamModal: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    if (!teamName) {
-      setFormError("Input a team name");
+    const parsed = teamFormSchema.safeParse({ name: teamName });
+    if (!parsed.success) {
+      parsed.error.issues.forEach((issue) => {
+        setFormError(issue.message);
+      });
       return;
     }
-    mutate({ name: teamName });
+    mutate(parsed.data);
   };
 
   return (
     <>
       <DialogHeader>
         <div className="inline-flex gap-2 items-center">
-          <Users className="size-5 text-blue-400" />
           <DialogTitle>Create New Team</DialogTitle>
         </div>
         <DialogDescription>Create a team to start collaborating with others</DialogDescription>

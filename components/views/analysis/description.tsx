@@ -3,135 +3,23 @@
 import { analysisActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
+import { truncateId } from "@/utils/helpers";
 import { FindingFeedbackBody } from "@/utils/schema";
-import {
-  AnalysisNodeSchemaI,
-  FindingSchemaI,
-  NodeSchemaI,
-  NodeWithContentSchemaI,
-} from "@/utils/types";
-import { useMutation, useQueryClient, UseQueryResult } from "@tanstack/react-query";
-import { Check, ExternalLink, ThumbsDown, ThumbsUp, X } from "lucide-react";
-import Link from "next/link";
+import { AnalysisNodeSchemaI, FindingSchemaI } from "@/utils/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ThumbsDown, ThumbsUp } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { codeToHtml } from "shiki";
 import { toast } from "sonner";
-import { getSeverityBadgeClasses } from "./scopes";
 
-export const FindingMetadata: React.FC<{
-  teamSlug: string;
-  projectSlug: string;
-  nodeId: string;
-  finding: FindingSchemaI;
-  nodeQuery: UseQueryResult<NodeSchemaI, Error>;
-}> = ({ teamSlug, projectSlug, nodeId, finding, nodeQuery }) => {
-  const isValidated = !!finding.validated_at;
-  const isInvalidated = !!finding.invalidated_at;
-  const isNotAcknowledged = !isValidated && !isInvalidated;
-
-  const sourceHref = `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}/code?source=${nodeQuery.data?.source_id}&node=${nodeQuery.data?.id}`;
-
-  return (
-    <div className="flex items-center gap-3">
-      <h3 className="text-lg font-semibold">{finding.name}</h3>
-      <Badge variant="outline" className={cn("text-xs", getSeverityBadgeClasses(finding.level))}>
-        {finding.level}
-      </Badge>
-      <span className="text-sm text-muted-foreground">
-        {finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-      </span>
-      {isValidated && (
-        <Badge
-          variant="outline"
-          className="text-xs border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400"
-        >
-          <Check className="size-3 mr-1" />
-          is validated
-        </Badge>
-      )}
-      {isInvalidated && (
-        <Badge
-          variant="outline"
-          className="text-xs border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400"
-        >
-          <X className="size-3 mr-1" />
-          is invalidated
-        </Badge>
-      )}
-      {isNotAcknowledged && (
-        <Badge
-          variant="outline"
-          className="text-xs border-muted-foreground/20 bg-muted-foreground/10 text-muted-foreground"
-        >
-          finding not acknowledged
-        </Badge>
-      )}
-      <Button variant="ghost" size="sm" asChild className="ml-auto">
-        <Link href={sourceHref}>
-          Source <ExternalLink className="size-3" />
-        </Link>
-      </Button>
-    </div>
-  );
-};
-
-export const CodeSnippet: React.FC<{
-  nodeQuery: UseQueryResult<NodeWithContentSchemaI, Error>;
-}> = ({ nodeQuery }) => {
-  const [html, setHtml] = useState<string>("");
-
-  useEffect(() => {
-    if (!nodeQuery.data?.content) {
-      setHtml("");
-      return;
-    }
-
-    const highlightCode = async (): Promise<void> => {
-      try {
-        const result = await codeToHtml(nodeQuery.data.content, {
-          lang: "solidity",
-          theme: "github-dark",
-          colorReplacements: {},
-        });
-        setHtml(result);
-      } catch (error) {
-        console.error("Error highlighting code:", error);
-        const fallbackHtml = `<pre><code>${nodeQuery.data.content}</code></pre>`;
-        setHtml(fallbackHtml);
-      }
-    };
-
-    highlightCode();
-  }, [nodeQuery.data?.content]);
-
-  return (
-    <div className="border rounded-lg">
-      <ScrollArea className="p-2 h-[300px]">
-        {nodeQuery.isLoading || !html ? (
-          <Skeleton className="h-48 w-full" />
-        ) : (
-          <div
-            className="shiki-container overflow-x-auto w-full"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        )}
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
-    </div>
-  );
-};
-
-export const FindingTabs: React.FC<{
+const FindingDescription: React.FC<{
   teamSlug: string;
   nodeId: string;
   finding: FindingSchemaI;
-  setSelectedFinding: React.Dispatch<React.SetStateAction<FindingSchemaI | null>>;
+  setSelectedFinding: React.Dispatch<React.SetStateAction<FindingSchemaI | undefined>>;
 }> = ({ teamSlug, nodeId, finding, setSelectedFinding }) => {
   const [tab, setTab] = useState("description");
   const [feedbackText, setFeedbackText] = useState<string>("");
@@ -195,35 +83,40 @@ export const FindingTabs: React.FC<{
 
   return (
     <div className={cn("border rounded-lg overflow-hidden", "finding")}>
-      <Subnav className="w-fit px-0">
-        <SubnavButton
-          isActive={tab === "description"}
-          shouldHighlight
-          onClick={() => setTab("description")}
-        >
-          Description
-        </SubnavButton>
-        <SubnavButton
-          isActive={tab === "recommendation"}
-          shouldHighlight
-          onClick={() => setTab("recommendation")}
-        >
-          Recommendation
-        </SubnavButton>
-        <SubnavButton
-          isActive={tab === "feedback"}
-          shouldHighlight
-          onClick={() => setTab("feedback")}
-        >
-          Feedback
-        </SubnavButton>
-      </Subnav>
+      <div className="flex justify-between items-center">
+        <Subnav className="w-fit px-0">
+          <SubnavButton
+            isActive={tab === "description"}
+            shouldHighlight
+            onClick={() => setTab("description")}
+          >
+            Description
+          </SubnavButton>
+          <SubnavButton
+            isActive={tab === "recommendation"}
+            shouldHighlight
+            onClick={() => setTab("recommendation")}
+          >
+            Recommendation
+          </SubnavButton>
+          <SubnavButton
+            isActive={tab === "feedback"}
+            shouldHighlight
+            onClick={() => setTab("feedback")}
+          >
+            Feedback
+          </SubnavButton>
+        </Subnav>
+        <Badge variant="outline" size="sm" className="mr-2">
+          {truncateId(finding.id)}
+        </Badge>
+      </div>
       {tab === "description" && (
         <div className="space-y-4 p-4">
           {finding.explanation && <p className="text-sm leading-relaxed">{finding.explanation}</p>}
           {finding.reference && (
             <div className="space-y-2">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase ">Reference</h4>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase">Reference</h4>
               <p className="text-sm leading-relaxed">{finding.reference}</p>
             </div>
           )}
@@ -289,3 +182,5 @@ export const FindingTabs: React.FC<{
     </div>
   );
 };
+
+export default FindingDescription;

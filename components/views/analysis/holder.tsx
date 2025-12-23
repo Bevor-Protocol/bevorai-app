@@ -7,15 +7,20 @@ import { FindingSchemaI } from "@/utils/types";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Shield } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { CodeSnippet, FindingMetadata, FindingTabs } from "./finding";
-import { levelOrder, ScopesList } from "./scopes";
+import FindingDescription from "./description";
+import FindingMetadata from "./finding";
+import AnalysisScopes, { levelOrder } from "./scopes";
+import AnalysisCodeSnippet from "./snippet";
 
-export const AnalysisVersionClient: React.FC<{
+const AnalysisHolder: React.FC<{
   nodeId: string;
   teamSlug: string;
   projectSlug: string;
-}> = ({ teamSlug, projectSlug, nodeId }) => {
-  const [selectedFinding, setSelectedFinding] = useState<FindingSchemaI | null>(null);
+  initialFinding?: FindingSchemaI;
+}> = ({ teamSlug, projectSlug, nodeId, initialFinding }) => {
+  const [selectedFinding, setSelectedFinding] = useState<FindingSchemaI | undefined>(
+    initialFinding,
+  );
 
   const { data: version, isLoading } = useSuspenseQuery({
     queryKey: generateQueryKey.analysisDetailed(nodeId),
@@ -25,11 +30,7 @@ export const AnalysisVersionClient: React.FC<{
   const nodeQuery = useQuery({
     queryKey: generateQueryKey.codeNode(selectedFinding?.code_version_node_id ?? ""),
     queryFn: () =>
-      codeActions.getNode(
-        teamSlug,
-        version.code_version_id,
-        selectedFinding?.code_version_node_id ?? "",
-      ),
+      codeActions.getNode(version.code_version_id, selectedFinding?.code_version_node_id ?? ""),
     enabled: !!selectedFinding,
   });
 
@@ -72,13 +73,24 @@ export const AnalysisVersionClient: React.FC<{
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-start gap-2">
         <h2 className="text-lg font-semibold">Findings</h2>
+        <div className="h-4 w-px bg-border mx-2" />
+        <div className="flex items-center gap-1.5 text-sm">
+          <span className="text-muted-foreground">{version.n_scopes}</span>
+          <span className="text-muted-foreground/70">
+            {version.n_scopes === 1 ? "scope" : "scopes"}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 text-sm">
+          <span className="text-muted-foreground">{version.n_findings}</span>
+          <span className="text-muted-foreground/70">
+            {version.n_findings === 1 ? "finding" : "findings"}
+          </span>
+        </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 min-w-0">
-        <ScopesList
-          teamSlug={teamSlug}
-          nodeId={nodeId}
+        <AnalysisScopes
           version={version}
           selectedFinding={selectedFinding}
           onSelectFinding={setSelectedFinding}
@@ -102,8 +114,8 @@ export const AnalysisVersionClient: React.FC<{
               finding={selectedFinding}
               nodeQuery={nodeQuery}
             />
-            <CodeSnippet nodeQuery={nodeQuery} />
-            <FindingTabs
+            <AnalysisCodeSnippet nodeQuery={nodeQuery} />
+            <FindingDescription
               teamSlug={teamSlug}
               nodeId={nodeId}
               finding={selectedFinding}
@@ -115,3 +127,5 @@ export const AnalysisVersionClient: React.FC<{
     </div>
   );
 };
+
+export default AnalysisHolder;

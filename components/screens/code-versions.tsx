@@ -25,7 +25,8 @@ export const CodeVersionsView: React.FC<{
   teamSlug: string;
   initialQuery: typeof DefaultCodesQuery;
   defaultQuery: typeof DefaultCodesQuery;
-}> = ({ teamSlug, initialQuery, defaultQuery }) => {
+  showRepo?: boolean;
+}> = ({ teamSlug, initialQuery, defaultQuery, showRepo = false }) => {
   const [filters, setFilters] = useState(initialQuery);
   const { debouncedState, timerRef, isWaiting } = useDebouncedState(filters);
 
@@ -86,6 +87,7 @@ export const CodeVersionsView: React.FC<{
                   version={version}
                   teamSlug={teamSlug}
                   isDisabled={isWaiting || versionsQuery.isFetching}
+                  showRepo={showRepo}
                 />
               ))}
             </div>

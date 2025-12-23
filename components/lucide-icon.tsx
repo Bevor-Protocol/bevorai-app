@@ -5,7 +5,6 @@ import {
   BrickWallShieldIcon,
   Code2,
   Settings,
-  Shield,
   SquareUser,
   User,
   type LucideIcon as LucideIconType,
@@ -18,7 +17,6 @@ const ASSET_ICON_MAP: Record<ItemType, LucideIconType> = {
   code: Code2,
   team: SquareUser,
   member: User,
-  analysis_node: Shield,
   settings: Settings,
 };
 

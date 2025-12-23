@@ -5,7 +5,7 @@ import { getQueryClient } from "@/lib/config/query";
 import { generateQueryKey } from "@/utils/constants";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import ProjectClient, { AnalysesPreview, ProjectActivities } from "./project-client";
+import ProjectClient, { AnalysesPreview, CodePreview, ProjectActivities } from "./project-client";
 
 interface ProjectPageProps {
   params: Promise<{ teamSlug: string; projectSlug: string }>;
@@ -30,6 +30,10 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Recent Analyses</h3>
                 <AnalysesPreview teamSlug={teamSlug} projectSlug={projectSlug} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Recent Code Versions</h3>
+                <CodePreview teamSlug={teamSlug} projectSlug={projectSlug} />
               </div>
             </div>
             <div className="min-w-0">

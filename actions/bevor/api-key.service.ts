@@ -2,7 +2,8 @@
 
 import api from "@/lib/api";
 import { generateQueryKey } from "@/utils/constants";
-import { AuthSchema, CreateKeyBody } from "@/utils/types";
+import { KeyFormValues } from "@/utils/schema/key";
+import { AuthSchema } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
 export const listKeys = async (teamSlug: string): Promise<AuthSchema[]> => {
@@ -13,7 +14,7 @@ export const listKeys = async (teamSlug: string): Promise<AuthSchema[]> => {
 
 export const createKey = async (
   teamSlug: string,
-  data: CreateKeyBody,
+  data: KeyFormValues,
 ): Promise<{ api_key: string; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.apiKeys(teamSlug)];
   return api.post("/auth", data, { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
