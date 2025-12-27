@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
 import { CodeSourceSchemaI, NodeSchemaI } from "@/utils/types";
-import React from "react";
+import React, { useMemo } from "react";
 import NodeSearch from "./search";
 
 interface SourcesViewerProps {
@@ -33,8 +33,57 @@ interface SourcesViewerProps {
   codeId: string;
 }
 
+const nodeTypeGroups = [
+  {
+    key: "contracts",
+    title: "Contracts",
+    nodeType: "ContractDefinition",
+  },
+  {
+    key: "functions",
+    title: "Functions",
+    nodeType: "FunctionDefinition",
+  },
+  {
+    key: "modifiers",
+    title: "Modifiers",
+    nodeType: "ModifierDefinition",
+  },
+  {
+    key: "variables",
+    title: "State Variables",
+    nodeType: "VariableDeclaration",
+  },
+  {
+    key: "structs",
+    title: "Structs",
+    nodeType: "StructDefinition",
+  },
+  {
+    key: "errors",
+    title: "Errors",
+    nodeType: "ErrorDefinition",
+  },
+  {
+    key: "events",
+    title: "Events",
+    nodeType: "EventDefinition",
+  },
+];
+
 const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId }) => {
   const { handleSourceChange, sourceQuery, nodesQuery, containerRef, sourceId } = useCode();
+
+  const nodeGroups = useMemo(() => {
+    if (!nodesQuery.data) return [];
+    return nodeTypeGroups.map((group) => {
+      const values = nodesQuery.data.filter((n) => n.node_type === group.nodeType);
+      return {
+        ...group,
+        values,
+      };
+    });
+  }, [nodesQuery.data]);
 
   if (sources.length === 0) {
     return (
@@ -48,19 +97,6 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId
       </div>
     );
   }
-
-  const contracts = nodesQuery.data?.filter((n) => n.node_type === "ContractDefinition") ?? [];
-  const callables =
-    nodesQuery.data?.filter(
-      (n) => n.node_type === "FunctionDefinition" || n.node_type === "ModifierDefinition",
-    ) ?? [];
-  const declarations =
-    nodesQuery.data?.filter(
-      (n) =>
-        n.node_type !== "ContractDefinition" &&
-        n.node_type !== "FunctionDefinition" &&
-        n.node_type !== "ModifierDefinition",
-    ) ?? [];
 
   const currentSource = sources.find((s) => s.id === sourceId);
   const currentFileName = currentSource?.path.split("/").pop() ?? "";
@@ -99,70 +135,35 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId
         <CodeSources>
           {nodesQuery.isLoading ? (
             <>
-              <div className="py-2 w-full">
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Contracts</div>
-                <div className="space-y-0.5">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="px-2 py-1.5">
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                  ))}
+              {nodeTypeGroups.map((group) => (
+                <div key={group.key} className="py-2 w-full">
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                    {group.title}
+                  </div>
+                  <div className="space-y-0.5">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="px-2 py-1.5">
+                        <Skeleton className="h-4 w-full" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="py-2 w-full">
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Callables</div>
-                <div className="space-y-0.5">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="px-2 py-1.5">
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="py-2 w-full">
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                  Declarations
-                </div>
-                <div className="space-y-0.5">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="px-2 py-1.5">
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </>
           ) : (
             <>
-              {contracts.length > 0 && (
-                <div className="py-2 w-full">
-                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                    Contracts ({contracts.length})
-                  </div>
-                  {contracts.map((node) => (
-                    <CodeNodeList key={node.id} node={node} onNodeClick={handleNodeClick} />
-                  ))}
-                </div>
-              )}
-              {callables.length > 0 && (
-                <div className="py-2 w-full">
-                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                    Callables ({callables.length})
-                  </div>
-                  {callables.map((node) => (
-                    <CodeNodeList key={node.id} node={node} onNodeClick={handleNodeClick} />
-                  ))}
-                </div>
-              )}
-              {declarations.length > 0 && (
-                <div className="py-2 w-full">
-                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                    Declarations ({declarations.length})
-                  </div>
-                  {declarations.map((node) => (
-                    <CodeNodeList key={node.id} node={node} onNodeClick={handleNodeClick} />
-                  ))}
-                </div>
+              {nodeGroups.map(
+                (group) =>
+                  group.values.length > 0 && (
+                    <div key={group.key} className="py-2 w-full">
+                      <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                        {group.title} ({group.values.length})
+                      </div>
+                      {group.values.map((node) => (
+                        <CodeNodeList key={node.id} node={node} onNodeClick={handleNodeClick} />
+                      ))}
+                    </div>
+                  ),
               )}
             </>
           )}

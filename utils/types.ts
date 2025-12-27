@@ -642,6 +642,28 @@ export interface GithubRepositoriesSchemaI extends GithubBaseSchemaI {
   repository_info?: GithubRepositoriesResponse;
 }
 
+export type SharedAnalysisNodeSchemaI = Omit<
+  AnalysisNodeSchemaI,
+  | "user"
+  | "team_id"
+  | "team_slug"
+  | "project_id"
+  | "project_slug"
+  | "is_leaf"
+  | "is_owner"
+  | "trigger"
+  | "is_public"
+  | "root_node_id"
+  | "merged_from_node_id"
+  | "parent_node_id"
+  | "children"
+>;
+
+export type SharedCodeMappingSchemaI = Omit<
+  CodeMappingSchemaI,
+  "project_id" | "project_slug" | "user" | "is_private" | "parent_id"
+>;
+
 export type ItemType = "team" | "project" | "code" | "chat" | "analysis" | "member" | "settings";
 
 export type HrefProps = {

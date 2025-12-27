@@ -1,10 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
 import { SourceTypeEnum } from "@/utils/enums";
 import { explorerUrl, formatDateShort, truncateId, truncateVersion } from "@/utils/helpers";
-import { CodeMappingSchemaI } from "@/utils/types";
+import { CodeMappingSchemaI, SharedCodeMappingSchemaI } from "@/utils/types";
 import { GitCommit, Network, XCircle } from "lucide-react";
 
 const getStatusIndicator = (status: CodeMappingSchemaI["status"]): React.ReactNode => {
@@ -38,7 +37,7 @@ const getStatusIndicator = (status: CodeMappingSchemaI["status"]): React.ReactNo
   }
 };
 
-const VersionDisplay: React.FC<{ version: CodeMappingSchemaI }> = ({ version }) => {
+const VersionDisplay: React.FC<{ version: SharedCodeMappingSchemaI }> = ({ version }) => {
   if (
     [SourceTypeEnum.PASTE, SourceTypeEnum.UPLOAD_FILE, SourceTypeEnum.UPLOAD_FOLDER].includes(
       version.source_type,
@@ -77,7 +76,7 @@ const VersionDisplay: React.FC<{ version: CodeMappingSchemaI }> = ({ version }) 
 };
 
 const CodeMetadata: React.FC<{
-  code: CodeMappingSchemaI;
+  code: SharedCodeMappingSchemaI;
 }> = ({ code }) => {
   return (
     <div className="grid pb-4 lg:pt-4 px-2" style={{ gridTemplateColumns: "250px 1fr" }}>
@@ -87,9 +86,6 @@ const CodeMetadata: React.FC<{
           {getStatusIndicator(code.status)}
           <VersionDisplay version={code} />
           <div className="flex items-center gap-1.5">
-            <Icon size="xs" seed={code.user.id} className="shrink-0" />
-            <span className="truncate">{code.user.username}</span>
-            <span>·</span>
             <span>{formatDateShort(code.commit?.timestamp ?? code.created_at)}</span>
           </div>
         </div>

@@ -179,11 +179,20 @@ export const CodeDisplay: React.FC<React.ComponentProps<"div">> = ({ className, 
 
 export const getNodeTypeColor = (nodeType: string): string => {
   switch (nodeType) {
-    case "FunctionDefinition":
-    case "ModifierDefinition":
-      return "bg-blue-500";
     case "ContractDefinition":
       return "bg-purple-500";
+    case "FunctionDefinition":
+      return "bg-blue-500";
+    case "ModifierDefinition":
+      return "bg-orange-300";
+    case "VariableDeclaration":
+      return "bg-green-500";
+    case "StructDefinition":
+      return "bg-pink-500";
+    case "ErrorDefinition":
+      return "bg-red-500";
+    case "EventDefinition":
+      return "bg-yellow-500";
     default:
       return "bg-gray-400";
   }

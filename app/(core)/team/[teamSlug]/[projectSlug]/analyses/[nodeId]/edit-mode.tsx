@@ -104,13 +104,14 @@ const EditFindingMetadata: React.FC<{
 };
 
 const EditCodeSnippet: React.FC<{
+  teamSlug: string;
   codeVersionId: string;
   codeVersionNodeId: string;
   isEditing: boolean;
-}> = ({ codeVersionId, codeVersionNodeId, isEditing }) => {
+}> = ({ teamSlug, codeVersionId, codeVersionNodeId, isEditing }) => {
   const { data: nodeData, isLoading: isLoadingNode } = useQuery({
     queryKey: [QUERY_KEYS.CODES, codeVersionId, "nodes", codeVersionNodeId],
-    queryFn: () => codeActions.getNode(codeVersionId, codeVersionNodeId),
+    queryFn: () => codeActions.getNode(teamSlug, codeVersionId, codeVersionNodeId),
     enabled: !!codeVersionNodeId && !isEditing,
   });
 
@@ -435,6 +436,7 @@ const EditFindingDetail: React.FC<{
     <div className="space-y-4">
       <EditFindingMetadata finding={finding} />
       <EditCodeSnippet
+        teamSlug={teamSlug}
         codeVersionId={codeVersionId}
         codeVersionNodeId={
           draftQuery.data

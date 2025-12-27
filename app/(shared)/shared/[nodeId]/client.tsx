@@ -1,6 +1,6 @@
 "use client";
 
-import { codeActions } from "@/actions/bevor";
+import { sharedActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Subnav, SubnavButton } from "@/components/ui/subnav";
@@ -12,7 +12,7 @@ import AnalysisCodeSnippet from "@/components/views/analysis/snippet";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
-import { AnalysisNodeSchemaI, FindingSchemaI, NodeSchemaI } from "@/utils/types";
+import { FindingSchemaI, NodeSchemaI, SharedAnalysisNodeSchemaI } from "@/utils/types";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { Check, ExternalLink, Shield, X } from "lucide-react";
 import Link from "next/link";
@@ -142,14 +142,13 @@ const FindingMetadata: React.FC<{
 };
 
 const AnalysisHolder: React.FC<{
-  analysis: AnalysisNodeSchemaI;
+  analysis: SharedAnalysisNodeSchemaI;
 }> = ({ analysis }) => {
   const [selectedFinding, setSelectedFinding] = useState<FindingSchemaI | undefined>(undefined);
 
   const nodeQuery = useQuery({
-    queryKey: generateQueryKey.codeNode(selectedFinding?.code_version_node_id ?? ""),
-    queryFn: () =>
-      codeActions.getNode(analysis.code_version_id, selectedFinding?.code_version_node_id ?? ""),
+    queryKey: generateQueryKey.codeNode(selectedFinding?.id ?? ""),
+    queryFn: () => sharedActions.getNode(analysis.id, selectedFinding?.code_version_node_id ?? ""),
     enabled: !!selectedFinding,
   });
 

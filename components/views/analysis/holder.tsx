@@ -30,7 +30,11 @@ const AnalysisHolder: React.FC<{
   const nodeQuery = useQuery({
     queryKey: generateQueryKey.codeNode(selectedFinding?.code_version_node_id ?? ""),
     queryFn: () =>
-      codeActions.getNode(version.code_version_id, selectedFinding?.code_version_node_id ?? ""),
+      codeActions.getNode(
+        teamSlug,
+        version.code_version_id,
+        selectedFinding?.code_version_node_id ?? "",
+      ),
     enabled: !!selectedFinding,
   });
 

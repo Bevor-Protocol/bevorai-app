@@ -56,7 +56,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   if (node) {
     const fetchedNode = await queryClient.fetchQuery({
       queryKey: generateQueryKey.codeNode(node),
-      queryFn: () => codeActions.getNode(resolvedParams.codeId, node),
+      queryFn: () => codeActions.getNode(resolvedParams.teamSlug, resolvedParams.codeId, node),
     });
     position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
   }

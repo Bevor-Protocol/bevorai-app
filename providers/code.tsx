@@ -147,7 +147,7 @@ export const CodeProvider: React.FC<{
           const lineNum = lineElement.dataset.line;
           if (!linesSeen.has(lineNum)) {
             const lineRect = lineElement.getBoundingClientRect();
-            const relativeTop = lineRect.top - containerTop + window.scrollY;
+            const relativeTop = lineRect.top - containerTop;
             linePositions.push(relativeTop);
             linesSeen.add(lineNum);
           }
@@ -157,11 +157,35 @@ export const CodeProvider: React.FC<{
 
     if (linePositions.length === 0) return;
 
-    const meanPos = linePositions.reduce((sum, pos) => sum + pos, 0) / linePositions.length;
-    const scrollPosition = meanPos - window.innerHeight / 2;
+    let scrollPosition: number;
+    const blockTop = Math.min(...linePositions);
+    const blockBottom = Math.max(...linePositions);
+    const blockHeight = blockBottom - blockTop;
+
+    // container ref has no fixed height. Add some buffer for the subnav + header to infer
+    // when to pin code blocks to the top of the screen.
+    if (blockHeight > window.innerHeight - 80) {
+      scrollPosition = Math.min(...linePositions) - 100;
+    } else {
+      // scrolls such that the middle of the element is in the middle of the screen
+      scrollPosition = blockTop + blockHeight / 2 - window.innerHeight / 2;
+    }
+
+    // if 50% of the element is already in view, don't scroll.
+    // const blockTopAbsolute = containerTop + blockTop;
+    // const blockBottomAbsolute = containerTop + blockBottom;
+
+    // const visibleTop = Math.max(0, blockTopAbsolute);
+    // const visibleBottom = Math.min(window.innerHeight, blockBottomAbsolute);
+    // const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+    // const isFiftyPercentVisible = visibleHeight >= blockHeight * 0.5;
+
+    // if (isFiftyPercentVisible) {
+    //   return;
+    // }
 
     window.scrollTo({
-      top: Math.max(0, scrollPosition),
+      top: Math.max(0, scrollPosition + 196),
       behavior: "smooth",
     });
   }, []);

@@ -2,12 +2,12 @@
 
 import { sharedAPI } from "@/lib/api";
 import {
-  AnalysisNodeSchemaI,
-  CodeMappingSchemaI,
   CodeSourceSchemaI,
   CodeSourceWithContentSchemaI,
   NodeSchemaI,
   NodeWithContentSchemaI,
+  SharedAnalysisNodeSchemaI,
+  SharedCodeMappingSchemaI,
 } from "@/utils/types";
 
 /*
@@ -16,7 +16,7 @@ All these endpoints require no authentication, and will all go through the analy
 The "auth" will be designated by whether the analysis is public or not.
 */
 
-export const getAnalysis = async (nodeId: string): Promise<AnalysisNodeSchemaI> => {
+export const getAnalysis = async (nodeId: string): Promise<SharedAnalysisNodeSchemaI> => {
   return sharedAPI
     .get(`/shared/analyses/${nodeId}?with_findings=true&with_scopes=true`)
     .then((response) => {
@@ -24,7 +24,7 @@ export const getAnalysis = async (nodeId: string): Promise<AnalysisNodeSchemaI> 
     });
 };
 
-export const getCode = async (nodeId: string): Promise<CodeMappingSchemaI> => {
+export const getCode = async (nodeId: string): Promise<SharedCodeMappingSchemaI> => {
   return sharedAPI.get(`/shared/analyses/${nodeId}/code`).then((response) => {
     return response.data;
   });

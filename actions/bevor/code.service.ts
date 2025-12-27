@@ -196,10 +196,16 @@ export const getTree = async (teamSlug: string, codeId: string): Promise<TreeRes
     });
 };
 
-export const getNode = async (codeId: string, nodeId: string): Promise<NodeWithContentSchemaI> => {
-  return api.get(`/codes/${codeId}/nodes/${nodeId}`).then((response) => {
-    return response.data;
-  });
+export const getNode = async (
+  teamSlug: string,
+  codeId: string,
+  nodeId: string,
+): Promise<NodeWithContentSchemaI> => {
+  return api
+    .get(`/codes/${codeId}/nodes/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      return response.data;
+    });
 };
 
 export const getNodes = async (

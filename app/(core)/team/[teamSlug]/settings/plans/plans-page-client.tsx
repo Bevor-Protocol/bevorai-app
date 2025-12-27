@@ -159,8 +159,8 @@ const PlanCard: React.FC<{
 
 export const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   const { data: plans, isLoading: plansLoading } = useQuery({
-    queryKey: generateQueryKey.products(team.id),
-    queryFn: () => billingActions.getProducts(team.id),
+    queryKey: generateQueryKey.products(team.slug),
+    queryFn: () => billingActions.getProducts(team.slug),
   });
 
   if (plansLoading) {

@@ -24,7 +24,7 @@ const PlansPage: AsyncComponent<PageProps> = async ({ params }) => {
       </div>
       <div className="mb-8">
         <h2 className="text-xl font-semibold  mb-6">Optional Add-ons</h2>
-        <AddonsSection teamSlug={team.id} />
+        <AddonsSection teamSlug={teamSlug} />
       </div>
     </>
   );
