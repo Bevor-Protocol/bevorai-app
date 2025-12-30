@@ -1,7 +1,11 @@
 "use server";
 
 import api from "@/lib/api";
-import { GithubInstallationsSchemaI, GithubRepositoriesSchemaI } from "@/utils/types";
+import {
+  GithubInstallationsSchemaI,
+  GithubRepoBranchesSchemaI,
+  GithubRepositoriesSchemaI,
+} from "@/utils/types";
 
 export const handleCallback = async (data: {
   code: string;
@@ -42,6 +46,12 @@ export const getRepositories = async (
     url += `?team_slug=${teamSlug}`;
   }
   return api.get(url).then((response) => {
+    return response.data;
+  });
+};
+
+export const getBranches = async (repoId: number): Promise<GithubRepoBranchesSchemaI> => {
+  return api.get(`github/branches/${repoId}`).then((response) => {
     return response.data;
   });
 };

@@ -12,7 +12,7 @@ export const CodeCreate: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
-          New Code
+          Upload Code
         </Button>
       </DialogTrigger>
       <DialogContent>

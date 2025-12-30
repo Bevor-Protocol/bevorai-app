@@ -21,8 +21,10 @@ import {
   Clock,
   Code2,
   GitBranch,
+  Leaf,
   Lock,
   MoreHorizontal,
+  TreeDeciduous,
   Unlock,
   User,
 } from "lucide-react";
@@ -200,10 +202,43 @@ export const AnalysisVersionElementBare: React.FC<
   const isRoot = !analysisVersion.parent_node_id;
   const isLeaf = analysisVersion.is_leaf;
 
+  const getStatusIndicator = (): React.ReactNode => {
+    let statusText: string;
+    let circleColor: string;
+
+    switch (analysisVersion.status) {
+      case "success":
+        statusText = "Processed";
+        circleColor = "bg-green-500";
+        break;
+      case "partial":
+        statusText = "Processed";
+        circleColor = "bg-green-500";
+        break;
+      case "processing":
+      case "waiting":
+        statusText = "Processing";
+        circleColor = "bg-blue-400 animate-pulse";
+        break;
+      case "failed":
+      default:
+        statusText = "Failed";
+        circleColor = "bg-destructive";
+        break;
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <div className={cn("size-2 rounded-full shrink-0", circleColor)} />
+        <span className="text-xs text-muted-foreground">{statusText}</span>
+      </div>
+    );
+  };
+
   return (
     <div
       className={cn(
-        "grid grid-cols-[24px_1fr_1fr_2fr_1fr_1fr_1fr_auto_40px] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
+        "grid grid-cols-[24px_1fr_60px_1fr_2fr_1fr_1fr_1fr_auto_40px] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
         className,
       )}
       {...props}
@@ -216,15 +251,24 @@ export const AnalysisVersionElementBare: React.FC<
       </div>
       <div className="flex items-center gap-1 justify-start">
         {isRoot && (
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap shrink-0">
-            ROOT
+          <span
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap shrink-0"
+            title="root"
+          >
+            <TreeDeciduous className="size-3" />
           </span>
         )}
         {isLeaf && (
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap shrink-0">
-            LEAF
+          <span
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap shrink-0"
+            title="leaf"
+          >
+            <Leaf className="size-3" />
           </span>
         )}
+      </div>
+      <div className="flex flex-col shrink-0 justify-center text-center">
+        {getStatusIndicator()}
       </div>
       <div className="text-xs text-muted-foreground font-mono truncate flex items-center gap-2">
         <Code2 className="size-3" />
@@ -232,7 +276,6 @@ export const AnalysisVersionElementBare: React.FC<
       </div>
 
       <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap justify-center">
-        {analysisVersion.status}
         {getTriggerIcon(analysisVersion.trigger)}
         {getTriggerLabel(analysisVersion.trigger)}
       </div>
@@ -282,13 +325,19 @@ export const AnalysisVersionCompactElement: React.FC<
       </div>
       <div className="flex items-center gap-1 justify-start">
         {isRoot && (
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap shrink-0">
-            ROOT
+          <span
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap shrink-0"
+            title="root"
+          >
+            <TreeDeciduous className="size-3" />
           </span>
         )}
         {isLeaf && (
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap shrink-0">
-            LEAF
+          <span
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap shrink-0"
+            title="leaf"
+          >
+            <Leaf className="size-3" />
           </span>
         )}
       </div>

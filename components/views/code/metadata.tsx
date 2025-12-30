@@ -75,7 +75,7 @@ const VersionDisplay: React.FC<{ version: CodeMappingSchemaI }> = ({ version }) 
     return (
       <Button asChild variant="ghost" className="text-xs font-mono">
         <a href={url} target="_blank" referrerPolicy="no-referrer">
-          <span>{version.commit?.branch}</span>
+          <span>{version.branch}</span>
           <GitCommit className="size-3" />
           <span>{truncateId(version.version_identifier)}</span>
         </a>

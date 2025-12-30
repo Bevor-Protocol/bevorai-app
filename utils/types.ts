@@ -245,16 +245,12 @@ export interface ProjectSchemaI extends BaseSchema {
   github_repo_id?: number;
 }
 
-export interface GithubInstallationSchemaI {
+export interface GithubAccountSchemaI {
   id: number;
-  created_at: string;
-  updated_at: string;
-  account_login: string;
-  account_type: string;
-  account_url: string;
-  account_avatar_url: string;
-  suspended_at?: string | null;
-  deleted_at?: string | null;
+  login: string;
+  type: string;
+  url: string;
+  avatar_url: string;
 }
 
 export interface GithubRepositorySchemaI {
@@ -264,7 +260,7 @@ export interface GithubRepositorySchemaI {
   name: string;
   is_private: boolean;
   is_active: boolean;
-  installation: GithubInstallationSchemaI;
+  account: GithubAccountSchemaI;
   full_name: string; // computed field
   url: string; // computed field
 }
@@ -300,6 +296,7 @@ export interface CodeVersionSchemaI extends BaseSchema {
   version_identifier: string;
   source_type: SourceTypeEnum;
   solc_version?: string;
+  branch?: string;
   status:
     | "waiting"
     | "parsing"
@@ -326,8 +323,6 @@ export interface GithubCommitSchemaI {
   sha: string;
   author: string;
   message: string;
-  ref: string;
-  branch: string;
   timestamp: string;
 }
 
@@ -640,6 +635,18 @@ export interface GithubInstallationsSchemaI extends GithubBaseSchemaI {
 
 export interface GithubRepositoriesSchemaI extends GithubBaseSchemaI {
   repository_info?: GithubRepositoriesResponse;
+}
+
+export interface GithubRepoBranchesSchemaI extends GithubBaseSchemaI {
+  is_member: boolean;
+  branches_info: {
+    name: string;
+    commit: {
+      sha: string;
+      url: string;
+    };
+    protected: boolean;
+  }[];
 }
 
 export type SharedAnalysisNodeSchemaI = Omit<
