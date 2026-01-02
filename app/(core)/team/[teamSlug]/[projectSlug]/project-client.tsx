@@ -1,6 +1,12 @@
 "use client";
 
-import { activityActions, analysisActions, codeActions, projectActions } from "@/actions/bevor";
+import {
+  activityActions,
+  analysisActions,
+  codeActions,
+  githubActions,
+  projectActions,
+} from "@/actions/bevor";
 import ActivityList from "@/components/activity";
 import { AnalysisVersionCompactElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
@@ -42,7 +48,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CodeVersionElementCompact } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { useFormReducer } from "@/hooks/useFormReducer";
-import { generateQueryKey } from "@/utils/constants";
+import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
 import { ProjectDetailedSchemaI } from "@/utils/types";
@@ -79,7 +85,7 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem className="[&_svg]:ml-auto" asChild>
               <Link href={`/team/${teamSlug}/${projectSlug}/codes/new`}>
-                Upload new code
+                Upload Code
                 <LucideIcon assetType="code" />
               </Link>
             </DropdownMenuItem>
@@ -379,8 +385,16 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
 }) => {
   const { data: project } = useSuspenseQuery({
     queryKey: generateQueryKey.project(projectSlug),
-    queryFn: async () => projectActions.getProject(teamSlug, projectSlug),
+    queryFn: () => projectActions.getProject(teamSlug, projectSlug),
   });
+
+  const { data: branches } = useQuery({
+    queryKey: [QUERY_KEYS.GITHUB_BRANCHES, project.github_repo_id],
+    queryFn: () => githubActions.getBranches(project.github_repo_id!),
+    enabled: !!project.github_repo_id,
+  });
+
+  console.log(branches);
 
   return (
     <div className="flex flex-col gap-6">
@@ -397,8 +411,8 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
               >
                 <div className="relative size-4 shrink-0">
                   <Image
-                    src={project.github_repo.installation.account_avatar_url}
-                    alt={project.github_repo.installation.account_login}
+                    src={project.github_repo.account.avatar_url}
+                    alt={project.github_repo.account.login}
                     fill
                     className="rounded-full object-cover"
                     unoptimized

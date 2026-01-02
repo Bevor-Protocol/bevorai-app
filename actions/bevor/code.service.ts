@@ -4,6 +4,8 @@ import api from "@/lib/api";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import {
+  CreateCodeFromGithubFormValues,
+  CreateCodeFromPublicGithubFormValues,
   PasteCodeFileFormValues,
   ScanCodeAddressFormValues,
   UploadCodeFileFormValues,
@@ -126,6 +128,65 @@ export const contractUploadScan = async (
     .post(
       "/codes/create/scan",
       { address: data.address, project_id: projectId, parent_id: data.parent_id },
+      { headers: { "bevor-team-slug": teamSlug } },
+    )
+    .then((response) => {
+      return {
+        ...response.data,
+        toInvalidate,
+      };
+    });
+};
+
+export const contractUploadPublicRepo = async (
+  teamSlug: string,
+  projectId: string,
+  data: CreateCodeFromPublicGithubFormValues,
+): Promise<
+  CodeCreateSchemaI & {
+    toInvalidate: QueryKey[];
+  }
+> => {
+  const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
+  if (data.parent_id) {
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  }
+  return api
+    .post(
+      "/codes/create/repo",
+      { url: data.url, project_id: projectId, parent_id: data.parent_id },
+      { headers: { "bevor-team-slug": teamSlug } },
+    )
+    .then((response) => {
+      return {
+        ...response.data,
+        toInvalidate,
+      };
+    });
+};
+
+export const createCodeConnectedGithub = async (
+  teamSlug: string,
+  projectId: string,
+  data: CreateCodeFromGithubFormValues,
+): Promise<
+  CodeCreateSchemaI & {
+    toInvalidate: QueryKey[];
+  }
+> => {
+  const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
+  if (data.parent_id) {
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  }
+  return api
+    .post(
+      "/codes/create/connected-repo",
+      {
+        project_id: projectId,
+        branch: data.branch,
+        commit_sha: data.commit,
+        parent_id: data.parent_id,
+      },
       { headers: { "bevor-team-slug": teamSlug } },
     )
     .then((response) => {

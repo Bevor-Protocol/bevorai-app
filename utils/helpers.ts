@@ -1,5 +1,5 @@
 import { BLOCK_EXPLORER_BASE_URLS } from "@/utils/constants";
-import { DropdownOption } from "@/utils/types";
+import { CodeMappingSchemaI, DropdownOption } from "@/utils/types";
 import { Address } from "viem";
 
 export const trimAddress = (address: Address | string | undefined): string => {
@@ -97,4 +97,11 @@ export const truncateVersion = (s: string): string => {
 export const explorerUrl = (network: string, address: string): string => {
   const explorer = BLOCK_EXPLORER_BASE_URLS[network];
   return explorer + "/address/" + address;
+};
+
+export const commitUrl = (version: CodeMappingSchemaI): string => {
+  const org = version.repository?.account.login;
+  const repo = version.repository?.name;
+  const sha = version.commit?.sha;
+  return `https://github.com/${org}/${repo}/commit/${sha}`;
 };

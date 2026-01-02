@@ -38,6 +38,7 @@ export const QUERY_KEYS = {
   BREADCRUMBS: "breadcrumbs",
   GITHUB_INSTALLATIONS: "github-installations",
   GITHUB_REPOSITORIES: "github-repositories",
+  GITHUB_BRANCHES: "github-branches",
 };
 
 export const NETWORKS = [

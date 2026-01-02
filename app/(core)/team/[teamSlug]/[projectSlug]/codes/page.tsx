@@ -45,7 +45,7 @@ const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params, s
                 href={`/team/${resolvedParams.teamSlug}/${resolvedParams.projectSlug}/codes/new`}
               >
                 <Plus className="size-4" />
-                New Code
+                Upload Code
               </Link>
             </Button>
           </div>

@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { SourceTypeEnum } from "@/utils/enums";
 import {
+  commitUrl,
+  explorerUrl,
   formatDate,
   formatDateShort,
   trimAddress,
@@ -26,6 +28,7 @@ import {
   ArrowUp,
   Clock,
   Code,
+  ExternalLink,
   GitBranch,
   GitCommit,
   MessageSquare,
@@ -86,8 +89,8 @@ const VersionDisplay: React.FC<{ version: CodeMappingSchemaI; showRepo?: boolean
           <div className="flex items-center gap-1">
             <div className="relative size-4 shrink-0">
               <Image
-                src={version.repository.installation.account_avatar_url}
-                alt={version.repository.installation.account_login}
+                src={version.repository.account.avatar_url}
+                alt={version.repository.account.login}
                 fill
                 className="rounded-full object-cover"
                 unoptimized
@@ -97,7 +100,7 @@ const VersionDisplay: React.FC<{ version: CodeMappingSchemaI; showRepo?: boolean
           </div>
         )}
         <div className="flex items-center gap-1">
-          <span>{version.commit?.branch}</span>
+          <span>{version?.branch}</span>
           <GitCommit className="size-3" />
           <span>{truncateId(version.version_identifier)}</span>
         </div>
@@ -148,7 +151,7 @@ export const VersionMeta: React.FC<{
       {!!version.commit && version.version_method === "commit" && (
         <div className="flex items-center gap-1">
           <GitBranch className="size-3" />
-          <span className="font-mono">{version.commit.branch}</span>
+          <span className="font-mono">{version.branch}</span>
         </div>
       )}
       {version.version_method === "hash" && (
@@ -208,9 +211,7 @@ export const CodeVersionElementCompact: React.FC<
           {!!version.commit && (
             <div className="flex items-center gap-1 shrink-0">
               <GitBranch className="size-3 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground font-mono">
-                {version.commit.branch}
-              </span>
+              <span className="text-xs text-muted-foreground font-mono">{version.branch}</span>
             </div>
           )}
           <div className="flex items-center gap-1 shrink-0">
@@ -328,6 +329,22 @@ const CodeVersionActions: React.FC<{
             Chat
           </Link>
         </DropdownMenuItem>
+        {version.network && (
+          <DropdownMenuItem asChild>
+            <a href={explorerUrl(version.network, version.version_identifier)} target="_blank">
+              <ExternalLink />
+              View On Explorer
+            </a>
+          </DropdownMenuItem>
+        )}
+        {version.repository && (
+          <DropdownMenuItem asChild>
+            <a href={commitUrl(version)} target="_blank">
+              <ExternalLink />
+              View Commit
+            </a>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -371,7 +388,7 @@ export const CodeVersionElementBare: React.FC<
     return (
       <div className="flex items-center gap-2">
         <div className={cn("size-2 rounded-full shrink-0", circleColor)} />
-        <span className="text-xs text-foreground">{statusText}</span>
+        <span className="text-xs text-muted-foreground">{statusText}</span>
       </div>
     );
   };
@@ -381,7 +398,7 @@ export const CodeVersionElementBare: React.FC<
   return (
     <div
       className={cn(
-        "grid grid-cols-[24px_1fr_1fr_1fr_1fr_24px_1fr_40px] items-center gap-3 py-3 px-3 border rounded-lg",
+        "grid grid-cols-[24px_1fr_1fr_1fr_2fr_24px_1fr_40px] items-center gap-3 py-3 px-3 border rounded-lg",
         className,
       )}
       {...props}
@@ -392,8 +409,10 @@ export const CodeVersionElementBare: React.FC<
       <div className="min-w-0">
         <h3 className="text-sm font-medium truncate">{version.inferred_name}</h3>
       </div>
-      <div className="flex flex-col shrink-0 justify-center">{getStatusIndicator()}</div>
-      <div className="flex flex-col shrink-0 justify-center">
+      <div className="flex flex-col shrink-0 justify-center text-center">
+        {getStatusIndicator()}
+      </div>
+      <div className="flex flex-col shrink-0 justify-center text-center">
         <span className="text-xs text-muted-foreground">
           {formatSourceType(version.source_type)}
         </span>
@@ -412,7 +431,7 @@ export const CodeVersionElementBare: React.FC<
           </div>
         )}
       </div>
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0 whitespace-nowrap">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0 whitespace-nowrap justify-center text-center">
         <span>{formatDateShort(version.created_at)}</span>
         <span>by</span>
         <Icon size="sm" seed={version.user.id} className="shrink-0" />

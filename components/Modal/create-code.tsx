@@ -37,7 +37,7 @@ const CreateCodeModal: React.FC<{
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Add New Code</DialogTitle>
+        <DialogTitle>Upload New Code</DialogTitle>
         <DialogDescription>
           Choose a project that this new code should be added to
         </DialogDescription>

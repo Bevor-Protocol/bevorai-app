@@ -90,6 +90,21 @@ export const uploadCodeFolderSchema = z.object({
 
 export type UploadCodeFolderFormValues = z.infer<typeof uploadCodeFolderSchema>;
 
+export const createCodeFromGithubSchema = z.object({
+  branch: z.string().optional(),
+  commit: z.string().optional(),
+  parent_id: z.string().optional(),
+});
+
+export type CreateCodeFromGithubFormValues = z.infer<typeof createCodeFromGithubSchema>;
+
+export const createCodeFromPublicGithubSchema = z.object({
+  url: z.string(),
+  parent_id: z.string().optional(),
+});
+
+export type CreateCodeFromPublicGithubFormValues = z.infer<typeof createCodeFromPublicGithubSchema>;
+
 export const analysisFindingBodySchema = z.object({
   type: z.enum(FindingType),
   level: z.enum(FindingLevel),
