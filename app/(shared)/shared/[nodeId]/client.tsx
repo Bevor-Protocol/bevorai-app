@@ -148,7 +148,11 @@ const AnalysisHolder: React.FC<{
 
   const nodeQuery = useQuery({
     queryKey: generateQueryKey.codeNode(selectedFinding?.id ?? ""),
-    queryFn: () => sharedActions.getNode(analysis.id, selectedFinding?.code_version_node_id ?? ""),
+    queryFn: () =>
+      sharedActions.getNode(analysis.id, selectedFinding?.code_version_node_id ?? "").then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: !!selectedFinding,
   });
 

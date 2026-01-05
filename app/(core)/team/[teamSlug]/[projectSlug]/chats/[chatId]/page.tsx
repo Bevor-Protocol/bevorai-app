@@ -29,11 +29,19 @@ const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params }) => {
   await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.chats(resolvedParams.teamSlug, chatQuery),
-      queryFn: () => chatActions.getChats(resolvedParams.teamSlug, chatQuery),
+      queryFn: () =>
+        chatActions.getChats(resolvedParams.teamSlug, chatQuery).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
     queryClient.fetchQuery({
       queryKey: generateQueryKey.chat(resolvedParams.chatId),
-      queryFn: () => chatActions.getChat(resolvedParams.teamSlug, resolvedParams.chatId),
+      queryFn: () =>
+        chatActions.getChat(resolvedParams.teamSlug, resolvedParams.chatId).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
   ]);
 

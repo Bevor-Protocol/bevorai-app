@@ -33,17 +33,29 @@ const ContainerBreadcrumb: React.FC<{
 
   const { data: teamsRaw } = useQuery({
     queryKey: generateQueryKey.teams(),
-    queryFn: () => userActions.teams(),
+    queryFn: () =>
+      userActions.teams().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: projects } = useQuery({
     queryKey: generateQueryKey.allProjects(),
-    queryFn: () => userActions.projects(),
+    queryFn: () =>
+      userActions.projects().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: user } = useQuery({
     queryKey: generateQueryKey.currentUser(),
-    queryFn: () => userActions.get(),
+    queryFn: () =>
+      userActions.get().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const curTeam = useMemo(() => {

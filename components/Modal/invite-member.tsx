@@ -38,7 +38,11 @@ const InviteMemberModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   ]);
 
   const inviteMembersMutation = useMutation({
-    mutationFn: async (data: InviteFormValues) => teamActions.inviteMembers(teamSlug, data),
+    mutationFn: async (data: InviteFormValues) =>
+      teamActions.inviteMembers(teamSlug, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

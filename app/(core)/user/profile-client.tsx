@@ -22,11 +22,19 @@ export const ProfileClient: React.FC = () => {
 
   const { data: user, isLoading } = useQuery({
     queryKey: generateQueryKey.currentUser(),
-    queryFn: () => userActions.get(),
+    queryFn: () =>
+      userActions.get().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (newUsername: string) => userActions.update({ username: newUsername }),
+    mutationFn: async (newUsername: string) =>
+      userActions.update({ username: newUsername }).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

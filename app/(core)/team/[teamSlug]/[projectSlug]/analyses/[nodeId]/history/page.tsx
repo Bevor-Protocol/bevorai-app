@@ -20,10 +20,12 @@ const AnalysisNodesHistoryPage: AsyncComponent<PageProps> = async ({ params, sea
   const resolvedParams = await params;
   const { user, ...resolvedSearchParams } = await searchParams;
 
-  const analysis = await analysisActions.getAnalysis(
-    resolvedParams.teamSlug,
-    resolvedParams.nodeId,
-  );
+  const analysis = await analysisActions
+    .getAnalysis(resolvedParams.teamSlug, resolvedParams.nodeId)
+    .then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
 
   const initialQuery = extractAnalysisNodesQuery({
     ...resolvedSearchParams,
@@ -32,7 +34,10 @@ const AnalysisNodesHistoryPage: AsyncComponent<PageProps> = async ({ params, sea
   });
 
   if (user !== "unset") {
-    const currentUser = await userActions.get();
+    const currentUser = await userActions.get().then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
     initialQuery.user_id = currentUser.id;
   }
 

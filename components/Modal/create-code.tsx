@@ -31,7 +31,11 @@ const CreateCodeModal: React.FC<{
 
   const { data: projects } = useQuery({
     queryKey: generateQueryKey.projects(teamSlug, DefaultProjectsQuery),
-    queryFn: async () => projectActions.getProjects(teamSlug, DefaultProjectsQuery),
+    queryFn: async () =>
+      projectActions.getProjects(teamSlug, DefaultProjectsQuery).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return (

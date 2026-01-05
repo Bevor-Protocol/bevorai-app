@@ -1,7 +1,7 @@
 "use server";
 
 import api, { idpApi } from "@/lib/api";
-import { TokenIssueResponse } from "@/utils/types";
+import { ApiResponse, TokenIssueResponse } from "@/utils/types";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revokeToken } from "./token.service";
@@ -19,35 +19,95 @@ export const magicLink = async (
     login_magic_link_url: string;
     signup_magic_link_url: string;
   },
-): Promise<boolean> => {
-  return idpApi.post("/user/auth/magic-link", { ...data, email }).then((response) => {
-    return response.data.is_user_created;
-  });
+): ApiResponse<boolean> => {
+  return idpApi
+    .post("/user/auth/magic-link", { ...data, email })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.is_user_created,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const authenticate = async (data: {
   token: string;
   method: "oauth" | "magic_links";
-}): Promise<TokenIssueResponse> => {
+}): ApiResponse<TokenIssueResponse> => {
   // the token acts as the authorization. This handles authentication + token issuance.
-  return idpApi.post("/user/auth/authenticate", data).then((response) => {
-    return response.data;
-  });
+  return idpApi
+    .post("/user/auth/authenticate", data)
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
-export const getAttachToken = async (providerName: string): Promise<string> => {
-  return api.get(`/user/auth/attach?provider_name=${providerName}`).then((response) => {
-    return response.data.token;
-  });
+export const getAttachToken = async (providerName: string): ApiResponse<string> => {
+  return api
+    .get(`/user/auth/attach?provider_name=${providerName}`)
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.token,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
-export const detachOAuth = async (providerName: "google" | "github"): Promise<void> => {
-  return api.delete(`/user/auth/oauth/${providerName}`).then(() => {
-    return;
-  });
+export const detachOAuth = async (providerName: "google" | "github"): ApiResponse<null> => {
+  return api
+    .delete(`/user/auth/oauth/${providerName}`)
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: null,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
-export const logout = async (): Promise<void> => {
+export const logout = async (): ApiResponse<void> => {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get("bevor-refresh-token")?.value;
   if (!refreshToken) {

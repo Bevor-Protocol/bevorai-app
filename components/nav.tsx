@@ -57,7 +57,11 @@ const NotificationsDropdown: React.FC<{ invites: MemberInviteSchema[] }> = ({ in
   const [selectedInvite, setSelectedInvite] = useState<MemberInviteSchema | null>(null);
 
   const acceptInviteMutation = useMutation({
-    mutationFn: async (inviteId: string) => teamActions.acceptInvite(inviteId),
+    mutationFn: async (inviteId: string) =>
+      teamActions.acceptInvite(inviteId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -67,7 +71,10 @@ const NotificationsDropdown: React.FC<{ invites: MemberInviteSchema[] }> = ({ in
 
   const rejectInviteMutation = useMutation({
     mutationFn: async (data: { teamSlug: string; inviteId: string }) =>
-      teamActions.removeInvite(data.teamSlug, data.inviteId),
+      teamActions.removeInvite(data.teamSlug, data.inviteId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -218,7 +225,11 @@ const UserDropdown: React.FC<{
   user: UserDetailedSchemaI | null | undefined;
 }> = ({ user }) => {
   const logoutMutation = useMutation({
-    mutationFn: async () => authActions.logout(),
+    mutationFn: async () =>
+      authActions.logout().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return (
@@ -267,12 +278,20 @@ const UserDropdown: React.FC<{
 const AppNav: React.FC = () => {
   const { data: user } = useQuery({
     queryKey: generateQueryKey.currentUser(),
-    queryFn: () => userActions.get(),
+    queryFn: () =>
+      userActions.get().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: invites = [] } = useQuery({
     queryKey: generateQueryKey.userInvites(),
-    queryFn: async () => userActions.invites(),
+    queryFn: async () =>
+      userActions.invites().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return (

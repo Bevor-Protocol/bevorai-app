@@ -31,7 +31,11 @@ const GithubRepoStep: React.FC<{
 
   const { data: project } = useSuspenseQuery({
     queryKey: generateQueryKey.project(projectSlug),
-    queryFn: async () => projectActions.getProject(teamSlug, projectSlug),
+    queryFn: async () =>
+      projectActions.getProject(teamSlug, projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const initialFormState: CreateCodeFromGithubFormValues = {
@@ -44,7 +48,11 @@ const GithubRepoStep: React.FC<{
     useFormReducer<CreateCodeFromGithubFormValues>(initialFormState);
   const { data: branches } = useQuery({
     queryKey: [QUERY_KEYS.GITHUB_BRANCHES, project.github_repo_id],
-    queryFn: () => githubActions.getBranches(project.github_repo_id!),
+    queryFn: () =>
+      githubActions.getBranches(project.github_repo_id!).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: !!project.github_repo_id,
   });
 
@@ -104,7 +112,10 @@ const GithubRepoStep: React.FC<{
 
   const mutation = useMutation({
     mutationFn: async (data: CreateCodeFromGithubFormValues) =>
-      codeActions.createCodeConnectedGithub(project.team.slug, project.id, data),
+      codeActions.createCodeConnectedGithub(project.team.slug, project.id, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onMutate: () => {
       updateFormState({ type: "SET_ERRORS", errors: {} });
       sseToastId.current = toast.loading("Creating code version from repository...");

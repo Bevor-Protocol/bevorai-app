@@ -1,10 +1,10 @@
 "use client";
 
 import { codeActions } from "@/actions/bevor";
-import { AnalysisEmpty } from "@/components/analysis/empty";
 import { CodeVersionFilters } from "@/components/filters/code-versions";
 import { Pagination } from "@/components/pagination";
 import { CodeVersionElement } from "@/components/versions/element";
+import { VersionEmpty } from "@/components/versions/empty";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
@@ -32,7 +32,11 @@ export const CodeVersionsView: React.FC<{
 
   const versionsQuery = useQuery({
     queryKey: generateQueryKey.codes(teamSlug, debouncedState),
-    queryFn: () => codeActions.getVersions(teamSlug, debouncedState),
+    queryFn: () =>
+      codeActions.getVersions(teamSlug, debouncedState).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -115,7 +119,7 @@ export const CodeVersionsView: React.FC<{
 
         {isEmpty && !isAnySearched && !isFetching && (
           <div className="animate-in fade-in duration-200">
-            <AnalysisEmpty centered />
+            <VersionEmpty centered />
           </div>
         )}
 

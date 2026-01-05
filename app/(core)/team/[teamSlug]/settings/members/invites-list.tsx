@@ -55,11 +55,19 @@ const InvitesList: React.FC<InvitesListProps> = ({ teamSlug, invites, isLoading 
 
   const { data: currentMember } = useSuspenseQuery({
     queryKey: generateQueryKey.currentMember(teamSlug),
-    queryFn: async () => teamActions.getCurrentMember(teamSlug),
+    queryFn: async () =>
+      teamActions.getCurrentMember(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const removeInviteMutation = useMutation({
-    mutationFn: async (inviteId: string) => teamActions.removeInvite(teamSlug, inviteId),
+    mutationFn: async (inviteId: string) =>
+      teamActions.removeInvite(teamSlug, inviteId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -69,7 +77,10 @@ const InvitesList: React.FC<InvitesListProps> = ({ teamSlug, invites, isLoading 
 
   const updateInviteMutation = useMutation({
     mutationFn: async (data: UpdateMemberValues & { inviteId: string }) =>
-      teamActions.updateInvite(teamSlug, data.inviteId, { role: data.role }),
+      teamActions.updateInvite(teamSlug, data.inviteId, { role: data.role }).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

@@ -10,7 +10,10 @@ interface PageProps {
 
 const BillingPage: AsyncComponent<PageProps> = async ({ params }) => {
   const { teamSlug } = await params;
-  const member = await teamActions.getCurrentMember(teamSlug);
+  const member = await teamActions.getCurrentMember(teamSlug).then((r) => {
+    if (!r.ok) throw r;
+    return r.data;
+  });
 
   if (member.role !== MemberRoleEnum.OWNER) {
     return (

@@ -27,7 +27,11 @@ const InvoiceNameSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 
   const { data: customer } = useQuery({
     queryKey: generateQueryKey.customer(teamSlug),
-    queryFn: () => billingActions.getCustomer(teamSlug),
+    queryFn: () =>
+      billingActions.getCustomer(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   useEffect(() => {
@@ -38,7 +42,11 @@ const InvoiceNameSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   }, [customer?.name]);
 
   const updateNameMutation = useMutation({
-    mutationFn: (data: { name: string }) => billingActions.updateCustomer(teamSlug, data),
+    mutationFn: (data: { name: string }) =>
+      billingActions.updateCustomer(teamSlug, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: (data) => {
       // don't need to invalidate here. The PATCH returns the same response as the GET.
       const queryKey = generateQueryKey.customer(teamSlug);
@@ -92,7 +100,11 @@ const BillingEmailSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 
   const { data: customer } = useQuery({
     queryKey: generateQueryKey.customer(teamSlug),
-    queryFn: () => billingActions.getCustomer(teamSlug),
+    queryFn: () =>
+      billingActions.getCustomer(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   useEffect(() => {
@@ -102,7 +114,11 @@ const BillingEmailSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   }, [customer?.email, email]);
 
   const updateEmailMutation = useMutation({
-    mutationFn: (data: { email: string }) => billingActions.updateCustomer(teamSlug, data),
+    mutationFn: (data: { email: string }) =>
+      billingActions.updateCustomer(teamSlug, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: (data) => {
       const queryKey = generateQueryKey.customer(teamSlug);
       queryClient.setQueryData(queryKey, data);
@@ -170,15 +186,24 @@ const BillingEmailSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 const PaymentMethodSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const { data: paymentMethod, isLoading: paymentMethodLoading } = useQuery({
     queryKey: generateQueryKey.paymentMethods(teamSlug),
-    queryFn: () => billingActions.getPaymentMethod(teamSlug),
+    queryFn: () =>
+      billingActions.getPaymentMethod(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const checkoutMutation = useMutation({
     mutationFn: () =>
-      billingActions.updatePaymentMethod(teamSlug, {
-        success_url: `${window.location.origin}/team/${teamSlug}/settings/billing?success=true`,
-        cancel_url: `${window.location.origin}/team/${teamSlug}/settings/billing?canceled=true`,
-      }),
+      billingActions
+        .updatePaymentMethod(teamSlug, {
+          success_url: `${window.location.origin}/team/${teamSlug}/settings/billing?success=true`,
+          cancel_url: `${window.location.origin}/team/${teamSlug}/settings/billing?canceled=true`,
+        })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     onSuccess: (data) => {
       window.location.href = data.url;
     },
@@ -284,7 +309,11 @@ const CurrentSubscription: React.FC<{
   const isCancelling = subscription.subscription?.cancel_at_period_end;
 
   const unsubscribeMutation = useMutation({
-    mutationFn: async () => billingActions.cancelSubscription(teamSlug),
+    mutationFn: async () =>
+      billingActions.cancelSubscription(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -293,7 +322,11 @@ const CurrentSubscription: React.FC<{
   });
 
   const reactivateMutation = useMutation({
-    mutationFn: async () => billingActions.reactivateSubscription(teamSlug),
+    mutationFn: async () =>
+      billingActions.reactivateSubscription(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -463,7 +496,11 @@ const CurrentSubscription: React.FC<{
 const AddonsSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const { data: addons, isLoading: addonsLoading } = useQuery({
     queryKey: generateQueryKey.addons(teamSlug),
-    queryFn: () => billingActions.getAddons(teamSlug),
+    queryFn: () =>
+      billingActions.getAddons(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   if (addonsLoading) {
@@ -539,7 +576,11 @@ const NoSubscription: React.FC<{ teamSlug: string; subscription?: StripeSubscrip
 const BillingPageClient: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const { data: subscription } = useQuery({
     queryKey: generateQueryKey.subscription(teamSlug),
-    queryFn: () => billingActions.getSubscription(teamSlug),
+    queryFn: () =>
+      billingActions.getSubscription(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const hasActiveSubscription =

@@ -11,7 +11,10 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
       return response;
     }
 
-    await tokenActions.revokeToken(refreshToken.value);
+    await tokenActions.revokeToken(refreshToken.value).then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
 
     response.cookies.delete("bevor-token");
     response.cookies.delete("bevor-refresh-token");

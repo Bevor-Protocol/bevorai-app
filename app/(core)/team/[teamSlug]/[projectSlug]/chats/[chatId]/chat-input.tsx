@@ -34,7 +34,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const { data: chatAttributes } = useQuery({
     queryKey: generateQueryKey.codeNodes(codeId),
-    queryFn: () => codeActions.getNodes(teamSlug, codeId),
+    queryFn: () =>
+      codeActions.getNodes(teamSlug, codeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const adjustTextareaHeight = (): void => {

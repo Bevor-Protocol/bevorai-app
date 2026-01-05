@@ -54,12 +54,19 @@ const MembersList: React.FC<MembersListProps> = ({ teamSlug, members, isLoading 
 
   const { data: currentMember } = useSuspenseQuery({
     queryKey: generateQueryKey.currentMember(teamSlug),
-    queryFn: async () => teamActions.getCurrentMember(teamSlug),
+    queryFn: async () =>
+      teamActions.getCurrentMember(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const updateMemberMutation = useMutation({
     mutationFn: async (data: { memberId: string; toRole: MemberRoleEnum }) =>
-      teamActions.updateMember(teamSlug, data.memberId, { role: data.toRole }),
+      teamActions.updateMember(teamSlug, data.memberId, { role: data.toRole }).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -68,7 +75,11 @@ const MembersList: React.FC<MembersListProps> = ({ teamSlug, members, isLoading 
   });
 
   const removeMemberMutation = useMutation({
-    mutationFn: async (memberId: string) => teamActions.removeMember(teamSlug, memberId),
+    mutationFn: async (memberId: string) =>
+      teamActions.removeMember(teamSlug, memberId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

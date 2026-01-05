@@ -4,45 +4,98 @@ import api from "@/lib/api";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { TeamFormValues } from "@/utils/schema";
 import { InviteFormValues, UpdateMemberValues } from "@/utils/schema/invite";
-import { MemberInviteSchema, MemberSchemaI, TeamDetailedSchemaI, TeamSchemaI } from "@/utils/types";
+import {
+  ApiResponse,
+  MemberInviteSchema,
+  MemberSchemaI,
+  TeamDetailedSchemaI,
+  TeamSchemaI,
+} from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 import { cookies } from "next/headers";
 
 export const createTeam = async (
   data: TeamFormValues,
-): Promise<{ id: string; toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ id: string; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [[QUERY_KEYS.TEAMS]];
-  return api.post("/teams", data).then((response) => {
-    return {
-      id: response.data.id,
-      toInvalidate,
-    };
-  });
+  return api
+    .post("/teams", data)
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          id: response.data.id,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
-export const getTeam = async (teamSlug: string): Promise<TeamDetailedSchemaI> => {
-  return api.get("/teams", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
-    return response.data;
-  });
+export const getTeam = async (teamSlug: string): ApiResponse<TeamDetailedSchemaI> => {
+  return api
+    .get("/teams", { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const deleteTeam = async (
   teamSlug: string,
-): Promise<{
+): ApiResponse<{
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.TEAMS], [QUERY_KEYS.PROJECTS]];
   const cookieStore = await cookies();
-  return api.delete("/teams", { headers: { "bevor-team-slug": teamSlug } }).then(() => {
-    cookieStore.delete("bevor-recent-team");
-    return { toInvalidate };
-  });
+  return api
+    .delete("/teams", { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      cookieStore.delete("bevor-recent-team");
+      return {
+        ok: true as const,
+        data: {
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const updateTeam = async (
   teamSlug: string,
   data: TeamFormValues,
-): Promise<{
+): ApiResponse<{
   team: TeamSchemaI;
   toInvalidate: QueryKey[];
 }> => {
@@ -51,62 +104,142 @@ export const updateTeam = async (
   return api
     .patch("/teams", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return { team: response.data, toInvalidate };
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          team: response.data,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
-export const getInvites = async (teamSlug: string): Promise<MemberInviteSchema[]> => {
-  return api.get("/invites", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
-    return response.data.results;
-  });
+export const getInvites = async (teamSlug: string): ApiResponse<MemberInviteSchema[]> => {
+  return api
+    .get("/invites", { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.results,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const inviteMembers = async (
   teamSlug: string,
   data: InviteFormValues,
-): Promise<{ toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [
     generateQueryKey.invites(teamSlug),
     generateQueryKey.subscription(teamSlug),
   ];
-  return api.post("/invites", data, { headers: { "bevor-team-slug": teamSlug } }).then(() => {
-    return { toInvalidate };
-  });
+  return api
+    .post("/invites", data, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const removeInvite = async (
   teamSlug: string,
   inviteId: string,
-): Promise<{
+): ApiResponse<{
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [
     generateQueryKey.invites(teamSlug),
     generateQueryKey.subscription(teamSlug),
   ];
-  return api.delete(`/invites/${inviteId}`).then(() => {
-    return { toInvalidate };
-  });
+  return api
+    .delete(`/invites/${inviteId}`)
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const updateInvite = async (
   teamSlug: string,
   inviteId: string,
   data: UpdateMemberValues,
-): Promise<{
+): ApiResponse<{
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [generateQueryKey.invites(teamSlug)];
   return api
     .patch(`/invites/${inviteId}`, data, { headers: { "bevor-team-slug": teamSlug } })
-    .then(() => {
-      return { toInvalidate };
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const acceptInvite = async (
   inviteId: string,
-): Promise<{
+): ApiResponse<{
   id: string;
   toInvalidate: QueryKey[];
 }> => {
@@ -115,33 +248,63 @@ export const acceptInvite = async (
     generateQueryKey.teams(),
     [QUERY_KEYS.PROJECTS],
   ];
-  return api.post(`/invites/${inviteId}`, {}).then((response) => {
-    return {
-      id: response.data.id,
-      toInvalidate,
-    };
-  });
+  return api
+    .post(`/invites/${inviteId}`, {})
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          id: response.data.id,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const updateMember = async (
   teamSlug: string,
   memberId: string,
   data: UpdateMemberValues,
-): Promise<{
+): ApiResponse<{
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [generateQueryKey.members(teamSlug)];
   return api
     .patch(`/members/${memberId}`, data, { headers: { "bevor-team-slug": teamSlug } })
-    .then(() => {
-      return { toInvalidate };
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const removeMember = async (
   teamSlug: string,
   memberId: string,
-): Promise<{
+): ApiResponse<{
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [
@@ -150,21 +313,64 @@ export const removeMember = async (
   ];
   return api
     .delete(`/members/${memberId}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then(() => {
-      return { toInvalidate };
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
-export const getMembers = async (teamSlug: string): Promise<MemberSchemaI[]> => {
-  return api.get("/members", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
-    return response.data.results;
-  });
+export const getMembers = async (teamSlug: string): ApiResponse<MemberSchemaI[]> => {
+  return api
+    .get("/members", { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.results,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
-export const getCurrentMember = async (teamSlug: string): Promise<MemberSchemaI> => {
+export const getCurrentMember = async (teamSlug: string): ApiResponse<MemberSchemaI> => {
   return api
     .get("/members/current", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };

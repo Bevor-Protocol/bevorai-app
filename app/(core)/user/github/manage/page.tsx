@@ -10,7 +10,10 @@ interface PageProps {
 const GitHubManagePage: AsyncComponent<PageProps> = async ({ searchParams }) => {
   const { teamSlug } = await searchParams;
 
-  const installations = await githubActions.getInstallations();
+  const installations = await githubActions.getInstallations().then((r) => {
+    if (!r.ok) throw r;
+    return r.data;
+  });
   const installationsList = installations?.installation_info?.installations || [];
   const defaultInstallationId = installationsList.length > 0 ? installationsList[0].id : null;
 

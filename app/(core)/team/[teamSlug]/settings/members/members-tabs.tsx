@@ -17,7 +17,11 @@ import MembersList from "./members-list";
 export const MembersCount: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const { data: members, isLoading } = useSuspenseQuery({
     queryKey: generateQueryKey.members(teamSlug),
-    queryFn: async () => teamActions.getMembers(teamSlug),
+    queryFn: async () =>
+      teamActions.getMembers(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   if (isLoading) {
@@ -34,17 +38,29 @@ export const MembersCount: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 export const TeamSeats: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const { data: members } = useSuspenseQuery({
     queryKey: generateQueryKey.members(teamSlug),
-    queryFn: async () => teamActions.getMembers(teamSlug),
+    queryFn: async () =>
+      teamActions.getMembers(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: invites } = useSuspenseQuery({
     queryKey: generateQueryKey.invites(teamSlug),
-    queryFn: async () => teamActions.getInvites(teamSlug),
+    queryFn: async () =>
+      teamActions.getInvites(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: subscription } = useSuspenseQuery({
     queryKey: generateQueryKey.subscription(teamSlug),
-    queryFn: () => billingActions.getSubscription(teamSlug),
+    queryFn: () =>
+      billingActions.getSubscription(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const totalSeats = (members?.length ?? 0) + (invites?.length ?? 0);
@@ -89,12 +105,20 @@ const MembersTabs: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 
   const { data: members, isLoading: isLoadingMembers } = useSuspenseQuery({
     queryKey: generateQueryKey.members(teamSlug),
-    queryFn: async () => teamActions.getMembers(teamSlug),
+    queryFn: async () =>
+      teamActions.getMembers(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: invites, isLoading: isLoadingInvites } = useSuspenseQuery({
     queryKey: generateQueryKey.invites(teamSlug),
-    queryFn: async () => teamActions.getInvites(teamSlug),
+    queryFn: async () =>
+      teamActions.getInvites(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return (

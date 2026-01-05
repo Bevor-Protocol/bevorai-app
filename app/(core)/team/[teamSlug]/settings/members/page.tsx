@@ -19,19 +19,35 @@ const MembersPage: AsyncComponent<PageProps> = async ({ params }) => {
   const [currentMember] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.currentMember(teamSlug),
-      queryFn: async () => teamActions.getCurrentMember(teamSlug),
+      queryFn: async () =>
+        teamActions.getCurrentMember(teamSlug).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
     queryClient.fetchQuery({
       queryKey: generateQueryKey.invites(teamSlug),
-      queryFn: async () => teamActions.getInvites(teamSlug),
+      queryFn: async () =>
+        teamActions.getInvites(teamSlug).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
     queryClient.fetchQuery({
       queryKey: generateQueryKey.members(teamSlug),
-      queryFn: async () => teamActions.getMembers(teamSlug),
+      queryFn: async () =>
+        teamActions.getMembers(teamSlug).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
     queryClient.fetchQuery({
       queryKey: generateQueryKey.subscription(teamSlug),
-      queryFn: () => billingActions.getSubscription(teamSlug),
+      queryFn: () =>
+        billingActions.getSubscription(teamSlug).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
   ]);
 

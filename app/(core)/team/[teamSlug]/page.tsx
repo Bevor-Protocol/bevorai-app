@@ -22,7 +22,11 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params, searchParams })
 
   const team = await queryClient.fetchQuery({
     queryKey: generateQueryKey.team(teamSlug),
-    queryFn: () => teamActions.getTeam(teamSlug),
+    queryFn: () =>
+      teamActions.getTeam(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return (

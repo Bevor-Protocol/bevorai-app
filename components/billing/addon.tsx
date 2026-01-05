@@ -17,7 +17,11 @@ export const AddonRow: React.FC<{
   const currentPrice = addon.price / 100;
 
   const checkoutMutation = useMutation({
-    mutationFn: (lookupKey: string) => billingActions.modifySubscription(teamSlug, lookupKey),
+    mutationFn: (lookupKey: string) =>
+      billingActions.modifySubscription(teamSlug, lookupKey).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: (data) => {
       const queryKey = generateQueryKey.subscription(teamSlug);
       queryClient.setQueryData(queryKey, data);
@@ -48,13 +52,13 @@ export const AddonRow: React.FC<{
   const getStatusBadge = (): React.ReactNode => {
     if (addon.is_pending_removal) {
       return (
-        <span className="bg-amber-500/20 text-amber-400 text-xs px-2 py-1 rounded flex-shrink-0">
+        <span className="bg-amber-500/20 text-amber-400 text-xs px-2 py-1 rounded shrink-0">
           Pending Removal
         </span>
       );
     } else if (addon.is_active) {
       return (
-        <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded flex-shrink-0">
+        <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded shrink-0">
           Active
         </span>
       );

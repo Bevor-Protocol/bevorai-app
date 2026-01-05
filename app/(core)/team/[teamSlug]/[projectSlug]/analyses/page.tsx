@@ -1,7 +1,7 @@
-import { userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { AnalysisNodesView } from "@/components/screens/nodes";
 import ProjectSubnav from "@/components/subnav/project";
+import { AnalysisCreate } from "@/components/views/analysis/creation";
 import { DefaultAnalysisNodesQuery, extractAnalysisNodesQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
 
@@ -12,23 +12,18 @@ type ResolvedParams = {
 
 interface PageProps {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<Partial<typeof DefaultAnalysisNodesQuery> & { user?: string }>;
+  searchParams: Promise<Partial<typeof DefaultAnalysisNodesQuery>>;
 }
 
 const AnalysisNodesPage: AsyncComponent<PageProps> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
-  const { user, ...resolvedSearchParams } = await searchParams;
+  const resolvedSearchParams = await searchParams;
 
   const initialQuery = extractAnalysisNodesQuery({
     ...resolvedSearchParams,
     project_slug: resolvedParams.projectSlug,
     is_leaf: "true",
   });
-
-  if (user !== "unset") {
-    const currentUser = await userActions.get();
-    initialQuery.user_id = currentUser.id;
-  }
 
   const defaultQuery = {
     ...DefaultAnalysisNodesQuery,
@@ -42,9 +37,12 @@ const AnalysisNodesPage: AsyncComponent<PageProps> = async ({ params, searchPara
           <div className="py-6 flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-semibold mb-1">Analyses</h1>
-              <p className="text-sm text-muted-foreground">User-scoped security analyses</p>
+              <p className="text-sm text-muted-foreground">
+                User-scoped security analyses. A root analysis is the initial form of that analysis,
+                a leaf is the most recent.
+              </p>
             </div>
-            {/* <AnalysisCreate {...resolvedParams} /> */}
+            <AnalysisCreate {...resolvedParams} />
           </div>
         </div>
         <div className="py-6">

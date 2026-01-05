@@ -27,7 +27,11 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   try {
     analysis = await queryClient.fetchQuery({
       queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),
-      queryFn: async () => sharedActions.getAnalysis(resolvedParams.nodeId),
+      queryFn: async () =>
+        sharedActions.getAnalysis(resolvedParams.nodeId).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     });
   } catch {
     return (
@@ -40,11 +44,19 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const [code, sources] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(resolvedParams.nodeId),
-      queryFn: () => sharedActions.getCode(resolvedParams.nodeId),
+      queryFn: () =>
+        sharedActions.getCode(resolvedParams.nodeId).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
     queryClient.fetchQuery({
       queryKey: generateQueryKey.codeSources(resolvedParams.nodeId),
-      queryFn: () => sharedActions.getSources(resolvedParams.nodeId),
+      queryFn: () =>
+        sharedActions.getSources(resolvedParams.nodeId).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
   ]);
 
@@ -64,7 +76,11 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   if (node) {
     const fetchedNode = await queryClient.fetchQuery({
       queryKey: generateQueryKey.codeNode(node),
-      queryFn: () => sharedActions.getNode(resolvedParams.nodeId, node),
+      queryFn: () =>
+        sharedActions.getNode(resolvedParams.nodeId, node).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     });
     position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
   }

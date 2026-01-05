@@ -1,7 +1,6 @@
 "use client";
 
-import { analysisActions, codeActions } from "@/actions/bevor";
-import { AnalysisVersionPreviewElement } from "@/components/analysis/element";
+import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,46 +19,47 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { CodeVersionElementCompact } from "@/components/versions/element";
+import { CodeVersionCompactElement } from "@/components/versions/element";
 import { generateQueryKey } from "@/utils/constants";
-import { truncateId } from "@/utils/helpers";
-import { extractAnalysisNodesQuery } from "@/utils/query-params";
 import { CodeMappingSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUp, GitBranch, MoreHorizontal, Shield, Upload } from "lucide-react";
+import { ArrowUp, GitBranch, MoreHorizontal, Upload } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 const CodeVersionMenu: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  userId: string;
   version: CodeMappingSchemaI;
-}> = ({ teamSlug, projectSlug, userId, version }) => {
+}> = ({ teamSlug, projectSlug, version }) => {
   const queryClient = useQueryClient();
 
   const { data: relations } = useQuery({
     queryKey: generateQueryKey.codeRelations(version.id),
-    queryFn: () => codeActions.getRelations(teamSlug, version.id),
+    queryFn: () =>
+      codeActions.getRelations(teamSlug, version.id).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: similarVersions } = useQuery({
     queryKey: generateQueryKey.codeSimilarity(version.id),
-    queryFn: () => codeActions.getCodeVersionSimilar(teamSlug, version.id),
+    queryFn: () =>
+      codeActions.getCodeVersionSimilar(teamSlug, version.id).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: !relations?.parent,
   });
 
   const updateParentMutation = useMutation({
     mutationFn: async (parentId: string) =>
-      codeActions.updateCodeVersionParent(teamSlug, version.id, parentId),
+      codeActions.updateCodeVersionParent(teamSlug, version.id, parentId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -71,63 +71,7 @@ const CodeVersionMenu: React.FC<{
       toast.error("Failed to update parent version");
     },
   });
-  const analysisQuery = extractAnalysisNodesQuery({
-    project_slug: projectSlug,
-    code_version_id: version.id,
-  });
-
-  const parentAnalysisQuery = extractAnalysisNodesQuery({
-    project_slug: projectSlug,
-    code_version_id: version.parent_id,
-  });
-
-  const [open, setOpen] = useState(false);
-  const [selectedParentId, setSelectedParentId] = useState<string>("");
   const [addParentDialogOpen, setAddParentDialogOpen] = useState(false);
-
-  const { data: analyses } = useQuery({
-    queryKey: generateQueryKey.analyses(teamSlug, analysisQuery),
-    queryFn: () => analysisActions.getAnalyses(teamSlug, analysisQuery),
-  });
-
-  const { data: parentAnalyses = { results: [] } } = useQuery({
-    queryKey: generateQueryKey.analyses(teamSlug, parentAnalysisQuery),
-    queryFn: () => analysisActions.getAnalyses(teamSlug, parentAnalysisQuery),
-    enabled: !!version.parent_id,
-  });
-
-  const userAnalyses = useMemo(() => {
-    if (!analyses?.results) return [];
-    return analyses.results
-      .filter((analysis) => analysis.user.id === userId)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [analyses, userId]);
-
-  const userParentAnalyses = useMemo(() => {
-    if (!parentAnalyses?.results) return [];
-    return parentAnalyses.results
-      .filter((analysis) => analysis.user.id === userId)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [parentAnalyses, userId]);
-
-  const candidateParents = useMemo(() => {
-    if (userAnalyses.length > 0) {
-      return userAnalyses;
-    }
-    if (userParentAnalyses.length > 0 && version.parent_id) {
-      return userParentAnalyses;
-    }
-    return [];
-  }, [userAnalyses, userParentAnalyses, version.parent_id]);
-
-  const isFromCurrentCodeVersion = userAnalyses.length > 0;
-
-  const handleAnalyzeClick = (): void => {
-    if (candidateParents.length > 0) {
-      setSelectedParentId(candidateParents[0]?.id || "");
-      setOpen(true);
-    }
-  };
 
   return (
     <>
@@ -138,25 +82,6 @@ const CodeVersionMenu: React.FC<{
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {candidateParents.length > 0 ? (
-            <DropdownMenuItem onSelect={handleAnalyzeClick} disabled={version.status !== "success"}>
-              <Shield className="size-4" />
-              Analyze
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem asChild>
-              <Link
-                href={{
-                  pathname: `/team/${teamSlug}/${projectSlug}/analyses/new`,
-                  query: { codeVersionId: version.id },
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Shield className="size-4" />
-                Analyze
-              </Link>
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem asChild>
             <Link
               href={{
@@ -199,7 +124,7 @@ const CodeVersionMenu: React.FC<{
                       href={`/team/${teamSlug}/${projectSlug}/codes/${child.id}`}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <CodeVersionElementCompact version={child} />
+                      <CodeVersionCompactElement version={child} />
                     </Link>
                   </DropdownMenuItem>
                 ))}
@@ -208,109 +133,6 @@ const CodeVersionMenu: React.FC<{
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Start Analysis</DialogTitle>
-            <DialogDescription>
-              {isFromCurrentCodeVersion
-                ? candidateParents.length === 1
-                  ? "You already have an analysis for this code version. You can start a new analysis from scratch."
-                  : "You already have analyses for this code version. Create a new analysis based on one of them, or start from scratch."
-                : candidateParents.length === 1
-                  ? "Create a new analysis with the previous code version's analysis as parent, or start from scratch"
-                  : "Select a parent analysis from the previous code version, or start from scratch"}
-            </DialogDescription>
-          </DialogHeader>
-          {candidateParents.length === 1 ? (
-            <div className="py-4">
-              <AnalysisVersionPreviewElement analysisVersion={candidateParents[0]} />
-            </div>
-          ) : (
-            <div className="py-4">
-              <Select value={selectedParentId} onValueChange={setSelectedParentId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a parent analysis">
-                    <div className="flex gap-2 items-center">
-                      <Shield className="size-3.5 text-purple-400 shrink-0" />
-                      {truncateId(selectedParentId)}
-                    </div>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {candidateParents.map((analysis) => (
-                    <SelectItem value={analysis.id} key={analysis.id}>
-                      <AnalysisVersionPreviewElement analysisVersion={analysis} />
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            {candidateParents.length === 1 ? (
-              isFromCurrentCodeVersion ? (
-                <Button asChild>
-                  <Link
-                    href={{
-                      pathname: `/team/${teamSlug}/${projectSlug}/analyses/new`,
-                      query: { codeVersionId: version.id },
-                    }}
-                    onClick={() => setOpen(false)}
-                  >
-                    Start from scratch
-                  </Link>
-                </Button>
-              ) : (
-                <>
-                  <Button variant="outline" asChild>
-                    <Link
-                      href={{
-                        pathname: `/team/${teamSlug}/${projectSlug}/analyses/new`,
-                        query: { codeVersionId: version.id },
-                      }}
-                      onClick={() => setOpen(false)}
-                    >
-                      Start from scratch
-                    </Link>
-                  </Button>
-                  <Button asChild>
-                    <Link
-                      href={{
-                        pathname: `/team/${teamSlug}/${projectSlug}/analyses/new`,
-                        query: {
-                          codeVersionId: version.id,
-                          parentVersionId: candidateParents[0]?.id,
-                        },
-                      }}
-                      onClick={() => setOpen(false)}
-                    >
-                      Create with parent
-                    </Link>
-                  </Button>
-                </>
-              )
-            ) : (
-              <Button asChild>
-                <Link
-                  href={{
-                    pathname: `/team/${teamSlug}/${projectSlug}/analyses/new`,
-                    query: selectedParentId
-                      ? { codeVersionId: version.id, parentVersionId: selectedParentId }
-                      : { codeVersionId: version.id },
-                  }}
-                  onClick={() => setOpen(false)}
-                >
-                  {selectedParentId ? "Create with parent" : "Start from scratch"}
-                </Link>
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       <Dialog open={addParentDialogOpen} onOpenChange={setAddParentDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -333,7 +155,7 @@ const CodeVersionMenu: React.FC<{
                     className="flex-1 min-w-0 hover:opacity-80 transition-opacity"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <CodeVersionElementCompact version={similarVersion} />
+                    <CodeVersionCompactElement version={similarVersion} />
                   </Link>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-muted-foreground whitespace-nowrap">

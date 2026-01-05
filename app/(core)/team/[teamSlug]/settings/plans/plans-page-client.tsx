@@ -35,10 +35,15 @@ const PlanCard: React.FC<{
 }> = ({ plan, team }) => {
   const checkoutMutation = useMutation({
     mutationFn: () =>
-      billingActions.createCheckoutSession(team.id, {
-        success_url: `${window.location.origin}/${team.id}/settings/billing?success=true`,
-        cancel_url: `${window.location.origin}/${team.id}/settings/plans?canceled=true`,
-      }),
+      billingActions
+        .createCheckoutSession(team.id, {
+          success_url: `${window.location.origin}/${team.id}/settings/billing?success=true`,
+          cancel_url: `${window.location.origin}/${team.id}/settings/plans?canceled=true`,
+        })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     onSuccess: (data) => {
       window.location.href = data.url;
     },
@@ -160,7 +165,11 @@ const PlanCard: React.FC<{
 export const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: generateQueryKey.products(team.slug),
-    queryFn: () => billingActions.getProducts(team.slug),
+    queryFn: () =>
+      billingActions.getProducts(team.slug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   if (plansLoading) {
@@ -192,7 +201,11 @@ export const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
 export const AddonsSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const { data: addons, isLoading: addonsLoading } = useQuery({
     queryKey: generateQueryKey.addons(teamSlug),
-    queryFn: () => billingActions.getAddons(teamSlug),
+    queryFn: () =>
+      billingActions.getAddons(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   if (addonsLoading) {

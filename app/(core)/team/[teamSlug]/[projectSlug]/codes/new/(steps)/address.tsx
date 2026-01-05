@@ -31,7 +31,10 @@ const ContractAddressStep: React.FC<{
 
   const mutation = useMutation({
     mutationFn: async (data: ScanCodeAddressFormValues) =>
-      codeActions.contractUploadScan(project.team.slug, project.id, data),
+      codeActions.contractUploadScan(project.team.slug, project.id, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onMutate: () => {
       updateFormState({ type: "SET_ERRORS", errors: {} });
       toastId.current = toast.loading("Uploading and parsing code...");

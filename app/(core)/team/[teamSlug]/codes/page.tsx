@@ -1,4 +1,3 @@
-import { userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { CodeVersionsView } from "@/components/screens/code-versions";
 import TeamSubnav from "@/components/subnav/team";
@@ -19,11 +18,8 @@ const TeamCodesPage: AsyncComponent<ProjectPageProps> = async ({ params, searchP
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const currentUser = await userActions.get();
-
   const initialQuery = extractCodesQuery({
     ...resolvedSearchParams,
-    user_id: currentUser.id,
   });
 
   const defaultQuery = { ...DefaultCodesQuery };

@@ -58,7 +58,7 @@ const versionMethods: VersionProps[] = [
     title: "MCP / IDE Integration",
     description: "Integrate directly with your IDE for seamless development. Requires an API key",
     route: (teamSlug: string) => `/team/${teamSlug}/settings/api`,
-    badge: "get API key",
+    badge: "get api key",
   },
   {
     Icon: GitBranch,

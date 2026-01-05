@@ -64,7 +64,11 @@ export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }
 export const TeamActivities: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const { data: activities = [] } = useQuery({
     queryKey: generateQueryKey.teamActivities(teamSlug),
-    queryFn: () => activityActions.getTeamActivities(teamSlug),
+    queryFn: () =>
+      activityActions.getTeamActivities(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return <ActivityList activities={activities} className="w-full" />;
@@ -104,7 +108,11 @@ export const ProjectsSection: React.FC<{
 }> = ({ teamSlug }) => {
   const { data: projects, isLoading } = useQuery({
     queryKey: generateQueryKey.projects(teamSlug, { page_size: "20" }),
-    queryFn: async () => projectActions.getProjects(teamSlug, { page_size: "20" }),
+    queryFn: async () =>
+      projectActions.getProjects(teamSlug, { page_size: "20" }).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   if (projects?.results.length === 0) {
@@ -126,7 +134,11 @@ export const AnalysesPreview: React.FC<{
 }> = ({ teamSlug }) => {
   const { data: analyses, isLoading } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, { page_size: "3" }),
-    queryFn: async () => analysisActions.getAnalyses(teamSlug, { page_size: "3" }),
+    queryFn: async () =>
+      analysisActions.getAnalyses(teamSlug, { page_size: "3" }).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   if (analyses?.results.length === 0) {

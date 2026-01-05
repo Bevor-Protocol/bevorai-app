@@ -87,7 +87,11 @@ const AnalysisMetadata: React.FC<{
 
   const { data: version } = useSuspenseQuery({
     queryKey: generateQueryKey.analysisDetailed(nodeId),
-    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, nodeId),
+    queryFn: async () =>
+      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const chatQuery = extractChatsQuery({
@@ -99,17 +103,26 @@ const AnalysisMetadata: React.FC<{
 
   const { data: chats } = useQuery({
     queryKey: generateQueryKey.chats(teamSlug, chatQuery),
-    queryFn: () => chatActions.getChats(teamSlug, chatQuery),
+    queryFn: () =>
+      chatActions.getChats(teamSlug, chatQuery).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: allowChat,
   });
 
   const createChatMutation = useMutation({
     mutationFn: async () =>
-      chatActions.initiateChat(teamSlug, {
-        chat_type: "analysis",
-        code_version_id: version.code_version_id,
-        analysis_node_id: version.id,
-      }),
+      chatActions
+        .initiateChat(teamSlug, {
+          chat_type: "analysis",
+          code_version_id: version.code_version_id,
+          analysis_node_id: version.id,
+        })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

@@ -42,10 +42,16 @@ const SigninContent: React.FC<{ hasError: boolean }> = ({ hasError }) => {
 
   const magicLinkMutation = useMutation({
     mutationFn: (email: string) =>
-      authActions.magicLink(email, {
-        login_magic_link_url: `${baseURL}/api/auth/callback`,
-        signup_magic_link_url: `${baseURL}/api/auth/callback`,
-      }),
+      authActions
+        .magicLink(email, {
+          login_magic_link_url: `${baseURL}/api/auth/callback`,
+          signup_magic_link_url: `${baseURL}/api/auth/callback`,
+        })
+        .then((r) => {
+          console.log(r);
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     onSettled: () => setIsLoggingIn(false),
   });
 

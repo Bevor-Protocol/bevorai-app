@@ -10,7 +10,7 @@ export const VersionEmpty: React.FC<{ centered?: boolean }> = ({ centered = fals
           <h4 className="text-base font-medium">No code versions yet</h4>
         </div>
         <p className="text-sm text-neutral-500 pl-8">
-          Create your first code version within a project to get started auditing
+          Create your first code version to get started
         </p>
       </div>
     );
@@ -18,9 +18,9 @@ export const VersionEmpty: React.FC<{ centered?: boolean }> = ({ centered = fals
   return (
     <div className="flex flex-col py-4 justify-center items-center gap-2">
       <Code className="size-8 text-neutral-600 mx-auto" />
-      <h4 className="text-base font-medium">No versions yet</h4>
+      <h4 className="text-base font-medium">No code versions yet</h4>
       <p className="text-sm text-neutral-500 text-center">
-        Create your first code version within a project to get started auditing
+        Create your first code version to get started
       </p>
     </div>
   );

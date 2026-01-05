@@ -22,7 +22,11 @@ export const ChatsView: React.FC<{
 
   const chatsQuery = useQuery({
     queryKey: generateQueryKey.chats(teamSlug, debouncedState),
-    queryFn: () => chatActions.getChats(teamSlug, debouncedState),
+    queryFn: () =>
+      chatActions.getChats(teamSlug, debouncedState).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     placeholderData: keepPreviousData,
   });
 

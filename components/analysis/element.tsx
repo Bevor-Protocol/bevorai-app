@@ -11,7 +11,7 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { formatDateShort, truncateId } from "@/utils/helpers";
+import { formatDate, formatDateShort, truncateId } from "@/utils/helpers";
 import { AnalysisNodeSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -197,8 +197,9 @@ export const AnalysisVersionElementBare: React.FC<
   {
     analysisVersion: AnalysisNodeSchemaI;
     isPreview?: boolean;
+    showActions?: boolean;
   } & React.ComponentProps<"div">
-> = ({ analysisVersion, className, ...props }) => {
+> = ({ analysisVersion, showActions = true, className, ...props }) => {
   const isRoot = !analysisVersion.parent_node_id;
   const isLeaf = analysisVersion.is_leaf;
 
@@ -293,9 +294,11 @@ export const AnalysisVersionElementBare: React.FC<
         <Icon size="sm" seed={analysisVersion.user.id} className="shrink-0" />
         <span className="truncate">{analysisVersion.user.username}</span>
       </div>
-      <div className="flex items-center justify-center">
-        <AnalysisVersionActions analysisVersion={analysisVersion} />
-      </div>
+      {showActions && (
+        <div className="flex items-center justify-center">
+          <AnalysisVersionActions analysisVersion={analysisVersion} />
+        </div>
+      )}
     </div>
   );
 };
@@ -312,52 +315,32 @@ export const AnalysisVersionCompactElement: React.FC<
   return (
     <div
       className={cn(
-        "grid grid-cols-[24px_1fr_1fr_2fr_1fr_1fr_auto] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
+        "grid grid-cols-[24px_1fr_2fr_1fr_1fr_80px] items-center gap-4 py-3 px-4 border rounded-lg group-hover:border-foreground/30 transition-colors",
         className,
       )}
       {...props}
     >
-      <BrickWallShieldIcon className="size-4 text-purple-400 justify-self-center" />
+      <BrickWallShieldIcon className="size-4 text-purple-400 justify-center" />
       <div className="flex items-center gap-2 min-w-0">
         <p className={cn("font-medium text-sm font-mono", isRoot || isLeaf ? "" : "truncate")}>
           {truncateId(analysisVersion.id)}
         </p>
       </div>
-      <div className="flex items-center gap-1 justify-start">
-        {isRoot && (
-          <span
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap shrink-0"
-            title="root"
-          >
-            <TreeDeciduous className="size-3" />
-          </span>
-        )}
-        {isLeaf && (
-          <span
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap shrink-0"
-            title="leaf"
-          >
-            <Leaf className="size-3" />
-          </span>
-        )}
-      </div>
+
       <div className="text-xs text-muted-foreground font-mono truncate flex items-center gap-2">
         <Code2 className="size-3" />
         {truncateId(analysisVersion.code_version_id)}
       </div>
-      <div className="text-xs text-muted-foreground whitespace-nowrap justify-center">
+      <div className="text-xs text-muted-foreground whitespace-nowrap justify-center text-center">
         {analysisVersion.n_scopes} scope
         {analysisVersion.n_scopes !== 1 ? "s" : ""}
       </div>
-      <div className="text-xs text-muted-foreground whitespace-nowrap justify-center">
+      <div className="text-xs text-muted-foreground whitespace-nowrap justify-center text-center">
         {analysisVersion.n_findings} finding
         {analysisVersion.n_findings !== 1 ? "s" : ""}
       </div>
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0 whitespace-nowrap">
-        <span>{formatDateShort(analysisVersion.created_at)}</span>
-        <span>by</span>
-        <Icon size="sm" seed={analysisVersion.user.id} className="shrink-0" />
-        <span className="truncate">{analysisVersion.user.username}</span>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 shrink-0 whitespace-nowrap justify-center text-center">
+        <span>{formatDate(analysisVersion.created_at)}</span>
       </div>
     </div>
   );
@@ -368,8 +351,9 @@ export const AnalysisVersionElement: React.FC<
     analysisVersion: AnalysisNodeSchemaI;
     isDisabled?: boolean;
     link?: string;
+    showActions?: boolean;
   } & React.ComponentProps<"div">
-> = ({ analysisVersion, isDisabled = false, link, className, ...props }) => {
+> = ({ analysisVersion, isDisabled = false, showActions = true, link, className, ...props }) => {
   return (
     <Link
       href={
@@ -382,6 +366,7 @@ export const AnalysisVersionElement: React.FC<
       <AnalysisVersionElementBare
         analysisVersion={analysisVersion}
         className={className}
+        showActions={showActions}
         {...props}
       />
     </Link>
@@ -395,7 +380,11 @@ export const AnalysisElementMenu: React.FC<{
   const queryClient = useQueryClient();
 
   const visibilityMutation = useMutation({
-    mutationFn: async () => analysisActions.toggleVisibility(teamSlug, analysis.id),
+    mutationFn: async () =>
+      analysisActions.toggleVisibility(teamSlug, analysis.id).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

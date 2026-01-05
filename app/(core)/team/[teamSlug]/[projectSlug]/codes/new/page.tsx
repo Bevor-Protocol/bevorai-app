@@ -26,7 +26,10 @@ const NewVersionPage: AsyncComponent<VersionPageProps> = async ({ params, search
   const project = await queryClient.fetchQuery({
     queryKey: generateQueryKey.project(resolvedParams.projectSlug),
     queryFn: async () =>
-      projectActions.getProject(resolvedParams.teamSlug, resolvedParams.projectSlug),
+      projectActions.getProject(resolvedParams.teamSlug, resolvedParams.projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   if (project.github_repo_id) {

@@ -6,7 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CodeVersionElementCompact } from "@/components/versions/element";
+import { CodeVersionCompactElement } from "@/components/versions/element";
 import { CodeMappingSchemaI, CodeRelationSchemaI } from "@/utils/types";
 import { ArrowUp, GitBranch } from "lucide-react";
 import Link from "next/link";
@@ -47,7 +47,7 @@ const ParentButton: React.FC<{
                 href={`/team/${teamSlug}/${projectSlug}/codes/${relations.parent.id}`}
                 className="block hover:opacity-80 transition-opacity"
               >
-                <CodeVersionElementCompact version={relations.parent} />
+                <CodeVersionCompactElement version={relations.parent} />
               </Link>
             </div>
           ) : (
@@ -67,7 +67,7 @@ const ParentButton: React.FC<{
                         href={`/team/${teamSlug}/${projectSlug}/codes/${similarVersion.id}`}
                         className="flex-1 min-w-0 hover:opacity-80 transition-opacity"
                       >
-                        <CodeVersionElementCompact version={similarVersion} />
+                        <CodeVersionCompactElement version={similarVersion} />
                       </Link>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -127,7 +127,7 @@ const ChildrenButton: React.FC<{
                   href={`/team/${teamSlug}/${projectSlug}/codes/${child.id}`}
                   className="block hover:opacity-80 transition-opacity"
                 >
-                  <CodeVersionElementCompact version={child} />
+                  <CodeVersionCompactElement version={child} />
                 </Link>
               ))}
             </div>

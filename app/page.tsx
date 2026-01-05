@@ -27,7 +27,10 @@ const MainPage: AsyncComponent<MainProps> = async ({ searchParams }) => {
 
   let defaultTeam;
   try {
-    const teams = await userActions.teams();
+    const teams = await userActions.teams().then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
     defaultTeam = teams.find((team) => team.is_default);
   } catch {
     redirect("/sign-in");

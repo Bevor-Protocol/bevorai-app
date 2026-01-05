@@ -45,7 +45,7 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { CodeVersionElementCompact } from "@/components/versions/element";
+import { CodeVersionCompactElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
@@ -69,7 +69,11 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
 
   const { data: project } = useQuery({
     queryKey: generateQueryKey.project(projectSlug),
-    queryFn: async () => projectActions.getProject(teamSlug, projectSlug),
+    queryFn: async () =>
+      projectActions.getProject(teamSlug, projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return (
@@ -147,7 +151,10 @@ const ProjectEditDialog: React.FC<{
 
   const updateMutation = useMutation({
     mutationFn: (data: ProjectFormValues) =>
-      projectActions.updateProject(teamSlug, project.slug, data),
+      projectActions.updateProject(teamSlug, project.slug, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ project: refreshedProject, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -267,7 +274,11 @@ const ProjectDeleteAlert: React.FC<{
   const router = useRouter();
 
   const deleteMutation = useMutation({
-    mutationFn: () => projectActions.deleteProject(teamSlug, project.id),
+    mutationFn: () =>
+      projectActions.deleteProject(teamSlug, project.id).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -325,7 +336,11 @@ export const ProjectActivities: React.FC<{ teamSlug: string; projectSlug: string
 }) => {
   const { data: activities = [] } = useQuery({
     queryKey: generateQueryKey.projectActivities(projectSlug),
-    queryFn: () => activityActions.getProjectActivities(teamSlug, projectSlug),
+    queryFn: () =>
+      activityActions.getProjectActivities(teamSlug, projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return <ActivityList activities={activities} />;
@@ -338,7 +353,11 @@ export const AnalysesPreview: React.FC<{
   const query = { page_size: "3", project_slug: projectSlug };
   const { data: analyses, isLoading } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, query),
-    queryFn: async () => analysisActions.getAnalyses(teamSlug, query),
+    queryFn: async () =>
+      analysisActions.getAnalyses(teamSlug, query).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   if (analyses?.results.length === 0) {
@@ -348,7 +367,13 @@ export const AnalysesPreview: React.FC<{
   return (
     <div className="flex flex-col gap-3">
       {analyses?.results.map((analysis) => (
-        <AnalysisVersionCompactElement key={analysis.id} analysisVersion={analysis} />
+        <Link
+          key={analysis.id}
+          href={`/team/${teamSlug}/${projectSlug}/analyses/${analysis.id}`}
+          className="block transition-colors hover:bg-accent/50 cursor-pointer"
+        >
+          <AnalysisVersionCompactElement key={analysis.id} analysisVersion={analysis} />
+        </Link>
       ))}
       {isLoading && <Skeleton className="w-full h-12" />}
     </div>
@@ -362,7 +387,11 @@ export const CodePreview: React.FC<{
   const query = { page_size: "3", project_slug: projectSlug };
   const { data: codes, isLoading } = useQuery({
     queryKey: generateQueryKey.codes(teamSlug, query),
-    queryFn: async () => codeActions.getVersions(teamSlug, query),
+    queryFn: async () =>
+      codeActions.getVersions(teamSlug, query).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   if (codes?.results.length === 0) {
@@ -372,7 +401,13 @@ export const CodePreview: React.FC<{
   return (
     <div className="flex flex-col gap-3">
       {codes?.results.map((code) => (
-        <CodeVersionElementCompact key={code.id} version={code} />
+        <Link
+          key={code.id}
+          href={`/team/${teamSlug}/${projectSlug}/codes/${code.id}`}
+          className="block transition-colors hover:bg-accent/50 cursor-pointer"
+        >
+          <CodeVersionCompactElement version={code} />
+        </Link>
       ))}
       {isLoading && <Skeleton className="w-full h-12" />}
     </div>
@@ -385,12 +420,20 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
 }) => {
   const { data: project } = useSuspenseQuery({
     queryKey: generateQueryKey.project(projectSlug),
-    queryFn: () => projectActions.getProject(teamSlug, projectSlug),
+    queryFn: () =>
+      projectActions.getProject(teamSlug, projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: branches } = useQuery({
     queryKey: [QUERY_KEYS.GITHUB_BRANCHES, project.github_repo_id],
-    queryFn: () => githubActions.getBranches(project.github_repo_id!),
+    queryFn: () =>
+      githubActions.getBranches(project.github_repo_id!).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: !!project.github_repo_id,
   });
 

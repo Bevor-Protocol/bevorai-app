@@ -17,7 +17,7 @@ import { generateQueryKey } from "@/utils/constants";
 import { DefaultAnalysisNodesQuery } from "@/utils/query-params";
 import { useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const triggerItems = ["manual_run", "chat", "manual_edit", "fork", "merge"];
 
@@ -40,7 +40,11 @@ const FilterContent: React.FC<{
 
   const { data: members } = useQuery({
     queryKey: generateQueryKey.members(teamSlug),
-    queryFn: () => teamActions.getMembers(teamSlug),
+    queryFn: () =>
+      teamActions.getMembers(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const handleNodeRoot = (leafOrRoot: "root" | "leaf" | "any"): void => {
@@ -53,6 +57,16 @@ const FilterContent: React.FC<{
       setFilters((prev) => ({ ...prev, is_leaf: "", is_root: "" }));
     }
   };
+
+  useEffect(() => {
+    if (filters.is_leaf) {
+      setRootType("leaf");
+    } else if (filters.is_root) {
+      setRootType("root");
+    } else {
+      setRootType("any");
+    }
+  }, [filters.is_leaf, filters.is_root]);
 
   return (
     <div className={containerClass}>
