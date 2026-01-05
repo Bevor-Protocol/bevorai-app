@@ -53,14 +53,22 @@ export const CodeProvider: React.FC<{
 
   const sourceQuery = useQuery({
     queryKey: generateQueryKey.codeSource(nodeId, sourceId ?? ""),
-    queryFn: () => sharedActions.getSource(nodeId, sourceId ?? ""),
+    queryFn: () =>
+      sharedActions.getSource(nodeId, sourceId ?? "").then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: !!sourceId,
     staleTime: Infinity,
   });
 
   const nodesQuery = useQuery({
     queryKey: generateQueryKey.codeNodes(codeVersionId ?? "", { source_id: sourceId! }),
-    queryFn: () => sharedActions.getNodes(nodeId, { source_id: sourceId! }),
+    queryFn: () =>
+      sharedActions.getNodes(nodeId, { source_id: sourceId! }).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: !!sourceId,
     staleTime: Infinity,
   });

@@ -28,7 +28,10 @@ const FindingDescription: React.FC<{
 
   const submitFeedbackMutation = useMutation({
     mutationFn: ({ findingId, data }: { findingId: string; data: FindingFeedbackBody }) => {
-      return analysisActions.submitFindingFeedback(teamSlug, nodeId, findingId, data);
+      return analysisActions.submitFindingFeedback(teamSlug, nodeId, findingId, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
     },
     onSuccess: (_, { findingId, data }) => {
       queryClient.setQueryData<AnalysisNodeSchemaI>(

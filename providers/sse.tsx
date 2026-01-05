@@ -140,7 +140,11 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             cleanedClaims[key] = value;
           }
         });
-        const token = await tokenActions.issueSSEToken(cleanedClaims);
+
+        const token = await tokenActions.issueSSEToken(cleanedClaims).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        });
         const eventSource = new EventSource(`${baseUrl}?token=${token}`);
         eventSourceRef.current = eventSource;
 

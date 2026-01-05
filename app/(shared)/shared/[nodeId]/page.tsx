@@ -23,7 +23,11 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params }) => {
   try {
     analysis = await queryClient.fetchQuery({
       queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),
-      queryFn: async () => sharedActions.getAnalysis(resolvedParams.nodeId),
+      queryFn: async () =>
+        sharedActions.getAnalysis(resolvedParams.nodeId).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     });
   } catch {
     return (

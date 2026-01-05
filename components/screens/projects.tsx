@@ -24,7 +24,11 @@ export const ProjectsView: React.FC<{
 
   const projectsQuery = useQuery({
     queryKey: generateQueryKey.projects(teamSlug, debouncedState),
-    queryFn: () => projectActions.getProjects(teamSlug, debouncedState),
+    queryFn: () =>
+      projectActions.getProjects(teamSlug, debouncedState).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     placeholderData: keepPreviousData,
   });
 

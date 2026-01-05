@@ -63,8 +63,8 @@ export const ProjectElement: React.FC<{
               <div className="inline-flex my-2 items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted border text-xs mb-2 font-mono">
                 <div className="relative size-4 shrink-0">
                   <Image
-                    src={project.github_repo.installation.account_avatar_url}
-                    alt={project.github_repo.installation.account_login}
+                    src={project.github_repo.account.avatar_url}
+                    alt={project.github_repo.account.login}
                     fill
                     className="rounded-full object-cover"
                     unoptimized

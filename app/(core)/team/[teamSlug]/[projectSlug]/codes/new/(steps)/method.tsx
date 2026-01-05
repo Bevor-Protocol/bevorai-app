@@ -1,17 +1,26 @@
 import { Badge } from "@/components/ui/badge";
 import { GridPattern } from "@/components/ui/grid-pattern";
 import { cn } from "@/lib/utils";
-import { Code, Folder, GitBranch, Globe, LucideProps, Upload } from "lucide-react";
-import { ForwardRefExoticComponent, RefAttributes } from "react";
+import {
+  Code,
+  Folder,
+  GitBranch,
+  GitCommitHorizontal,
+  Globe,
+  LucideProps,
+  Upload,
+} from "lucide-react";
+import Link from "next/link";
+import React, { ForwardRefExoticComponent, RefAttributes } from "react";
 
 type VersionProps = {
   Icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
   iconColor: string;
   title: string;
   description: string;
-  cta: string;
-  disabled: boolean;
-  method: string;
+  route?: (teamSlug: string) => string;
+  method?: string;
+  badge?: string;
 };
 
 const versionMethods: VersionProps[] = [
@@ -20,8 +29,6 @@ const versionMethods: VersionProps[] = [
     iconColor: "text-blue-400",
     title: "Upload / Write File",
     description: "Upload your .sol file(s) for analysis, or manually write/paste it",
-    cta: "Choose Files",
-    disabled: false,
     method: "file",
   },
   {
@@ -29,8 +36,6 @@ const versionMethods: VersionProps[] = [
     iconColor: "text-yellow-400",
     title: "Upload Folder",
     description: "Upload an entire folder of solidity files",
-    cta: "Choose Folder",
-    disabled: false,
     method: "folder",
   },
   {
@@ -38,37 +43,68 @@ const versionMethods: VersionProps[] = [
     iconColor: "text-purple-400",
     title: "Explorer Scan",
     description: "Enter a deployed, verified contract address to analyze",
-    cta: "Enter Address",
-    disabled: false,
     method: "scan",
+  },
+  {
+    Icon: GitCommitHorizontal,
+    iconColor: "text-foreground-400",
+    title: "Public Repository Scan",
+    description: "Scan one-off public repositories",
+    method: "repo",
   },
   {
     Icon: Code,
     iconColor: "text-orange-400",
     title: "MCP / IDE Integration",
-    description: "Integrate directly with your IDE for seamless development",
-    cta: "Get Started",
-    disabled: true,
-    method: "mcp",
+    description: "Integrate directly with your IDE for seamless development. Requires an API key",
+    route: (teamSlug: string) => `/team/${teamSlug}/settings/api`,
+    badge: "get api key",
   },
   {
     Icon: GitBranch,
     iconColor: "text-foreground-400",
-    title: "Repository Scan",
-    description: "Automatically scan and analyze your Git repositories",
-    cta: "Get Started",
-    disabled: true,
-    method: "repo",
+    title: "Github Connection",
+    description:
+      "Automatically scan and analyze your Git repositories. These connections will be scoped to their own project.",
+    route: (teamSlug: string) => `/user/github/manage?teamSlug=${teamSlug}`,
+    badge: "create connection",
   },
 ];
+
+const MethodCardWrapper: React.FC<{
+  href?: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ href, onClick, children, className }) => {
+  const baseClassName = cn(
+    "relative overflow-hidden p-6 last:border-r last:border-b group cursor-pointer",
+    className,
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={baseClassName}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={baseClassName} onClick={onClick}>
+      {children}
+    </div>
+  );
+};
 
 const MethodSelection: React.FC<{
   setMethod: (method: string) => void;
   nextStep: () => void;
+  teamSlug: string;
   isChild: boolean;
-}> = ({ setMethod, nextStep, isChild }) => {
+}> = ({ setMethod, nextStep, teamSlug, isChild }) => {
   const handleSelection = (method: VersionProps): void => {
-    if (method.disabled) return;
+    if (!method.method) return;
     setMethod(method.method);
     nextStep();
   };
@@ -85,13 +121,10 @@ const MethodSelection: React.FC<{
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-x divide-y border-t border-l">
         {versionMethods.map((method, ind) => (
-          <div
-            className={cn(
-              "relative overflow-hidden p-6 last:border-r last:border-b group cursor-pointer",
-              method.disabled && "opacity-60 pointer-events-none cursor-default",
-            )}
+          <MethodCardWrapper
             key={ind}
-            onClick={() => handleSelection(method)}
+            href={method.route ? method.route(teamSlug) : undefined}
+            onClick={method.route ? undefined : (): void => handleSelection(method)}
           >
             <div className="-mt-2 -ml-20 pointer-events-none absolute top-0 left-1/2 size-full mask-[radial-gradient(farthest-side_at_top,white,transparent)]">
               <GridPattern
@@ -106,15 +139,16 @@ const MethodSelection: React.FC<{
             <p className="z-20 mt-2 font-light text-muted-foreground text-xs">
               {method.description}
             </p>
-            {method.disabled && (
+            {method.badge && (
               <Badge
                 variant="outline"
-                className="border-orange-400/70 ml-auto opacity-80 absolute top-4 right-4"
+                size="sm"
+                className="border-blue-400/70 ml-auto opacity-80 absolute top-4 right-4"
               >
-                soon
+                {method.badge}
               </Badge>
             )}
-          </div>
+          </MethodCardWrapper>
         ))}
       </div>
     </div>

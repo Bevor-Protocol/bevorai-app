@@ -31,25 +31,49 @@ const ContainerBreadcrumb: React.FC<{
   const { teamSlug, projectSlug, codeId, nodeId } = useParams();
   const pathname = usePathname();
 
-  const { data: teams } = useQuery({
+  const { data: teamsRaw } = useQuery({
     queryKey: generateQueryKey.teams(),
-    queryFn: () => userActions.teams(),
+    queryFn: () =>
+      userActions.teams().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: projects } = useQuery({
     queryKey: generateQueryKey.allProjects(),
-    queryFn: () => userActions.projects(),
+    queryFn: () =>
+      userActions.projects().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: user } = useQuery({
     queryKey: generateQueryKey.currentUser(),
-    queryFn: () => userActions.get(),
+    queryFn: () =>
+      userActions.get().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const curTeam = useMemo(() => {
-    if (!teams || !teamSlug) return;
-    return teams.find((team) => team.slug === teamSlug);
-  }, [teamSlug, teams]);
+    if (!teamsRaw || !teamSlug) return;
+    return teamsRaw.find((team) => team.slug === teamSlug);
+  }, [teamSlug, teamsRaw]);
+
+  const teams = useMemo(() => {
+    if (!teamsRaw) return [];
+    if (!curTeam) return teamsRaw;
+    const sorted = [...teamsRaw];
+    const curTeamIndex = sorted.findIndex((team) => team.id === curTeam.id);
+    if (curTeamIndex > 0) {
+      sorted.splice(curTeamIndex, 1);
+      sorted.unshift(curTeam);
+    }
+    return sorted;
+  }, [teamsRaw, curTeam]);
 
   const curProject = useMemo(() => {
     if (!projects?.results || !projectSlug) return;

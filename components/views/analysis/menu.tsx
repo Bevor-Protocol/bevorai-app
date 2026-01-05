@@ -41,7 +41,11 @@ const AnalysisVersionMenu: React.FC<{
   const router = useRouter();
 
   const visibilityMutation = useMutation({
-    mutationFn: async () => analysisActions.toggleVisibility(teamSlug, nodeId),
+    mutationFn: async () =>
+      analysisActions.toggleVisibility(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -54,7 +58,11 @@ const AnalysisVersionMenu: React.FC<{
   });
 
   const forkMutation = useMutation({
-    mutationFn: async () => analysisActions.forkAnalysis(teamSlug, nodeId),
+    mutationFn: async () =>
+      analysisActions.forkAnalysis(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -71,7 +79,11 @@ const AnalysisVersionMenu: React.FC<{
   });
 
   const mergeMutation = useMutation({
-    mutationFn: async () => analysisActions.mergeAnalysis(teamSlug, nodeId, fromAnalysisNodeId),
+    mutationFn: async () =>
+      analysisActions.mergeAnalysis(teamSlug, nodeId, fromAnalysisNodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

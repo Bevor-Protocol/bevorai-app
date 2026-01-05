@@ -25,7 +25,11 @@ const CreateTeamModal: React.FC = () => {
   const [formError, setFormError] = useState("");
 
   const { mutate, error, isSuccess, isPending } = useMutation({
-    mutationFn: async (data: TeamFormValues) => teamActions.createTeam(data),
+    mutationFn: async (data: TeamFormValues) =>
+      teamActions.createTeam(data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

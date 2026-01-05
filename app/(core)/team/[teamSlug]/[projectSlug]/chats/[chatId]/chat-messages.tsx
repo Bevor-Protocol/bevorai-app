@@ -42,12 +42,20 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   const chatMessageQuery = useQuery({
     queryKey: generateQueryKey.chatMessages(chatId),
-    queryFn: () => chatActions.getChatMessages(teamSlug, chatId),
+    queryFn: () =>
+      chatActions.getChatMessages(teamSlug, chatId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const chatQuery = useSuspenseQuery({
     queryKey: generateQueryKey.chat(chatId),
-    queryFn: () => chatActions.getChat(teamSlug, chatId),
+    queryFn: () =>
+      chatActions.getChat(teamSlug, chatId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   useEffect(() => {

@@ -15,8 +15,10 @@ import {
   Check,
   Copy,
   Globe,
+  Leaf,
   Lock,
   Pencil,
+  TreeDeciduous,
   X,
   XCircle,
 } from "lucide-react";
@@ -85,7 +87,11 @@ const AnalysisMetadata: React.FC<{
 
   const { data: version } = useSuspenseQuery({
     queryKey: generateQueryKey.analysisDetailed(nodeId),
-    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, nodeId),
+    queryFn: async () =>
+      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const chatQuery = extractChatsQuery({
@@ -97,17 +103,26 @@ const AnalysisMetadata: React.FC<{
 
   const { data: chats } = useQuery({
     queryKey: generateQueryKey.chats(teamSlug, chatQuery),
-    queryFn: () => chatActions.getChats(teamSlug, chatQuery),
+    queryFn: () =>
+      chatActions.getChats(teamSlug, chatQuery).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: allowChat,
   });
 
   const createChatMutation = useMutation({
     mutationFn: async () =>
-      chatActions.initiateChat(teamSlug, {
-        chat_type: "analysis",
-        code_version_id: version.code_version_id,
-        analysis_node_id: version.id,
-      }),
+      chatActions
+        .initiateChat(teamSlug, {
+          chat_type: "analysis",
+          code_version_id: version.code_version_id,
+          analysis_node_id: version.id,
+        })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -166,13 +181,19 @@ const AnalysisMetadata: React.FC<{
               <div className="h-4 w-px bg-border" />
               <div className="flex items-center gap-1 justify-start">
                 {!version.parent_node_id && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap shrink-0">
-                    ROOT
+                  <span
+                    className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 whitespace-nowrap shrink-0"
+                    title="root"
+                  >
+                    <TreeDeciduous className="size-3" />
                   </span>
                 )}
                 {version.is_leaf && version.parent_node_id && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap shrink-0">
-                    LEAF
+                  <span
+                    className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 whitespace-nowrap shrink-0"
+                    title="leaf"
+                  >
+                    <Leaf className="size-3" />
                   </span>
                 )}
               </div>

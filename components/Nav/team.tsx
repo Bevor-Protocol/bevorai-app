@@ -27,7 +27,11 @@ export const TeamNavigation: React.FC<{
 
   const { data: teams } = useQuery({
     queryKey: generateQueryKey.teams(),
-    queryFn: async () => userActions.teams(),
+    queryFn: async () =>
+      userActions.teams().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const team = useMemo(() => {

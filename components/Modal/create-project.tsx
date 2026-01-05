@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { ProjectFormValues, projectFormSchema } from "@/utils/schema";
+import { isApiError } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 
@@ -31,7 +32,11 @@ const CreateProjectModal: React.FC<{
   const { formState, setField, updateFormState } = useFormReducer<ProjectFormValues>(initialState);
 
   const createProjectMutation = useMutation({
-    mutationFn: async (data: ProjectFormValues) => projectActions.createProject(teamSlug, data),
+    mutationFn: async (data: ProjectFormValues) =>
+      projectActions.createProject(teamSlug, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -60,6 +65,8 @@ const CreateProjectModal: React.FC<{
 
     createProjectMutation.mutate(parsed.data);
   };
+
+  console.log(createProjectMutation.error);
 
   return (
     <>
@@ -124,8 +131,8 @@ const CreateProjectModal: React.FC<{
           </Field>
         </FieldGroup>
 
-        {createProjectMutation.error && (
-          <p className="text-sm text-destructive">{createProjectMutation.error.message}</p>
+        {createProjectMutation.error && isApiError(createProjectMutation.error) && (
+          <p className="text-sm text-destructive">{createProjectMutation.error.error.message}</p>
         )}
         <DialogFooter className="mt-2">
           <DialogClose disabled={createProjectMutation.isPending} asChild>

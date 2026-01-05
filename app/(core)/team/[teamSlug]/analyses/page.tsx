@@ -1,7 +1,7 @@
-import { userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { AnalysisNodesView } from "@/components/screens/nodes";
 import TeamSubnav from "@/components/subnav/team";
+import { AnalysisCreate } from "@/components/views/analysis/creation";
 import { DefaultAnalysisNodesQuery, extractAnalysisNodesQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
 
@@ -21,11 +21,8 @@ const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const currentUser = await userActions.get();
-
   const initialQuery = extractAnalysisNodesQuery({
     ...resolvedSearchParams,
-    user_id: currentUser.id,
   });
   const defaultQuery = { ...DefaultAnalysisNodesQuery };
 
@@ -36,8 +33,12 @@ const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
           <div className="px-6 py-6 flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-semibold mb-1">Analyses</h1>
-              <p className="text-sm text-muted-foreground">User-scoped security analyses</p>
+              <p className="text-sm text-muted-foreground">
+                User-scoped security analyses. A root analysis is the initial form of that analysis,
+                a leaf is the most recent.
+              </p>
             </div>
+            <AnalysisCreate {...resolvedParams} />
           </div>
         </div>
         <div className="px-6 py-6">

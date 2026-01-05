@@ -30,7 +30,11 @@ export const AnalysisNodesView: React.FC<{
 
   const nodesQuery = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, debouncedState),
-    queryFn: () => analysisActions.getAnalyses(teamSlug, debouncedState),
+    queryFn: () =>
+      analysisActions.getAnalyses(teamSlug, debouncedState).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     placeholderData: keepPreviousData,
   });
 

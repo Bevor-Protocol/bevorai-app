@@ -35,3 +35,11 @@ export const uploadCodeFolderSchema = z.object({
 });
 
 export type UploadCodeFolderFormValues = z.infer<typeof uploadCodeFolderSchema>;
+
+export const createCodeFromGithubSchema = z.object({
+  branch: z.string().optional(),
+  commit: z.string().optional(),
+  parent_id: z.string().optional(),
+});
+
+export type CreateCodeFromGithubFormValues = z.infer<typeof createCodeFromGithubSchema>;

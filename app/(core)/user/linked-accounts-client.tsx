@@ -28,7 +28,11 @@ const LinkedAccountsClient: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: user, isLoading: isLoadingUser } = useQuery({
     queryKey: generateQueryKey.currentUser(),
-    queryFn: () => userActions.get(),
+    queryFn: () =>
+      userActions.get().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const [isAttaching, setIsAttaching] = useState<"google" | "github" | null>(null);
@@ -39,7 +43,10 @@ const LinkedAccountsClient: React.FC = () => {
   const attachOauth = async (providerName: "google" | "github"): Promise<void> => {
     setIsAttaching(providerName);
     try {
-      const oauth_attach_token = await authActions.getAttachToken(providerName);
+      const oauth_attach_token = await authActions.getAttachToken(providerName).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
       start({
         providerName,
         oauth_attach_token,
@@ -55,7 +62,10 @@ const LinkedAccountsClient: React.FC = () => {
 
   const detachOAuthMutation = useMutation({
     mutationFn: async (providerName: "google" | "github") => {
-      return authActions.detachOAuth(providerName);
+      return authActions.detachOAuth(providerName).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
     },
     onSuccess: (_, providerName) => {
       toast.success("OAuth account disconnected successfully");

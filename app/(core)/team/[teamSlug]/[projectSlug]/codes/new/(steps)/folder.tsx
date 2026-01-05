@@ -4,8 +4,9 @@ import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
+import { handleMutationError } from "@/utils/helpers";
 import { UploadCodeFolderFormValues, uploadCodeFolderSchema } from "@/utils/schema";
-import { ProjectDetailedSchemaI } from "@/utils/types";
+import { isApiError, ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { solidity } from "@replit/codemirror-lang-solidity";
@@ -46,13 +47,20 @@ const FolderStep: React.FC<{
 
   const mutation = useMutation({
     mutationFn: async (data: UploadCodeFolderFormValues) =>
-      codeActions.contractUploadFolder(project.team.slug, project.id, data),
+      codeActions.contractUploadFolder(project.team.slug, project.id, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onMutate: () => {
       updateFormState({ type: "SET_ERRORS", errors: {} });
       toastId.current = toast.loading("Uploading and parsing code...");
     },
-    onError: () => {
-      toast.dismiss(toastId.current);
+    onError: (err) => {
+      if (isApiError(err)) {
+        handleMutationError({ err, toastId: toastId.current, message: "Something went wrong" });
+      } else {
+        toast.dismiss(toastId.current);
+      }
       updateFormState({
         type: "SET_ERRORS",
         errors: { fileMap: "Something went wrong" },
@@ -99,7 +107,7 @@ const FolderStep: React.FC<{
       const validFiles: SourceFile[] = [];
 
       for (const file of Array.from(files)) {
-        if (file.name.endsWith(".sol") || file.name.endsWith(".js") || file.name.endsWith(".ts")) {
+        if (file.name.endsWith(".sol")) {
           const content = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e): void => resolve(e.target?.result as string);
@@ -237,9 +245,7 @@ const FolderStep: React.FC<{
             <XCircle className="size-8 text-destructive" />
           </div>
           <h2 className="text-2xl font-bold ">Upload Failed</h2>
-          <p className="text-muted-foreground">
-            There was an error processing your contract. Please try again.
-          </p>
+          <p className="text-muted-foreground">There was an error processing your contract.</p>
           <div className="flex gap-4 justify-center mt-6">
             <Button variant="outline" onClick={() => mutation.reset()}>
               Try Again

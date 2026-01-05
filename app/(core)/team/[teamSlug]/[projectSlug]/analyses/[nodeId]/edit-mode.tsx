@@ -49,7 +49,7 @@ import {
   AnalysisFindingBody,
   analysisFindingBodySchema,
 } from "@/utils/schema";
-import { DraftFindingSchemaI, DraftSchemaI, ScopeSchemaI } from "@/utils/types";
+import { DraftFindingSchemaI, DraftSchemaI, isApiError, ScopeSchemaI } from "@/utils/types";
 import {
   useMutation,
   useQuery,
@@ -111,7 +111,11 @@ const EditCodeSnippet: React.FC<{
 }> = ({ teamSlug, codeVersionId, codeVersionNodeId, isEditing }) => {
   const { data: nodeData, isLoading: isLoadingNode } = useQuery({
     queryKey: [QUERY_KEYS.CODES, codeVersionId, "nodes", codeVersionNodeId],
-    queryFn: () => codeActions.getNode(teamSlug, codeVersionId, codeVersionNodeId),
+    queryFn: () =>
+      codeActions.getNode(teamSlug, codeVersionId, codeVersionNodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: !!codeVersionNodeId && !isEditing,
   });
 
@@ -253,7 +257,11 @@ const EditFindingDetail: React.FC<{
 
   const deleteMutation = useMutation({
     mutationFn: (findingId: string) =>
-      analysisActions.deleteStagedFinding(teamSlug, nodeId, findingId),
+      analysisActions.deleteStagedFinding(teamSlug, nodeId, findingId).then((r) => {
+        console.log(r);
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }, findingId) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -262,11 +270,26 @@ const EditFindingDetail: React.FC<{
         onFindingDeleted(findingId);
       }
     },
+    onError: (err) => {
+      if (isApiError(err)) {
+        toast.error(err.error.message, {
+          action: {
+            label: "view",
+            onClick: () => console.log(err.error.code),
+          },
+        });
+      } else {
+        console.log("is not api error", err);
+      }
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ findingId, data }: { findingId: string; data: AnalysisFindingBody }) =>
-      analysisActions.updateStagedFinding(teamSlug, nodeId, findingId, data),
+      analysisActions.updateStagedFinding(teamSlug, nodeId, findingId, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }, { findingId, data }) => {
       for (const f of draftQuery.data?.findings ?? []) {
         if (f.id == findingId) {
@@ -629,17 +652,28 @@ export const EditClient: React.FC<{
 
   const { data: version } = useSuspenseQuery({
     queryKey: generateQueryKey.analysisDetailed(nodeId),
-    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, nodeId),
+    queryFn: async () =>
+      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const draftQuery = useQuery({
     queryKey: generateQueryKey.analysisDraft(nodeId),
-    queryFn: () => analysisActions.getDraft(teamSlug, nodeId),
+    queryFn: () =>
+      analysisActions.getDraft(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const addMutation = useMutation({
     mutationFn: (data: AddAnalysisFindingBody) =>
-      analysisActions.addStagedFinding(teamSlug, nodeId, data),
+      analysisActions.addStagedFinding(teamSlug, nodeId, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -648,7 +682,11 @@ export const EditClient: React.FC<{
   });
 
   const commitMutation = useMutation({
-    mutationFn: () => analysisActions.commitDraft(teamSlug, nodeId),
+    mutationFn: () =>
+      analysisActions.commitDraft(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ id }) => {
       setOpenCommitDialog(false);
       toast.success("Changes committed successfully");
@@ -661,7 +699,10 @@ export const EditClient: React.FC<{
 
   const undoStagedMutation = useMutation({
     mutationFn: (findingId: string) =>
-      analysisActions.deleteStagedFinding(teamSlug, nodeId, findingId),
+      analysisActions.deleteStagedFinding(teamSlug, nodeId, findingId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

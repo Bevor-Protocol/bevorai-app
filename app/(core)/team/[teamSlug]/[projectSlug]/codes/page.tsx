@@ -1,4 +1,3 @@
-import { userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { CodeVersionsView } from "@/components/screens/code-versions";
 import ProjectSubnav from "@/components/subnav/project";
@@ -22,12 +21,9 @@ const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params, s
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const currentUser = await userActions.get();
-
   const initialQuery = extractCodesQuery({
     ...resolvedSearchParams,
     project_slug: resolvedParams.projectSlug,
-    user_id: currentUser.id,
   });
 
   const defaultQuery = { ...DefaultCodesQuery, project_slug: resolvedParams.projectSlug };
@@ -45,7 +41,7 @@ const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params, s
                 href={`/team/${resolvedParams.teamSlug}/${resolvedParams.projectSlug}/codes/new`}
               >
                 <Plus className="size-4" />
-                New Code
+                Upload Code
               </Link>
             </Button>
           </div>

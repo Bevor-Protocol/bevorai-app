@@ -5,6 +5,7 @@ import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import { ProjectFormValues } from "@/utils/schema";
 import {
+  ApiResponse,
   ProjectDetailedSchemaI,
   ProjectsPaginationI,
   RecentCodeVersionSchemaI,
@@ -14,7 +15,7 @@ import { QueryKey } from "@tanstack/react-query";
 export const createProject = async (
   teamSlug: string,
   data: ProjectFormValues,
-): Promise<{
+): ApiResponse<{
   project: ProjectDetailedSchemaI;
   toInvalidate: QueryKey[];
 }> => {
@@ -25,9 +26,19 @@ export const createProject = async (
   return api
     .post("/projects", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
       return {
-        project: response.data,
-        toInvalidate,
+        ok: true as const,
+        data: { project: response.data, toInvalidate },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
       };
     });
 };
@@ -37,36 +48,75 @@ export const getProjects = async (
   filters: {
     [key: string]: string;
   },
-): Promise<ProjectsPaginationI> => {
+): ApiResponse<ProjectsPaginationI> => {
   const searchParams = buildSearchParams(filters);
 
   return api
     .get(`/projects?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const getProject = async (
   teamSlug: string,
   projectSlug: string,
-): Promise<ProjectDetailedSchemaI> => {
+): ApiResponse<ProjectDetailedSchemaI> => {
   return api
     .get(`/projects/${projectSlug}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const deleteProject = async (
   teamSlug: string,
   projectSlug: string,
-): Promise<{ toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [[QUERY_KEYS.PROJECTS]];
   return api
     .delete(`/projects/${projectSlug}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then(() => {
-      return { toInvalidate };
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: { toInvalidate },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
@@ -74,22 +124,48 @@ export const updateProject = async (
   teamSlug: string,
   projectSlug: string,
   data: ProjectFormValues,
-): Promise<{ project: ProjectDetailedSchemaI; toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ project: ProjectDetailedSchemaI; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.project(projectSlug), generateQueryKey.allProjects()];
   return api
     .patch(`/projects/${projectSlug}`, data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return { project: response.data, toInvalidate };
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: { project: response.data, toInvalidate },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const getRecentCode = async (
   teamSlug: string,
   projectSlug: string,
-): Promise<RecentCodeVersionSchemaI> => {
+): ApiResponse<RecentCodeVersionSchemaI> => {
   return api
     .get(`/projects/${projectSlug}/recent-code`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };

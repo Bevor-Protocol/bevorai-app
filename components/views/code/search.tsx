@@ -67,7 +67,11 @@ const NodeSearch: React.FC<{
     isFetching,
   } = useQuery({
     queryKey: generateQueryKey.codeNodes(codeId, { name: debouncedState }),
-    queryFn: () => codeActions.getNodes(teamSlug, codeId, { name: debouncedState }),
+    queryFn: () =>
+      codeActions.getNodes(teamSlug, codeId, { name: debouncedState }).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: !!debouncedState,
   });
 

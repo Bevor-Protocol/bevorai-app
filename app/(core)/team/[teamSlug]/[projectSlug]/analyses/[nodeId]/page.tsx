@@ -34,19 +34,33 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
     [, analysis] = await Promise.all([
       queryClient.fetchQuery({
         queryKey: generateQueryKey.analysisDraft(resolvedParams.nodeId),
-        queryFn: () => analysisActions.getDraft(resolvedParams.teamSlug, resolvedParams.nodeId),
+        queryFn: () =>
+          analysisActions.getDraft(resolvedParams.teamSlug, resolvedParams.nodeId).then((r) => {
+            if (!r.ok) throw r;
+            return r.data;
+          }),
       }),
       queryClient.fetchQuery({
         queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),
         queryFn: () =>
-          analysisActions.getAnalysisDetailed(resolvedParams.teamSlug, resolvedParams.nodeId),
+          analysisActions
+            .getAnalysisDetailed(resolvedParams.teamSlug, resolvedParams.nodeId)
+            .then((r) => {
+              if (!r.ok) throw r;
+              return r.data;
+            }),
       }),
     ]);
   } else {
     analysis = await queryClient.fetchQuery({
       queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),
       queryFn: async () =>
-        analysisActions.getAnalysisDetailed(resolvedParams.teamSlug, resolvedParams.nodeId),
+        analysisActions
+          .getAnalysisDetailed(resolvedParams.teamSlug, resolvedParams.nodeId)
+          .then((r) => {
+            if (!r.ok) throw r;
+            return r.data;
+          }),
     });
   }
 

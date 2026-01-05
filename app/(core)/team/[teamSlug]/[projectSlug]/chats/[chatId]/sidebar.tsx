@@ -5,7 +5,7 @@ import { AnalysisVersionPreviewElement } from "@/components/analysis/element";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CodeVersionElementCompact } from "@/components/versions/element";
+import { CodeVersionCompactElement } from "@/components/versions/element";
 import { cn } from "@/lib/utils";
 import { SSEPayload, useSSE } from "@/providers/sse";
 import { generateQueryKey } from "@/utils/constants";
@@ -44,25 +44,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
 
   const chatsQuery = useQuery({
     queryKey: generateQueryKey.chats(teamSlug, query),
-    queryFn: () => chatActions.getChats(teamSlug, query),
+    queryFn: () =>
+      chatActions.getChats(teamSlug, query).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const chatQuery = useSuspenseQuery({
     queryKey: generateQueryKey.chat(chatId),
-    queryFn: () => chatActions.getChat(teamSlug, chatId),
+    queryFn: () =>
+      chatActions.getChat(teamSlug, chatId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const relationQuery = useQuery({
     queryKey: generateQueryKey.codeRelations(chatQuery.data.code_version_id),
-    queryFn: () => codeActions.getRelations(teamSlug, chatQuery.data.code_version_id),
+    queryFn: () =>
+      codeActions.getRelations(teamSlug, chatQuery.data.code_version_id).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const createChatMutation = useMutation({
     mutationFn: async (codeId: string) =>
-      chatActions.initiateChat(teamSlug, {
-        chat_type: "code",
-        code_version_id: codeId,
-      }),
+      chatActions
+        .initiateChat(teamSlug, {
+          chat_type: "code",
+          code_version_id: codeId,
+        })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -139,7 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ teamSlug, projectSlug, query, 
               href={`/team/${teamSlug}/${projectSlug}/codes/${chatQuery.data.code_version_id}`}
               className="block hover:opacity-80 transition-opacity"
             >
-              <CodeVersionElementCompact version={chatQuery.data.code_version} />
+              <CodeVersionCompactElement version={chatQuery.data.code_version} />
             </Link>
             {chatQuery.data.analysis && (
               <Link

@@ -1,5 +1,6 @@
 import { BLOCK_EXPLORER_BASE_URLS } from "@/utils/constants";
-import { DropdownOption } from "@/utils/types";
+import { ApiError, CodeMappingSchemaI, DropdownOption } from "@/utils/types";
+import { toast } from "sonner";
 import { Address } from "viem";
 
 export const trimAddress = (address: Address | string | undefined): string => {
@@ -97,4 +98,34 @@ export const truncateVersion = (s: string): string => {
 export const explorerUrl = (network: string, address: string): string => {
   const explorer = BLOCK_EXPLORER_BASE_URLS[network];
   return explorer + "/address/" + address;
+};
+
+export const commitUrl = (version: CodeMappingSchemaI): string => {
+  const org = version.repository?.account.login;
+  const repo = version.repository?.name;
+  const sha = version.commit?.sha;
+  return `https://github.com/${org}/${repo}/commit/${sha}`;
+};
+
+export const handleMutationError = (data: {
+  err: ApiError;
+  toastId?: string | number;
+  message?: string;
+}): string | number => {
+  const requestId = data.err.requestId;
+  const truncatedId =
+    requestId.length > 16 ? `${requestId.slice(0, 8)}...${requestId.slice(-8)}` : requestId;
+
+  const toastId = toast.error(data.message ?? data.err.error.message, {
+    id: data.toastId,
+    description: `Request ID: ${truncatedId}`,
+    action: {
+      label: "Copy ID",
+      onClick: (): void => {
+        navigator.clipboard.writeText(requestId);
+      },
+    },
+  });
+
+  return toastId;
 };

@@ -23,7 +23,11 @@ export const UserNavigation: React.FC<{
   user: UserDetailedSchemaI | null | undefined;
 }> = ({ user }) => {
   const logoutMutation = useMutation({
-    mutationFn: async () => authActions.logout(),
+    mutationFn: async () =>
+      authActions.logout().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return (

@@ -43,21 +43,23 @@ export async function GET(
   return await authActions
     .authenticate({ token, method: code })
     .then((response) => {
+      console.log("CALLBACK", response);
+      if (!response.ok) throw new Error(response.error);
       const redirectResponse = NextResponse.redirect(new URL(redirect, request.url));
-      redirectResponse.cookies.set("bevor-token", response.scoped_token, {
+      redirectResponse.cookies.set("bevor-token", response.data.scoped_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        expires: new Date(response.expires_at * 1000),
+        expires: new Date(response.data.expires_at * 1000),
       });
 
-      redirectResponse.cookies.set("bevor-refresh-token", response.refresh_token, {
+      redirectResponse.cookies.set("bevor-refresh-token", response.data.refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        expires: new Date(response.refresh_expires_at * 1000),
+        expires: new Date(response.data.refresh_expires_at * 1000),
       });
 
       return redirectResponse;

@@ -27,7 +27,10 @@ const AnalysisNodesPage: AsyncComponent<PageProps> = async ({ params, searchPara
   });
 
   if (user !== "unset") {
-    const currentUser = await userActions.get();
+    const currentUser = await userActions.get().then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
     initialQuery.user_id = currentUser.id;
   }
 

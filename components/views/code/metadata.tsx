@@ -1,17 +1,34 @@
 "use client";
 
-import { chatActions, codeActions } from "@/actions/bevor";
+import { analysisActions, chatActions, codeActions } from "@/actions/bevor";
+import { AnalysisVersionPreviewElement } from "@/components/analysis/element";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { generateQueryKey } from "@/utils/constants";
 import { SourceTypeEnum } from "@/utils/enums";
 import { explorerUrl, formatDateShort, truncateId, truncateVersion } from "@/utils/helpers";
-import { extractChatsQuery } from "@/utils/query-params";
+import { extractAnalysisNodesQuery, extractChatsQuery } from "@/utils/query-params";
 import { CodeMappingSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { BotMessageSquare, GitCommit, Network, XCircle } from "lucide-react";
+import { BotMessageSquare, GitCommit, Network, Shield, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import CodeVersionMenu from "./code-version-menu";
 
@@ -75,7 +92,7 @@ const VersionDisplay: React.FC<{ version: CodeMappingSchemaI }> = ({ version }) 
     return (
       <Button asChild variant="ghost" className="text-xs font-mono">
         <a href={url} target="_blank" referrerPolicy="no-referrer">
-          <span>{version.commit?.branch}</span>
+          <span>{version.branch}</span>
           <GitCommit className="size-3" />
           <span>{truncateId(version.version_identifier)}</span>
         </a>
@@ -96,7 +113,11 @@ const CodeMetadata: React.FC<{
 
   const { data: version } = useSuspenseQuery({
     queryKey: generateQueryKey.code(codeId),
-    queryFn: () => codeActions.getCodeVersion(teamSlug, codeId),
+    queryFn: () =>
+      codeActions.getCodeVersion(teamSlug, codeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const chatQuery = extractChatsQuery({
@@ -107,15 +128,24 @@ const CodeMetadata: React.FC<{
 
   const { data: chats } = useQuery({
     queryKey: generateQueryKey.chats(teamSlug, chatQuery),
-    queryFn: () => chatActions.getChats(teamSlug, chatQuery),
+    queryFn: () =>
+      chatActions.getChats(teamSlug, chatQuery).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const createChatMutation = useMutation({
     mutationFn: async () =>
-      chatActions.initiateChat(teamSlug, {
-        chat_type: "code",
-        code_version_id: version.id,
-      }),
+      chatActions
+        .initiateChat(teamSlug, {
+          chat_type: "code",
+          code_version_id: version.id,
+        })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -138,6 +168,73 @@ const CodeMetadata: React.FC<{
     }
   };
 
+  const analysisQuery = extractAnalysisNodesQuery({
+    project_slug: projectSlug,
+    code_version_id: version.id,
+  });
+
+  const parentAnalysisQuery = extractAnalysisNodesQuery({
+    project_slug: projectSlug,
+    code_version_id: version.parent_id,
+  });
+
+  const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
+  const [selectedParentId, setSelectedParentId] = useState<string>("");
+
+  const { data: analyses } = useQuery({
+    queryKey: generateQueryKey.analyses(teamSlug, analysisQuery),
+    queryFn: () =>
+      analysisActions.getAnalyses(teamSlug, analysisQuery).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  const { data: parentAnalyses = { results: [] } } = useQuery({
+    queryKey: generateQueryKey.analyses(teamSlug, parentAnalysisQuery),
+    queryFn: () =>
+      analysisActions.getAnalyses(teamSlug, parentAnalysisQuery).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    enabled: !!version.parent_id,
+  });
+
+  const userAnalyses = useMemo(() => {
+    if (!analyses?.results) return [];
+    return analyses.results
+      .filter((analysis) => analysis.user.id === userId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [analyses, userId]);
+
+  const userParentAnalyses = useMemo(() => {
+    if (!parentAnalyses?.results) return [];
+    return parentAnalyses.results
+      .filter((analysis) => analysis.user.id === userId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [parentAnalyses, userId]);
+
+  const candidateParents = useMemo(() => {
+    if (userAnalyses.length > 0) {
+      return userAnalyses;
+    }
+    if (userParentAnalyses.length > 0 && version.parent_id) {
+      return userParentAnalyses;
+    }
+    return [];
+  }, [userAnalyses, userParentAnalyses, version.parent_id]);
+
+  const isFromCurrentCodeVersion = userAnalyses.length > 0;
+
+  const handleAnalyzeClick = (): void => {
+    if (candidateParents.length > 0) {
+      setSelectedParentId(candidateParents[0]?.id || "");
+      setAnalyzeDialogOpen(true);
+    } else {
+      router.push(`/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}`);
+    }
+  };
+
   return (
     <div className="grid pb-4 lg:pt-4 px-2" style={{ gridTemplateColumns: "250px 1fr" }}>
       <h3>{version.inferred_name}</h3>
@@ -152,23 +249,29 @@ const CodeMetadata: React.FC<{
             <span>{formatDateShort(version.commit?.timestamp ?? version.created_at)}</span>
           </div>
           {allowActions && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleChatClick}
-              disabled={createChatMutation.isPending || version.status !== "success"}
-            >
-              <BotMessageSquare className="size-4" />
-              {chats && chats.results.length > 0 ? "Continue Chat" : "Start Chat"}
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleChatClick}
+                disabled={createChatMutation.isPending || version.status !== "success"}
+              >
+                <BotMessageSquare className="size-4" />
+                {chats && chats.results.length > 0 ? "Continue Chat" : "Start Chat"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAnalyzeClick}
+                disabled={version.status !== "success"}
+              >
+                <Shield className="size-4" />
+                Analyze
+              </Button>
+            </>
           )}
           {allowActions ? (
-            <CodeVersionMenu
-              version={version}
-              teamSlug={teamSlug}
-              projectSlug={projectSlug}
-              userId={userId}
-            />
+            <CodeVersionMenu version={version} teamSlug={teamSlug} projectSlug={projectSlug} />
           ) : (
             <Button variant="outline" asChild>
               <Link href={`/team/${teamSlug}/${projectSlug}/codes/${codeId}`}>Go To Source</Link>
@@ -176,6 +279,96 @@ const CodeMetadata: React.FC<{
           )}
         </div>
       </div>
+      <Dialog open={analyzeDialogOpen} onOpenChange={setAnalyzeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start Analysis</DialogTitle>
+            <DialogDescription>
+              {isFromCurrentCodeVersion
+                ? candidateParents.length === 1
+                  ? "You already have an analysis for this code version. You can start a new analysis from scratch."
+                  : "You already have analyses for this code version. Create a new analysis based on one of them, or start from scratch."
+                : candidateParents.length === 1
+                  ? "Create a new analysis with the previous code version's analysis as parent, or start from scratch"
+                  : "Select a parent analysis from the previous code version, or start from scratch"}
+            </DialogDescription>
+          </DialogHeader>
+          {candidateParents.length === 1 ? (
+            <div className="py-4">
+              <AnalysisVersionPreviewElement analysisVersion={candidateParents[0]} />
+            </div>
+          ) : (
+            <div className="py-4">
+              <Select value={selectedParentId} onValueChange={setSelectedParentId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a parent analysis">
+                    <div className="flex gap-2 items-center">
+                      <Shield className="size-3.5 text-purple-400 shrink-0" />
+                      {truncateId(selectedParentId)}
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {candidateParents.map((analysis) => (
+                    <SelectItem value={analysis.id} key={analysis.id}>
+                      <AnalysisVersionPreviewElement analysisVersion={analysis} />
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAnalyzeDialogOpen(false)}>
+              Cancel
+            </Button>
+            {candidateParents.length === 1 ? (
+              isFromCurrentCodeVersion ? (
+                <Button asChild>
+                  <Link
+                    href={`/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}`}
+                    onClick={() => setAnalyzeDialogOpen(false)}
+                  >
+                    Start from scratch
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" asChild>
+                    <Link
+                      href={`/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}`}
+                      onClick={() => setAnalyzeDialogOpen(false)}
+                    >
+                      Start from scratch
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link
+                      href={`/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}&parentVersionId=${candidateParents[0]?.id}`}
+                      onClick={() => setAnalyzeDialogOpen(false)}
+                    >
+                      Create with parent
+                    </Link>
+                  </Button>
+                </>
+              )
+            ) : (
+              <Button asChild>
+                <Link
+                  href={
+                    selectedParentId
+                      ? `/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}&parentVersionId=${selectedParentId}`
+                      : `/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}`
+                  }
+                  onClick={() => setAnalyzeDialogOpen(false)}
+                >
+                  {selectedParentId ? "Create with parent" : "Start from scratch"}
+                </Link>
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

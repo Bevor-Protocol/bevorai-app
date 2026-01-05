@@ -14,6 +14,7 @@ import {
   AnalysisDagSchemaI,
   AnalysisNodeSchemaI,
   AnalysisVersionPaginationI,
+  ApiResponse,
   DraftSchemaI,
   FindingSchemaI,
   ScopeSchemaI,
@@ -23,7 +24,7 @@ import { QueryKey } from "@tanstack/react-query";
 export const createAnalysis = async (
   teamSlug: string,
   data: createAnalysisFormValues,
-): Promise<{
+): ApiResponse<{
   id: string;
   toInvalidate: QueryKey[];
 }> => {
@@ -31,9 +32,22 @@ export const createAnalysis = async (
   return api
     .post("/analyses", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
       return {
-        id: response.data.id,
-        toInvalidate,
+        ok: true as const,
+        data: {
+          id: response.data.id,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
       };
     });
 };
@@ -41,63 +55,144 @@ export const createAnalysis = async (
 export const getLeafs = async (
   teamSlug: string,
   nodeId: string,
-): Promise<AnalysisNodeSchemaI[]> => {
+): ApiResponse<AnalysisNodeSchemaI[]> => {
   return api
     .get(`/analyses/${nodeId}/leafs`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data.results;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.results,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
-export const getDAG = async (teamSlug: string, nodeId: string): Promise<AnalysisDagSchemaI> => {
+export const getDAG = async (teamSlug: string, nodeId: string): ApiResponse<AnalysisDagSchemaI> => {
   return api
     .get(`/analyses/${nodeId}/dag`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const getAnalysis = async (
   teamSlug: string,
   nodeId: string,
-): Promise<AnalysisNodeSchemaI> => {
+): ApiResponse<AnalysisNodeSchemaI> => {
   return api
     .get(`/analyses/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const getAnalysisDetailed = async (
   teamSlug: string,
   nodeId: string,
-): Promise<AnalysisNodeSchemaI> => {
+): ApiResponse<AnalysisNodeSchemaI> => {
   return api
     .get(`/analyses/${nodeId}?with_findings=true&with_scopes=true`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
-      return response.data;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
-export const getFindings = async (teamSlug: string, nodeId: string): Promise<FindingSchemaI[]> => {
+export const getFindings = async (
+  teamSlug: string,
+  nodeId: string,
+): ApiResponse<FindingSchemaI[]> => {
   return api
     .get(`/analyses/${nodeId}/findings`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
-      return response.data.results;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.results,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
-export const getScopes = async (teamSlug: string, nodeId: string): Promise<ScopeSchemaI[]> => {
+export const getScopes = async (teamSlug: string, nodeId: string): ApiResponse<ScopeSchemaI[]> => {
   return api
     .get(`/analyses/${nodeId}/scopes`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
-      return response.data.results;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.results,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
@@ -105,7 +200,7 @@ export const updateFindings = async (
   teamSlug: string,
   nodeId: string,
   data: UpdateAnalysisNodeBody,
-): Promise<{
+): ApiResponse<{
   id: string;
   toInvalidate: QueryKey[];
 }> => {
@@ -115,9 +210,22 @@ export const updateFindings = async (
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
       return {
-        id: response.data.id,
-        toInvalidate,
+        ok: true as const,
+        data: {
+          id: response.data.id,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
       };
     });
 };
@@ -127,28 +235,56 @@ export const submitFindingFeedback = async (
   nodeId: string,
   findingId: string,
   data: FindingFeedbackBody,
-): Promise<{ toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisFindings(nodeId)];
   return api
     .post(`/analyses/${nodeId}/findings/${findingId}`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
-    .then(() => {
-      return { toInvalidate };
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const toggleVisibility = async (
   teamSlug: string,
   nodeId: string,
-): Promise<{ toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analyses(teamSlug), generateQueryKey.analysis(nodeId)];
 
   return api
     .patch(`/analyses/${nodeId}/visibility`, {}, { headers: { "bevor-team-slug": teamSlug } })
-    .then(() => {
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
       return {
-        toInvalidate,
+        ok: true as const,
+        data: {
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
       };
     });
 };
@@ -158,21 +294,34 @@ export const getAnalyses = async (
   filters: {
     [key: string]: string;
   },
-): Promise<AnalysisVersionPaginationI> => {
+): ApiResponse<AnalysisVersionPaginationI> => {
   const searchParams = buildSearchParams(filters);
   return api
     .get(`/analyses?${searchParams}`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
-      return response.data;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const forkAnalysis = async (
   teamSlug: string,
   analysisNodeId: string,
-): Promise<{
+): ApiResponse<{
   id: string;
   toInvalidate: QueryKey[];
 }> => {
@@ -180,9 +329,22 @@ export const forkAnalysis = async (
   return api
     .post(`/analyses/${analysisNodeId}/fork`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
       return {
-        id: response.data.id,
-        toInvalidate,
+        ok: true as const,
+        data: {
+          id: response.data.id,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
       };
     });
 };
@@ -191,7 +353,7 @@ export const mergeAnalysis = async (
   teamSlug: string,
   toAnalysisNodeId: string,
   fromAnalysisNodeId: string,
-): Promise<{
+): ApiResponse<{
   id: string;
   toInvalidate: QueryKey[];
 }> => {
@@ -203,25 +365,54 @@ export const mergeAnalysis = async (
       { headers: { "bevor-team-slug": teamSlug } },
     )
     .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
       return {
-        id: response.data.id,
-        toInvalidate,
+        ok: true as const,
+        data: {
+          id: response.data.id,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
       };
     });
 };
 
-export const getDraft = async (teamSlug: string, analysisNodeId: string): Promise<DraftSchemaI> => {
+export const getDraft = async (
+  teamSlug: string,
+  analysisNodeId: string,
+): ApiResponse<DraftSchemaI> => {
   return api
     .get(`/analyses/${analysisNodeId}/draft`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      return response.data;
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
 export const commitDraft = async (
   teamSlug: string,
   analysisNodeId: string,
-): Promise<{
+): ApiResponse<{
   id: string;
 }> => {
   return api
@@ -231,7 +422,20 @@ export const commitDraft = async (
       { headers: { "bevor-team-slug": teamSlug } },
     )
     .then((response) => {
-      return { id: response.data.id };
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: { id: response.data.id },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
@@ -239,14 +443,27 @@ export const addStagedFinding = async (
   teamSlug: string,
   analysisNodeId: string,
   data: AddAnalysisFindingBody,
-): Promise<{ toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisDraft(analysisNodeId)];
   return api
     .post(`/analyses/${analysisNodeId}/draft/add`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
-    .then(() => {
-      return { toInvalidate };
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: { toInvalidate },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
@@ -254,7 +471,7 @@ export const deleteStagedFinding = async (
   teamSlug: string,
   analysisNodeId: string,
   findingId: string,
-): Promise<{ toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisDraft(analysisNodeId)];
   return api
     .post(
@@ -262,8 +479,22 @@ export const deleteStagedFinding = async (
       {},
       { headers: { "bevor-team-slug": teamSlug } },
     )
-    .then(() => {
-      return { toInvalidate };
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: { toInvalidate },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      console.log(error);
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };
 
@@ -272,13 +503,26 @@ export const updateStagedFinding = async (
   analysisNodeId: string,
   findingId: string,
   data: AnalysisFindingBody,
-): Promise<{ toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisDraft(analysisNodeId)];
   return api
     .post(`/analyses/${analysisNodeId}/draft/edit/${findingId}`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
-    .then(() => {
-      return { toInvalidate };
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: { toInvalidate },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
     });
 };

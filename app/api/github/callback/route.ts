@@ -26,7 +26,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   return await githubActions
     .handleCallback({ code, state, installation_id, setup_action })
-    .then(() => {
+    .then((response) => {
+      if (!response.ok) throw new Error(response.error);
       return NextResponse.redirect(
         new URL("/user/github/manage?success=github_connected", request.url),
       );

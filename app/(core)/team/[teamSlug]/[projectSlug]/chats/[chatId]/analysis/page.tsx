@@ -22,7 +22,12 @@ const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
   const queryClient = getQueryClient();
   const resolvedParams = await params;
 
-  const chat = await chatActions.getChat(resolvedParams.teamSlug, resolvedParams.chatId);
+  const chat = await chatActions
+    .getChat(resolvedParams.teamSlug, resolvedParams.chatId)
+    .then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
 
   if (!chat.analysis_node_id) {
     return (
@@ -37,7 +42,12 @@ const SourcesPage: AsyncComponent<Props> = async ({ params }) => {
   await queryClient.fetchQuery({
     queryKey: generateQueryKey.analysisDetailed(chat.analysis_node_id),
     queryFn: () =>
-      analysisActions.getAnalysisDetailed(resolvedParams.teamSlug, chat.analysis_node_id!),
+      analysisActions
+        .getAnalysisDetailed(resolvedParams.teamSlug, chat.analysis_node_id!)
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
   });
 
   return (

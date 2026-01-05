@@ -3,10 +3,10 @@
 import api from "@/lib/api";
 import { generateQueryKey } from "@/utils/constants";
 import { KeyFormValues } from "@/utils/schema/key";
-import { AuthSchema } from "@/utils/types";
+import { ApiResponse, AuthSchema } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
-export const listKeys = async (teamSlug: string): Promise<AuthSchema[]> => {
+export const listKeys = async (teamSlug: string): ApiResponse<AuthSchema[]> => {
   return api.get("/auth", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
     return response.data.results;
   });
@@ -15,27 +15,55 @@ export const listKeys = async (teamSlug: string): Promise<AuthSchema[]> => {
 export const createKey = async (
   teamSlug: string,
   data: KeyFormValues,
-): Promise<{ api_key: string; toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ api_key: string; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.apiKeys(teamSlug)];
-  return api.post("/auth", data, { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
-    return {
-      api_key: response.data.api_key,
-      toInvalidate,
-    };
-  });
+  return api
+    .post("/auth", data, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          api_key: response.data.api_key,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const refreshKey = async (
   teamSlug: string,
   keyId: string,
-): Promise<{ api_key: string; toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ api_key: string; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.apiKeys(teamSlug)];
   return api
     .post(`/auth/${keyId}`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
       return {
-        api_key: response.data.api_key,
-        toInvalidate,
+        ok: true as const,
+        data: {
+          api_key: response.data.api_key,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
       };
     });
 };
@@ -43,9 +71,26 @@ export const refreshKey = async (
 export const revokeKey = async (
   teamSlug: string,
   keyId: string,
-): Promise<{ toInvalidate: QueryKey[] }> => {
+): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.apiKeys(teamSlug)];
-  return api.delete(`/auth/${keyId}`, { headers: { "bevor-team-slug": teamSlug } }).then(() => {
-    return { toInvalidate };
-  });
+  return api
+    .delete(`/auth/${keyId}`, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };

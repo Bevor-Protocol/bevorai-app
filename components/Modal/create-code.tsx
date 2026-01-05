@@ -31,13 +31,17 @@ const CreateCodeModal: React.FC<{
 
   const { data: projects } = useQuery({
     queryKey: generateQueryKey.projects(teamSlug, DefaultProjectsQuery),
-    queryFn: async () => projectActions.getProjects(teamSlug, DefaultProjectsQuery),
+    queryFn: async () =>
+      projectActions.getProjects(teamSlug, DefaultProjectsQuery).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Add New Code</DialogTitle>
+        <DialogTitle>Upload New Code</DialogTitle>
         <DialogDescription>
           Choose a project that this new code should be added to
         </DialogDescription>

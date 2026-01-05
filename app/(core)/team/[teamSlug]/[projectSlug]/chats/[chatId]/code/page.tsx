@@ -25,20 +25,37 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const { source, node } = await searchParams;
 
-  const chat = await chatActions.getChat(resolvedParams.teamSlug, resolvedParams.chatId);
+  const chat = await chatActions
+    .getChat(resolvedParams.teamSlug, resolvedParams.chatId)
+    .then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
 
   const [, sources, user] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(chat.code_version_id),
-      queryFn: () => codeActions.getCodeVersion(resolvedParams.teamSlug, chat.code_version_id),
+      queryFn: () =>
+        codeActions.getCodeVersion(resolvedParams.teamSlug, chat.code_version_id).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
     queryClient.fetchQuery({
       queryKey: generateQueryKey.codeSources(chat.code_version_id),
-      queryFn: () => codeActions.getSources(resolvedParams.teamSlug, chat.code_version_id),
+      queryFn: () =>
+        codeActions.getSources(resolvedParams.teamSlug, chat.code_version_id).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
     queryClient.fetchQuery({
       queryKey: generateQueryKey.currentUser(),
-      queryFn: () => userActions.get(),
+      queryFn: () =>
+        userActions.get().then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     }),
   ]);
 
@@ -58,7 +75,11 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   if (node) {
     const fetchedNode = await queryClient.fetchQuery({
       queryKey: generateQueryKey.codeNode(node),
-      queryFn: () => codeActions.getNode(resolvedParams.teamSlug, chat.code_version_id, node),
+      queryFn: () =>
+        codeActions.getNode(resolvedParams.teamSlug, chat.code_version_id, node).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     });
     position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
   }

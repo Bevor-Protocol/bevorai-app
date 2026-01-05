@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import { CodeVersionElementCompact } from "@/components/versions/element";
+import { CodeVersionCompactElement } from "@/components/versions/element";
 import NodeSearch from "@/components/views/code/search";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
@@ -70,7 +70,11 @@ const CodeVersionSelector: React.FC<{
 
   const { data: codeVersions } = useQuery({
     queryKey: generateQueryKey.codes(teamSlug, { project_slug: projectSlug }),
-    queryFn: () => codeActions.getVersions(teamSlug, { project_slug: projectSlug }),
+    queryFn: () =>
+      codeActions.getVersions(teamSlug, { project_slug: projectSlug }).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: allowCodeVersionChange,
   });
 
@@ -79,7 +83,10 @@ const CodeVersionSelector: React.FC<{
 
   const handleSelect = async (codeId: string): Promise<void> => {
     setOpen(false);
-    const tree = await codeActions.getTree(teamSlug, codeId);
+    const tree = await codeActions.getTree(teamSlug, codeId).then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
     // update this after. Otherwise a request will fire for a new codeVersionId, and an old sourceId
     setCodeVersionId(codeId);
     if (tree.length > 0) {
@@ -109,7 +116,7 @@ const CodeVersionSelector: React.FC<{
           disabled={!allowCodeVersionChange}
         >
           {selectedVersion ? (
-            <CodeVersionElementCompact
+            <CodeVersionCompactElement
               version={selectedVersion}
               className={cn(!allowCodeVersionChange && "opacity-75")}
             />
@@ -132,7 +139,7 @@ const CodeVersionSelector: React.FC<{
                     codeVersionId === version.id ? "bg-accent" : "hover:bg-accent/50",
                   )}
                 >
-                  <CodeVersionElementCompact version={version} />
+                  <CodeVersionCompactElement version={version} />
                 </div>
               ))}
             </div>
@@ -446,7 +453,10 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   const createAnalysisMutation = useMutation({
     mutationFn: async (data: createAnalysisFormValues) => {
       const payload = createAnalysisSchema.parse(data);
-      return analysisActions.createAnalysis(teamSlug, payload);
+      return analysisActions.createAnalysis(teamSlug, payload).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
     },
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
@@ -475,7 +485,11 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
   const { data: analysis } = useQuery({
     queryKey: generateQueryKey.analysisDetailed(analysisNodeId ?? ""),
-    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, analysisNodeId!),
+    queryFn: async () =>
+      analysisActions.getAnalysisDetailed(teamSlug, analysisNodeId!).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: !!analysisNodeId,
     staleTime: Infinity,
   });

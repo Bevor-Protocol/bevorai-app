@@ -39,7 +39,10 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
     queryKey: generateQueryKey.githubRepositories(selectedInstallationId ?? 0, teamSlug),
     queryFn: () => {
       if (!selectedInstallationId) return null;
-      return githubActions.getRepositories(selectedInstallationId, teamSlug);
+      return githubActions.getRepositories(selectedInstallationId, teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
     },
     enabled: !!selectedInstallationId,
   });
@@ -49,6 +52,10 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
       githubActions
         .getOauthUrl({
           redirect_uri: window.location.origin + "/api/github/callback/oauth",
+        })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
         })
         .then((url) => window.location.replace(url)),
     onError: () => {
@@ -62,6 +69,10 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
         .getInstallationUrl({
           redirect_uri: window.location.origin + "/api/github/callback/install",
         })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        })
         .then((url) => window.open(url, "_blank")),
     onError: () => {
       toast.error("Failed to get GitHub installation URL. Please try again.");
@@ -71,9 +82,14 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
   const createProjectMutation = useMutation({
     mutationFn: async (repo_id: number) => {
       if (!teamSlug) throw new Error("Team slug is required");
-      return projectActions.createProject(teamSlug, {
-        github_repo_id: repo_id,
-      });
+      return projectActions
+        .createProject(teamSlug, {
+          github_repo_id: repo_id,
+        })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        });
     },
     onSuccess: ({ project, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {

@@ -37,27 +37,58 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   let parentScopes: ScopeSchemaI[] | undefined;
 
   if (parentVersionId && !codeVersionId) {
-    defaultParentVersion = await analysisActions.getAnalysis(
-      resolvedParams.teamSlug,
-      parentVersionId,
-    );
-    defaultCodeVersion = await codeActions.getCodeVersion(
-      resolvedParams.teamSlug,
-      defaultParentVersion.code_version_id,
-    );
-    parentScopes = await analysisActions.getScopes(resolvedParams.teamSlug, parentVersionId);
+    defaultParentVersion = await analysisActions
+      .getAnalysis(resolvedParams.teamSlug, parentVersionId)
+      .then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
+    defaultCodeVersion = await codeActions
+      .getCodeVersion(resolvedParams.teamSlug, defaultParentVersion!.code_version_id)
+      .then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
+    parentScopes = await analysisActions
+      .getScopes(resolvedParams.teamSlug, parentVersionId)
+      .then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
   } else if (parentVersionId && codeVersionId) {
-    defaultParentVersion = await analysisActions.getAnalysis(
-      resolvedParams.teamSlug,
-      parentVersionId,
-    );
-    defaultCodeVersion = await codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId!);
-    parentScopes = await analysisActions.getScopes(resolvedParams.teamSlug, parentVersionId);
+    defaultParentVersion = await analysisActions
+      .getAnalysis(resolvedParams.teamSlug, parentVersionId)
+      .then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
+    defaultCodeVersion = await codeActions
+      .getCodeVersion(resolvedParams.teamSlug, codeVersionId!)
+      .then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
+    parentScopes = await analysisActions
+      .getScopes(resolvedParams.teamSlug, parentVersionId)
+      .then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
   } else {
-    defaultCodeVersion = await codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId!);
+    defaultCodeVersion = await codeActions
+      .getCodeVersion(resolvedParams.teamSlug, codeVersionId!)
+      .then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
   }
 
-  const sources = await codeActions.getSources(resolvedParams.teamSlug, defaultCodeVersion.id);
+  const sources = await codeActions
+    .getSources(resolvedParams.teamSlug, defaultCodeVersion.id)
+    .then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
 
   const initialSourceId = sources.length ? sources[0].id : null;
 

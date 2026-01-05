@@ -73,7 +73,10 @@ const FileStep: React.FC<{
 
   const uploadMutation = useMutation({
     mutationFn: async (data: UploadCodeFileFormValues) =>
-      codeActions.contractUploadFile(project.team.slug, project.id, data),
+      codeActions.contractUploadFile(project.team.slug, project.id, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onMutate: () => {
       updateUploadFormState({ type: "SET_ERRORS", errors: {} });
       uploadToastId.current = toast.loading("Uploading and parsing code...");
@@ -101,7 +104,10 @@ const FileStep: React.FC<{
 
   const pasteMutation = useMutation({
     mutationFn: async (data: PasteCodeFileFormValues) =>
-      codeActions.contractUploadPaste(project.team.slug, project.id, data),
+      codeActions.contractUploadPaste(project.team.slug, project.id, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onMutate: () => {
       updatePasteFormState({ type: "SET_ERRORS", errors: {} });
       pasteToastId.current = toast.loading("Uploading and parsing code...");

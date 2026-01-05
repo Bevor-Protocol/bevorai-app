@@ -29,7 +29,11 @@ const attemptRefresh = async (
     if (!refreshToken) {
       throw new Error("no_refresh_token");
     }
-    const token = await tokenActions.refreshToken(refreshToken);
+
+    const token = await tokenActions.refreshToken(refreshToken).then((r) => {
+      if (!r.ok) throw r;
+      return r.data;
+    });
 
     response.cookies.set("bevor-token", token.scoped_token, {
       httpOnly: true,
@@ -89,6 +93,7 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
 
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
   // do NOT use the "use server" equivalent. It isn't accessible in middleware edge context
+
   if (!isPublicRoute) {
     try {
       await tokenActions.validateToken();
@@ -121,7 +126,10 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
 
   if (pathname.startsWith("/sign-in") && !searchParams.has("method")) {
     try {
-      await tokenActions.validateToken();
+      await tokenActions.validateToken().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      });
       // If we got here, they're already logged in → redirect them away
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {

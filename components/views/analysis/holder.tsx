@@ -24,17 +24,22 @@ const AnalysisHolder: React.FC<{
 
   const { data: version, isLoading } = useSuspenseQuery({
     queryKey: generateQueryKey.analysisDetailed(nodeId),
-    queryFn: async () => analysisActions.getAnalysisDetailed(teamSlug, nodeId),
+    queryFn: async () =>
+      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const nodeQuery = useQuery({
     queryKey: generateQueryKey.codeNode(selectedFinding?.code_version_node_id ?? ""),
     queryFn: () =>
-      codeActions.getNode(
-        teamSlug,
-        version.code_version_id,
-        selectedFinding?.code_version_node_id ?? "",
-      ),
+      codeActions
+        .getNode(teamSlug, version.code_version_id, selectedFinding?.code_version_node_id ?? "")
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
     enabled: !!selectedFinding,
   });
 

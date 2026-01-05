@@ -9,8 +9,14 @@ interface PageProps {
 
 const PlansPage: AsyncComponent<PageProps> = async ({ params }) => {
   const { teamSlug } = await params;
-  const team = await teamActions.getTeam(teamSlug);
-  const membership = await teamActions.getCurrentMember(teamSlug);
+  const team = await teamActions.getTeam(teamSlug).then((r) => {
+    if (!r.ok) throw r;
+    return r.data;
+  });
+  const membership = await teamActions.getCurrentMember(teamSlug).then((r) => {
+    if (!r.ok) throw r;
+    return r.data;
+  });
 
   if (membership.role !== MemberRoleEnum.OWNER) {
     return <AccessRestricted />;

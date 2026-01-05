@@ -34,7 +34,11 @@ const CreateApiKeyModal: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async (data: KeyFormValues) => apiKeyActions.createKey(teamSlug, data),
+    mutationFn: async (data: KeyFormValues) =>
+      apiKeyActions.createKey(teamSlug, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

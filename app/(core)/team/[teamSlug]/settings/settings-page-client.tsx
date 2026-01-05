@@ -47,7 +47,11 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
   const { isCopied, copy } = useCopyToClipboard();
 
   const updateTeamMutation = useMutation({
-    mutationFn: async (data: TeamFormValues) => teamActions.updateTeam(team.slug, data),
+    mutationFn: async (data: TeamFormValues) =>
+      teamActions.updateTeam(team.slug, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ team: refreshedTeam, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -63,7 +67,11 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
   });
 
   const deleteTeamMutation = useMutation({
-    mutationFn: async () => teamActions.deleteTeam(team.id),
+    mutationFn: async () =>
+      teamActions.deleteTeam(team.id).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -77,7 +85,11 @@ const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member })
   });
 
   const leaveTeamMutation = useMutation({
-    mutationFn: async () => teamActions.removeMember(team.slug, member.id),
+    mutationFn: async () =>
+      teamActions.removeMember(team.slug, member.id).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

@@ -53,11 +53,19 @@ export const ApiKeyTable: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 
   const { data: apiKeys = [], isLoading } = useQuery({
     queryKey: generateQueryKey.apiKeys(teamSlug),
-    queryFn: async () => apiKeyActions.listKeys(teamSlug),
+    queryFn: async () =>
+      apiKeyActions.listKeys(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const regenerateApiKeyMutation = useMutation({
-    mutationFn: async (keyId: string) => apiKeyActions.refreshKey(teamSlug, keyId),
+    mutationFn: async (keyId: string) =>
+      apiKeyActions.refreshKey(teamSlug, keyId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
@@ -67,7 +75,11 @@ export const ApiKeyTable: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   });
 
   const deleteApiKeyMutation = useMutation({
-    mutationFn: async (keyId: string) => apiKeyActions.revokeKey(teamSlug, keyId),
+    mutationFn: async (keyId: string) =>
+      apiKeyActions.revokeKey(teamSlug, keyId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onSuccess: ({ toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });

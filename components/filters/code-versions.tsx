@@ -41,12 +41,20 @@ const FilterContent: React.FC<{
 
   const { data: members } = useQuery({
     queryKey: generateQueryKey.members(teamSlug),
-    queryFn: () => teamActions.getMembers(teamSlug),
+    queryFn: () =>
+      teamActions.getMembers(teamSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   const { data: projects } = useQuery({
     queryKey: generateQueryKey.projects(teamSlug, { page_size: "10" }),
-    queryFn: async () => projectActions.getProjects(teamSlug, { page_size: "10" }),
+    queryFn: async () =>
+      projectActions.getProjects(teamSlug, { page_size: "10" }).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     enabled: includeProject,
   });
 

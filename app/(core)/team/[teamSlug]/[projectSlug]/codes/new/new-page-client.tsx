@@ -1,4 +1,5 @@
 "use client";
+import RepoUrlStep from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/(steps)/repo";
 import { Button } from "@/components/ui/button";
 import { useSSE } from "@/providers/sse";
 import { ProjectDetailedSchemaI } from "@/utils/types";
@@ -85,7 +86,12 @@ const Steps: React.FC<{
         </Button>
       )}
       {currentStep === 1 && (
-        <MethodSelection setMethod={setMethod} nextStep={nextStep} isChild={!!parentId} />
+        <MethodSelection
+          setMethod={setMethod}
+          nextStep={nextStep}
+          isChild={!!parentId}
+          teamSlug={project.team.slug}
+        />
       )}
       {currentStep === 2 && method === "scan" && (
         <ContractAdressStep project={project} parentId={parentId} onSuccess={handleSuccess} />
@@ -95,6 +101,9 @@ const Steps: React.FC<{
       )}
       {currentStep === 2 && method === "folder" && (
         <FolderStep project={project} parentId={parentId} onSuccess={handleSuccess} />
+      )}
+      {currentStep === 2 && method === "repo" && (
+        <RepoUrlStep project={project} parentId={parentId} onSuccess={handleSuccess} />
       )}
     </div>
   );

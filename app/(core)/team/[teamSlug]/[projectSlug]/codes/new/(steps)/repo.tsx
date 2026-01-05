@@ -5,33 +5,36 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
-import { ScanCodeAddressFormValues, scanCodeAddressSchema } from "@/utils/schema";
+import {
+  CreateCodeFromPublicGithubFormValues,
+  createCodeFromPublicGithubSchema,
+} from "@/utils/schema";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, CheckCircle, Globe, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle, GitCommitHorizontal, XCircle } from "lucide-react";
 import Link from "next/link";
 import React, { useRef } from "react";
 import { toast } from "sonner";
 
-const ContractAddressStep: React.FC<{
+const RepoUrlStep: React.FC<{
   project: ProjectDetailedSchemaI;
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ project, parentId, onSuccess }) => {
   const queryClient = useQueryClient();
 
-  const initialState: ScanCodeAddressFormValues = {
-    address: "",
+  const initialState: CreateCodeFromPublicGithubFormValues = {
+    url: "",
     parent_id: parentId,
   };
   const { formState, setField, updateFormState } =
-    useFormReducer<ScanCodeAddressFormValues>(initialState);
+    useFormReducer<CreateCodeFromPublicGithubFormValues>(initialState);
 
   const toastId = useRef<string | number>(undefined);
 
   const mutation = useMutation({
-    mutationFn: async (data: ScanCodeAddressFormValues) =>
-      codeActions.contractUploadScan(project.team.slug, project.id, data).then((r) => {
+    mutationFn: async (data: CreateCodeFromPublicGithubFormValues) =>
+      codeActions.contractUploadPublicRepo(project.team.slug, project.id, data).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
@@ -64,7 +67,7 @@ const ContractAddressStep: React.FC<{
     e.preventDefault();
     updateFormState({ type: "SET_ERRORS", errors: {} });
 
-    const parsed = scanCodeAddressSchema.safeParse(formState.values);
+    const parsed = createCodeFromPublicGithubSchema.safeParse(formState.values);
 
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
@@ -78,11 +81,7 @@ const ContractAddressStep: React.FC<{
       return;
     }
 
-    const encodedAddress = encodeURIComponent(parsed.data.address);
-    mutation.mutate({
-      ...parsed.data,
-      address: encodedAddress,
-    });
+    mutation.mutate(parsed.data);
   };
 
   if (mutation.isSuccess) {
@@ -131,43 +130,41 @@ const ContractAddressStep: React.FC<{
     <div className="max-w-5xl mx-auto space-y-8">
       <div className="text-left space-y-2">
         <div className="flex flex-row gap-4 justify-start items-center">
-          <Globe className="size-6 text-purple-400" />
-          <h2 className="text-2xl font-bold ">Explorer Scan</h2>
+          <GitCommitHorizontal className="size-6 text-foreground" />
+          <h2 className="text-2xl font-bold ">Public Github Repository</h2>
         </div>
-        <p className="text-muted-foreground">
-          Enter a deployed, verified contract address to analyze
-        </p>
+        <p className="text-muted-foreground">Enter a public github solidity repository</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="address" aria-required>
-              Contract Address
+            <FieldLabel htmlFor="url" aria-required>
+              Github Repository
             </FieldLabel>
             <div className="flex flex-row gap-4 flex-wrap">
               <Input
-                id="address"
-                name="address"
+                id="url"
+                name="url"
                 type="text"
-                value={formState.values.address}
-                onChange={(e) => setField("address", e.target.value)}
-                placeholder="0x1234..."
+                value={formState.values.url}
+                onChange={(e) => setField("url", e.target.value)}
+                placeholder="https://github.com/..."
                 className="font-mono grow basis-1/2"
                 disabled={mutation.isPending}
-                aria-invalid={!!formState.errors.address}
+                aria-invalid={!!formState.errors.url}
               />
               <Button
                 type="submit"
-                disabled={mutation.isPending || !formState.values.address.trim()}
+                disabled={mutation.isPending || !formState.values.url.trim()}
                 className="min-w-40 grow"
               >
                 <span>Submit</span>
                 <ArrowRight className="size-4" />
               </Button>
             </div>
-            {formState.errors.address && (
-              <p className="text-sm text-destructive">{formState.errors.address}</p>
+            {formState.errors.url && (
+              <p className="text-sm text-destructive">{formState.errors.url}</p>
             )}
           </Field>
         </FieldGroup>
@@ -176,4 +173,4 @@ const ContractAddressStep: React.FC<{
   );
 };
 
-export default ContractAddressStep;
+export default RepoUrlStep;
