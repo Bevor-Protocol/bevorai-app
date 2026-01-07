@@ -11,6 +11,8 @@ This callback can be for BOTH oauth OR installation.
 */
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  // the State can encode arbitrary information for us, which we have control over. We'll conditionally
+  // include the team_slug into it, so that we can appropriately route.
   const { searchParams } = new URL(request.url);
 
   const code = searchParams.get("code"); // we bundle in the oauth flow into our app connection.
@@ -24,18 +26,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  let url = "/user/github/manage";
+
   return await githubActions
     .handleCallback({ code, state, installation_id, setup_action })
     .then((response) => {
       if (!response.ok) throw new Error(response.error);
-      return NextResponse.redirect(
-        new URL("/user/github/manage?success=github_connected", request.url),
-      );
+      url += "?success=github_connected";
+      if (response.data.team_slug) {
+        url += `&teamSlug=${response.data.team_slug}`;
+      }
+      return NextResponse.redirect(new URL(url, request.url));
     })
     .catch((error) => {
       console.log(error);
-      return NextResponse.redirect(
-        new URL("/user/github/manage?error=github_connection_failed", request.url),
-      );
+      url += "?error=github_connection_failed";
+      return NextResponse.redirect(new URL(url, request.url));
     });
 }

@@ -13,14 +13,14 @@ export const handleCallback = async (data: {
   state: string;
   installation_id: string | null;
   setup_action: string | null;
-}): ApiResponse<null> => {
+}): ApiResponse<{ success: boolean; team_slug?: string }> => {
   return api
     .post("/github/callback", data)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
         ok: true as const,
-        data: null,
+        data: response.data,
         requestId,
       };
     })
@@ -34,9 +34,14 @@ export const handleCallback = async (data: {
     });
 };
 
-export const getInstallationUrl = async (data: { redirect_uri: string }): ApiResponse<string> => {
+export const getInstallationUrl = async (teamSlug?: string): ApiResponse<string> => {
+  let url = "/github/urls/installation";
+  if (teamSlug) {
+    url += `?team_slug=${teamSlug}`;
+  }
+
   return api
-    .post("github/urls/installation", data)
+    .get(url)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -55,10 +60,14 @@ export const getInstallationUrl = async (data: { redirect_uri: string }): ApiRes
     });
 };
 
-export const getOauthUrl = async (data: { redirect_uri: string }): ApiResponse<string> => {
+export const getOauthUrl = async (teamSlug?: string): ApiResponse<string> => {
   // user access tokens can expire, and these are the only way to recover them.
+  let url = "/github/urls/oauth";
+  if (teamSlug) {
+    url += `?team_slug=${teamSlug}`;
+  }
   return api
-    .post("github/urls/oauth", data)
+    .get(url)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -79,7 +88,7 @@ export const getOauthUrl = async (data: { redirect_uri: string }): ApiResponse<s
 
 export const getInstallations = async (): ApiResponse<GithubInstallationsSchemaI> => {
   return api
-    .get("github/installations")
+    .get("/github/installations")
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -102,7 +111,7 @@ export const getRepositories = async (
   installationId: number,
   teamSlug?: string,
 ): ApiResponse<GithubRepositoriesSchemaI> => {
-  let url = `github/repositories/${installationId}`;
+  let url = `/github/repositories/${installationId}`;
   if (teamSlug) {
     url += `?team_slug=${teamSlug}`;
   }
@@ -128,7 +137,7 @@ export const getRepositories = async (
 
 export const getBranches = async (repoId: number): ApiResponse<GithubRepoBranchesSchemaI> => {
   return api
-    .get(`github/branches/${repoId}`)
+    .get(`/github/branches/${repoId}`)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {

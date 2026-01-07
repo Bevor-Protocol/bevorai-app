@@ -524,6 +524,8 @@ const handleCodeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload): 
     };
   });
 
+  queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CODES, payload.id], refetchType: "all" });
+
   const allActiveListQueries = queryClient.getQueriesData<CodeVersionsPaginationI>({
     queryKey: [QUERY_KEYS.CODES, payload.data.team_slug],
     stale: false,

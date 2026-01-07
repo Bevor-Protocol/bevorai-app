@@ -1,5 +1,6 @@
 "use client";
 
+import { codeActions } from "@/actions/bevor";
 import ShikiViewer from "@/components/shiki-viewer";
 import {
   CodeContent,
@@ -23,12 +24,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
-import { CodeSourceSchemaI, NodeSchemaI } from "@/utils/types";
+import { generateQueryKey } from "@/utils/constants";
+import { NodeSchemaI } from "@/utils/types";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 import NodeSearch from "./search";
 
 interface SourcesViewerProps {
-  sources: CodeSourceSchemaI[];
   teamSlug: string;
   codeId: string;
 }
@@ -71,8 +73,17 @@ const nodeTypeGroups = [
   },
 ];
 
-const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, teamSlug, codeId }) => {
+const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
   const { handleSourceChange, sourceQuery, nodesQuery, containerRef, sourceId } = useCode();
+
+  const { data: sources } = useSuspenseQuery({
+    queryKey: generateQueryKey.codeSources(codeId),
+    queryFn: () =>
+      codeActions.getSources(teamSlug, codeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
 
   const nodeGroups = useMemo(() => {
     if (!nodesQuery.data) return [];
