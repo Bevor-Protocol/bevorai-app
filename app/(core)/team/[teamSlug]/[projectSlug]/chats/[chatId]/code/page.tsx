@@ -94,7 +94,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
       >
         <Container subnav={<ChatSubnav />}>
           <CodeMetadata codeId={chat.code_version_id} userId={user.id} {...resolvedParams} />
-          <SourcesViewer sources={sources} {...resolvedParams} codeId={chat.code_version_id} />
+          <SourcesViewer {...resolvedParams} codeId={chat.code_version_id} />
         </Container>
       </CodeProvider>
     </HydrationBoundary>
