@@ -12,7 +12,17 @@ import {
 import { generateQueryKey } from "@/utils/constants";
 import { GithubInstallationsSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, GitFork, Github, Loader2, Lock, Plus, PlusCircle, Star } from "lucide-react";
+import {
+  AlertCircle,
+  ExternalLink,
+  GitFork,
+  Github,
+  Loader2,
+  Lock,
+  Plus,
+  PlusCircle,
+  Star,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -45,14 +55,16 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
       });
     },
     enabled: !!selectedInstallationId,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 
   const connectGithubOauthMutation = useMutation({
     mutationFn: () =>
       githubActions
-        .getOauthUrl({
-          redirect_uri: window.location.origin + "/api/github/callback/oauth",
-        })
+        .getOauthUrl(teamSlug)
         .then((r) => {
           if (!r.ok) throw r;
           return r.data;
@@ -66,9 +78,7 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
   const connectGitHubAppMutation = useMutation({
     mutationFn: () =>
       githubActions
-        .getInstallationUrl({
-          redirect_uri: window.location.origin + "/api/github/callback/install",
-        })
+        .getInstallationUrl(teamSlug)
         .then((r) => {
           if (!r.ok) throw r;
           return r.data;
@@ -220,23 +230,12 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
                 repositories.repository_info.repositories.length > 0 ? (
                 <div className="space-y-2">
                   {repositories.repository_info.repositories.map((repo) => (
-                    <div
-                      key={repo.id}
-                      className="block p-4 border rounded-lg hover:border-foreground/20 hover:bg-muted/30 transition-colors"
-                    >
+                    <div key={repo.id} className="block p-4 border rounded-lg">
                       <div className="flex items-start gap-3">
                         <Github className="size-4 text-muted-foreground shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <a
-                              href={repo.html_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-medium text-sm truncate hover:underline"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {repo.full_name}
-                            </a>
+                            <p className="text-sm">{repo.full_name}</p>
                             {repo.private && (
                               <Lock className="size-3 text-muted-foreground shrink-0" />
                             )}
@@ -327,6 +326,12 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
                             )}
                           </Button>
                         )}
+                        <Button asChild variant="ghost">
+                          <a href={repo.html_url} target="_blank">
+                            <ExternalLink />
+                            View
+                          </a>
+                        </Button>
                       </div>
                     </div>
                   ))}

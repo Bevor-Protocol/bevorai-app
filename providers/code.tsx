@@ -51,6 +51,24 @@ export const CodeProvider: React.FC<{
   const [isSticky, setIsSticky] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null!); // thing that should stick to top (code holder)
 
+  const sourcesQuery = useQuery({
+    queryKey: generateQueryKey.codeSources(codeVersionId ?? ""),
+    queryFn: () =>
+      codeActions.getSources(teamSlug, codeVersionId ?? "").then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  useEffect(() => {
+    // if someone lands on this while code is processing, the sources aren't available yet.
+    // listen to events, and once they're populated, update the source.
+    if (!!sourceId || !sourcesQuery.data?.length) return;
+    if (sourcesQuery.data) {
+      setSourceId(sourcesQuery.data.length ? sourcesQuery.data[0].id : null);
+    }
+  }, [sourcesQuery.data, sourceId]);
+
   const sourceQuery = useQuery({
     queryKey: generateQueryKey.codeSource(codeVersionId ?? "", sourceId ?? ""),
     queryFn: () =>
