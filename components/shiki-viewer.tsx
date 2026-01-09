@@ -27,6 +27,11 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
   const codeRef = useRef<HTMLDivElement>(null);
   const isInitialRenderRef = useRef(true);
 
+  const charToByteIndex = (source: string, charIndex: number): number => {
+    const encoder = new TextEncoder();
+    return encoder.encode(source.slice(0, charIndex)).length;
+  };
+
   useEffect(() => {
     const codeVersionChanged = lastCodeVersionIdRef.current !== codeVersionId;
     if (codeVersionChanged) {
@@ -69,9 +74,11 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
                 node.properties["data-line"] = line;
               },
               span(node, line, col, lineElement, token): void {
-                const startPos = token.offset;
-                const endPos = startPos + token.content.length;
-                node.properties["data-token"] = `token:${startPos}:${endPos}`;
+                const charStartPos = token.offset;
+                const charEndPos = charStartPos + token.content.length;
+                const byteStartPos = charToByteIndex(sourceData.content, charStartPos);
+                const byteEndPos = charToByteIndex(sourceData.content, charEndPos);
+                node.properties["data-token"] = `token:${byteStartPos}:${byteEndPos}`;
               },
             },
           ],

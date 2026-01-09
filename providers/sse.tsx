@@ -2,6 +2,7 @@
 
 import { authActions, tokenActions } from "@/actions/bevor";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
+import { FindingLevel } from "@/utils/enums";
 import {
   ActivitySchemaI,
   AnalysisNodeSchemaI,
@@ -10,6 +11,7 @@ import {
   CodeVersionsPaginationI,
   FindingSchemaI,
   MemberInviteSchema,
+  ScopeSchemaI,
 } from "@/utils/types";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
@@ -453,10 +455,33 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
 
     const updatedFindings = oldData.findings.concat(findings);
 
+    // this emulates sorting on the backend. We can remove this if we want.
+    const scoreMap: Record<FindingLevel, number> = {
+      [FindingLevel.CRITICAL]: 6,
+      [FindingLevel.HIGH]: 4,
+      [FindingLevel.MEDIUM]: 2,
+      [FindingLevel.LOW]: 1,
+    };
+
+    const scopeScoreMap = new Map<string, number>();
+    for (const finding of updatedFindings) {
+      const score = scoreMap[finding.level] || 0;
+      const currentScore = scopeScoreMap.get(finding.code_version_node_id) || 0;
+      scopeScoreMap.set(finding.code_version_node_id, currentScore + score);
+    }
+
+    const scopesWithScore: [ScopeSchemaI, number][] = updatedScopes.map((scope) => [
+      scope,
+      scopeScoreMap.get(scope.code_version_node_id) || 0,
+    ]);
+
+    scopesWithScore.sort((a, b) => b[1] - a[1]);
+    const sortedScopes = scopesWithScore.map((s) => s[0]);
+
     return {
       ...oldData,
       n_findings: oldData.n_findings + findings.length,
-      scopes: updatedScopes,
+      scopes: sortedScopes,
       findings: updatedFindings,
     };
   });

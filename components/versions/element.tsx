@@ -316,6 +316,43 @@ const CodeVersionActions: React.FC<{
   );
 };
 
+export const getStatusIndicator = (status: CodeVersionSchemaI["status"]): React.ReactNode => {
+  let statusText: string;
+  let circleColor: string;
+
+  switch (status) {
+    case "waiting":
+      statusText = "Processing";
+      circleColor = "bg-neutral-400 animate-pulse";
+      break;
+    case "parsing":
+      statusText = "Processing";
+      circleColor = "bg-neutral-400 animate-pulse";
+      break;
+    case "embedding":
+    case "parsed":
+      statusText = "Post-Processing";
+      circleColor = "bg-blue-400 animate-pulse";
+      break;
+    case "failed_parsing":
+    case "failed_embedding":
+      statusText = "Failed";
+      circleColor = "bg-destructive";
+      break;
+    case "success":
+      statusText = "Processed";
+      circleColor = "bg-green-500";
+      break;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className={cn("size-2 rounded-full shrink-0", circleColor)} />
+      <span className="text-xs text-muted-foreground">{statusText}</span>
+    </div>
+  );
+};
+
 export const CodeVersionElementBare: React.FC<
   {
     version: CodeMappingSchemaI;
@@ -324,42 +361,6 @@ export const CodeVersionElementBare: React.FC<
     showActions?: boolean;
   } & React.ComponentProps<"div">
 > = ({ version, teamSlug, showRepo = false, showActions = true, className, ...props }) => {
-  const getStatusIndicator = (): React.ReactNode => {
-    let statusText: string;
-    let circleColor: string;
-
-    switch (version.status) {
-      case "success":
-        statusText = "Processed";
-        circleColor = "bg-green-500";
-        break;
-      case "embedding":
-      case "parsing":
-      case "parsed":
-        statusText = "Post-Processing";
-        circleColor = "bg-blue-400 animate-pulse";
-        break;
-      case "failed_parsing":
-      case "failed_embedding":
-        statusText = "Failed";
-        circleColor = "bg-destructive";
-        break;
-      case "waiting":
-      default:
-        // condition should not occur, unless for repositories.
-        statusText = "Processing";
-        circleColor = "bg-neutral-400 animate-pulse";
-        break;
-    }
-
-    return (
-      <div className="flex items-center gap-2">
-        <div className={cn("size-2 rounded-full shrink-0", circleColor)} />
-        <span className="text-xs text-muted-foreground">{statusText}</span>
-      </div>
-    );
-  };
-
   const hasParent = !!version.parent_id;
 
   return (
@@ -381,7 +382,7 @@ export const CodeVersionElementBare: React.FC<
         <h3 className="text-sm font-medium truncate">{version.inferred_name}</h3>
       </div>
       <div className="flex flex-col shrink-0 justify-center text-center">
-        {getStatusIndicator()}
+        {getStatusIndicator(version.status)}
       </div>
       <div className="flex flex-col shrink-0 justify-center text-center">
         <span className="text-xs text-muted-foreground">
