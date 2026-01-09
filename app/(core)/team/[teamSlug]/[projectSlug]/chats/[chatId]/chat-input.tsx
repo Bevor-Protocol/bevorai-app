@@ -87,10 +87,48 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     await onSendMessage(message, attributes);
   };
 
+  const calculateSimilarityScore = (name: string, query: string): number => {
+    const lowerName = name.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+
+    if (lowerName === lowerQuery) {
+      return 1000;
+    }
+
+    if (lowerName.startsWith(lowerQuery)) {
+      return 500 + (lowerQuery.length / lowerName.length) * 100;
+    }
+
+    const index = lowerName.indexOf(lowerQuery);
+    if (index !== -1) {
+      return 200 + (lowerQuery.length / lowerName.length) * 100 - index;
+    }
+
+    let matchingChars = 0;
+    let queryIndex = 0;
+    for (let i = 0; i < lowerName.length && queryIndex < lowerQuery.length; i++) {
+      if (lowerName[i] === lowerQuery[queryIndex]) {
+        matchingChars++;
+        queryIndex++;
+      }
+    }
+
+    if (matchingChars === 0) {
+      return 0;
+    }
+
+    return (matchingChars / lowerQuery.length) * 100;
+  };
+
   const filteredAttributes =
-    chatAttributes?.filter((attr) =>
-      attr.name.toLowerCase().includes(autocompleteQuery.toLowerCase()),
-    ) || [];
+    chatAttributes
+      ?.map((attr) => ({
+        attr,
+        score: calculateSimilarityScore(attr.name, autocompleteQuery),
+      }))
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map((item) => item.attr) || [];
 
   const extractAttributes = (text: string): string[] => {
     const backtickMatches = text.match(/`([^`]+)`/g);

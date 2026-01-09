@@ -19,49 +19,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getStatusIndicator } from "@/components/versions/element";
 import { generateQueryKey } from "@/utils/constants";
 import { SourceTypeEnum } from "@/utils/enums";
 import { explorerUrl, formatDateShort, truncateId, truncateVersion } from "@/utils/helpers";
 import { extractAnalysisNodesQuery, extractChatsQuery } from "@/utils/query-params";
 import { CodeMappingSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { BotMessageSquare, GitCommit, Network, Shield, XCircle } from "lucide-react";
+import { BotMessageSquare, GitCommit, Network, Shield } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import CodeVersionMenu from "./code-version-menu";
-
-const getStatusIndicator = (status: CodeMappingSchemaI["status"]): React.ReactNode => {
-  switch (status) {
-    case "waiting":
-      return (
-        <div className="flex items-center gap-1">
-          <div className="size-2 rounded-full bg-neutral-400 shrink-0 animate-pulse" />
-          <span className="capitalize">Waiting</span>
-        </div>
-      );
-    case "embedding":
-    case "parsing":
-    case "parsed":
-      return (
-        <div className="flex items-center gap-1">
-          <div className="size-3 rounded-full bg-blue-400 shrink-0 animate-pulse" />
-          <span className="capitalize">Post-Processing</span>
-        </div>
-      );
-    case "failed_parsing":
-    case "failed_embedding":
-      return (
-        <div className="flex items-center gap-1">
-          <XCircle className="size-3 text-destructive shrink-0" />
-          <span className="capitalize">Failed</span>
-        </div>
-      );
-    default:
-      return null;
-  }
-};
 
 const VersionDisplay: React.FC<{ version: CodeMappingSchemaI }> = ({ version }) => {
   if (
