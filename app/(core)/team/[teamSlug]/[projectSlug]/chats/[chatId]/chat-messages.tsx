@@ -7,7 +7,7 @@ import { Loader } from "@/components/ui/loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
-import { ChatMessageI } from "@/utils/types";
+import { ChatMessageI, FindingSchemaI } from "@/utils/types";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -20,12 +20,16 @@ interface ChatMessagesProps {
   teamSlug: string;
   chatId: string;
   fullWidth?: boolean;
+  findingContext?: FindingSchemaI[];
+  onRemoveFindingFromContext?: (findingId: string) => void;
 }
 
 export const ChatMessages: React.FC<ChatMessagesProps> = ({
   teamSlug,
   chatId,
   fullWidth = false,
+  findingContext,
+  onRemoveFindingFromContext,
 }) => {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -94,7 +98,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     chatId: string;
     approval_id?: string;
     is_approved?: boolean;
-    attributes?: string[];
+    attributes?: Array<{ type: "node" | "finding"; id: string }>;
   }): Promise<void> => {
     if (!data.message.message.trim() && !data.approval_id) return;
 
@@ -232,7 +236,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   };
 
-  const handleSendMessage = async (message: string, attributes: string[]): Promise<void> => {
+  const handleSendMessage = async (
+    message: string,
+    attributes: Array<{ type: "node" | "finding"; id: string }>,
+  ): Promise<void> => {
     if (!message.trim()) return;
 
     const userMessage: ChatMessageI = {
@@ -292,11 +299,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   return (
     <div
       className={cn(
-        "flex flex-col bg-background grow min-h-0 w-full",
+        "flex flex-col bg-background grow min-h-0 min-w-0 w-full",
         !fullWidth && "max-w-3xl m-auto",
       )}
     >
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 min-w-0 flex flex-col">
         {chatMessageQuery.isLoading && (
           <div className="flex items-center justify-center h-full">
             <Loader className="size-6" />
@@ -307,11 +314,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         )}
         {(chatMessageQuery.data ?? []).length > 0 && (
           <ScrollArea
-            className="min-h-0 w-full no-scrollbar"
+            className="min-h-0 w-full no-scrollbar chat-holder"
             ref={messagesContainerRef}
             viewportRef={scrollViewportRef as React.RefObject<HTMLDivElement>}
           >
-            <div className="flex flex-col gap-4 max-w-3xl">
+            <div className={cn("flex flex-col gap-4 min-w-0 w-full", !fullWidth && "max-w-3xl")}>
               {chatMessageQuery.data?.map((message) => (
                 <Chat.Message
                   role={message.chat_role}
@@ -350,6 +357,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         <ChatInput
           teamSlug={teamSlug}
           codeId={chatQuery.data.code_version_id}
+          findingContext={findingContext}
+          onRemoveFindingFromContext={onRemoveFindingFromContext}
           onSendMessage={handleSendMessage}
           messagesContainerRef={messagesContainerRef}
         />

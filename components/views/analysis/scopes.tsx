@@ -13,7 +13,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { FindingLevel, FindingType } from "@/utils/enums";
-import { DraftFindingSchemaI, FindingSchemaI, ScopeSchemaI } from "@/utils/types";
+import {
+  AnalysisNodeSchemaI,
+  DraftFindingSchemaI,
+  DraftSchemaI,
+  FindingSchemaI,
+  ScopeSchemaI,
+} from "@/utils/types";
 import { AlertCircle, AlertTriangle, ChevronDown, Info, XCircle } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -651,7 +657,7 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
   renderAddFinding,
   checkScopeStatus = true,
 }: {
-  version?: FindingData;
+  version?: DraftSchemaI | AnalysisNodeSchemaI;
   selectedFinding?: T;
   onSelectFinding: (finding: T) => void;
   disableGrouping?: boolean;
@@ -720,6 +726,22 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
 
   return (
     <div className="flex flex-col space-y-2">
+      <div className="flex items-center justify-start gap-2 h-8">
+        <h2 className="text-lg font-semibold">Findings</h2>
+        <div className="h-4 w-px bg-border mx-2" />
+        {/* <div className="flex items-center gap-1.5 text-sm">
+          <span className="text-muted-foreground">{version.n_scopes}</span>
+          <span className="text-muted-foreground/70">
+            {version.n_scopes === 1 ? "scope" : "scopes"}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 text-sm">
+          <span className="text-muted-foreground">{version.n_findings}</span>
+          <span className="text-muted-foreground/70">
+            {version.n_findings === 1 ? "finding" : "findings"}
+          </span>
+        </div> */}
+      </div>
       {!disableGrouping && (
         <Select
           value={groupingMode}

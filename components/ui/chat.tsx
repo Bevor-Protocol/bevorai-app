@@ -124,13 +124,13 @@ const EmptyCta: React.FC<React.ComponentProps<"div">> = ({ className, ...props }
 };
 
 const EmptyActions: React.FC<React.ComponentProps<"div">> = ({ ...props }) => {
-  return <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full items-end" {...props} />;
+  return <div className="flex gap-4 w-full items-end flex-wrap" {...props} />;
 };
 
 const EmptyAction: React.FC<React.ComponentProps<"div">> = ({ children, ...props }) => {
   return (
     <div
-      className="border rounded-xl animate-appear transition-all p-4 pr-8 relative leading-relaxed h-full cursor-pointer hover:border-muted-foreground/60"
+      className="border rounded-xl animate-appear transition-all p-4 pr-8 relative leading-relaxed h-full cursor-pointer hover:border-muted-foreground/60 min-w-30 grow"
       {...props}
     >
       <LucideIcon

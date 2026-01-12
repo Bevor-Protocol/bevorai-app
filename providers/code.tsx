@@ -27,6 +27,7 @@ interface CodeContextValue {
   codeVersionId: string | null;
   setCodeVersionId: React.Dispatch<React.SetStateAction<string | null>>;
   containerRef: React.RefObject<HTMLDivElement>;
+  contentViewportRef: React.RefObject<HTMLDivElement>;
   isSticky: boolean;
   handleSourceChange: (sourceId: string, positions?: { start: number; end: number }) => void;
   sourceQuery: UseQueryResult<CodeSourceWithContentSchemaI, Error>;
@@ -50,6 +51,7 @@ export const CodeProvider: React.FC<{
   const [sourceId, setSourceId] = useState<string | null>(initialSourceId);
   const [isSticky, setIsSticky] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null!); // thing that should stick to top (code holder)
+  const contentViewportRef = useRef<HTMLDivElement>(null!);
 
   const sourcesQuery = useQuery({
     queryKey: generateQueryKey.codeSources(codeVersionId ?? ""),
@@ -115,18 +117,12 @@ export const CodeProvider: React.FC<{
       setHtmlLoaded(false);
       setSourceId(newSourceId);
       if (!positions) {
-        if (!containerRef.current) return;
-        const codeEl = document.getElementById("code-holder");
-        if (!codeEl) return;
-        const codeTop = codeEl.getBoundingClientRect().top;
-        if (codeTop > 80) return;
-        const scrollTop = window.scrollY || window.pageYOffset;
-        const targetScroll = scrollTop + codeTop - 80;
-
-        window.scrollTo({
-          top: targetScroll,
-          behavior: "instant", // optional: smooth scrolling
-        });
+        if (contentViewportRef.current) {
+          contentViewportRef.current.scrollTo({
+            top: 0,
+            behavior: "instant",
+          });
+        }
       }
     },
     [sourceId],
@@ -156,8 +152,8 @@ export const CodeProvider: React.FC<{
   }, []);
 
   const scrollToElement = useCallback(({ start, end }: { start: number; end: number }): void => {
-    if (!containerRef.current) return;
-    const containerTop = containerRef.current.getBoundingClientRect().top;
+    if (!contentViewportRef.current) return;
+    const viewport = contentViewportRef.current;
 
     const elements = document.querySelectorAll("[data-token]");
 
@@ -173,7 +169,8 @@ export const CodeProvider: React.FC<{
           const lineNum = lineElement.dataset.line;
           if (!linesSeen.has(lineNum)) {
             const lineRect = lineElement.getBoundingClientRect();
-            const relativeTop = lineRect.top - containerTop;
+            const viewportRect = viewport.getBoundingClientRect();
+            const relativeTop = lineRect.top - viewportRect.top + viewport.scrollTop;
             linePositions.push(relativeTop);
             linesSeen.add(lineNum);
           }
@@ -187,31 +184,16 @@ export const CodeProvider: React.FC<{
     const blockTop = Math.min(...linePositions);
     const blockBottom = Math.max(...linePositions);
     const blockHeight = blockBottom - blockTop;
+    const viewportHeight = viewport.clientHeight;
 
-    // container ref has no fixed height. Add some buffer for the subnav + header to infer
-    // when to pin code blocks to the top of the screen.
-    if (blockHeight > window.innerHeight - 80) {
-      scrollPosition = Math.min(...linePositions) - 100;
+    if (blockHeight > viewportHeight - 80) {
+      scrollPosition = Math.min(...linePositions) - 40;
     } else {
-      // scrolls such that the middle of the element is in the middle of the screen
-      scrollPosition = blockTop + blockHeight / 2 - window.innerHeight / 2;
+      scrollPosition = blockTop + blockHeight / 2 - viewportHeight / 2;
     }
 
-    // if 50% of the element is already in view, don't scroll.
-    // const blockTopAbsolute = containerTop + blockTop;
-    // const blockBottomAbsolute = containerTop + blockBottom;
-
-    // const visibleTop = Math.max(0, blockTopAbsolute);
-    // const visibleBottom = Math.min(window.innerHeight, blockBottomAbsolute);
-    // const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-    // const isFiftyPercentVisible = visibleHeight >= blockHeight * 0.5;
-
-    // if (isFiftyPercentVisible) {
-    //   return;
-    // }
-
-    window.scrollTo({
-      top: Math.max(0, scrollPosition + 196),
+    viewport.scrollTo({
+      top: Math.max(0, scrollPosition),
       behavior: "smooth",
     });
   }, []);
@@ -228,6 +210,7 @@ export const CodeProvider: React.FC<{
       sourceId,
       setSourceId,
       containerRef,
+      contentViewportRef,
       isSticky,
       handleSourceChange,
       codeVersionId,
@@ -247,6 +230,7 @@ export const CodeProvider: React.FC<{
       setCodeVersionId,
       isSticky,
       containerRef,
+      contentViewportRef,
       sourceQuery,
       nodesQuery,
     ],

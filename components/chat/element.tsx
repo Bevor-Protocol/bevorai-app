@@ -137,7 +137,10 @@ export const ChatElement: React.FC<ChatElementProps> = ({
   projectSlug,
   isDisabled = false,
 }) => {
-  const chatPath = `/team/${teamSlug}/${projectSlug}/chats/${chat.id}`;
+  const chatPath =
+    chat.chat_type === "code"
+      ? `/team/${teamSlug}/${projectSlug}/codes/${chat.code_version_id}?chatId=${chat.id}`
+      : `/team/${teamSlug}/${projectSlug}/analyses/${chat.analysis_node_id}?chatId=${chat.id}`;
 
   return (
     <Link

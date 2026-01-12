@@ -1,17 +1,15 @@
 "use client";
 
-import { analysisActions, chatActions } from "@/actions/bevor";
+import { analysisActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDateShort } from "@/utils/helpers";
-import { extractChatsQuery } from "@/utils/query-params";
 import { AnalysisNodeSchemaI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
-  BotMessageSquare,
   Check,
   Copy,
   Globe,
@@ -23,8 +21,6 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import AnalysisVersionMenu from "./menu";
 
 const getStatusIndicator = (status: AnalysisNodeSchemaI["status"]): React.ReactNode => {
@@ -81,8 +77,6 @@ const AnalysisMetadata: React.FC<{
   allowActions = false,
   isOwner = false,
 }) => {
-  const queryClient = useQueryClient();
-  const router = useRouter();
   const { isCopied, copy } = useCopyToClipboard();
 
   const { data: version } = useSuspenseQuery({
@@ -94,56 +88,6 @@ const AnalysisMetadata: React.FC<{
       }),
   });
 
-  const chatQuery = extractChatsQuery({
-    project_slug: projectSlug,
-    code_version_id: version.code_version_id,
-    analysis_node_id: version.id,
-    chat_type: "analysis",
-  });
-
-  const { data: chats } = useQuery({
-    queryKey: generateQueryKey.chats(teamSlug, chatQuery),
-    queryFn: () =>
-      chatActions.getChats(teamSlug, chatQuery).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-    enabled: allowChat,
-  });
-
-  const createChatMutation = useMutation({
-    mutationFn: async () =>
-      chatActions
-        .initiateChat(teamSlug, {
-          chat_type: "analysis",
-          code_version_id: version.code_version_id,
-          analysis_node_id: version.id,
-        })
-        .then((r) => {
-          if (!r.ok) throw r;
-          return r.data;
-        }),
-    onSuccess: ({ id, toInvalidate }) => {
-      toInvalidate.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-      });
-      router.push(`/team/${teamSlug}/${projectSlug}/chats/${id}`);
-    },
-    onError: () => {
-      toast.error("Failed to create chat");
-    },
-  });
-
-  const handleChatClick = (): void => {
-    if (!allowChat) return;
-    if (chats && chats.results.length > 0) {
-      const firstChatId = chats.results[0].id;
-      const chatPath = `/team/${teamSlug}/${projectSlug}/chats/${firstChatId}`;
-      router.push(chatPath);
-    } else {
-      createChatMutation.mutate();
-    }
-  };
 
   return (
     <div className="pt-3 pb-6">
@@ -214,17 +158,6 @@ const AnalysisMetadata: React.FC<{
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {allowChat && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleChatClick}
-              disabled={createChatMutation.isPending}
-            >
-              <BotMessageSquare className="size-4" />
-              {chats && chats.results.length > 0 ? "Continue Chat" : "Start Chat"}
-            </Button>
-          )}
           {allowEditMode && (
             <Button variant="outline" size="sm" asChild>
               <Link

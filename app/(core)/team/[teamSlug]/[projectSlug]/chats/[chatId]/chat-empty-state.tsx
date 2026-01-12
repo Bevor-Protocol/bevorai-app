@@ -4,7 +4,10 @@ import * as Chat from "@/components/ui/chat";
 import React from "react";
 
 interface ChatEmptyStateProps {
-  onSendMessage: (message: string, attributes: string[]) => Promise<void>;
+  onSendMessage: (
+    message: string,
+    attributes: Array<{ type: "node" | "finding"; id: string }>,
+  ) => Promise<void>;
 }
 
 export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({ onSendMessage }) => {
@@ -19,7 +22,7 @@ export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({ onSendMessage })
       <div className="pb-4">
         <Chat.EmptyActions>
           {[
-            "What is the name of this contract?",
+            "What are the core contracts of this codebase?",
             "Which variables does the constructor initialize?",
           ].map((text, ind) => (
             <Chat.EmptyAction onClick={() => onSendMessage(text, [])} key={ind}>

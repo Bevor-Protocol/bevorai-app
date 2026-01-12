@@ -1,4 +1,4 @@
-import { codeActions, userActions } from "@/actions/bevor";
+import { chatActions, codeActions, userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import CodeVersionSubnav from "@/components/subnav/code-version";
 import CodeMetadata from "@/components/views/code/metadata";
@@ -6,8 +6,10 @@ import SourcesViewer from "@/components/views/code/sources-viewer";
 import { getQueryClient } from "@/lib/config/query";
 import { CodeProvider } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
+import { extractChatsQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import CollapsibleChatPanel from "./collapsible-chat-panel";
 
 type ResolvedParams = {
   codeId: string;
@@ -17,15 +19,15 @@ type ResolvedParams = {
 
 type Props = {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<{ source?: string; node?: string }>;
+  searchParams: Promise<{ source?: string; node?: string; chatId?: string }>;
 };
 
 const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const queryClient = getQueryClient();
   const resolvedParams = await params;
-  const { source, node } = await searchParams;
+  const { source, node, chatId } = await searchParams;
 
-  const [, sources, user] = await Promise.all([
+  const [code, sources, user] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(resolvedParams.codeId),
       queryFn: () =>
@@ -52,6 +54,37 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
     }),
   ]);
 
+  const chatQuery = extractChatsQuery({
+    project_slug: resolvedParams.projectSlug,
+    code_version_id: code.id,
+    chat_type: "code",
+  });
+
+  const chatPromises = [
+    queryClient.fetchQuery({
+      queryKey: generateQueryKey.chats(resolvedParams.teamSlug, chatQuery),
+      queryFn: () =>
+        chatActions.getChats(resolvedParams.teamSlug, chatQuery).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
+    }),
+  ];
+
+  if (chatId) {
+    chatPromises.push(
+      queryClient.fetchQuery({
+        queryKey: generateQueryKey.chat(chatId),
+        queryFn: () =>
+          chatActions.getChat(resolvedParams.teamSlug, chatId).then((r) => {
+            if (!r.ok) throw r;
+            return r.data;
+          }),
+      }),
+    );
+  }
+
+  await Promise.all(chatPromises);
   // Prefetch the initial source data so it's available immediately on the client
   let initialSourceId = source ?? null;
   if (initialSourceId) {
@@ -84,9 +117,14 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         initialPosition={position}
         {...resolvedParams}
       >
-        <Container subnav={<CodeVersionSubnav />}>
+        <Container subnav={<CodeVersionSubnav />} contain>
           <CodeMetadata userId={user.id} {...resolvedParams} allowActions />
-          <SourcesViewer {...resolvedParams} />
+          <div className="flex flex-1 min-h-0 gap-4">
+            <div className="min-h-0 flex-1">
+              <SourcesViewer {...resolvedParams} />
+            </div>
+            <CollapsibleChatPanel {...resolvedParams} />
+          </div>
         </Container>
       </CodeProvider>
     </HydrationBoundary>
