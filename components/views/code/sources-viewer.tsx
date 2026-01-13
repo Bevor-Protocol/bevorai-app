@@ -74,7 +74,14 @@ const nodeTypeGroups = [
 ];
 
 const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
-  const { handleSourceChange, sourceQuery, nodesQuery, containerRef, sourceId } = useCode();
+  const {
+    handleSourceChange,
+    sourceQuery,
+    nodesQuery,
+    containerRef,
+    contentViewportRef,
+    sourceId,
+  } = useCode();
 
   const { data: sources } = useSuspenseQuery({
     queryKey: generateQueryKey.codeSources(codeId),
@@ -121,7 +128,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
   };
 
   return (
-    <CodeHolder ref={containerRef} className="pr-2">
+    <CodeHolder ref={containerRef}>
       <CodeMetadata>
         <CodeSourceToggle>
           <NodeSearch teamSlug={teamSlug} codeId={codeId} className="w-full" />
@@ -182,7 +189,7 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
       </CodeMetadata>
       <CodeDisplay>
         <CodeHeader path={sourceQuery.data?.path} />
-        <CodeContent>
+        <CodeContent viewportRef={contentViewportRef}>
           <ShikiViewer className={sourceQuery.isLoading ? "opacity-50" : ""} />
         </CodeContent>
       </CodeDisplay>

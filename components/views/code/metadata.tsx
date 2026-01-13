@@ -1,6 +1,6 @@
 "use client";
 
-import { analysisActions, chatActions, codeActions } from "@/actions/bevor";
+import { analysisActions, codeActions } from "@/actions/bevor";
 import { AnalysisVersionPreviewElement } from "@/components/analysis/element";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,14 +23,13 @@ import { getStatusIndicator } from "@/components/versions/element";
 import { generateQueryKey } from "@/utils/constants";
 import { SourceTypeEnum } from "@/utils/enums";
 import { explorerUrl, formatDateShort, truncateId, truncateVersion } from "@/utils/helpers";
-import { extractAnalysisNodesQuery, extractChatsQuery } from "@/utils/query-params";
+import { extractAnalysisNodesQuery } from "@/utils/query-params";
 import { CodeMappingSchemaI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { BotMessageSquare, GitCommit, Network, Shield } from "lucide-react";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { GitCommit, Network, Shield } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import CodeVersionMenu from "./code-version-menu";
 
 const VersionDisplay: React.FC<{ version: CodeMappingSchemaI }> = ({ version }) => {
@@ -78,7 +77,6 @@ const CodeMetadata: React.FC<{
   codeId: string;
   allowActions?: boolean;
 }> = ({ teamSlug, projectSlug, codeId, userId, allowActions }) => {
-  const queryClient = useQueryClient();
   const router = useRouter();
 
   const { data: version } = useSuspenseQuery({
@@ -89,54 +87,6 @@ const CodeMetadata: React.FC<{
         return r.data;
       }),
   });
-
-  const chatQuery = extractChatsQuery({
-    project_slug: projectSlug,
-    code_version_id: version.id,
-    chat_type: "code",
-  });
-
-  const { data: chats } = useQuery({
-    queryKey: generateQueryKey.chats(teamSlug, chatQuery),
-    queryFn: () =>
-      chatActions.getChats(teamSlug, chatQuery).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-  });
-
-  const createChatMutation = useMutation({
-    mutationFn: async () =>
-      chatActions
-        .initiateChat(teamSlug, {
-          chat_type: "code",
-          code_version_id: version.id,
-        })
-        .then((r) => {
-          if (!r.ok) throw r;
-          return r.data;
-        }),
-    onSuccess: ({ id, toInvalidate }) => {
-      toInvalidate.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-      });
-      router.push(`/team/${teamSlug}/${projectSlug}/chats/${id}`);
-    },
-    onError: () => {
-      toast.error("Failed to create chat");
-    },
-  });
-
-  const handleChatClick = (): void => {
-    if (version.status !== "success") return;
-    if (chats && chats.results.length > 0) {
-      const firstChatId = chats.results[0].id;
-      const chatPath = `/team/${teamSlug}/${projectSlug}/chats/${firstChatId}`;
-      router.push(chatPath);
-    } else {
-      createChatMutation.mutate();
-    }
-  };
 
   const analysisQuery = extractAnalysisNodesQuery({
     project_slug: projectSlug,
@@ -220,15 +170,6 @@ const CodeMetadata: React.FC<{
           </div>
           {allowActions && (
             <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleChatClick}
-                disabled={createChatMutation.isPending || version.status !== "success"}
-              >
-                <BotMessageSquare className="size-4" />
-                {chats && chats.results.length > 0 ? "Continue Chat" : "Start Chat"}
-              </Button>
               <Button
                 variant="outline"
                 size="sm"

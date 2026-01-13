@@ -239,7 +239,7 @@
 }
 
 @utility markdown {
-  @apply text-foreground leading-relaxed;
+  @apply text-foreground leading-relaxed w-full min-w-0;
 
   /* Headings */
   h1 {
@@ -265,34 +265,48 @@
 
   p {
     @apply my-2;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   /* Code blocks */
   pre {
-    @apply bg-gray-900 rounded-lg p-4 my-4 overflow-x-auto;
-  }
-  pre code {
-    @apply block font-mono;
+    @apply bg-gray-900 rounded-lg p-4 my-4;
+    overflow-x: auto;
+    max-width: 100%;
   }
 
-  /* Inline code */
+  pre code {
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
+    font-size: 0.8em;
+  }
+
   code:not(pre code) {
     @apply bg-gray-800 rounded px-1.5 py-0.5 font-mono text-sm;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    font-size: 0.8em;
   }
 
-  /* Links */
   a {
     @apply text-blue-400 hover:underline;
   }
 
-  /* Blockquotes */
   blockquote {
     @apply border-l-4 border-gray-700 pl-4 italic my-4 text-gray-300;
   }
 
-  /* Tables */
   table {
     @apply w-full border-collapse my-4;
+    table-layout: fixed;
+  }
+
+  th,
+  td {
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
   th {
     @apply bg-gray-800 text-left font-semibold p-2;
@@ -301,7 +315,6 @@
     @apply border border-gray-700 p-2;
   }
 
-  /* Horizontal rule */
   hr {
     @apply border-t border-gray-700 my-6;
   }
@@ -312,6 +325,22 @@
   & [data-slot="scroll-area-thumb"] {
     display: none;
     scrollbar-width: none;
+  }
+}
+
+@utility chat-holder {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow-x: visible;
+
+  & [data-radix-scroll-area-viewport],
+  & [data-slot="scroll-area-viewport"] {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    overflow-x: visible;
   }
 }
 

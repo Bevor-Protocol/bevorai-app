@@ -3,17 +3,24 @@
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import * as Chat from "@/components/ui/chat";
+import { Pill } from "@/components/ui/pill";
 import { Textarea } from "@/components/ui/textarea";
 import { generateQueryKey } from "@/utils/constants";
-import { NodeSchemaI } from "@/utils/types";
+import { truncateId } from "@/utils/helpers";
+import { FindingSchemaI, NodeSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Send } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronDown, Send, X } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 interface ChatInputProps {
   teamSlug: string;
   codeId: string;
-  onSendMessage: (message: string, attributes: string[]) => Promise<void>;
+  findingContext?: FindingSchemaI[];
+  onRemoveFindingFromContext?: (findingId: string) => void;
+  onSendMessage: (
+    message: string,
+    attributes: Array<{ type: "node" | "finding"; id: string }>,
+  ) => Promise<void>;
   messagesContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -22,6 +29,8 @@ const TEXTAREA_MAX_HEIGHT = 264;
 export const ChatInput: React.FC<ChatInputProps> = ({
   teamSlug,
   codeId,
+  findingContext,
+  onRemoveFindingFromContext,
   onSendMessage,
   messagesContainerRef,
 }) => {
@@ -68,6 +77,41 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     return (): void => container.removeEventListener("scroll", checkScrollPosition);
   }, [checkScrollPosition, messagesContainerRef]);
 
+  type SelectedAttribute = { type: "node" | "finding"; id: string; name: string };
+
+  const selectedNodeAttributes = useMemo((): SelectedAttribute[] => {
+    if (!chatAttributes) return [];
+    const backtickMatches = inputValue.match(/`([^`]+)`/g);
+    if (!backtickMatches) return [];
+
+    const attributes: SelectedAttribute[] = [];
+    backtickMatches.forEach((match) => {
+      const name = match.slice(1, -1);
+      const matchingAttr = chatAttributes.find((attr) => attr.name === name);
+      if (
+        matchingAttr &&
+        !attributes.some((attr) => attr.type === "node" && attr.id === matchingAttr.id)
+      ) {
+        attributes.push({ type: "node", id: matchingAttr.id, name: matchingAttr.name });
+      }
+    });
+    return attributes;
+  }, [inputValue, chatAttributes]);
+
+  const selectedFindingAttributes = useMemo((): SelectedAttribute[] => {
+    if (!findingContext || findingContext.length === 0) return [];
+    return findingContext.map((finding) => ({
+      type: "finding" as const,
+      id: finding.id,
+      name: `finding ${truncateId(finding.id)}`,
+    }));
+  }, [findingContext]);
+
+  const selectedAttributes = useMemo(
+    () => [...selectedNodeAttributes, ...selectedFindingAttributes],
+    [selectedNodeAttributes, selectedFindingAttributes],
+  );
+
   const scrollToBottom = (): void => {
     if (!messagesContainerRef?.current) return;
     messagesContainerRef.current.scrollTo({
@@ -78,13 +122,31 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() && selectedAttributes.length === 0) return;
 
     const message = inputValue.trim();
-    const attributes = extractAttributes(message);
+    const attributes = selectedAttributes.map((attr) => ({ type: attr.type, id: attr.id }));
     setInputValue("");
 
+    if (onRemoveFindingFromContext && findingContext) {
+      findingContext.forEach((finding) => {
+        onRemoveFindingFromContext(finding.id);
+      });
+    }
+
     await onSendMessage(message, attributes);
+  };
+
+  const handleRemoveAttribute = (attr: SelectedAttribute): void => {
+    if (attr.type === "node") {
+      const pattern = new RegExp(
+        `\\\`${attr.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\\`\\s*`,
+        "g",
+      );
+      setInputValue((prev) => prev.replace(pattern, ""));
+    } else if (attr.type === "finding" && onRemoveFindingFromContext) {
+      onRemoveFindingFromContext(attr.id);
+    }
   };
 
   const calculateSimilarityScore = (name: string, query: string): number => {
@@ -129,23 +191,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
       .map((item) => item.attr) || [];
-
-  const extractAttributes = (text: string): string[] => {
-    const backtickMatches = text.match(/`([^`]+)`/g);
-    if (!backtickMatches || !chatAttributes) return [];
-
-    const attributeIds = new Set<string>();
-    backtickMatches.forEach((match) => {
-      const name = match.slice(1, -1);
-      const matchingAttr = chatAttributes.find((attr) => attr.name === name);
-      if (matchingAttr) {
-        attributeIds.add(matchingAttr.id);
-      }
-    });
-
-    return Array.from(attributeIds);
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     const value = e.target.value;
     setInputValue(value);
@@ -243,6 +288,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 relative mt-auto">
+      {selectedAttributes.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedAttributes.map((attr) => (
+            <Pill
+              key={`${attr.type}-${attr.id}`}
+              className="flex items-center gap-1.5 cursor-pointer"
+              onClick={() => handleRemoveAttribute(attr)}
+            >
+              <span>{attr.name}</span>
+              <X className="size-3" />
+            </Pill>
+          ))}
+        </div>
+      )}
       <div className="rounded-3xl border bg-card p-2 shadow-sm">
         <Textarea
           ref={textareaRef}
@@ -252,11 +311,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onKeyDown={handleKeyDown}
           placeholder="Message Bevor..."
           className="flex-1 max-h-[264px] p-2 resize-none border-0 bg-transparent! leading-6 text-foreground focus-visible:outline-none focus-visible:ring-0 scrollbar-thin disabled:opacity-50 disabled:cursor-not-allowed"
+          autoFocus
         />
         <div className="flex justify-end">
           <Button
             type="submit"
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() && selectedAttributes.length === 0}
             size="icon"
             className="size-8 rounded-full"
           >

@@ -10,9 +10,10 @@ import React from "react";
 export const CodeHolder: React.FC<React.ComponentProps<"div">> = ({ className, ...props }) => {
   return (
     <div
-      className={cn("grid size-full rounded-lg min-h-0 gap-x-2", className)}
+      className={cn("grid rounded-lg min-h-0 gap-x-2", className)}
       style={{
         gridTemplateColumns: "250px 1fr",
+        height: "calc(100svh - var(--spacing-subheader) - var(--spacing-header) - 5.5rem - 1.5rem)",
       }}
       {...props}
     />
@@ -23,7 +24,7 @@ export const CodeCounter: React.FC<React.ComponentProps<"div">> = ({ className, 
   return (
     <div
       className={cn(
-        "bg-background sticky top-subheader z-10",
+        "bg-background",
         "flex items-center gap-2 border-l border-t border-b rounded-tl-lg px-3 bg-background size-full",
         className,
       )}
@@ -37,7 +38,7 @@ export const CodeSourceToggle: React.FC<React.ComponentProps<"div">> = ({
   ...props
 }) => {
   return (
-    <div className="bg-background sticky top-subheader z-10">
+    <div className="bg-background">
       <div
         className={cn("flex flex-col items-center gap-2 bg-background w-full", className)}
         {...props}
@@ -89,11 +90,7 @@ export const CodeHeader: React.FC<React.ComponentProps<"div"> & { path?: string 
   ...props
 }) => {
   return (
-    <div
-      className={cn("bg-background sticky top-subheader z-10 h-subheader", className)}
-      id="code-header"
-      {...props}
-    >
+    <div className={cn("bg-background h-subheader", className)} id="code-header" {...props}>
       <div className="flex items-center justify-between border rounded-t-lg pl-3 pr-1.5 bg-background gap-6 size-full">
         <div className="flex items-center gap-2 whitespace-nowrap">
           <FileText className="size-4 text-muted-foreground" />
@@ -115,11 +112,9 @@ export const CodeSources: React.FC<
   React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
     viewportRef?: React.RefObject<HTMLDivElement>;
   }
-> = ({ className, ...props }) => {
+> = ({ className, viewportRef, ...props }) => {
   return (
-    <div className="sticky top-[calc(var(--spacing-subheader)+5.5rem)] self-start z-5 h-[calc(100svh-var(--spacing-subheader)-5.5rem-1.5rem)] bg-background w-full">
-      <ScrollArea className={cn("h-full mt-2", className)} {...props} />
-    </div>
+    <ScrollArea className={cn("flex-1 min-h-0", className)} viewportRef={viewportRef} {...props} />
   );
 };
 
@@ -159,22 +154,23 @@ export const CodeContent: React.FC<
   React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
     viewportRef?: React.RefObject<HTMLDivElement>;
   }
-> = ({ className, ...props }) => {
+> = ({ className, viewportRef, ...props }) => {
   return (
-    <div
-      className={cn("overflow-x-scroll border-r border-b border-l rounded-b-lg flex", className)}
+    <ScrollArea
+      className={cn("flex-1 min-h-0 border-r border-b border-l rounded-b-lg", className)}
       id="code-holder"
+      viewportRef={viewportRef}
       {...props}
     />
   );
 };
 
 export const CodeMetadata: React.FC<React.ComponentProps<"div">> = ({ className, ...props }) => {
-  return <div className={cn("flex flex-col", className)} {...props} />;
+  return <div className={cn("flex flex-col min-h-0 overflow-hidden", className)} {...props} />;
 };
 
 export const CodeDisplay: React.FC<React.ComponentProps<"div">> = ({ className, ...props }) => {
-  return <div className={cn("flex flex-col", className)} {...props} />;
+  return <div className={cn("flex flex-col min-h-0 overflow-hidden", className)} {...props} />;
 };
 
 export const getNodeTypeColor = (nodeType: string): string => {

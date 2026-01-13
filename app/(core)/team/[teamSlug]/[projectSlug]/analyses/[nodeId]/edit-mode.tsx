@@ -781,7 +781,7 @@ export const EditClient: React.FC<{
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 min-w-0">
-        <AnalysisScopes<DraftFindingSchemaI>
+        <AnalysisScopes
           version={draftQuery.data}
           selectedFinding={selectedFinding || undefined}
           onSelectFinding={setSelectedFinding}

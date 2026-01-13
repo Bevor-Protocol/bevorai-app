@@ -8,7 +8,6 @@ import {
   Code,
   FileCode,
   Hash,
-  InfoIcon,
   Package,
   Shield,
   Variable,
@@ -84,9 +83,8 @@ const Message: React.FC<
   React.ComponentProps<"div"> & {
     role: ChatMessageI["chat_role"];
     content: string;
-    isDiffVersion: boolean;
   }
-> = ({ className, role, content, isDiffVersion, ...props }) => {
+> = ({ className, role, content, ...props }) => {
   return (
     <div
       className={cn(
@@ -97,14 +95,6 @@ const Message: React.FC<
       )}
       {...props}
     >
-      {isDiffVersion && (
-        <InfoIcon
-          className={cn(
-            "absolute text-muted-foreground text-xs size-3",
-            role == "user" ? "-left-4" : "left-0 top-0",
-          )}
-        />
-      )}
       <ReactMarkdown className="markdown">{content}</ReactMarkdown>
     </div>
   );
@@ -124,13 +114,13 @@ const EmptyCta: React.FC<React.ComponentProps<"div">> = ({ className, ...props }
 };
 
 const EmptyActions: React.FC<React.ComponentProps<"div">> = ({ ...props }) => {
-  return <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full items-end" {...props} />;
+  return <div className="flex gap-4 w-full items-end flex-wrap" {...props} />;
 };
 
 const EmptyAction: React.FC<React.ComponentProps<"div">> = ({ children, ...props }) => {
   return (
     <div
-      className="border rounded-xl animate-appear transition-all p-4 pr-8 relative leading-relaxed h-full cursor-pointer hover:border-muted-foreground/60"
+      className="border rounded-xl animate-appear transition-all p-4 pr-8 relative leading-relaxed h-full cursor-pointer hover:border-muted-foreground/60 min-w-30 grow"
       {...props}
     >
       <LucideIcon

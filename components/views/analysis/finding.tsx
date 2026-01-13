@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FindingSchemaI, NodeSchemaI } from "@/utils/types";
 import { UseQueryResult } from "@tanstack/react-query";
-import { Check, ExternalLink, X } from "lucide-react";
+import { Check, ExternalLink, MessageSquare, X } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { getSeverityBadgeClasses } from "./scopes";
@@ -16,13 +16,14 @@ const FindingMetadata: React.FC<{
   nodeId: string;
   finding: FindingSchemaI;
   nodeQuery: UseQueryResult<NodeSchemaI, Error>;
-}> = ({ teamSlug, projectSlug, nodeId, finding, nodeQuery }) => {
+  onAddFindingToContext?: (finding: FindingSchemaI) => void;
+}> = ({ teamSlug, projectSlug, nodeId, finding, nodeQuery, onAddFindingToContext }) => {
   const isValidated = !!finding.validated_at;
   const isInvalidated = !!finding.invalidated_at;
   const isNotAcknowledged = !isValidated && !isInvalidated;
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 h-8">
       <h3 className="text-lg font-semibold">{finding.name}</h3>
       <Badge variant="outline" className={cn("text-xs", getSeverityBadgeClasses(finding.level))}>
         {finding.level}
@@ -55,6 +56,16 @@ const FindingMetadata: React.FC<{
         >
           finding not acknowledged
         </Badge>
+      )}
+      {onAddFindingToContext && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onAddFindingToContext(finding)}
+          title="Add to chat context"
+        >
+          <MessageSquare className="size-3" />
+        </Button>
       )}
       <Button variant="ghost" size="sm" asChild className="ml-auto">
         <Link
