@@ -4,6 +4,7 @@ import CodeVersionSubnav from "@/components/subnav/code-version";
 import CodeMetadata from "@/components/views/code/metadata";
 import SourcesViewer from "@/components/views/code/sources-viewer";
 import { getQueryClient } from "@/lib/config/query";
+import { ChatProvider } from "@/providers/chat";
 import { CodeProvider } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
@@ -84,9 +85,10 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
     );
   }
 
-  await Promise.all(chatPromises);
+  const chatResults = await Promise.all(chatPromises);
   // Prefetch the initial source data so it's available immediately on the client
   let initialSourceId = source ?? null;
+  let initialChatId = chatId ?? null;
   if (initialSourceId) {
     // validate that the query param exists on this code version. If not, unset it, default to first.
     if (!sources.find((s) => s.id == source)) {
@@ -95,6 +97,10 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   }
   if (!initialSourceId) {
     initialSourceId = sources.length ? sources[0].id : null;
+  }
+  if (!initialChatId) {
+    const chats = chatResults[0];
+    initialChatId = chats && chats.results.length ? chats.results[0].id : null;
   }
 
   let position: { start: number; end: number } | undefined;
@@ -112,21 +118,23 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <CodeProvider
-        initialSourceId={initialSourceId}
-        initialPosition={position}
-        {...resolvedParams}
-      >
-        <Container subnav={<CodeVersionSubnav />} contain>
-          <CodeMetadata userId={user.id} {...resolvedParams} allowActions />
-          <div className="flex flex-1 min-h-0 gap-4">
-            <div className="min-h-0 flex-1">
-              <SourcesViewer {...resolvedParams} />
+      <ChatProvider {...resolvedParams} chatType="code" initialChatId={initialChatId}>
+        <CodeProvider
+          initialSourceId={initialSourceId}
+          initialPosition={position}
+          {...resolvedParams}
+        >
+          <Container subnav={<CodeVersionSubnav />} contain>
+            <CodeMetadata userId={user.id} {...resolvedParams} allowActions />
+            <div className="flex flex-1 min-h-0 gap-4">
+              <div className="min-h-0 flex-1">
+                <SourcesViewer {...resolvedParams} />
+              </div>
+              <CollapsibleChatPanel {...resolvedParams} />
             </div>
-            <CollapsibleChatPanel {...resolvedParams} />
-          </div>
-        </Container>
-      </CodeProvider>
+          </Container>
+        </CodeProvider>
+      </ChatProvider>
     </HydrationBoundary>
   );
 };

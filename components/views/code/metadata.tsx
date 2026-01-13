@@ -25,12 +25,11 @@ import { SourceTypeEnum } from "@/utils/enums";
 import { explorerUrl, formatDateShort, truncateId, truncateVersion } from "@/utils/helpers";
 import { extractAnalysisNodesQuery } from "@/utils/query-params";
 import { CodeMappingSchemaI } from "@/utils/types";
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { GitCommit, Network, Shield } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import CodeVersionMenu from "./code-version-menu";
 
 const VersionDisplay: React.FC<{ version: CodeMappingSchemaI }> = ({ version }) => {
@@ -78,7 +77,6 @@ const CodeMetadata: React.FC<{
   codeId: string;
   allowActions?: boolean;
 }> = ({ teamSlug, projectSlug, codeId, userId, allowActions }) => {
-  const queryClient = useQueryClient();
   const router = useRouter();
 
   const { data: version } = useSuspenseQuery({

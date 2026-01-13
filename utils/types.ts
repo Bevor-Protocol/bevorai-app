@@ -29,6 +29,25 @@ export interface UserDetailedSchemaI extends UserSchemaI {
   is_github_oauth_connected: boolean;
 }
 
+export interface ScopeSchemaI extends NodeSchemaI {
+  code_version_node_id: string;
+  status: "waiting" | "processing" | "success" | "failed" | "partial";
+}
+
+export interface FindingSchemaI {
+  id: string;
+  code_version_node_id: string;
+  type: FindingType;
+  level: FindingLevel;
+  name: string;
+  explanation: string;
+  recommendation: string;
+  reference: string;
+  validated_at?: Date;
+  invalidated_at?: Date;
+  feedback?: string;
+}
+
 // users "own" nodes, denoted by the "is_owner". This field is what will impact
 // the actions that can be taken.
 export interface AnalysisNodeSchemaI extends BaseSchema {
@@ -51,6 +70,18 @@ export interface AnalysisNodeSchemaI extends BaseSchema {
   children: string[];
   scopes: ScopeSchemaI[];
   findings: FindingSchemaI[];
+}
+
+export interface DraftFindingSchemaI extends FindingSchemaI {
+  is_draft: boolean;
+  draft_id?: string;
+  draft_type?: "add" | "delete" | "update";
+  base_finding_id?: string;
+}
+
+export interface DraftSchemaI extends AnalysisNodeSchemaI {
+  findings: DraftFindingSchemaI[];
+  staged: DraftFindingSchemaI[];
 }
 
 export interface AnalysisVersionPaginationI extends PaginationI {
@@ -123,39 +154,6 @@ export interface NodeWithContentSchemaI extends NodeSchemaI {
   children: object;
 }
 
-export interface ScopeSchemaI extends NodeSchemaI {
-  code_version_node_id: string;
-  status: "waiting" | "processing" | "success" | "failed" | "partial";
-}
-
-export interface FindingSchemaI {
-  id: string;
-  code_version_node_id: string;
-  type: FindingType;
-  level: FindingLevel;
-  name: string;
-  explanation: string;
-  recommendation: string;
-  reference: string;
-  validated_at?: Date;
-  invalidated_at?: Date;
-  feedback?: string;
-}
-
-export interface DraftFindingSchemaI extends FindingSchemaI {
-  is_draft: boolean;
-  draft_id?: string;
-  draft_type?: "add" | "delete" | "update";
-  base_finding_id?: string;
-}
-
-export interface DraftSchemaI {
-  id: string;
-  scopes: ScopeSchemaI[];
-  findings: DraftFindingSchemaI[];
-  staged: DraftFindingSchemaI[];
-}
-
 export interface CodeRelationSchemaI {
   parent?: CodeMappingSchemaI;
   children: CodeMappingSchemaI[];
@@ -183,6 +181,7 @@ export interface ChatSchemaI {
   user: UserSchemaI;
   analysis_node_id?: string;
   code_version_id: string;
+  title?: string;
   chat_type: "code" | "analysis";
 }
 
@@ -664,6 +663,11 @@ export type SharedAnalysisNodeSchemaI = Omit<
   | "merged_from_node_id"
   | "parent_node_id"
   | "children"
+>;
+
+export type AnalysisScopesVersionI = Pick<
+  AnalysisNodeSchemaI,
+  "scopes" | "findings" | "n_scopes" | "n_findings"
 >;
 
 export type SharedCodeMappingSchemaI = Omit<

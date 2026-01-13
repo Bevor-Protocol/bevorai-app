@@ -199,7 +199,7 @@ const AnalysisHolder: React.FC<{
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 min-w-0">
         <AnalysisScopes
-          version={{ scopes: analysis.scopes, findings: analysis.findings }}
+          version={analysis}
           selectedFinding={selectedFinding}
           onSelectFinding={setSelectedFinding}
         />

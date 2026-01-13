@@ -82,7 +82,7 @@ const AnalysisHolder: React.FC<{
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 min-w-0 max-w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 min-w-0 max-w-full h-full">
       <AnalysisScopes
         version={version}
         selectedFinding={selectedFinding}
@@ -97,7 +97,7 @@ const AnalysisHolder: React.FC<{
           </div>
         </div>
       ) : (
-        <div className="space-y-2 min-w-0">
+        <div className="flex flex-col gap-2 w-full h-full min-h-0 overflow-hidden">
           <FindingMetadata
             teamSlug={teamSlug}
             projectSlug={projectSlug}

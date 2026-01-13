@@ -85,7 +85,7 @@ const FindingDescription: React.FC<{
   };
 
   return (
-    <div className={cn("border rounded-lg overflow-hidden", "finding")}>
+    <div className={cn("border rounded-lg overflow-hidden flex flex-col h-[250px]", "finding")}>
       <div className="flex justify-between items-center">
         <Subnav className="w-fit px-0">
           <SubnavButton

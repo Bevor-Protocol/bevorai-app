@@ -7,6 +7,8 @@ import {
   ActivitySchemaI,
   AnalysisNodeSchemaI,
   AnalysisVersionPaginationI,
+  ChatFullSchemaI,
+  ChatPaginationI,
   CodeMappingSchemaI,
   CodeVersionsPaginationI,
   FindingSchemaI,
@@ -17,9 +19,9 @@ import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type EventType = "activity" | "code" | "invite" | "analysis" | "scope";
+type EventType = "activity" | "code" | "invite" | "analysis" | "scope" | "chat";
 
-const ALL_EVENT_TYPES: EventType[] = ["activity", "code", "invite", "analysis", "scope"];
+const ALL_EVENT_TYPES: EventType[] = ["activity", "code", "invite", "analysis", "scope", "chat"];
 
 type ClaimType = "user" | "team" | "project" | "analysis" | "code" | "chat";
 
@@ -302,6 +304,10 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       handleCodeStatusUpdate(queryClient, payload);
     });
 
+    const chatSubId = subscribe("chat", "team", (payload) => {
+      handleChatUpdate(queryClient, payload);
+    });
+
     const inviteSubId = subscribe("invite", "user", (payload) => {
       handleInviteUpdate(queryClient, payload);
     });
@@ -316,6 +322,7 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsubscribe(inviteSubId);
       unsubscribe(activitySubId);
       unsubscribe(codeSubId);
+      unsubscribe(chatSubId);
     };
   }, [queryClient, subscribe, unsubscribe, getClaimsState]);
 
@@ -516,6 +523,39 @@ const handleInviteUpdate = (queryClient: QueryClient, payload: SSEPayload): void
   queryClient.setQueryData<MemberInviteSchema[]>(inviteQuery, (oldData) => {
     if (!oldData) return [payload.data];
     return [...oldData, payload.data];
+  });
+};
+
+const handleChatUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
+  console.log("chat payload", payload);
+  const chatQuery = generateQueryKey.chat(payload.id);
+  queryClient.setQueryData<ChatFullSchemaI>(chatQuery, (oldData) => {
+    if (!oldData) return oldData;
+    return {
+      ...oldData,
+      title: payload.data.title,
+    };
+  });
+
+  const allChatsQueries = queryClient.getQueriesData<ChatPaginationI>({
+    queryKey: [QUERY_KEYS.CHATS, payload.data.team_slug],
+    stale: false,
+  });
+
+  allChatsQueries.forEach(([queryKey, data]) => {
+    if (!data) return;
+    const itemExists = data.results.some((item) => item.id === payload.id);
+    if (itemExists) {
+      queryClient.setQueryData<ChatPaginationI>(queryKey, (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          results: oldData.results.map((item) =>
+            item.id === payload.id ? { ...item, title: payload.data.title } : item,
+          ),
+        };
+      });
+    }
   });
 };
 

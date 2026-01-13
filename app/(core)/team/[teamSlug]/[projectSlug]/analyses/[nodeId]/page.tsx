@@ -3,6 +3,7 @@ import Container from "@/components/container";
 import AnalysisSubnav from "@/components/subnav/analysis";
 import AnalysisMetadata from "@/components/views/analysis/metadata";
 import { getQueryClient } from "@/lib/config/query";
+import { ChatProvider } from "@/providers/chat";
 import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
 import { AnalysisNodeSchemaI, AsyncComponent, FindingSchemaI } from "@/utils/types";
@@ -71,6 +72,8 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
     );
   }
 
+  let initialChatId = resolvedSearchParams.chatId ?? null;
+
   if (analysis.is_owner) {
     const chatQuery = extractChatsQuery({
       project_slug: resolvedParams.projectSlug,
@@ -103,7 +106,11 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
       );
     }
 
-    await Promise.all(chatPromises);
+    const chatResults = await Promise.all(chatPromises);
+    if (!initialChatId) {
+      const chats = chatResults[0];
+      initialChatId = chats && chats.results.length ? chats.results[0].id : null;
+    }
   }
 
   if (isEditMode && !analysis.is_owner) {
@@ -117,35 +124,43 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Container subnav={<AnalysisSubnav />} contain>
-        <AnalysisMetadata
-          {...resolvedParams}
-          isEditMode={isEditMode}
-          allowChat={analysis.is_owner}
-          allowEditMode={analysis.is_owner}
-          allowActions
-          isOwner={analysis.is_owner}
-        />
-        {isEditMode ? (
-          <div className="flex flex-1 min-h-0 gap-4">
-            <div className="min-h-0 min-w-0 flex-1">
-              <EditClient
-                teamSlug={resolvedParams.teamSlug}
-                nodeId={resolvedParams.nodeId}
-                projectSlug={resolvedParams.projectSlug}
-              />
-            </div>
-          </div>
-        ) : (
-          <AnalysisClient
-            teamSlug={resolvedParams.teamSlug}
-            projectSlug={resolvedParams.projectSlug}
-            nodeId={resolvedParams.nodeId}
-            initialFinding={initialFinding}
+      <ChatProvider
+        {...resolvedParams}
+        chatType="analysis"
+        initialChatId={initialChatId}
+        codeId={analysis.code_version_id}
+        analysisNodeId={analysis.id}
+      >
+        <Container subnav={<AnalysisSubnav />} contain>
+          <AnalysisMetadata
+            {...resolvedParams}
+            isEditMode={isEditMode}
+            allowChat={analysis.is_owner}
+            allowEditMode={analysis.is_owner}
+            allowActions
             isOwner={analysis.is_owner}
           />
-        )}
-      </Container>
+          {isEditMode ? (
+            <div className="flex flex-1 min-h-0 gap-4">
+              <div className="min-h-0 min-w-0 flex-1">
+                <EditClient
+                  teamSlug={resolvedParams.teamSlug}
+                  nodeId={resolvedParams.nodeId}
+                  projectSlug={resolvedParams.projectSlug}
+                />
+              </div>
+            </div>
+          ) : (
+            <AnalysisClient
+              teamSlug={resolvedParams.teamSlug}
+              projectSlug={resolvedParams.projectSlug}
+              nodeId={resolvedParams.nodeId}
+              initialFinding={initialFinding}
+              isOwner={analysis.is_owner}
+            />
+          )}
+        </Container>
+      </ChatProvider>
     </HydrationBoundary>
   );
 };

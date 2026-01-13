@@ -6,9 +6,10 @@ import * as Chat from "@/components/ui/chat";
 import { Loader } from "@/components/ui/loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useChat } from "@/providers/chat";
 import { generateQueryKey } from "@/utils/constants";
 import { ChatMessageI, FindingSchemaI } from "@/utils/types";
-import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -18,17 +19,17 @@ import { ChatStreamingContent } from "./chat-streaming-content";
 
 interface ChatMessagesProps {
   teamSlug: string;
-  chatId: string;
-  fullWidth?: boolean;
+  codeId: string;
   findingContext?: FindingSchemaI[];
+  maxWidth?: string;
   onRemoveFindingFromContext?: (findingId: string) => void;
 }
 
 export const ChatMessages: React.FC<ChatMessagesProps> = ({
   teamSlug,
-  chatId,
-  fullWidth = false,
+  codeId,
   findingContext,
+  maxWidth,
   onRemoveFindingFromContext,
 }) => {
   const queryClient = useQueryClient();
@@ -44,22 +45,26 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
 
+  const { selectedChatId } = useChat();
+
   const chatMessageQuery = useQuery({
-    queryKey: generateQueryKey.chatMessages(chatId),
+    queryKey: generateQueryKey.chatMessages(selectedChatId!),
     queryFn: () =>
-      chatActions.getChatMessages(teamSlug, chatId).then((r) => {
+      chatActions.getChatMessages(teamSlug, selectedChatId!).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
+    enabled: !!selectedChatId,
   });
 
-  const chatQuery = useSuspenseQuery({
-    queryKey: generateQueryKey.chat(chatId),
+  const chatQuery = useQuery({
+    queryKey: generateQueryKey.chat(selectedChatId!),
     queryFn: () =>
-      chatActions.getChat(teamSlug, chatId).then((r) => {
+      chatActions.getChat(teamSlug, selectedChatId!).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
+    enabled: !!selectedChatId,
   });
 
   useEffect(() => {
@@ -100,6 +105,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     is_approved?: boolean;
     attributes?: Array<{ type: "node" | "finding"; id: string }>;
   }): Promise<void> => {
+    if (!chatQuery.data) return;
     if (!data.message.message.trim() && !data.approval_id) return;
 
     setIsAwaitingResponse(true);
@@ -213,7 +219,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         };
         // we already optimistically added the user message upon submission.
         queryClient.setQueryData(
-          generateQueryKey.chatMessages(chatId),
+          generateQueryKey.chatMessages(selectedChatId!),
           (oldData: ChatMessageI[]) => {
             return [...oldData, systemMessageData];
           },
@@ -226,10 +232,13 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       const errorMessage = error instanceof Error ? error.message : "Failed to send message";
       toast.error(errorMessage);
       // undo the optimistically added user message.
-      queryClient.setQueryData(generateQueryKey.chatMessages(chatId), (oldData: ChatMessageI[]) => {
-        const newData = oldData.slice(0, -1);
-        return newData;
-      });
+      queryClient.setQueryData(
+        generateQueryKey.chatMessages(selectedChatId!),
+        (oldData: ChatMessageI[]) => {
+          const newData = oldData.slice(0, -1);
+          return newData;
+        },
+      );
     } finally {
       setIsLoading(false);
       setIsAwaitingResponse(false);
@@ -240,6 +249,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     message: string,
     attributes: Array<{ type: "node" | "finding"; id: string }>,
   ): Promise<void> => {
+    if (!chatQuery.data) return;
     if (!message.trim()) return;
 
     const userMessage: ChatMessageI = {
@@ -254,17 +264,21 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     };
 
     // optimistically add it.
-    queryClient.setQueryData(generateQueryKey.chatMessages(chatId), (oldData: ChatMessageI[]) => {
-      return [...oldData, userMessage];
-    });
+    queryClient.setQueryData(
+      generateQueryKey.chatMessages(selectedChatId!),
+      (oldData: ChatMessageI[]) => {
+        return [...oldData, userMessage];
+      },
+    );
 
     setIsLoading(true);
     setPendingApprovalId(null);
     setApprovalContent("");
-    sendMessage({ message: userMessage, chatId, attributes });
+    sendMessage({ message: userMessage, chatId: selectedChatId!, attributes });
   };
 
   const handleApproval = async (isApproved: boolean): Promise<void> => {
+    if (!chatQuery.data) return;
     if (!pendingApprovalId) return;
 
     // fake message. Can likely remove and just pass approvalId. We do not add this to the query client.
@@ -288,7 +302,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     setCurrentEventType("");
     await sendMessage({
       message: userMessage,
-      chatId,
+      chatId: selectedChatId!,
       approval_id: approvalId,
       is_approved: isApproved,
     });
@@ -297,12 +311,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const showEmptyState = chatMessageQuery.data?.length === 0 && !isLoading;
 
   return (
-    <div
-      className={cn(
-        "flex flex-col bg-background grow min-h-0 min-w-0 w-full",
-        !fullWidth && "max-w-3xl m-auto",
-      )}
-    >
+    <div className={cn("flex flex-col bg-background grow min-h-0 min-w-0")}>
       <div className="flex-1 min-h-0 min-w-0 flex flex-col">
         {chatMessageQuery.isLoading && (
           <div className="flex items-center justify-center h-full">
@@ -312,20 +321,20 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         {showEmptyState && !chatMessageQuery.isLoading && (
           <ChatEmptyState onSendMessage={handleSendMessage} />
         )}
-        {(chatMessageQuery.data ?? []).length > 0 && (
+        {(chatMessageQuery.data ?? []).length > 0 && chatQuery.data && (
           <ScrollArea
-            className="min-h-0 w-full no-scrollbar chat-holder"
+            className="min-h-0 min-w-0 no-scrollbar chat-holder"
             ref={messagesContainerRef}
             viewportRef={scrollViewportRef as React.RefObject<HTMLDivElement>}
           >
-            <div className={cn("flex flex-col gap-4 min-w-0 w-full", !fullWidth && "max-w-3xl")}>
+            <div
+              className="flex flex-col gap-4 px-2 overflow-x-hidden"
+              style={maxWidth ? { maxWidth } : { maxWidth: "24rem" }}
+            >
               {chatMessageQuery.data?.map((message) => (
-                <Chat.Message
-                  role={message.chat_role}
-                  content={message.message}
-                  isDiffVersion={message.code_version_id != chatQuery.data.code_version_id}
-                  key={message.id}
-                />
+                <div key={message.id} className="w-full">
+                  <Chat.Message role={message.chat_role} content={message.message} />
+                </div>
               ))}
               <ChatStreamingContent
                 currentEventType={currentEventType}
@@ -356,7 +365,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         )}
         <ChatInput
           teamSlug={teamSlug}
-          codeId={chatQuery.data.code_version_id}
+          codeId={codeId}
           findingContext={findingContext}
           onRemoveFindingFromContext={onRemoveFindingFromContext}
           onSendMessage={handleSendMessage}

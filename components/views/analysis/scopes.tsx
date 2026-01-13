@@ -15,13 +15,13 @@ import { cn } from "@/lib/utils";
 import { FindingLevel, FindingType } from "@/utils/enums";
 import {
   AnalysisNodeSchemaI,
+  AnalysisScopesVersionI,
   DraftFindingSchemaI,
-  DraftSchemaI,
   FindingSchemaI,
   ScopeSchemaI,
 } from "@/utils/types";
 import { AlertCircle, AlertTriangle, ChevronDown, Info, XCircle } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const isDraftFinding = (
   finding: FindingSchemaI | DraftFindingSchemaI,
@@ -106,15 +106,15 @@ export const getSeverityColor = (level: FindingLevel): string => {
 export const getSeverityBadgeClasses = (level: FindingLevel): string => {
   switch (level.toLowerCase()) {
     case "critical":
-      return "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400";
+      return "border-red-500/20 text-red-600 dark:text-red-400";
     case "high":
-      return "border-orange-500/20 bg-orange-500/10 text-orange-600 dark:text-orange-400";
+      return "border-orange-500/20 text-orange-600 dark:text-orange-400";
     case "medium":
-      return "border-yellow-500/20 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
+      return "border-yellow-500/20 text-yellow-600 dark:text-yellow-400";
     case "low":
-      return "border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-400";
+      return "border-blue-500/20 text-blue-600 dark:text-blue-400";
     default:
-      return "border-neutral-500/20 bg-neutral-500/10 text-neutral-600 dark:text-neutral-400";
+      return "border-neutral-500/20 text-neutral-600 dark:text-neutral-400";
   }
 };
 
@@ -263,7 +263,7 @@ const ScopeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="font-medium truncate min-w-0 flex-1">{scope.name}</div>
+                    <div className="truncate min-w-0 flex-1 text-sm">{scope.name}</div>
                     {hasFindings ? (
                       <div className="flex items-center gap-2 shrink-0">
                         {levelOrder.map((level) => {
@@ -657,7 +657,7 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
   renderAddFinding,
   checkScopeStatus = true,
 }: {
-  version?: DraftSchemaI | AnalysisNodeSchemaI;
+  version?: AnalysisNodeSchemaI | AnalysisScopesVersionI;
   selectedFinding?: T;
   onSelectFinding: (finding: T) => void;
   disableGrouping?: boolean;
@@ -666,29 +666,40 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
 }): React.ReactElement => {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [groupingMode, setGroupingMode] = useState<GroupingMode>("scope");
+  const lastSelectedFindingIdRef = useRef<string | undefined>(undefined);
 
   const isLoading = !version;
 
   useEffect(() => {
-    if (!selectedFinding || !version) return;
-
-    if (groupingMode === "scope") {
-      const scope = getScopeForFinding(selectedFinding, version);
-      if (!openGroups.has(scope.id)) {
-        setOpenGroups(new Set([...openGroups, scope.id]));
-      }
-    } else if (groupingMode === "severity") {
-      const groupKey = selectedFinding.level;
-      if (!openGroups.has(groupKey)) {
-        setOpenGroups(new Set([...openGroups, groupKey]));
-      }
-    } else if (groupingMode === "type") {
-      const groupKey = selectedFinding.type;
-      if (!openGroups.has(groupKey)) {
-        setOpenGroups(new Set([...openGroups, groupKey]));
-      }
+    if (!selectedFinding || !version) {
+      lastSelectedFindingIdRef.current = undefined;
+      return;
     }
-  }, [selectedFinding, groupingMode, openGroups, version]);
+
+    const currentFindingId = selectedFinding.id;
+    const isNewSelection = lastSelectedFindingIdRef.current !== currentFindingId;
+
+    if (isNewSelection) {
+      lastSelectedFindingIdRef.current = currentFindingId;
+
+      setOpenGroups((prevOpenGroups) => {
+        const newOpenGroups = new Set(prevOpenGroups);
+
+        if (groupingMode === "scope") {
+          const scope = getScopeForFinding(selectedFinding, version);
+          newOpenGroups.add(scope.id);
+        } else if (groupingMode === "severity") {
+          const groupKey = selectedFinding.level;
+          newOpenGroups.add(groupKey);
+        } else if (groupingMode === "type") {
+          const groupKey = selectedFinding.type;
+          newOpenGroups.add(groupKey);
+        }
+
+        return newOpenGroups;
+      });
+    }
+  }, [selectedFinding, groupingMode, version]);
 
   if (isLoading) {
     return (
@@ -729,7 +740,7 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
       <div className="flex items-center justify-start gap-2 h-8">
         <h2 className="text-lg font-semibold">Findings</h2>
         <div className="h-4 w-px bg-border mx-2" />
-        {/* <div className="flex items-center gap-1.5 text-sm">
+        <div className="flex items-center gap-1.5 text-sm">
           <span className="text-muted-foreground">{version.n_scopes}</span>
           <span className="text-muted-foreground/70">
             {version.n_scopes === 1 ? "scope" : "scopes"}
@@ -740,7 +751,7 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
           <span className="text-muted-foreground/70">
             {version.n_findings === 1 ? "finding" : "findings"}
           </span>
-        </div> */}
+        </div>
       </div>
       {!disableGrouping && (
         <Select
@@ -758,7 +769,7 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
         </Select>
       )}
       <ScrollArea className="flex flex-col space-y-4 pr-2 overflow-y-auto max-h-[calc(100svh-var(--spacing-header)-var(--spacing-subheader)-9rem-1.5rem-2rem)]">
-        <div className="w-[350px]">
+        <div className="w-[300px]">
           {groupingMode === "scope" && <ScopeGrouping<T> {...groupingProps} />}
           {groupingMode === "severity" && <SeverityGrouping<T> {...groupingProps} />}
           {groupingMode === "type" && <TypeGrouping<T> {...groupingProps} />}

@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "biome lint --max-diagnostics 50 && tsc --noEmit",
+    "lint": "biome lint --max-diagnostics 180 && tsc --noEmit",
     "prepare": "husky"
   },
   "dependencies": {
