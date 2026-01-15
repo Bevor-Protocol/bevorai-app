@@ -13,16 +13,43 @@ import { solidity } from "@replit/codemirror-lang-solidity";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { githubDark } from "@uiw/codemirror-theme-github";
 import { basicSetup } from "codemirror";
+import { zipSync } from "fflate";
 import { ArrowRight, CheckCircle, FileText, Folder, Upload, X, XCircle } from "lucide-react";
 import Link from "next/link";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
+const zipFiles = async (files: File[]): Promise<Uint8Array> => {
+  const zip: Record<string, Uint8Array> = {};
+
+  for (const file of files) {
+    const path = file.webkitRelativePath || file.name;
+    zip[path] = new Uint8Array(await file.arrayBuffer());
+  }
+
+  return zipSync(zip, { level: 6 });
+};
 
 interface SourceFile {
   path: string;
   content: string;
   file: File;
 }
+
+const isValidFile = (file: File): boolean => {
+  if (file.webkitRelativePath.includes("node_modules")) return false;
+  if (file.name.endsWith(".sol")) return true;
+  const validNames = [
+    "foundry.toml",
+    "remappings.txt",
+    "package.json",
+    "yarn.lock",
+    "package-lock.json",
+    ".gitmodules",
+  ];
+  if (validNames.includes(file.name)) return true;
+  return false;
+};
 
 const FolderStep: React.FC<{
   project: ProjectDetailedSchemaI;
@@ -32,7 +59,7 @@ const FolderStep: React.FC<{
   const queryClient = useQueryClient();
 
   const initialState: UploadCodeFolderFormValues = {
-    fileMap: {},
+    zip: new Blob(),
     parent_id: parentId,
   };
   const { formState, setField, updateFormState } =
@@ -63,7 +90,7 @@ const FolderStep: React.FC<{
       }
       updateFormState({
         type: "SET_ERRORS",
-        errors: { fileMap: "Something went wrong" },
+        errors: { zip: "Something went wrong" },
       });
     },
     onSuccess: ({ id, status, toInvalidate }) => {
@@ -103,11 +130,11 @@ const FolderStep: React.FC<{
   }, [selectedFile, mutation.isSuccess, mutation.isError]);
 
   const processFiles = useCallback(
-    async (files: File[] | FileList) => {
+    async (fileList: File[] | FileList) => {
       const validFiles: SourceFile[] = [];
 
-      for (const file of Array.from(files)) {
-        if (file.name.endsWith(".sol")) {
+      for (const file of Array.from(fileList)) {
+        if (isValidFile(file)) {
           const content = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e): void => resolve(e.target?.result as string);
@@ -126,18 +153,23 @@ const FolderStep: React.FC<{
       if (validFiles.length === 0) {
         updateFormState({
           type: "SET_ERRORS",
-          errors: { fileMap: "No valid .sol, .js, or .ts files found in the folder" },
+          errors: { zip: "No valid .sol, .js, or .ts files found in the folder" },
         });
         return;
       }
 
       sourceFilesRef.current = validFiles;
-      const fileMap: Record<string, File> = {};
-      validFiles.forEach((sourceFile) => {
-        fileMap[sourceFile.path] = sourceFile.file;
+      const filesToZip = validFiles.map((sf) => sf.file);
+      const zipData = await zipFiles(filesToZip);
+      const zipBlob = new Blob([new Uint8Array(zipData)], { type: "application/zip" });
+      setField("zip", zipBlob);
+
+      const displayableFiles = validFiles.filter((sf) => {
+        if (!sf.path.endsWith(".sol")) return false;
+        const pathSegments = sf.path.split("/");
+        return pathSegments[1] !== "lib";
       });
-      setField("fileMap", fileMap);
-      setSelectedFile(validFiles[0]);
+      setSelectedFile(displayableFiles[0] || null);
       updateFormState({ type: "SET_ERRORS", errors: {} });
     },
     [setField, updateFormState],
@@ -145,7 +177,7 @@ const FolderStep: React.FC<{
 
   const clearAllFiles = useCallback(() => {
     sourceFilesRef.current = [];
-    setField("fileMap", {});
+    setField("zip", new Blob());
     setSelectedFile(null);
     updateFormState({ type: "SET_ERRORS", errors: {} });
   }, [setField, updateFormState]);
@@ -268,7 +300,7 @@ const FolderStep: React.FC<{
         </div>
         <Button
           type="submit"
-          disabled={Object.keys(formState.values.fileMap).length === 0 || mutation.isPending}
+          disabled={formState.values.zip.size === 0 || mutation.isPending}
           className="min-w-40"
           onClick={handleSubmit}
         >
@@ -278,7 +310,7 @@ const FolderStep: React.FC<{
       </div>
 
       <div className="flex flex-col flex-1 min-h-0">
-        {Object.keys(formState.values.fileMap).length === 0 ? (
+        {formState.values.zip.size === 0 ? (
           <label className="w-full block mb-4">
             <div
               className={cn(
@@ -321,7 +353,7 @@ const FolderStep: React.FC<{
           </div>
         )}
 
-        {Object.keys(formState.values.fileMap).length > 0 && (
+        {formState.values.zip.size > 0 && (
           <div className="grow border border-border rounded-lg overflow-hidden flex flex-col">
             <div
               className="grid flex-1 h-full"
@@ -330,7 +362,15 @@ const FolderStep: React.FC<{
               <div className="flex items-center space-x-2 p-3 border-b border-r border-border">
                 <span className="text-sm font-medium ">Sources</span>
                 <span className="text-xs text-neutral-500">
-                  ({Object.keys(formState.values.fileMap).length})
+                  (
+                  {
+                    sourceFilesRef.current.filter((sf) => {
+                      if (!sf.path.endsWith(".sol")) return false;
+                      const pathSegments = sf.path.split("/");
+                      return pathSegments[1] !== "lib";
+                    }).length
+                  }
+                  )
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 border-b border-border">
@@ -345,24 +385,30 @@ const FolderStep: React.FC<{
                 </div>
               </div>
               <div className="border-r border-border overflow-y-auto min-h-0">
-                {sourceFilesRef.current.map((sourceFile) => (
-                  <div key={sourceFile.path} className="space-y-1">
-                    <div
-                      className={cn(
-                        "px-3 py-2 rounded-lg transition-colors flex justify-center flex-col cursor-pointer",
-                        selectedFile?.path === sourceFile.path
-                          ? "bg-neutral-800 "
-                          : " hover:bg-neutral-800/50",
-                      )}
-                      onClick={() => setSelectedFile(sourceFile)}
-                    >
-                      <span className="text-sm font-medium truncate">
-                        {sourceFile.path.split("/").pop()}
-                      </span>
-                      <div className="text-xs text-neutral-500 truncate">{sourceFile.path}</div>
+                {sourceFilesRef.current
+                  .filter((sf) => {
+                    if (!sf.path.endsWith(".sol")) return false;
+                    const pathSegments = sf.path.split("/");
+                    return pathSegments[1] !== "lib";
+                  })
+                  .map((sourceFile) => (
+                    <div key={sourceFile.path} className="space-y-1">
+                      <div
+                        className={cn(
+                          "px-3 py-2 rounded-lg transition-colors flex justify-center flex-col cursor-pointer",
+                          selectedFile?.path === sourceFile.path
+                            ? "bg-neutral-800 "
+                            : " hover:bg-neutral-800/50",
+                        )}
+                        onClick={() => setSelectedFile(sourceFile)}
+                      >
+                        <span className="text-sm font-medium truncate">
+                          {sourceFile.path.split("/").pop()}
+                        </span>
+                        <div className="text-xs text-neutral-500 truncate">{sourceFile.path}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
               <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
                 {selectedFile ? (
@@ -379,10 +425,10 @@ const FolderStep: React.FC<{
           </div>
         )}
 
-        {formState.errors.fileMap && (
+        {formState.errors.zip && (
           <div className="flex items-center space-x-2 text-destructive text-sm mt-4">
             <XCircle className="size-4" />
-            <span>{formState.errors.fileMap}</span>
+            <span>{formState.errors.zip}</span>
           </div>
         )}
       </div>

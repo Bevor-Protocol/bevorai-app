@@ -25,12 +25,7 @@ export const scanCodeAddressSchema = z.object({
 export type ScanCodeAddressFormValues = z.infer<typeof scanCodeAddressSchema>;
 
 export const uploadCodeFolderSchema = z.object({
-  fileMap: z
-    .record(z.string(), z.instanceof(File))
-    .refine(
-      (fileMap) => Object.keys(fileMap).length > 0,
-      "Please upload a folder with contract files",
-    ),
+  zip: z.instanceof(Blob, { message: "Zip file is required" }),
   parent_id: z.string().optional(),
 });
 
