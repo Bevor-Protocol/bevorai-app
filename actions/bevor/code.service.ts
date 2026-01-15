@@ -38,9 +38,7 @@ export const contractUploadFolder = async (
 
   const formData = new FormData();
   formData.append("project_id", projectId);
-  Object.entries(data.fileMap).forEach(([relativePath, file]) => {
-    formData.append("files", file, relativePath);
-  });
+  formData.append("zip", data.zip, "folder.zip");
   if (data.parent_id) {
     formData.append("parent_id", data.parent_id);
     toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
