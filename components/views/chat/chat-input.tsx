@@ -30,7 +30,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   teamSlug,
   codeId,
   findingContext,
-  availableFindings,
   onRemoveFindingFromContext,
   onSendMessage,
   messagesContainerRef,
@@ -163,29 +162,34 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           range.collapse(true);
           selection.removeAllRanges();
           selection.addRange(range);
-        } else {
+        } else if (contentEditableRef.current) {
           contentEditableRef.current.appendChild(pill);
           const spaceText = document.createTextNode(" ");
           contentEditableRef.current.appendChild(spaceText);
         }
 
-        setInputHtml(contentEditableRef.current.innerHTML);
-        adjustContentHeight();
+        if (contentEditableRef.current) {
+          setInputHtml(contentEditableRef.current.innerHTML);
+          adjustContentHeight();
+        }
       }
     });
 
     existingIds.forEach((existingId) => {
-      if (!providerIds.has(existingId)) {
+      if (existingId && !providerIds.has(existingId)) {
         const pill = contentEditableRef.current?.querySelector(
           `[data-attribute-type='finding'][data-attribute-id='${existingId}']`,
         );
-        if (pill) {
+        if (pill && contentEditableRef.current) {
           const nextSibling = pill.nextSibling;
-          if (nextSibling?.nodeType === Node.TEXT_NODE && (nextSibling as Text).textContent === " ") {
+          if (
+            nextSibling?.nodeType === Node.TEXT_NODE &&
+            (nextSibling as Text).textContent === " "
+          ) {
             nextSibling.remove();
           }
           pill.remove();
-          setInputHtml(contentEditableRef.current!.innerHTML);
+          setInputHtml(contentEditableRef.current.innerHTML);
           adjustContentHeight();
         }
       }
