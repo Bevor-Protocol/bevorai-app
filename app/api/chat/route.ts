@@ -1,5 +1,7 @@
+import { tokenActions } from "@/actions/bevor";
 import { streaming_api } from "@/lib/api";
-import { NextRequest } from "next/server";
+import axios from "axios";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -24,15 +26,48 @@ export async function POST(req: NextRequest): Promise<Response> {
       );
     }
 
+    // since this /api route bypasses the proxy, we need session refresh baked in.
+
     const { chatId, ...rest } = requestBody;
 
-    const sessionToken = req.cookies.get("bevor-token")?.value;
+    let sessionToken = req.cookies.get("bevor-token")?.value;
+    const refreshToken = req.cookies.get("bevor-refresh-token")?.value;
     const teamSlug = req.cookies.get("bevor-recent-team")?.value;
 
-    if (!sessionToken) {
-      throw new Error("invalidate token");
+    if (!refreshToken) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-    // Create a new ReadableStream for streaming the response
+
+    let needsRefresh = !sessionToken;
+    if (!needsRefresh) {
+      try {
+        await tokenActions.validateToken();
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.data?.code === "session_token_expired") {
+          needsRefresh = true;
+        } else {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
+
+    if (needsRefresh) {
+      const tokenResponse = await tokenActions.refreshToken(refreshToken);
+      if (!tokenResponse.ok) {
+        return new Response(JSON.stringify({ error: "Session expired" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      sessionToken = tokenResponse.data.scoped_token;
+    }
+
     const stream = new ReadableStream({
       async start(controller: ReadableStreamDefaultController): Promise<void> {
         try {
@@ -47,17 +82,11 @@ export async function POST(req: NextRequest): Promise<Response> {
             },
           );
 
-          // Get the response as a stream
-          // Axios with responseType: 'stream' provides the data directly as a stream
           const dataStream = response.data;
-
-          // Process the stream
           for await (const chunk of dataStream) {
-            // Send the chunk to the client
             controller.enqueue(chunk);
           }
 
-          // Close the stream when done
           controller.close();
         } catch (err) {
           controller.error(err);
@@ -65,8 +94,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       },
     });
 
-    // Return the stream with appropriate headers
-    return new Response(stream, {
+    return new NextResponse(stream, {
       headers: {
         "Content-Type": "text/event-stream",
         "X-Content-Type-Options": "nosniff",

@@ -1,8 +1,12 @@
 "use client";
 
+import { analysisActions } from "@/actions/bevor";
 import AnalysisHolder from "@/components/views/analysis/holder";
+import { useChat } from "@/providers/chat";
+import { generateQueryKey } from "@/utils/constants";
 import { FindingSchemaI } from "@/utils/types";
-import React, { useState } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import React, { useMemo } from "react";
 import CollapsibleChatPanel from "./collapsible-chat-panel";
 
 interface AnalysisClientProps {
@@ -20,19 +24,29 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
   initialFinding,
   isOwner,
 }) => {
-  const [findingContext, setFindingContext] = useState<FindingSchemaI[]>([]);
+  const { addFinding, removeFinding, attributes } = useChat();
+  const { data: version } = useSuspenseQuery({
+    queryKey: generateQueryKey.analysisDetailed(nodeId),
+    queryFn: async () =>
+      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  const findingContext = useMemo(() => {
+    const findingAttributeIds = new Set(
+      attributes.filter((attr) => attr.type === "finding").map((attr) => attr.id),
+    );
+    return version.findings.filter((finding) => findingAttributeIds.has(finding.id));
+  }, [attributes, version.findings]);
 
   const addFindingToContext = (finding: FindingSchemaI): void => {
-    setFindingContext((prev) => {
-      if (prev.some((f) => f.id === finding.id)) {
-        return prev;
-      }
-      return [...prev, finding];
-    });
+    addFinding(finding);
   };
 
   const removeFindingFromContext = (findingId: string): void => {
-    setFindingContext((prev) => prev.filter((f) => f.id !== findingId));
+    removeFinding(findingId);
   };
 
   return (

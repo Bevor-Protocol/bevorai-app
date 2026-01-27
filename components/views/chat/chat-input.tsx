@@ -3,19 +3,19 @@
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import * as Chat from "@/components/ui/chat";
-import { Pill } from "@/components/ui/pill";
-import { Textarea } from "@/components/ui/textarea";
+import { useChat } from "@/providers/chat";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
 import { FindingSchemaI, NodeSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Send, X } from "lucide-react";
+import { ChevronDown, Send } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 interface ChatInputProps {
   teamSlug: string;
   codeId: string;
   findingContext?: FindingSchemaI[];
+  availableFindings?: FindingSchemaI[];
   onRemoveFindingFromContext?: (findingId: string) => void;
   onSendMessage: (
     message: string,
@@ -30,16 +30,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   teamSlug,
   codeId,
   findingContext,
+  availableFindings,
   onRemoveFindingFromContext,
   onSendMessage,
   messagesContainerRef,
 }) => {
-  const [inputValue, setInputValue] = useState("");
+  const [inputHtml, setInputHtml] = useState("");
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteQuery, setAutocompleteQuery] = useState("");
   const [selectedAutocompleteIndex, setSelectedAutocompleteIndex] = useState(0);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const contentEditableRef = useRef<HTMLDivElement>(null);
+  const atPositionRef = useRef<{ node: Text; offset: number } | null>(null);
+  const { attributes: chatProviderAttributes, removeFinding } = useChat();
 
   const { data: chatAttributes } = useQuery({
     queryKey: generateQueryKey.codeNodes(codeId),
@@ -50,13 +53,59 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       }),
   });
 
-  const adjustTextareaHeight = (): void => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    textarea.style.height = "auto";
-    const nextHeight = Math.min(textarea.scrollHeight, TEXTAREA_MAX_HEIGHT);
-    textarea.style.height = `${nextHeight}px`;
-    textarea.style.overflowY = textarea.scrollHeight > TEXTAREA_MAX_HEIGHT ? "auto" : "hidden";
+  const getPlainText = useCallback((): string => {
+    if (!contentEditableRef.current) return "";
+    const clone = contentEditableRef.current.cloneNode(true) as HTMLElement;
+    const pills = clone.querySelectorAll("[data-attribute-id]");
+    pills.forEach((pill) => {
+      const pillText = pill.textContent || "";
+      const nextSibling = pill.nextSibling;
+      const hasSpaceAfter =
+        nextSibling?.nodeType === Node.TEXT_NODE &&
+        (nextSibling as Text).textContent?.startsWith(" ");
+
+      const replacementText = hasSpaceAfter ? pillText : pillText + " ";
+      const textNode = document.createTextNode(replacementText);
+      pill.parentNode?.replaceChild(textNode, pill);
+
+      if (hasSpaceAfter) {
+        const spaceNode = nextSibling as Text;
+        const remainingText = spaceNode.textContent?.substring(1) || "";
+        if (remainingText) {
+          const remainingNode = document.createTextNode(remainingText);
+          spaceNode.parentNode?.replaceChild(remainingNode, spaceNode);
+        } else {
+          spaceNode.parentNode?.removeChild(spaceNode);
+        }
+      }
+    });
+    return clone.textContent || "";
+  }, []);
+
+  const getAttributesFromContent = useCallback((): Array<{
+    type: "node" | "finding";
+    id: string;
+  }> => {
+    if (!contentEditableRef.current) return [];
+    const attributeElements = contentEditableRef.current.querySelectorAll("[data-attribute-id]");
+    const attributes: Array<{ type: "node" | "finding"; id: string }> = [];
+    attributeElements.forEach((el) => {
+      const id = el.getAttribute("data-attribute-id");
+      const type = el.getAttribute("data-attribute-type") as "node" | "finding";
+      if (id && type) {
+        attributes.push({ type, id });
+      }
+    });
+    return attributes;
+  }, []);
+
+  const adjustContentHeight = (): void => {
+    const div = contentEditableRef.current;
+    if (!div) return;
+    div.style.height = "auto";
+    const nextHeight = Math.min(div.scrollHeight, TEXTAREA_MAX_HEIGHT);
+    div.style.height = `${nextHeight}px`;
+    div.style.overflowY = div.scrollHeight > TEXTAREA_MAX_HEIGHT ? "auto" : "hidden";
   };
 
   const checkScrollPosition = useCallback((): void => {
@@ -67,8 +116,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   }, [messagesContainerRef]);
 
   useLayoutEffect(() => {
-    adjustTextareaHeight();
-  }, [inputValue]);
+    adjustContentHeight();
+  }, [inputHtml]);
 
   useEffect(() => {
     if (!messagesContainerRef?.current) return;
@@ -77,26 +126,89 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     return (): void => container.removeEventListener("scroll", checkScrollPosition);
   }, [checkScrollPosition, messagesContainerRef]);
 
+  useEffect(() => {
+    if (!contentEditableRef.current || !chatProviderAttributes) return;
+    const findingAttributes = chatProviderAttributes.filter((attr) => attr.type === "finding");
+    const existingPills = contentEditableRef.current.querySelectorAll(
+      "[data-attribute-type='finding']",
+    );
+    const existingIds = new Set(
+      Array.from(existingPills).map((pill) => pill.getAttribute("data-attribute-id")),
+    );
+    const providerIds = new Set(findingAttributes.map((attr) => attr.id));
+
+    providerIds.forEach((providerId) => {
+      if (!existingIds.has(providerId)) {
+        const attr = findingAttributes.find((a) => a.id === providerId);
+        if (!attr) return;
+
+        const pill = document.createElement("span");
+        pill.setAttribute("data-attribute-id", attr.id);
+        pill.setAttribute("data-attribute-type", "finding");
+        pill.setAttribute("data-attribute-name", attr.name);
+        pill.setAttribute("contenteditable", "false");
+        pill.className =
+          "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-accent text-accent-foreground text-sm font-medium cursor-pointer hover:bg-accent/80";
+        pill.textContent = attr.name;
+
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          range.collapse(false);
+          range.insertNode(pill);
+          const spaceText = document.createTextNode(" ");
+          range.setStartAfter(pill);
+          range.insertNode(spaceText);
+          range.setStartAfter(spaceText);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        } else {
+          contentEditableRef.current.appendChild(pill);
+          const spaceText = document.createTextNode(" ");
+          contentEditableRef.current.appendChild(spaceText);
+        }
+
+        setInputHtml(contentEditableRef.current.innerHTML);
+        adjustContentHeight();
+      }
+    });
+
+    existingIds.forEach((existingId) => {
+      if (!providerIds.has(existingId)) {
+        const pill = contentEditableRef.current?.querySelector(
+          `[data-attribute-type='finding'][data-attribute-id='${existingId}']`,
+        );
+        if (pill) {
+          const nextSibling = pill.nextSibling;
+          if (nextSibling?.nodeType === Node.TEXT_NODE && (nextSibling as Text).textContent === " ") {
+            nextSibling.remove();
+          }
+          pill.remove();
+          setInputHtml(contentEditableRef.current!.innerHTML);
+          adjustContentHeight();
+        }
+      }
+    });
+  }, [chatProviderAttributes, removeFinding]);
+
   type SelectedAttribute = { type: "node" | "finding"; id: string; name: string };
 
   const selectedNodeAttributes = useMemo((): SelectedAttribute[] => {
-    if (!chatAttributes) return [];
-    const backtickMatches = inputValue.match(/`([^`]+)`/g);
-    if (!backtickMatches) return [];
-
+    if (!contentEditableRef.current || !chatAttributes) return [];
+    const attributeElements = contentEditableRef.current.querySelectorAll(
+      "[data-attribute-type='node']",
+    );
     const attributes: SelectedAttribute[] = [];
-    backtickMatches.forEach((match) => {
-      const name = match.slice(1, -1);
-      const matchingAttr = chatAttributes.find((attr) => attr.name === name);
-      if (
-        matchingAttr &&
-        !attributes.some((attr) => attr.type === "node" && attr.id === matchingAttr.id)
-      ) {
-        attributes.push({ type: "node", id: matchingAttr.id, name: matchingAttr.name });
+    attributeElements.forEach((el) => {
+      const id = el.getAttribute("data-attribute-id");
+      const name = el.getAttribute("data-attribute-name");
+      if (id && name && !attributes.some((attr) => attr.id === id)) {
+        attributes.push({ type: "node", id, name });
       }
     });
     return attributes;
-  }, [inputValue, chatAttributes]);
+  }, [chatAttributes]);
 
   const selectedFindingAttributes = useMemo((): SelectedAttribute[] => {
     if (!findingContext || findingContext.length === 0) return [];
@@ -122,11 +234,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    if (!inputValue.trim() && selectedAttributes.length === 0) return;
+    const message = getPlainText().trim();
+    const attributes = getAttributesFromContent();
 
-    const message = inputValue.trim();
-    const attributes = selectedAttributes.map((attr) => ({ type: attr.type, id: attr.id }));
-    setInputValue("");
+    if (!message && attributes.length === 0) return;
+
+    setInputHtml("");
+    if (contentEditableRef.current) {
+      contentEditableRef.current.innerHTML = "";
+    }
 
     if (onRemoveFindingFromContext && findingContext) {
       findingContext.forEach((finding) => {
@@ -136,19 +252,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
     await onSendMessage(message, attributes);
   };
-
-  const handleRemoveAttribute = (attr: SelectedAttribute): void => {
-    if (attr.type === "node") {
-      const pattern = new RegExp(
-        `\\\`${attr.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\\`\\s*`,
-        "g",
-      );
-      setInputValue((prev) => prev.replace(pattern, ""));
-    } else if (attr.type === "finding" && onRemoveFindingFromContext) {
-      onRemoveFindingFromContext(attr.id);
-    }
-  };
-
   const calculateSimilarityScore = (name: string, query: string): number => {
     const lowerName = name.toLowerCase();
     const lowerQuery = query.toLowerCase();
@@ -191,12 +294,149 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
       .map((item) => item.attr) || [];
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
-    const value = e.target.value;
-    setInputValue(value);
+  const convertBackticksToAttributes = (): void => {
+    if (!contentEditableRef.current || !chatAttributes) return;
+    const plainText = getPlainText();
+    const backtickMatches = Array.from(plainText.matchAll(/`([^`]+)`/g));
 
-    const cursorPosition = e.target.selectionStart;
-    const textBeforeCursor = value.substring(0, cursorPosition);
+    if (backtickMatches.length === 0) return;
+
+    let hasChanges = false;
+    const walker = document.createTreeWalker(
+      contentEditableRef.current,
+      NodeFilter.SHOW_TEXT,
+      null,
+    );
+
+    let charCount = 0;
+    const replacements: Array<{
+      node: Text;
+      start: number;
+      end: number;
+      name: string;
+      id: string;
+    }> = [];
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      const textContent = node.textContent || "";
+      const textLength = textContent.length;
+
+      backtickMatches.forEach((match) => {
+        const matchStart = match.index!;
+        const matchEnd = matchStart + match[0].length;
+        const name = match[1];
+
+        if (charCount <= matchStart && charCount + textLength >= matchEnd) {
+          const matchingAttr = chatAttributes.find((attr) => attr.name === name);
+          if (matchingAttr) {
+            const startInNode = matchStart - charCount;
+            const endInNode = matchEnd - charCount;
+            replacements.push({
+              node,
+              start: startInNode,
+              end: endInNode,
+              name,
+              id: matchingAttr.id,
+            });
+          }
+        }
+      });
+
+      charCount += textLength;
+    }
+
+    replacements.reverse().forEach(({ node, start, end, name, id }) => {
+      const textContent = node.textContent || "";
+      const before = textContent.substring(0, start);
+      const after = textContent.substring(end);
+
+      const pill = document.createElement("span");
+      pill.setAttribute("data-attribute-id", id);
+      pill.setAttribute("data-attribute-type", "node");
+      pill.setAttribute("data-attribute-name", name);
+      pill.setAttribute("contenteditable", "false");
+      pill.className =
+        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-accent text-accent-foreground text-sm font-medium cursor-pointer hover:bg-accent/80";
+      pill.textContent = name;
+
+      if (node.parentNode) {
+        const beforeNode = document.createTextNode(before);
+        const afterNode = document.createTextNode(after);
+        node.parentNode.insertBefore(beforeNode, node);
+        node.parentNode.insertBefore(pill, node);
+        node.parentNode.insertBefore(afterNode, node);
+        node.parentNode.removeChild(node);
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      setInputHtml(contentEditableRef.current.innerHTML);
+    }
+  };
+
+  const handleInput = (): void => {
+    if (!contentEditableRef.current) return;
+    const html = contentEditableRef.current.innerHTML;
+    setInputHtml(html);
+    adjustContentHeight();
+
+    const existingFindingPills = contentEditableRef.current.querySelectorAll(
+      "[data-attribute-type='finding']",
+    );
+    const existingFindingIds = new Set(
+      Array.from(existingFindingPills).map((pill) => pill.getAttribute("data-attribute-id")),
+    );
+    const providerFindingIds = new Set(
+      (chatProviderAttributes || [])
+        .filter((attr) => attr.type === "finding")
+        .map((attr) => attr.id),
+    );
+
+    providerFindingIds.forEach((findingId) => {
+      if (!existingFindingIds.has(findingId)) {
+        removeFinding(findingId);
+      }
+    });
+
+    setTimeout(() => {
+      convertBackticksToAttributes();
+    }, 0);
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      atPositionRef.current = null;
+      setShowAutocomplete(false);
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const plainText = getPlainText();
+
+    const walker = document.createTreeWalker(
+      contentEditableRef.current,
+      NodeFilter.SHOW_TEXT,
+      null,
+    );
+
+    let charCount = 0;
+    let cursorAbsolutePos = 0;
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const textLength = node.textContent?.length || 0;
+
+      if (node === startContainer && node.nodeType === Node.TEXT_NODE) {
+        cursorAbsolutePos = charCount + startOffset;
+        break;
+      }
+      charCount += textLength;
+    }
+
+    const textBeforeCursor = plainText.substring(0, cursorAbsolutePos);
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
 
     if (lastAtIndex !== -1) {
@@ -205,37 +445,153 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         setAutocompleteQuery(textAfterAt);
         setShowAutocomplete(true);
         setSelectedAutocompleteIndex(0);
+
+        charCount = 0;
+        const walker2 = document.createTreeWalker(
+          contentEditableRef.current,
+          NodeFilter.SHOW_TEXT,
+          null,
+        );
+        while (walker2.nextNode()) {
+          const node = walker2.currentNode as Text;
+          const textLength = node.textContent?.length || 0;
+          if (charCount + textLength > lastAtIndex) {
+            atPositionRef.current = {
+              node,
+              offset: lastAtIndex - charCount,
+            };
+            break;
+          }
+          charCount += textLength;
+        }
       } else {
+        atPositionRef.current = null;
         setShowAutocomplete(false);
       }
     } else {
+      atPositionRef.current = null;
       setShowAutocomplete(false);
     }
+  };
 
-    adjustTextareaHeight();
+  const handleRemoveAttribute = (attr: SelectedAttribute): void => {
+    if (!contentEditableRef.current) return;
+    if (attr.type === "node") {
+      const element = contentEditableRef.current.querySelector(`[data-attribute-id="${attr.id}"]`);
+      if (element) {
+        const textNode = document.createTextNode(`\`${attr.name}\``);
+        element.parentNode?.replaceChild(textNode, element);
+        setInputHtml(contentEditableRef.current.innerHTML);
+      }
+    } else if (attr.type === "finding" && onRemoveFindingFromContext) {
+      onRemoveFindingFromContext(attr.id);
+    }
+  };
+
+  const handlePillClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+    const target = e.target as HTMLElement;
+    const pill = target.closest("[data-attribute-id]") as HTMLElement;
+    if (pill) {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = pill.getAttribute("data-attribute-id");
+      const type = pill.getAttribute("data-attribute-type") as "node" | "finding";
+      const name = pill.getAttribute("data-attribute-name");
+      if (id && type && name) {
+        handleRemoveAttribute({ type, id, name });
+      }
+    }
   };
 
   const insertAutocompleteItem = (item: NodeSchemaI): void => {
-    const cursorPosition = textareaRef.current?.selectionStart || 0;
-    const textBeforeCursor = inputValue.substring(0, cursorPosition);
-    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+    if (!contentEditableRef.current || !atPositionRef.current) return;
 
-    if (lastAtIndex !== -1) {
-      const beforeAt = inputValue.substring(0, lastAtIndex);
-      const afterCursor = inputValue.substring(cursorPosition);
-      const newValue = beforeAt + `\`${item.name}\`` + " " + afterCursor;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
 
-      setInputValue(newValue);
-      setShowAutocomplete(false);
+    const range = selection.getRangeAt(0);
+    const cursorContainer = range.startContainer;
+    const cursorOffset = range.startOffset;
 
-      setTimeout(() => {
-        const newCursorPos = beforeAt.length + `\`${item.name}\``.length + 1;
-        if (textareaRef.current) {
-          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-          textareaRef.current.focus();
+    if (cursorContainer.nodeType !== Node.TEXT_NODE) return;
+
+    const cursorTextNode = cursorContainer as Text;
+    const { node: atNode, offset: atOffset } = atPositionRef.current;
+
+    const atText = atNode.textContent || "";
+    const cursorText = cursorTextNode.textContent || "";
+    const queryLength = autocompleteQuery.length;
+
+    const pill = document.createElement("span");
+    pill.setAttribute("data-attribute-id", item.id);
+    pill.setAttribute("data-attribute-type", "node");
+    pill.setAttribute("data-attribute-name", item.name);
+    pill.setAttribute("contenteditable", "false");
+    pill.className =
+      "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-accent text-accent-foreground text-sm font-medium cursor-pointer hover:bg-accent/80";
+    pill.textContent = item.name;
+
+    if (atNode === cursorTextNode) {
+      const beforeAt = atText.substring(0, atOffset);
+      const afterCursor = cursorText.substring(cursorOffset);
+      const spaceText = document.createTextNode(" ");
+
+      if (cursorTextNode.parentNode) {
+        const beforeTextNode = document.createTextNode(beforeAt);
+        const afterTextNode = document.createTextNode(afterCursor);
+
+        cursorTextNode.parentNode.insertBefore(beforeTextNode, cursorTextNode);
+        cursorTextNode.parentNode.insertBefore(pill, cursorTextNode);
+        cursorTextNode.parentNode.insertBefore(spaceText, cursorTextNode);
+        cursorTextNode.parentNode.insertBefore(afterTextNode, cursorTextNode);
+        cursorTextNode.parentNode.removeChild(cursorTextNode);
+
+        const newRange = document.createRange();
+        newRange.setStartAfter(spaceText);
+        newRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
+    } else {
+      const beforeAt = atText.substring(0, atOffset);
+      const afterAt = atText.substring(atOffset + 1 + queryLength);
+      const cursorTextAfter = cursorText.substring(cursorOffset);
+      const spaceText = document.createTextNode(" ");
+
+      if (atNode.parentNode && cursorTextNode.parentNode) {
+        const beforeTextNode = document.createTextNode(beforeAt);
+        const afterAtTextNode = document.createTextNode(afterAt);
+        const afterCursorTextNode = document.createTextNode(cursorTextAfter);
+
+        atNode.parentNode.insertBefore(beforeTextNode, atNode);
+        atNode.parentNode.insertBefore(pill, atNode);
+        atNode.parentNode.insertBefore(spaceText, atNode);
+        atNode.parentNode.insertBefore(afterAtTextNode, atNode);
+
+        const nodesToRemove: Node[] = [];
+        let currentNode: Node | null = atNode.nextSibling;
+        while (currentNode && currentNode !== cursorTextNode) {
+          nodesToRemove.push(currentNode);
+          currentNode = currentNode.nextSibling;
         }
-      }, 0);
+
+        nodesToRemove.forEach((node) => node.parentNode?.removeChild(node));
+        cursorTextNode.parentNode.insertBefore(afterCursorTextNode, cursorTextNode);
+        cursorTextNode.parentNode.removeChild(cursorTextNode);
+        atNode.parentNode.removeChild(atNode);
+
+        const newRange = document.createRange();
+        newRange.setStartAfter(spaceText);
+        newRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
     }
+
+    atPositionRef.current = null;
+    setInputHtml(contentEditableRef.current.innerHTML);
+    setShowAutocomplete(false);
+    contentEditableRef.current.focus();
   };
 
   const scrollToSelectedItem = (index: number): void => {
@@ -256,7 +612,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
     if (showAutocomplete && filteredAttributes.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -288,35 +644,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 relative mt-auto">
-      {selectedAttributes.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selectedAttributes.map((attr) => (
-            <Pill
-              key={`${attr.type}-${attr.id}`}
-              className="flex items-center gap-1.5 cursor-pointer"
-              onClick={() => handleRemoveAttribute(attr)}
-            >
-              <span>{attr.name}</span>
-              <X className="size-3" />
-            </Pill>
-          ))}
-        </div>
-      )}
       <div className="rounded-3xl border bg-card p-2 shadow-sm">
-        <Textarea
-          ref={textareaRef}
-          rows={1}
-          value={inputValue}
-          onChange={handleInputChange}
+        <div
+          ref={contentEditableRef}
+          contentEditable
+          onInput={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder="Message Bevor..."
-          className="flex-1 max-h-[264px] p-2 resize-none border-0 bg-transparent! leading-6 text-foreground focus-visible:outline-none focus-visible:ring-0 scrollbar-thin disabled:opacity-50 disabled:cursor-not-allowed"
-          autoFocus
+          onClick={handlePillClick}
+          data-placeholder="Message Bevor..."
+          className="flex-1 max-h-[264px] p-2 resize-none border-0 bg-transparent leading-6 text-foreground focus-visible:outline-none focus-visible:ring-0 scrollbar-thin disabled:opacity-50 disabled:cursor-not-allowed min-h-[24px] empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
+          suppressContentEditableWarning
         />
         <div className="flex justify-end">
           <Button
             type="submit"
-            disabled={!inputValue.trim() && selectedAttributes.length === 0}
+            disabled={!getPlainText().trim() && selectedAttributes.length === 0}
             size="icon"
             className="size-8 rounded-full"
           >

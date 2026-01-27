@@ -1,6 +1,7 @@
 "use client";
 
 import { chatActions } from "@/actions/bevor";
+import { truncateId } from "@/utils/helpers";
 import { FindingSchemaI } from "@/utils/types";
 import { QueryKey, useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
@@ -15,6 +16,8 @@ interface ChatContextValue {
   setShowSettings: React.Dispatch<React.SetStateAction<boolean>>;
   isExpanded: boolean;
   toggleExpanded: () => void;
+  isMaximized: boolean;
+  toggleMaximized: () => void;
   selectedChatId: string | null;
   setSelectedChatId: (chatId: string | null) => void;
   attributes: ChatAttribute[];
@@ -55,7 +58,7 @@ interface ChatProviderProps {
   teamSlug: string;
   projectSlug: string;
   chatType: ChatType;
-  codeId: string | null;
+  codeId?: string | null;
   analysisNodeId?: string | null;
   initialChatId: string | null;
   keyboardShortcut?: boolean;
@@ -74,26 +77,39 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
 
   const [selectedChatId, setSelectedChatId] = useState<string | null>(initialChatId);
   const [attributes, setAttributes] = useState<ChatAttribute[]>([]);
-  const [isExpanded, setIsExpanded] = useState(true); // for now, just default to open on page navigation.
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [showSettings, setShowSettings] = useState(!initialChatId);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded((prev) => !prev);
-  }, [setIsExpanded]);
+  }, []);
+
+  const toggleMaximized = useCallback(() => {
+    setIsMaximized((prev) => !prev);
+  }, []);
 
   const createChatMutation = useMutation({
     mutationFn: async () => {
-      if (!codeId) throw new Error("Code version ID is required");
-      return chatActions
-        .initiateChat(teamSlug, {
-          chat_type: chatType,
-          code_version_id: codeId,
-          ...(analysisNodeId && { analysis_node_id: analysisNodeId }),
-        })
-        .then((r) => {
+      if (chatType === "analysis") {
+        if (!analysisNodeId) throw new Error("analysisNodeId is required");
+        return chatActions
+          .initiateAnalysisChat(teamSlug, {
+            analysis_node_id: analysisNodeId,
+          })
+          .then((r) => {
+            if (!r.ok) throw r;
+            return r.data;
+          });
+      } else if (chatType === "code") {
+        if (!codeId) throw new Error("codeId is required");
+        return chatActions.initiateCodeChat(teamSlug, { code_version_id: codeId }).then((r) => {
           if (!r.ok) throw r;
           return r.data;
         });
+      } else {
+        throw new Error("invalid chatType");
+      }
     },
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
@@ -140,7 +156,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
       addAttribute({
         type: "finding",
         id: finding.id,
-        name: `finding ${finding.id.slice(-6)}`,
+        name: `finding ${truncateId(finding.id)}`,
       });
     },
     [addAttribute],
@@ -160,6 +176,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   const value: ChatContextValue = {
     isExpanded,
     toggleExpanded,
+    isMaximized,
+    toggleMaximized,
     selectedChatId,
     setSelectedChatId,
     attributes,
@@ -171,7 +189,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     clearFindings,
     createChatMutation,
     chatType,
-    codeId,
+    codeId: codeId ?? null,
     analysisNodeId,
     teamSlug,
     projectSlug,

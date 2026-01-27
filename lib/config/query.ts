@@ -1,5 +1,6 @@
 // app/get-query-client.ts
 import { defaultShouldDehydrateQuery, isServer, QueryClient } from "@tanstack/react-query";
+import { cache } from "react";
 
 const makeQueryClient = (): QueryClient => {
   return new QueryClient({
@@ -27,16 +28,11 @@ const makeQueryClient = (): QueryClient => {
 
 let browserQueryClient: QueryClient | undefined = undefined;
 
-export const getQueryClient = (): QueryClient => {
+export const getQueryClient = cache((): QueryClient => {
   if (isServer) {
-    // Server: always make a new query client
     return makeQueryClient();
   } else {
-    // Browser: make a new query client if we don't already have one
-    // This is very important, so we don't re-make a new client if React
-    // suspends during the initial render. This may not be needed if we
-    // have a suspense boundary BELOW the creation of the query client
     if (!browserQueryClient) browserQueryClient = makeQueryClient();
     return browserQueryClient;
   }
-};
+});

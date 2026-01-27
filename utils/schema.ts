@@ -46,14 +46,6 @@ export const createAnalysisSchema = z
 
 export type createAnalysisFormValues = z.infer<typeof createAnalysisSchema>;
 
-export const createChatSchema = z.object({
-  code_version_id: z.string().optional(),
-  analysis_node_id: z.string().optional(),
-  chat_type: z.enum(["code", "analysis"]),
-});
-
-export type CreateChatFormValues = z.infer<typeof createChatSchema>;
-
 export const uploadCodeFileSchema = z.object({
   file: z.instanceof(File, { message: "File is required" }),
   parent_id: z.string().optional(),

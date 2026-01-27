@@ -60,6 +60,8 @@ export const CodeProvider: React.FC<{
         if (!r.ok) throw r;
         return r.data;
       }),
+    initialData: undefined, // Let React Query use hydrated data
+    staleTime: 5 * 60 * 1000, // Match server config
   });
 
   useEffect(() => {

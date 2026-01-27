@@ -11,7 +11,7 @@ import { generateQueryKey } from "@/utils/constants";
 import { ChatMessageI, FindingSchemaI } from "@/utils/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ChatEmptyState } from "./chat-empty-state";
 import { ChatInput } from "./chat-input";
@@ -21,6 +21,7 @@ interface ChatMessagesProps {
   teamSlug: string;
   codeId: string;
   findingContext?: FindingSchemaI[];
+  availableFindings?: FindingSchemaI[];
   maxWidth?: string;
   onRemoveFindingFromContext?: (findingId: string) => void;
 }
@@ -29,6 +30,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   teamSlug,
   codeId,
   findingContext,
+  availableFindings,
   maxWidth,
   onRemoveFindingFromContext,
 }) => {
@@ -45,7 +47,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
 
-  const { selectedChatId } = useChat();
+  const { selectedChatId, isMaximized } = useChat();
 
   const chatMessageQuery = useQuery({
     queryKey: generateQueryKey.chatMessages(selectedChatId!),
@@ -67,36 +69,113 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     enabled: !!selectedChatId,
   });
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [chatMessageQuery.data, streamedContent, isAwaitingResponse]);
-
-  useEffect(() => {
+  const checkScrollPosition = useCallback((): void => {
     const viewport = scrollViewportRef.current;
     if (!viewport) return;
-
-    const checkScrollPosition = (): void => {
-      if (!chatMessageQuery.data?.length) return;
-      const { scrollTop, scrollHeight, clientHeight } = viewport;
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setShowScrollToBottom(!isAtBottom && chatMessageQuery.data.length > 0);
-    };
-
-    checkScrollPosition();
-    viewport.addEventListener("scroll", checkScrollPosition);
-
-    return (): void => {
-      viewport.removeEventListener("scroll", checkScrollPosition);
-    };
+    if (!chatMessageQuery.data?.length) {
+      setShowScrollToBottom(false);
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = viewport;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShowScrollToBottom(!isAtBottom && chatMessageQuery.data.length > 0);
   }, [chatMessageQuery.data?.length]);
 
-  const scrollToBottom = (): void => {
+  const scrollToBottom = useCallback((): void => {
     const viewport = scrollViewportRef.current;
     if (viewport) {
-      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "instant" });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(checkScrollPosition);
+      });
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+    messagesEndRef.current?.scrollIntoView();
+  }, [checkScrollPosition]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessageQuery.data, streamedContent, isAwaitingResponse, scrollToBottom]);
+
+  useEffect(() => {
+    if (!chatMessageQuery.data?.length || chatMessageQuery.isLoading) return;
+
+    const checkAfterRender = (): void => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          checkScrollPosition();
+        });
+      });
+    };
+
+    checkAfterRender();
+    const timeoutId = setTimeout(checkAfterRender, 100);
+
+    return (): void => {
+      clearTimeout(timeoutId);
+    };
+  }, [chatMessageQuery.data?.length, chatMessageQuery.isLoading, checkScrollPosition]);
+
+  useEffect(() => {
+    if (!chatMessageQuery.data?.length) {
+      setShowScrollToBottom(false);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    let contentObserver: MutationObserver | null = null;
+    let viewport: HTMLDivElement | null = null;
+
+    const delayedCheck = (): void => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(checkScrollPosition);
+      });
+    };
+
+    const setupScrollListener = (): void => {
+      viewport = scrollViewportRef.current;
+      if (!viewport) {
+        timeoutId = window.setTimeout(setupScrollListener, 50);
+        return;
+      }
+
+      checkScrollPosition();
+      delayedCheck();
+      viewport.addEventListener("scroll", checkScrollPosition);
+
+      resizeObserver = new ResizeObserver(() => {
+        delayedCheck();
+      });
+      resizeObserver.observe(viewport);
+
+      contentObserver = new MutationObserver(() => {
+        delayedCheck();
+      });
+      if (viewport.parentElement) {
+        contentObserver.observe(viewport.parentElement, {
+          childList: true,
+          subtree: true,
+        });
+      }
+    };
+
+    setupScrollListener();
+
+    return (): void => {
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+      if (viewport) {
+        viewport.removeEventListener("scroll", checkScrollPosition);
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      if (contentObserver) {
+        contentObserver.disconnect();
+      }
+    };
+  }, [checkScrollPosition, chatMessageQuery.data?.length]);
 
   const sendMessage = async (data: {
     message: ChatMessageI;
@@ -329,7 +408,9 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           >
             <div
               className="flex flex-col gap-4 px-2 overflow-x-hidden"
-              style={maxWidth ? { maxWidth } : { maxWidth: "24rem" }}
+              style={{
+                maxWidth: isMaximized ? "48rem" : maxWidth || "24rem",
+              }}
             >
               {chatMessageQuery.data?.map((message) => (
                 <div key={message.id} className="w-full">
@@ -367,6 +448,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           teamSlug={teamSlug}
           codeId={codeId}
           findingContext={findingContext}
+          availableFindings={availableFindings}
           onRemoveFindingFromContext={onRemoveFindingFromContext}
           onSendMessage={handleSendMessage}
           messagesContainerRef={messagesContainerRef}
