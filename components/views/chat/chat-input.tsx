@@ -3,12 +3,14 @@
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import * as Chat from "@/components/ui/chat";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
 import { FindingSchemaI, NodeSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Send } from "lucide-react";
+import { ChevronDown, ChevronUp, GitBranch, Minus, Pencil, Plus, Send } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 interface ChatInputProps {
@@ -39,9 +41,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [autocompleteQuery, setAutocompleteQuery] = useState("");
   const [selectedAutocompleteIndex, setSelectedAutocompleteIndex] = useState(0);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [showStagedChanges, setShowStagedChanges] = useState(false);
   const contentEditableRef = useRef<HTMLDivElement>(null);
   const atPositionRef = useRef<{ node: Text; offset: number } | null>(null);
-  const { attributes: chatProviderAttributes, removeFinding } = useChat();
+  const { attributes: chatProviderAttributes, removeFinding, chatType, draft } = useChat();
 
   const { data: chatAttributes } = useQuery({
     queryKey: generateQueryKey.codeNodes(codeId),
@@ -646,9 +649,70 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const stagedFindings = draft?.staged ?? [];
+  const hasStagedChanges = chatType === "analysis" && stagedFindings.length > 0;
+
+  const getDraftTypeIcon = (draftType?: string): React.ReactElement | null => {
+    switch (draftType) {
+      case "add":
+        return <Plus className="size-3.5 text-green-600 dark:text-green-400" />;
+      case "update":
+        return <Pencil className="size-3 text-blue-600 dark:text-blue-400" />;
+      case "delete":
+        return <Minus className="size-3.5 text-red-600 dark:text-red-400" />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 relative mt-auto">
-      <div className="rounded-3xl border bg-card p-2 shadow-sm">
+    <form onSubmit={handleSubmit} className="flex flex-col relative mt-auto">
+      {hasStagedChanges && (
+        <div className="border-t border-l border-r rounded-tl-lg rounded-tr-lg bg-card overflow-hidden mx-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full justify-between gap-2 h-auto p-2 hover:bg-muted/50"
+            onClick={() => setShowStagedChanges(!showStagedChanges)}
+          >
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <GitBranch className="size-4" />
+              {stagedFindings.length}{" "}
+              {stagedFindings.length > 1 ? "Staged Changes" : "Staged Change"}
+            </div>
+            {showStagedChanges ? (
+              <ChevronUp className="size-4" />
+            ) : (
+              <ChevronDown className="size-4" />
+            )}
+          </Button>
+          <div
+            className={cn(
+              "overflow-hidden transition-all duration-200",
+              showStagedChanges ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0",
+            )}
+          >
+            <ScrollArea className="max-h-[300px]">
+              <div className="p-1 space-y-1 border-t text-xs text-foreground/80">
+                {stagedFindings.map((finding) => {
+                  const draftType = (finding as { draft_type?: string }).draft_type;
+                  return (
+                    <div
+                      key={finding.id}
+                      className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 min-w-0 w-full"
+                    >
+                      <span className="text-sm truncate min-w-0 flex-1">{finding.name}</span>
+                      <div className="shrink-0">{getDraftTypeIcon(draftType)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+      )}
+      <div className="rounded-xl border bg-card p-2 shadow-sm">
         <div
           ref={contentEditableRef}
           contentEditable

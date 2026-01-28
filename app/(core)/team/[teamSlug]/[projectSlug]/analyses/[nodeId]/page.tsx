@@ -33,6 +33,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   let initialFinding: FindingSchemaI | undefined;
 
   if (isEditMode) {
+    // still need to prefetch the analysisDetailed for the AnalysisMetadata component.
     [, analysis] = await Promise.all([
       queryClient.fetchQuery({
         queryKey: generateQueryKey.analysisDraft(resolvedParams.nodeId),
@@ -44,7 +45,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
       }),
       queryClient.fetchQuery({
         queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),
-        queryFn: () =>
+        queryFn: async () =>
           analysisActions
             .getAnalysisDetailed(resolvedParams.teamSlug, resolvedParams.nodeId)
             .then((r) => {
@@ -66,19 +67,22 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
     });
   }
 
-  if (!isEditMode && resolvedSearchParams.findingId) {
+  const isOwner = analysis.is_owner;
+  const codeVersionId = analysis.code_version_id;
+
+  if (resolvedSearchParams.findingId) {
     initialFinding = analysis.findings.find(
-      (finding) => finding.id === resolvedSearchParams.findingId,
+      (finding) => finding.id == resolvedSearchParams.findingId,
     );
   }
 
   let initialChatId = resolvedSearchParams.chatId ?? null;
 
-  if (analysis.is_owner) {
+  if (isOwner) {
     const chatQuery = extractChatsQuery({
       project_slug: resolvedParams.projectSlug,
-      code_version_id: analysis.code_version_id,
-      analysis_node_id: analysis.id,
+      code_version_id: codeVersionId,
+      analysis_node_id: resolvedParams.nodeId,
       chat_type: "analysis",
     });
 
@@ -113,7 +117,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
     }
   }
 
-  if (isEditMode && !analysis.is_owner) {
+  if (isEditMode && !isOwner) {
     // non-owners should not be allowed to edit, strip out the query param.
     let url = `/team/${resolvedParams.teamSlug}/${resolvedParams.projectSlug}/analyses/${resolvedParams.nodeId}`;
     if (resolvedSearchParams.findingId) {
@@ -128,35 +132,30 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
         {...resolvedParams}
         chatType="analysis"
         initialChatId={initialChatId}
-        codeId={analysis.code_version_id}
-        analysisNodeId={analysis.id}
+        codeId={codeVersionId}
+        analysisNodeId={resolvedParams.nodeId}
       >
         <Container subnav={<AnalysisSubnav />} contain>
           <AnalysisMetadata
             {...resolvedParams}
             isEditMode={isEditMode}
-            allowChat={analysis.is_owner}
-            allowEditMode={analysis.is_owner}
+            allowEditMode={isOwner}
             allowActions
-            isOwner={analysis.is_owner}
+            isOwner={isOwner}
           />
           {isEditMode ? (
-            <div className="flex flex-1 min-h-0 gap-4">
-              <div className="min-h-0 min-w-0 flex-1">
-                <EditClient
-                  teamSlug={resolvedParams.teamSlug}
-                  nodeId={resolvedParams.nodeId}
-                  projectSlug={resolvedParams.projectSlug}
-                />
-              </div>
-            </div>
+            <EditClient
+              teamSlug={resolvedParams.teamSlug}
+              nodeId={resolvedParams.nodeId}
+              projectSlug={resolvedParams.projectSlug}
+            />
           ) : (
             <AnalysisClient
               teamSlug={resolvedParams.teamSlug}
               projectSlug={resolvedParams.projectSlug}
               nodeId={resolvedParams.nodeId}
               initialFinding={initialFinding}
-              isOwner={analysis.is_owner}
+              isOwner={isOwner}
             />
           )}
         </Container>

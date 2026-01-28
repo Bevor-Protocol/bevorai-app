@@ -1,9 +1,16 @@
 "use client";
 
-import { chatActions } from "@/actions/bevor";
+import { analysisActions, chatActions } from "@/actions/bevor";
+import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
-import { FindingSchemaI } from "@/utils/types";
-import { QueryKey, useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
+import { DraftSchemaI, FindingSchemaI } from "@/utils/types";
+import {
+  QueryKey,
+  useMutation,
+  UseMutationResult,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -41,6 +48,7 @@ interface ChatContextValue {
   analysisNodeId: string | null;
   teamSlug: string;
   projectSlug: string;
+  draft?: DraftSchemaI;
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
@@ -80,6 +88,17 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
   const [showSettings, setShowSettings] = useState(!initialChatId);
+
+  const draftQuery = useQuery({
+    queryKey: generateQueryKey.analysisDraft(analysisNodeId ?? ""),
+    queryFn: () =>
+      analysisActions.getDraft(teamSlug, analysisNodeId!).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    enabled: chatType === "analysis" && !!analysisNodeId,
+    refetchInterval: 5000,
+  });
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded((prev) => !prev);
@@ -195,6 +214,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     projectSlug,
     showSettings,
     setShowSettings,
+    draft: draftQuery.data,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

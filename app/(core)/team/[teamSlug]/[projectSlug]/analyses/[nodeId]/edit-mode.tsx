@@ -1,16 +1,6 @@
 "use client";
 
 import { analysisActions, codeActions } from "@/actions/bevor";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,11 +27,10 @@ import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
 import AnalysisScopes, {
   getSeverityBadgeClasses,
-  getSeverityColor,
-  getSeverityIcon,
   levelOrder,
 } from "@/components/views/analysis/scopes";
 import { cn } from "@/lib/utils";
+import { useChat } from "@/providers/chat";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { FindingLevel, FindingType } from "@/utils/enums";
 import {
@@ -50,18 +39,12 @@ import {
   analysisFindingBodySchema,
 } from "@/utils/schema";
 import { DraftFindingSchemaI, DraftSchemaI, isApiError, ScopeSchemaI } from "@/utils/types";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  UseQueryResult,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
-import { Plus, RotateCcw, Shield } from "lucide-react";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient, UseQueryResult } from "@tanstack/react-query";
+import { Plus, Shield } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 import { codeToHtml } from "shiki";
 import { toast } from "sonner";
+import CollapsibleChatPanel from "./collapsible-chat-panel";
 
 export const getScopeForDraftFinding = (
   finding: DraftFindingSchemaI,
@@ -146,10 +129,23 @@ const EditCodeSnippet: React.FC<{
   }, [nodeData?.content, isEditing]);
 
   return (
-    <div className="border rounded-lg relative">
-      <ScrollArea className="p-2 h-[300px]">
+    <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
+      <ScrollArea className="p-2 flex-1 min-h-[300px]">
         {isLoadingNode || !html ? (
-          <Skeleton className="h-48 w-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-2/6" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-2/5" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-2/6" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-2/5" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-1/4" />
+          </div>
         ) : (
           <div
             className="shiki-container overflow-x-auto w-full"
@@ -166,12 +162,13 @@ const EditFindingTabs: React.FC<{
   finding: DraftFindingSchemaI;
   onEdit: () => void;
   onDelete: () => void;
+  onUndo?: () => void;
   isDeleting: boolean;
-}> = ({ finding, onEdit, onDelete, isDeleting }) => {
+}> = ({ finding, onEdit, onDelete, onUndo, isDeleting }) => {
   const [tab, setTab] = useState("description");
 
   return (
-    <div className={cn("border rounded-lg overflow-hidden", "finding")}>
+    <div className={cn("border rounded-lg overflow-hidden flex flex-col h-[250px]", "finding")}>
       <Subnav className="w-fit px-0">
         <SubnavButton
           isActive={tab === "description"}
@@ -217,7 +214,16 @@ const EditFindingTabs: React.FC<{
       <div className="px-4 pb-4 mt-4">
         <div className="flex items-center justify-between">
           {finding.draft_type === "delete" ? (
-            <div className="text-sm text-muted-foreground">This finding is staged for deletion</div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                This finding is staged for deletion
+              </span>
+              {onUndo && (
+                <Button variant="outline" size="sm" onClick={onUndo}>
+                  Revert
+                </Button>
+              )}
+            </div>
           ) : (
             <>
               <Button variant="destructive" size="sm" onClick={onDelete} disabled={isDeleting}>
@@ -241,6 +247,7 @@ const EditFindingDetail: React.FC<{
   finding: DraftFindingSchemaI | null;
   draftQuery: UseQueryResult<DraftSchemaI, Error>;
   onFindingDeleted?: (deletedFindingId: string) => void;
+  onUndoStagedChange?: (findingId: string) => void;
   setSelectedFinding: React.Dispatch<React.SetStateAction<DraftFindingSchemaI | null>>;
 }> = ({
   teamSlug,
@@ -249,6 +256,7 @@ const EditFindingDetail: React.FC<{
   finding,
   draftQuery,
   onFindingDeleted,
+  onUndoStagedChange,
   setSelectedFinding,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -456,7 +464,7 @@ const EditFindingDetail: React.FC<{
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-2 w-full h-full min-h-0 overflow-hidden">
       <EditFindingMetadata finding={finding} />
       <EditCodeSnippet
         teamSlug={teamSlug}
@@ -472,6 +480,11 @@ const EditFindingDetail: React.FC<{
         finding={finding}
         onEdit={() => setIsEditing(true)}
         onDelete={() => deleteMutation.mutate(finding.id)}
+        onUndo={
+          finding.draft_type === "delete" && onUndoStagedChange
+            ? (): void => onUndoStagedChange(finding.id)
+            : undefined
+        }
         isDeleting={deleteMutation.isPending}
       />
     </div>
@@ -643,21 +656,11 @@ export const EditClient: React.FC<{
   nodeId: string;
   projectSlug: string;
 }> = ({ teamSlug, nodeId, projectSlug }) => {
-  const router = useRouter();
   const [selectedFinding, setSelectedFinding] = useState<DraftFindingSchemaI | null>(null);
   const [openAddDialog, setOpenAddDialog] = useState<string | null>(null);
-  const [openCommitDialog, setOpenCommitDialog] = useState(false);
   const [shouldResetFinding, setShouldResetFinding] = useState("");
   const queryClient = useQueryClient();
-
-  const { data: version } = useSuspenseQuery({
-    queryKey: generateQueryKey.analysisDetailed(nodeId),
-    queryFn: async () =>
-      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-  });
+  const { removeFinding, attributes } = useChat();
 
   const draftQuery = useQuery({
     queryKey: generateQueryKey.analysisDraft(nodeId),
@@ -667,6 +670,18 @@ export const EditClient: React.FC<{
         return r.data;
       }),
   });
+
+  const findingContext = useMemo(() => {
+    if (!draftQuery.data) return [];
+    const findingAttributeIds = new Set(
+      attributes.filter((attr) => attr.type === "finding").map((attr) => attr.id),
+    );
+    return draftQuery.data.findings.filter((finding) => findingAttributeIds.has(finding.id));
+  }, [attributes, draftQuery.data]);
+
+  const removeFindingFromContext = (findingId: string): void => {
+    removeFinding(findingId);
+  };
 
   const addMutation = useMutation({
     mutationFn: (data: AddAnalysisFindingBody) =>
@@ -681,33 +696,28 @@ export const EditClient: React.FC<{
     },
   });
 
-  const commitMutation = useMutation({
-    mutationFn: () =>
-      analysisActions.commitDraft(teamSlug, nodeId).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-    onSuccess: ({ id }) => {
-      setOpenCommitDialog(false);
-      toast.success("Changes committed successfully");
-      router.push(`/team/${teamSlug}/${projectSlug}/analyses/${id}`);
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to commit changes");
-    },
-  });
-
   const undoStagedMutation = useMutation({
     mutationFn: (findingId: string) =>
       analysisActions.deleteStagedFinding(teamSlug, nodeId, findingId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
-    onSuccess: ({ toInvalidate }) => {
+    onSuccess: ({ toInvalidate }, findingId) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
       toast.success("Staged change undone");
+      if (selectedFinding?.id === findingId && draftQuery.data) {
+        const baseFindingId = draftQuery.data.staged.find(
+          (f) => f.id === findingId,
+        )?.base_finding_id;
+        if (baseFindingId) {
+          const baseFinding = draftQuery.data.findings.find((f) => f.id === baseFindingId);
+          if (baseFinding) {
+            setSelectedFinding(baseFinding);
+          }
+        }
+      }
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to undo staged change");
@@ -756,49 +766,42 @@ export const EditClient: React.FC<{
     }
   };
 
+  const mergedVersion = useMemo(() => {
+    if (!draftQuery.data) return undefined;
+
+    const deletedFindings = draftQuery.data.staged.filter(
+      (f) => f.draft_type === "delete",
+    ) as DraftFindingSchemaI[];
+
+    return {
+      ...draftQuery.data,
+      findings: [...draftQuery.data.findings, ...deletedFindings],
+      n_findings: draftQuery.data.findings.length + deletedFindings.length,
+    };
+  }, [draftQuery.data]);
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-start gap-2">
-        <h2 className="text-lg font-semibold">Edit Mode</h2>
-        <div className="h-4 w-px bg-border mx-2" />
-        <div className="flex items-center gap-1.5 text-sm">
-          <span className="text-muted-foreground">{draftQuery.data?.scopes.length}</span>
-          <span className="text-muted-foreground/70 text-xs">
-            {draftQuery.data?.scopes.length === 1 ? "scope" : "scopes"}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 text-sm">
-          <span className="text-muted-foreground">{draftQuery.data?.findings.length}</span>
-          <span className="text-muted-foreground/70 text-xs">
-            {draftQuery.data?.findings.length === 1 ? "finding" : "findings"}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 text-sm">
-          <span className="text-muted-foreground">{draftQuery.data?.staged.length}</span>
-          <span className="text-muted-foreground/70 text-xs">
-            {draftQuery.data?.staged.length === 1 ? "staged change" : "staged changes"}
-          </span>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 min-w-0">
-        <AnalysisScopes
-          version={draftQuery.data}
-          selectedFinding={selectedFinding || undefined}
-          onSelectFinding={setSelectedFinding}
-          disableGrouping={true}
-          checkScopeStatus={false}
-          renderAddFinding={(scopeId, scopeName) => (
-            <AddFindingDialog
-              scopeId={scopeId}
-              scopeName={scopeName}
-              open={openAddDialog === scopeId}
-              onOpenChange={(open) => setOpenAddDialog(open ? scopeId : null)}
-              onAdd={(data) => addMutation.mutate(data)}
-              isLoading={false}
-            />
-          )}
-        />
-        <div className="space-y-4">
+    <div className="flex flex-1 min-h-0 gap-4">
+      <div className="min-h-0 min-w-0 flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 min-w-0 max-w-full h-full">
+          <AnalysisScopes
+            version={mergedVersion}
+            selectedFinding={selectedFinding || undefined}
+            onSelectFinding={setSelectedFinding}
+            disableGrouping={true}
+            checkScopeStatus={false}
+            onUndoStagedChange={(findingId) => undoStagedMutation.mutate(findingId)}
+            renderAddFinding={(scopeId, scopeName) => (
+              <AddFindingDialog
+                scopeId={scopeId}
+                scopeName={scopeName}
+                open={openAddDialog === scopeId}
+                onOpenChange={(open) => setOpenAddDialog(open ? scopeId : null)}
+                onAdd={(data) => addMutation.mutate(data)}
+                isLoading={false}
+              />
+            )}
+          />
           {!selectedFinding ? (
             <div className="flex items-center justify-center text-center py-12">
               <div>
@@ -811,142 +814,23 @@ export const EditClient: React.FC<{
             <EditFindingDetail
               teamSlug={teamSlug}
               nodeId={nodeId}
-              codeVersionId={version?.code_version_id ?? ""}
+              codeVersionId={draftQuery.data?.code_version_id ?? ""}
               finding={selectedFinding}
               draftQuery={draftQuery}
               onFindingDeleted={handleFindingDeleted}
+              onUndoStagedChange={(findingId) => undoStagedMutation.mutate(findingId)}
               setSelectedFinding={setSelectedFinding}
             />
           )}
-          {draftQuery.data && draftQuery.data.staged.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h4 className="text-sm font-medium mb-1">
-                    {draftQuery.data.staged.length} staged change
-                    {draftQuery.data.staged.length !== 1 ? "s" : ""}
-                  </h4>
-                  <p className="text-xs text-muted-foreground">
-                    {draftQuery.data.staged.filter((f) => f.draft_type === "add").length} to add,{" "}
-                    {draftQuery.data.staged.filter((f) => f.draft_type === "update").length} to
-                    update, {draftQuery.data.staged.filter((f) => f.draft_type === "delete").length}{" "}
-                    to delete
-                  </p>
-                </div>
-                <AlertDialog open={openCommitDialog} onOpenChange={setOpenCommitDialog}>
-                  <Button
-                    onClick={() => setOpenCommitDialog(true)}
-                    disabled={commitMutation.isPending}
-                    size="sm"
-                  >
-                    {commitMutation.isPending ? "Committing..." : "Commit Changes"}
-                  </Button>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Commit Changes</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will create a new analysis version with your staged changes and set the
-                        current version as its parent. Are you sure you want to continue?
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => commitMutation.mutate()}
-                        disabled={commitMutation.isPending}
-                      >
-                        {commitMutation.isPending ? "Committing..." : "Commit Changes"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-              <ScrollArea className="space-y-2 h-48">
-                {levelOrder.map((level) => {
-                  const levelFindings =
-                    draftQuery.data?.staged.filter((f) => f.level === level) ?? [];
-                  if (levelFindings.length === 0) return null;
-
-                  return (
-                    <div key={level} className="space-y-1">
-                      <div className="text-xs font-medium text-muted-foreground capitalize">
-                        {level}
-                      </div>
-                      {levelFindings.map((finding) => {
-                        const isDraftDelete = finding.draft_type === "delete";
-                        const isSelected = selectedFinding?.id === finding.id;
-                        return (
-                          <div
-                            key={finding.id}
-                            onClick={() => setSelectedFinding(finding)}
-                            className={cn(
-                              "w-full text-left p-2 rounded border text-sm cursor-pointer transition-all duration-200",
-                              getSeverityColor(level),
-                              isDraftDelete && "border-dashed opacity-50",
-                              isSelected
-                                ? "border-opacity-60 bg-opacity-10"
-                                : "hover:bg-opacity-10 hover:border-opacity-40",
-                            )}
-                          >
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              {getSeverityIcon(level)}
-                              <span
-                                className={cn(
-                                  "font-medium truncate flex-1",
-                                  isDraftDelete && "line-through",
-                                )}
-                              >
-                                {finding.name}
-                              </span>
-                              {finding.draft_type === "add" && (
-                                <Badge variant="secondary" className="text-xs shrink-0">
-                                  New
-                                </Badge>
-                              )}
-                              {finding.draft_type === "update" && (
-                                <Badge variant="secondary" className="text-xs shrink-0">
-                                  Modified
-                                </Badge>
-                              )}
-                              {isDraftDelete && (
-                                <Badge variant="destructive" className="text-xs shrink-0">
-                                  Deleting
-                                </Badge>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 shrink-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  undoStagedMutation.mutate(finding.id);
-                                  if (finding.base_finding_id) {
-                                    console.log("should reset", finding.base_finding_id);
-                                    setShouldResetFinding(finding.base_finding_id);
-                                  }
-                                }}
-                                disabled={undoStagedMutation.isPending}
-                                title="Undo staged change"
-                              >
-                                <RotateCcw className="size-3" />
-                              </Button>
-                            </div>
-                            {draftQuery.data && (
-                              <div className="text-xs text-muted-foreground mt-1 truncate">
-                                {getScopeForDraftFinding(finding, draftQuery.data).name}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </ScrollArea>
-            </div>
-          )}
         </div>
       </div>
+      <CollapsibleChatPanel
+        teamSlug={teamSlug}
+        projectSlug={projectSlug}
+        nodeId={nodeId}
+        findingContext={findingContext}
+        onRemoveFindingFromContext={removeFindingFromContext}
+      />
     </div>
   );
 };

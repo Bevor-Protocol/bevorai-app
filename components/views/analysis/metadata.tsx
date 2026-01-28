@@ -1,13 +1,23 @@
 "use client";
 
 import { analysisActions } from "@/actions/bevor";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDateShort } from "@/utils/helpers";
 import { AnalysisNodeSchemaI } from "@/utils/types";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   Check,
@@ -21,6 +31,9 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import AnalysisVersionMenu from "./menu";
 
 const getStatusIndicator = (status: AnalysisNodeSchemaI["status"]): React.ReactNode => {
@@ -63,7 +76,6 @@ const AnalysisMetadata: React.FC<{
   projectSlug: string;
   nodeId: string;
   isEditMode: boolean;
-  allowChat?: boolean;
   allowEditMode?: boolean;
   allowActions?: boolean;
   isOwner?: boolean;
@@ -72,12 +84,13 @@ const AnalysisMetadata: React.FC<{
   projectSlug,
   nodeId,
   isEditMode,
-  allowChat = false,
   allowEditMode = false,
   allowActions = false,
   isOwner = false,
 }) => {
   const { isCopied, copy } = useCopyToClipboard();
+  const [openCommitDialog, setOpenCommitDialog] = useState(false);
+  const router = useRouter();
 
   const { data: version } = useSuspenseQuery({
     queryKey: generateQueryKey.analysisDetailed(nodeId),
@@ -88,6 +101,21 @@ const AnalysisMetadata: React.FC<{
       }),
   });
 
+  const commitMutation = useMutation({
+    mutationFn: () =>
+      analysisActions.commitDraft(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    onSuccess: ({ id }) => {
+      setOpenCommitDialog(false);
+      toast.success("Changes committed successfully");
+      router.push(`/team/${teamSlug}/${projectSlug}/analyses/${id}`);
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to commit changes");
+    },
+  });
 
   return (
     <div className="pt-3 pb-6">
@@ -179,6 +207,35 @@ const AnalysisMetadata: React.FC<{
                 )}
               </Link>
             </Button>
+          )}
+          {isEditMode && (
+            <AlertDialog open={openCommitDialog} onOpenChange={setOpenCommitDialog}>
+              <Button
+                onClick={() => setOpenCommitDialog(true)}
+                disabled={commitMutation.isPending}
+                size="sm"
+              >
+                {commitMutation.isPending ? "Committing..." : "Commit Changes"}
+              </Button>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Commit Changes</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will create a new analysis version with your staged changes and set the
+                    current version as its parent. Are you sure you want to continue?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => commitMutation.mutate()}
+                    disabled={commitMutation.isPending}
+                  >
+                    {commitMutation.isPending ? "Committing..." : "Commit Changes"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           {allowActions ? (
             <AnalysisVersionMenu

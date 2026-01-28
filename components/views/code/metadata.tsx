@@ -151,7 +151,7 @@ const CodeMetadata: React.FC<{
       setSelectedParentId(candidateParents[0]?.id || "");
       setAnalyzeDialogOpen(true);
     } else {
-      router.push(`/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}`);
+      router.push(`/team/${teamSlug}/${projectSlug}/codes/${codeId}/analyses/new`);
     }
   };
 

@@ -276,7 +276,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
               setBuffer("");
             }
 
-            if (parsed.event_type === "text") {
+            if (parsed.event_type === "text" || parsed.event_type == "failure") {
               finalMessage = parsed.content;
             }
           } catch {
@@ -409,7 +409,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             <div
               className="flex flex-col gap-4 px-2 overflow-x-hidden"
               style={{
-                maxWidth: isMaximized ? "48rem" : maxWidth || "24rem",
+                maxWidth: isMaximized ? "44rem" : maxWidth || "24rem",
               }}
             >
               {chatMessageQuery.data?.map((message) => (

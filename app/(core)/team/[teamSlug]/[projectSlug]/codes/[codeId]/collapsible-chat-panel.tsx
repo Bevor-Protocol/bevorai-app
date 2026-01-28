@@ -55,8 +55,8 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
 
   return (
     <aside
-      className={`flex flex-col min-h-0 pr-2 bg-background ${
-        isMaximized ? "fixed right-0 z-50 shadow-2xl border-l" : "relative"
+      className={`flex flex-col min-h-0 bg-background ${
+        isMaximized ? "fixed right-0 z-50 shadow-2xl border-l px-4" : "relative pr-2"
       }`}
       style={
         isMaximized
