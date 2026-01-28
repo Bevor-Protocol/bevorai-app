@@ -9,7 +9,7 @@ import { useChat } from "@/providers/chat";
 import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
 import { useQuery } from "@tanstack/react-query";
-import { Settings, X } from "lucide-react";
+import { Maximize2, Minimize2, Settings, X } from "lucide-react";
 
 interface CollapsibleChatPanelProps {
   teamSlug: string;
@@ -24,7 +24,15 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
   projectSlug,
   codeId,
 }) => {
-  const { isExpanded, toggleExpanded, showSettings, setShowSettings, selectedChatId } = useChat();
+  const {
+    isExpanded,
+    toggleExpanded,
+    isMaximized,
+    toggleMaximized,
+    showSettings,
+    setShowSettings,
+    selectedChatId,
+  } = useChat();
 
   const chatQuery = extractChatsQuery({
     project_slug: projectSlug,
@@ -46,7 +54,21 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
   }
 
   return (
-    <aside className="flex flex-col min-h-0 pr-2 bg-background" style={{ width: CHAT_PANEL_WIDTH }}>
+    <aside
+      className={`flex flex-col min-h-0 bg-background ${
+        isMaximized ? "fixed right-0 z-50 shadow-2xl border-l px-4" : "relative pr-2"
+      }`}
+      style={
+        isMaximized
+          ? {
+              width: "50vw",
+              maxWidth: "48rem",
+              top: "calc(var(--spacing-header) + var(--spacing-subheader))",
+              height: "calc(100vh - var(--spacing-header) - var(--spacing-subheader))",
+            }
+          : { width: CHAT_PANEL_WIDTH }
+      }
+    >
       <div className="flex items-center justify-end gap-1 p-2">
         {selectedChatId && (
           <Button
@@ -58,6 +80,14 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
             <Settings className="size-4" />
           </Button>
         )}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={toggleMaximized}
+          title={isMaximized ? "Minimize chat" : "Maximize chat"}
+        >
+          {isMaximized ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+        </Button>
         <Button variant="ghost" size="icon-sm" onClick={toggleExpanded} title="Collapse chat">
           <X className="size-4" />
         </Button>
@@ -66,7 +96,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
         <ChatThreads chatsQuery={chatsQuery} />
       ) : (
         <div className="flex-1 min-h-0 min-w-0 flex flex-col">
-          <ChatMessages teamSlug={teamSlug} codeId={codeId} maxWidth={CHAT_PANEL_WIDTH} />
+          <ChatMessages teamSlug={teamSlug} codeId={codeId} />
         </div>
       )}
     </aside>

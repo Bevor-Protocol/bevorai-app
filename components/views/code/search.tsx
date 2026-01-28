@@ -116,7 +116,7 @@ const NodeSearch: React.FC<{
             results?.map((result) => (
               <div
                 key={result.id}
-                className="group flex hover:bg-accent hover:text-accent-foreground cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+                className="group flex hover:bg-accent hover:text-accent-foreground cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 w-full max-w-[calc(100%-2rem)] sm:max-w-lg"
                 onClick={() =>
                   handleSelection({
                     sourceId: result.source_id,
@@ -128,7 +128,7 @@ const NodeSearch: React.FC<{
                 <div className="w-full flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     {getNodeType(result.node_type)}
-                    <p>{result.name}</p>
+                    <p className="text-ellipsis max-w-1/2 overflow-hidden">{result.name}</p>
                     <span className="text-muted-foreground text-xs ml-auto">
                       {result.path.split("/").slice(-1)}
                     </span>

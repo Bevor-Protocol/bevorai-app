@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Cog, Lightbulb } from "lucide-react";
+import { Cog, Lightbulb, X } from "lucide-react";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -67,6 +67,7 @@ export const ChatStreamingContent: React.FC<ChatStreamingContentProps> = ({
           {currentEventType === "thinking" && (
             <Lightbulb className="size-3 text-yellow-400 animate-pulse" />
           )}
+          {currentEventType === "failure" && <X className="size-3 text-red-400" />}
           <span className="text-sm">{streamedContent}</span>
         </div>
       )}

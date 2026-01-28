@@ -3,20 +3,53 @@
 import api from "@/lib/api";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
-import { CreateChatFormValues } from "@/utils/schema";
 import { ApiResponse, ChatFullSchemaI, ChatMessageI, ChatPaginationI } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
-export const initiateChat = async (
+export const initiateCodeChat = async (
   teamSlug: string,
-  data: CreateChatFormValues,
+  data: { code_version_id: string },
+): ApiResponse<{
+  id: string;
+  toInvalidate: QueryKey[];
+}> => {
+  console.log("SHOULD CALL", data);
+  const toInvalidate = [[QUERY_KEYS.CHATS, teamSlug]];
+  return api
+    .post("/chats/code", data, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      console.log(response);
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: {
+          id: response.data.id,
+          toInvalidate,
+        },
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      console.log(error);
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
+};
+
+export const initiateAnalysisChat = async (
+  teamSlug: string,
+  data: { analysis_node_id: string },
 ): ApiResponse<{
   id: string;
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.CHATS, teamSlug]];
   return api
-    .post("/chats", data, { headers: { "bevor-team-slug": teamSlug } })
+    .post("/chats/analysis", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {

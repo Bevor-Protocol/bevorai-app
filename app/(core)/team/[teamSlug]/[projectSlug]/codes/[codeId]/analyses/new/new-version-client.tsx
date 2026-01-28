@@ -1,7 +1,6 @@
 "use client";
 
 import { analysisActions, codeActions } from "@/actions/bevor";
-import { AnalysisVersionPreviewElement } from "@/components/analysis/element";
 import ShikiViewer from "@/components/shiki-viewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,8 +16,6 @@ import {
   CodeSourceToggle,
   getSourceColor,
 } from "@/components/ui/code";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -29,158 +26,32 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import { CodeVersionCompactElement } from "@/components/versions/element";
 import NodeSearch from "@/components/views/code/search";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
 import { createAnalysisFormValues, createAnalysisSchema } from "@/utils/schema";
-import {
-  AnalysisNodeSchemaI,
-  CodeMappingSchemaI,
-  CodeSourceSchemaI,
-  NodeSchemaI,
-  ScopeSchemaI,
-} from "@/utils/types";
+import { AnalysisNodeSchemaI, CodeSourceSchemaI, NodeSchemaI, ScopeSchemaI } from "@/utils/types";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
-import { useMutation, UseMutationResult, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Code, InfoIcon, XCircle } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useMutation,
+  UseMutationResult,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { InfoIcon, XCircle } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import AnalysisStatusDisplay from "./status";
 
 interface AnalysisScopeSelectorProps {
-  sources: CodeSourceSchemaI[];
+  teamSlug: string;
+  projectSlug: string;
+  codeId: string;
   parentScopes: ScopeSchemaI[];
-  teamSlug: string;
-  projectSlug: string;
-  defaultParentVersion?: AnalysisNodeSchemaI;
-  defaultCodeVersion: CodeMappingSchemaI;
-  allowCodeVersionChange: boolean;
+  parentAnalysis?: AnalysisNodeSchemaI;
 }
-
-const CodeVersionSelector: React.FC<{
-  defaultCodeVersion?: CodeMappingSchemaI;
-  teamSlug: string;
-  projectSlug: string;
-  allowCodeVersionChange: boolean;
-}> = ({ defaultCodeVersion, teamSlug, projectSlug, allowCodeVersionChange }) => {
-  const [open, setOpen] = useState(false);
-  const { codeVersionId, setCodeVersionId, setSourceId } = useCode();
-
-  const { data: codeVersions } = useQuery({
-    queryKey: generateQueryKey.codes(teamSlug, { project_slug: projectSlug }),
-    queryFn: () =>
-      codeActions.getVersions(teamSlug, { project_slug: projectSlug }).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-    enabled: allowCodeVersionChange,
-  });
-
-  const selectedVersion =
-    codeVersions?.results.find((v) => v.id === codeVersionId) ?? defaultCodeVersion;
-
-  const handleSelect = async (codeId: string): Promise<void> => {
-    setOpen(false);
-    const tree = await codeActions.getTree(teamSlug, codeId).then((r) => {
-      if (!r.ok) throw r;
-      return r.data;
-    });
-    // update this after. Otherwise a request will fire for a new codeVersionId, and an old sourceId
-    setCodeVersionId(codeId);
-    if (tree.length > 0) {
-      setSourceId(tree[0].id);
-    }
-  };
-
-  return (
-    <div className="w-fit">
-      <div className="flex items-center gap-2 mb-2">
-        <Label className="text-sm font-medium">Code Version</Label>
-        <Tooltip>
-          <TooltipTrigger>
-            <InfoIcon className="size-3 text-muted-foreground" />
-          </TooltipTrigger>
-          <TooltipContent className="max-w-[300px] text-muted-foreground">
-            <p className="text-sm">
-              Select the code version you want to analyze. This is the smart contract code that will
-              be scanned for security issues.
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger
-          className="border flex items-center justify-between gap-4 rounded-lg pr-2 w-[380px]"
-          disabled={!allowCodeVersionChange}
-        >
-          {selectedVersion ? (
-            <CodeVersionCompactElement
-              version={selectedVersion}
-              className={cn(!allowCodeVersionChange && "opacity-75")}
-            />
-          ) : (
-            <span className="text-sm text-muted-foreground h-14">
-              Select code version (required)
-            </span>
-          )}
-          {allowCodeVersionChange && <ChevronDown className="ml-2 size-4 shrink-0 opacity-50" />}
-        </PopoverTrigger>
-        <PopoverContent className="w-[380px] p-1" align="start">
-          <ScrollArea className="h-[400px]">
-            <div className="space-y-0.5">
-              {codeVersions?.results.map((version) => (
-                <div
-                  key={version.id}
-                  onClick={() => handleSelect(version.id)}
-                  className={cn(
-                    "cursor-pointer rounded-md transition-colors",
-                    codeVersionId === version.id ? "bg-accent" : "hover:bg-accent/50",
-                  )}
-                >
-                  <CodeVersionCompactElement version={version} />
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-};
-
-const AnalysisVersionSelector: React.FC<{
-  defaultParentVersion?: AnalysisNodeSchemaI;
-  teamSlug: string;
-}> = ({ defaultParentVersion }) => {
-  if (!defaultParentVersion) {
-    return <></>;
-  }
-
-  return (
-    <div className="w-fit">
-      <div className="flex items-center gap-2 mb-2">
-        <Label className="text-sm font-medium">Reference Analysis Version</Label>
-        <Tooltip>
-          <TooltipTrigger>
-            <InfoIcon className="size-3 text-muted-foreground" />
-          </TooltipTrigger>
-          <TooltipContent className="max-w-[400px] text-muted-foreground">
-            <p className="text-sm">
-              Prior analysis version used as a reference. By default, your new analysis will use the
-              same scope, but can be updated. This helps track changes and enforce versioning.
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-      <AnalysisVersionPreviewElement
-        analysisVersion={defaultParentVersion}
-        className="border rounded-lg w-[380px] opacity-75"
-      />
-    </div>
-  );
-};
 
 const ScopeSelectionControls: React.FC<{
   selectedNodes: NodeSchemaI[];
@@ -244,27 +115,87 @@ const ScopeSelectionControls: React.FC<{
   );
 };
 
+const nodeTypeGroups = [
+  {
+    key: "contracts",
+    title: "Contracts",
+    nodeType: "ContractDefinition",
+  },
+  {
+    key: "functions",
+    title: "Functions",
+    nodeType: "FunctionDefinition",
+  },
+  {
+    key: "modifiers",
+    title: "Modifiers",
+    nodeType: "ModifierDefinition",
+  },
+  {
+    key: "variables",
+    title: "State Variables",
+    nodeType: "VariableDeclaration",
+  },
+  {
+    key: "structs",
+    title: "Structs",
+    nodeType: "StructDefinition",
+  },
+  {
+    key: "errors",
+    title: "Errors",
+    nodeType: "ErrorDefinition",
+  },
+  {
+    key: "events",
+    title: "Events",
+    nodeType: "EventDefinition",
+  },
+];
+
 const CodeTreeViewer: React.FC<{
   teamSlug: string;
+  codeId: string;
   sources: CodeSourceSchemaI[];
   selectedNodes: NodeSchemaI[];
   onNodeToggle: (node: NodeSchemaI) => void;
-}> = ({ teamSlug, sources, selectedNodes, onNodeToggle }) => {
-  const { handleSourceChange, sourceQuery, containerRef, codeVersionId, nodesQuery, sourceId } =
-    useCode();
+  onSelectAllForSource?: (sourceId: string) => void;
+  onDeselectAllForSource?: (sourceId: string) => void;
+}> = ({
+  teamSlug,
+  codeId,
+  sources,
+  selectedNodes,
+  onNodeToggle,
+  onSelectAllForSource,
+  onDeselectAllForSource,
+}) => {
+  const { handleSourceChange, sourceQuery, containerRef, nodesQuery, sourceId } = useCode();
 
-  if (!codeVersionId) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 px-4">
-        <Code className="size-12 text-muted-foreground mb-4" />
-        <h4 className="text-lg font-medium mb-2">Select a Code Version</h4>
-        <p className="text-sm text-muted-foreground text-center max-w-md">
-          Choose a code version above to view the source files and select which functions to
-          analyze.
-        </p>
-      </div>
-    );
-  }
+  const nodeGroups = useMemo(() => {
+    if (!nodesQuery.data) return [];
+    return nodeTypeGroups.map((group) => {
+      const values = nodesQuery.data.filter((n) => n.node_type === group.nodeType);
+      return {
+        ...group,
+        values,
+      };
+    });
+  }, [nodesQuery.data]);
+
+  const sourceAuditableNodes = useMemo(() => {
+    if (!nodesQuery.data) return [];
+    return nodesQuery.data.filter((node) => node.is_auditable);
+  }, [nodesQuery.data]);
+
+  const selectedNodesForSource = useMemo(() => {
+    if (!sourceId) return [];
+    return selectedNodes.filter((node) => node.source_id === sourceId);
+  }, [selectedNodes, sourceId]);
+
+  const hasAuditableNodes = sourceAuditableNodes.length > 0;
+  const hasSelectedNodes = selectedNodesForSource.length > 0;
+  const showSourceControls = hasAuditableNodes || hasSelectedNodes;
 
   if (sources.length === 0) {
     return (
@@ -278,19 +209,6 @@ const CodeTreeViewer: React.FC<{
       </div>
     );
   }
-
-  const contracts = nodesQuery.data?.filter((n) => n.node_type === "ContractDefinition") ?? [];
-  const callables =
-    nodesQuery.data?.filter(
-      (n) => n.node_type === "FunctionDefinition" || n.node_type === "ModifierDefinition",
-    ) ?? [];
-  const declarations =
-    nodesQuery.data?.filter(
-      (n) =>
-        n.node_type !== "ContractDefinition" &&
-        n.node_type !== "FunctionDefinition" &&
-        n.node_type !== "ModifierDefinition",
-    ) ?? [];
 
   const currentSource = sources.find((s) => s.id === sourceId);
   const currentFileName = currentSource?.path.split("/").pop() ?? "";
@@ -309,7 +227,7 @@ const CodeTreeViewer: React.FC<{
     <CodeHolder ref={containerRef} className="pr-2">
       <CodeMetadata>
         <CodeSourceToggle>
-          <NodeSearch teamSlug={teamSlug} codeId={codeVersionId} className="w-full" />
+          <NodeSearch teamSlug={teamSlug} codeId={codeId} className="w-full" />
           <Select value={sourceId!} onValueChange={(sourceId) => handleSourceChange(sourceId)}>
             <SelectTrigger className="max-w-full w-full px-2">
               <SelectValue>
@@ -328,94 +246,67 @@ const CodeTreeViewer: React.FC<{
             </SelectContent>
           </Select>
         </CodeSourceToggle>
+        {showSourceControls && (
+          <div className="px-2 py-1.5 flex items-center gap-2 border-b border-border">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => onSelectAllForSource?.(sourceId!)}
+              disabled={!hasAuditableNodes}
+            >
+              Select All ({sourceAuditableNodes.length})
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => onDeselectAllForSource?.(sourceId!)}
+              disabled={!hasSelectedNodes}
+            >
+              Deselect All ({selectedNodesForSource.length})
+            </Button>
+          </div>
+        )}
         <CodeSources>
           {nodesQuery.isLoading ? (
             <>
-              <div className="py-2 w-full">
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Contracts</div>
-                <div className="space-y-0.5">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="px-2 py-1.5">
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                  ))}
+              {nodeTypeGroups.map((group) => (
+                <div key={group.key} className="py-2 w-full">
+                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                    {group.title}
+                  </div>
+                  <div className="space-y-0.5">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="px-2 py-1.5">
+                        <Skeleton className="h-4 w-full" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="py-2 w-full">
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Callables</div>
-                <div className="space-y-0.5">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="px-2 py-1.5">
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="py-2 w-full">
-                <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                  Declarations
-                </div>
-                <div className="space-y-0.5">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="px-2 py-1.5">
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </>
           ) : (
             <>
-              {contracts.length > 0 && (
-                <div className="py-2 w-full">
-                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                    Contracts ({contracts.length})
-                  </div>
-                  {contracts.map((node) => (
-                    <CodeNodeCheckList
-                      key={node.id}
-                      node={node}
-                      isChecked={selectedNodeIds.includes(node.id)}
-                      isDisabled={false}
-                      onNodeToggle={onNodeToggle}
-                      onNodeClick={handleNodeClick}
-                    />
-                  ))}
-                </div>
-              )}
-              {callables.length > 0 && (
-                <div className="py-2 w-full">
-                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                    Callables ({callables.length})
-                  </div>
-                  {callables.map((node) => (
-                    <CodeNodeCheckList
-                      key={node.id}
-                      node={node}
-                      isChecked={selectedNodeIds.includes(node.id)}
-                      isDisabled={false}
-                      onNodeToggle={onNodeToggle}
-                      onNodeClick={handleNodeClick}
-                    />
-                  ))}
-                </div>
-              )}
-              {declarations.length > 0 && (
-                <div className="py-2 w-full">
-                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                    Declarations ({declarations.length})
-                  </div>
-                  {declarations.map((node) => (
-                    <CodeNodeCheckList
-                      key={node.id}
-                      node={node}
-                      isChecked={selectedNodeIds.includes(node.id)}
-                      isDisabled={false}
-                      onNodeToggle={onNodeToggle}
-                      onNodeClick={handleNodeClick}
-                    />
-                  ))}
-                </div>
+              {nodeGroups.map(
+                (group) =>
+                  group.values.length > 0 && (
+                    <div key={group.key} className="py-2 w-full">
+                      <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                        {group.title} ({group.values.length})
+                      </div>
+                      {group.values.map((node) => (
+                        <CodeNodeCheckList
+                          key={node.id}
+                          node={node}
+                          isChecked={selectedNodeIds.includes(node.id)}
+                          isDisabled={false}
+                          onNodeToggle={onNodeToggle}
+                          onNodeClick={handleNodeClick}
+                        />
+                      ))}
+                    </div>
+                  ),
               )}
             </>
           )}
@@ -432,23 +323,48 @@ const CodeTreeViewer: React.FC<{
 };
 
 const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
-  sources,
   parentScopes,
   teamSlug,
   projectSlug,
-  defaultParentVersion,
-  defaultCodeVersion,
-  allowCodeVersionChange,
+  codeId,
+  parentAnalysis,
 }) => {
   const queryClient = useQueryClient();
 
-  const { codeVersionId, nodesQuery } = useCode();
   const toastRefId = useRef<string | undefined>(undefined);
 
   const [selectedNodes, setSelectedNodes] = useState<NodeSchemaI[]>([]);
   const [scopeStrategy, setScopeStrategy] = useState<"all" | "explicit" | "parent">(
-    defaultParentVersion ? "parent" : "explicit",
+    parentAnalysis ? "parent" : "explicit",
   );
+
+  const { data: sources } = useSuspenseQuery({
+    queryKey: generateQueryKey.codeSources(codeId),
+    queryFn: () =>
+      codeActions.getSources(teamSlug, codeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  const { data: code } = useSuspenseQuery({
+    queryKey: generateQueryKey.code(codeId),
+    queryFn: () =>
+      codeActions.getCodeVersion(teamSlug, codeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  const { data: allNodes } = useQuery({
+    queryKey: generateQueryKey.codeNodes(codeId),
+    queryFn: () =>
+      codeActions.getNodes(teamSlug, codeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    staleTime: Infinity,
+  });
 
   const createAnalysisMutation = useMutation({
     mutationFn: async (data: createAnalysisFormValues) => {
@@ -495,9 +411,9 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   });
 
   const allAuditableNodes = useMemo(() => {
-    if (!nodesQuery.data) return [];
-    return nodesQuery.data.filter((node) => node.is_auditable);
-  }, [nodesQuery.data]);
+    if (!allNodes) return [];
+    return allNodes.filter((node) => node.is_auditable);
+  }, [allNodes]);
 
   const overlappingScopes = useMemo(() => {
     if (!parentScopes.length || !allAuditableNodes) return [];
@@ -505,14 +421,14 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     return allAuditableNodes.filter((node) => existingGenericIds.includes(node.generic_id));
   }, [parentScopes, allAuditableNodes]);
 
-  React.useEffect(() => {
-    if (scopeStrategy === "all" && codeVersionId) {
+  useEffect(() => {
+    if (scopeStrategy === "all") {
       setSelectedNodes(allAuditableNodes as NodeSchemaI[]);
-    } else if (scopeStrategy === "parent" && defaultParentVersion) {
+    } else if (scopeStrategy === "parent" && parentAnalysis) {
       setSelectedNodes(overlappingScopes as NodeSchemaI[]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scopeStrategy, codeVersionId, overlappingScopes]);
+  }, [scopeStrategy, overlappingScopes, allAuditableNodes]);
 
   const handleNodeToggle = (node: NodeSchemaI): void => {
     if (!node.is_auditable) return;
@@ -524,29 +440,94 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     }
     setSelectedNodes(newScopes);
 
+    // Check if all auditable nodes are selected
+    const allSelected =
+      allAuditableNodes.length > 0 &&
+      newScopes.length === allAuditableNodes.length &&
+      allAuditableNodes.every((node) => newScopes.some((n) => n.id === node.id));
+
     if (scopeStrategy === "parent" && parentScopes.length) {
       const scopesMatch =
         JSON.stringify([...newScopes].sort()) === JSON.stringify([...parentScopes].sort());
       if (!scopesMatch) {
-        setScopeStrategy("explicit");
+        setScopeStrategy(allSelected ? "all" : "explicit");
       }
     } else if (scopeStrategy == "all") {
       if (allAuditableNodes.length !== newScopes.length) {
         setScopeStrategy("explicit");
       }
+    } else if (allSelected) {
+      // If all auditable nodes are selected, switch to "all" strategy
+      setScopeStrategy("all");
     }
   };
+
+  const handleSelectAllForSource = useCallback(
+    (sourceId: string): void => {
+      if (!allNodes) return;
+      const sourceAuditableNodes = allNodes.filter(
+        (node) => node.source_id === sourceId && node.is_auditable,
+      );
+      const newSelectedNodes = [
+        ...selectedNodes.filter((n) => n.source_id !== sourceId),
+        ...sourceAuditableNodes,
+      ];
+      setSelectedNodes(newSelectedNodes);
+
+      // Check if all auditable nodes are now selected
+      const allSelected =
+        allAuditableNodes.length > 0 &&
+        newSelectedNodes.length === allAuditableNodes.length &&
+        allAuditableNodes.every((node) => newSelectedNodes.some((n) => n.id === node.id));
+
+      if (scopeStrategy === "parent" && parentScopes.length) {
+        const scopesMatch =
+          JSON.stringify([...newSelectedNodes].sort()) === JSON.stringify([...parentScopes].sort());
+        if (!scopesMatch) {
+          setScopeStrategy(allSelected ? "all" : "explicit");
+        }
+      } else if (scopeStrategy == "all") {
+        if (allAuditableNodes.length !== newSelectedNodes.length) {
+          setScopeStrategy("explicit");
+        }
+      } else if (allSelected) {
+        // If all auditable nodes are selected, switch to "all" strategy
+        setScopeStrategy("all");
+      }
+    },
+    [allNodes, selectedNodes, scopeStrategy, parentScopes, allAuditableNodes],
+  );
+
+  const handleDeselectAllForSource = useCallback(
+    (sourceId: string): void => {
+      const newSelectedNodes = selectedNodes.filter((n) => n.source_id !== sourceId);
+      setSelectedNodes(newSelectedNodes);
+
+      if (scopeStrategy === "parent" && parentScopes.length) {
+        const scopesMatch =
+          JSON.stringify([...newSelectedNodes].sort()) === JSON.stringify([...parentScopes].sort());
+        if (!scopesMatch) {
+          setScopeStrategy("explicit");
+        }
+      } else if (scopeStrategy == "all") {
+        if (allAuditableNodes.length !== newSelectedNodes.length) {
+          setScopeStrategy("explicit");
+        }
+      }
+    },
+    [selectedNodes, scopeStrategy, parentScopes, allAuditableNodes],
+  );
 
   const canSubmit = selectedNodes.length > 0;
 
   const handleSubmit = (): void => {
     const scopeIds = selectedNodes.map((n) => n.id);
     createAnalysisMutation.mutate({
-      project_id: defaultCodeVersion?.project_id,
+      project_id: code.project_id,
       scopes: scopeIds,
       scope_strategy: scopeStrategy,
-      ...(defaultParentVersion?.id ? { parent_version_id: defaultParentVersion.id } : {}),
-      ...(codeVersionId ? { code_version_id: codeVersionId } : {}),
+      code_version_id: codeId,
+      ...(parentAnalysis?.id ? { parent_version_id: parentAnalysis.id } : {}),
     });
   };
 
@@ -563,20 +544,6 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
   return (
     <>
-      <div className="flex items-start gap-4 flex-wrap justify-between mb-2">
-        <div className="flex items-start gap-4 flex-wrap">
-          <CodeVersionSelector
-            defaultCodeVersion={defaultCodeVersion}
-            teamSlug={teamSlug}
-            projectSlug={projectSlug}
-            allowCodeVersionChange={allowCodeVersionChange}
-          />
-          <AnalysisVersionSelector
-            defaultParentVersion={defaultParentVersion}
-            teamSlug={teamSlug}
-          />
-        </div>
-      </div>
       <ScopeSelectionControls
         selectedNodes={selectedNodes}
         onDeselectAll={() => setSelectedNodes([])}
@@ -585,7 +552,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
         canSubmit={canSubmit}
         scopeStrategy={scopeStrategy}
         onScopeStrategyChange={setScopeStrategy}
-        hasParentVersion={!!defaultParentVersion}
+        hasParentVersion={!!parentAnalysis}
       />
       <div className="py-2 sticky top-0 z-10 bg-background border border-background w-full h-subheader">
         <ScrollArea>
@@ -634,9 +601,12 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
       <CodeTreeViewer
         teamSlug={teamSlug}
+        codeId={codeId}
         sources={sources}
         selectedNodes={selectedNodes}
         onNodeToggle={handleNodeToggle}
+        onSelectAllForSource={handleSelectAllForSource}
+        onDeselectAllForSource={handleDeselectAllForSource}
       />
     </>
   );

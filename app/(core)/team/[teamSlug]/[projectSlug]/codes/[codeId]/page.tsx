@@ -12,6 +12,9 @@ import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import CollapsibleChatPanel from "./collapsible-chat-panel";
 
+export const dynamic = "force-dynamic"; // Or 'auto' if you want caching
+export const revalidate = 0; // Disable ISR if not needed
+
 type ResolvedParams = {
   codeId: string;
   projectSlug: string;

@@ -48,23 +48,27 @@ const renderDraftBadges = (finding: FindingSchemaI | DraftFindingSchemaI): React
   );
 };
 
-const renderDraftDelete = (
-  finding: FindingSchemaI | DraftFindingSchemaI,
+const renderDraftDelete = <T extends FindingSchemaI | DraftFindingSchemaI>(
+  finding: T,
   level: FindingLevel,
+  onSelectFinding?: (finding: T) => void,
+  isSelected?: boolean,
 ): React.ReactNode | null => {
   if (!isDraftFinding(finding) || finding.draft_type !== "delete") return null;
 
   return (
     <div
+      onClick={() => onSelectFinding?.(finding)}
       className={cn(
-        "w-full text-left p-2 rounded border flex items-center justify-between group",
+        "w-full text-left p-2 rounded border flex items-center justify-between cursor-pointer transition-all duration-200",
         getSeverityColor(level),
         "border-dashed opacity-50",
+        isSelected && "border-opacity-60 bg-opacity-10",
       )}
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
         {getSeverityIcon(level)}
-        <span className="text-sm font-medium truncate line-through">{finding.name}</span>
+        <span className="text-sm font-medium truncate">{finding.name}</span>
         <Badge variant="destructive" className="text-xs shrink-0">
           Deleting
         </Badge>
@@ -211,6 +215,7 @@ type GroupingProps<T extends FindingSchemaI | DraftFindingSchemaI> = {
   openGroups: Set<string>;
   setOpenGroups: React.Dispatch<React.SetStateAction<Set<string>>>;
   renderAddFinding?: (scopeId: string, scopeName: string) => React.ReactNode;
+  onUndoStagedChange?: (findingId: string) => void;
   checkScopeStatus?: boolean;
 };
 
@@ -221,6 +226,7 @@ const ScopeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
   openGroups,
   setOpenGroups,
   renderAddFinding,
+  onUndoStagedChange,
   checkScopeStatus = true,
 }: GroupingProps<T>): React.ReactElement => {
   const groups = version.scopes.map((scope) => ({
@@ -324,7 +330,17 @@ const ScopeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
                             const isSelected = selectedFinding?.id === finding.id;
                             const findingTyped = finding as T;
 
-                            const deleteRender = renderDraftDelete(finding, level);
+                            const deleteRender = renderDraftDelete(
+                              findingTyped,
+                              level,
+                              () => {
+                                onSelectFinding(findingTyped);
+                                if (!openGroups.has(scope.id)) {
+                                  setOpenGroups(new Set([...openGroups, scope.id]));
+                                }
+                              },
+                              isSelected,
+                            );
                             if (deleteRender)
                               return (
                                 <React.Fragment key={finding.id || index}>
@@ -382,6 +398,7 @@ const SeverityGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
   onSelectFinding,
   openGroups,
   setOpenGroups,
+  onUndoStagedChange,
 }: GroupingProps<T>): React.ReactElement => {
   const groups = levelOrder.map((level) => ({
     key: level,
@@ -440,7 +457,17 @@ const SeverityGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
                       const findingTyped = finding as T;
                       const findingScope = getScopeForFinding(finding, version);
 
-                      const deleteRender = renderDraftDelete(finding, group.key);
+                      const deleteRender = renderDraftDelete(
+                        findingTyped,
+                        group.key,
+                        () => {
+                          onSelectFinding(findingTyped);
+                          if (!openGroups.has(group.key)) {
+                            setOpenGroups(new Set([...openGroups, group.key]));
+                          }
+                        },
+                        isSelected,
+                      );
                       if (deleteRender)
                         return (
                           <React.Fragment key={finding.id || index}>{deleteRender}</React.Fragment>
@@ -492,6 +519,7 @@ const TypeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
   onSelectFinding,
   openGroups,
   setOpenGroups,
+  onUndoStagedChange,
 }: GroupingProps<T>): React.ReactElement => {
   // Initialize all types with empty arrays
   const typeGroups = new Map<string, FindingSchemaI[]>();
@@ -595,7 +623,17 @@ const TypeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
                             const findingTyped = finding as T;
                             const findingScope = getScopeForFinding(finding, version);
 
-                            const deleteRender = renderDraftDelete(finding, level);
+                            const deleteRender = renderDraftDelete(
+                              findingTyped,
+                              level,
+                              () => {
+                                onSelectFinding(findingTyped);
+                                if (!openGroups.has(group.key)) {
+                                  setOpenGroups(new Set([...openGroups, group.key]));
+                                }
+                              },
+                              isSelected,
+                            );
                             if (deleteRender)
                               return (
                                 <React.Fragment key={finding.id || index}>
@@ -655,6 +693,7 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
   onSelectFinding,
   disableGrouping = false,
   renderAddFinding,
+  onUndoStagedChange,
   checkScopeStatus = true,
 }: {
   version?: AnalysisNodeSchemaI | AnalysisScopesVersionI;
@@ -662,6 +701,7 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
   onSelectFinding: (finding: T) => void;
   disableGrouping?: boolean;
   renderAddFinding?: (scopeId: string, scopeName: string) => React.ReactNode;
+  onUndoStagedChange?: (findingId: string) => void;
   checkScopeStatus?: boolean;
 }): React.ReactElement => {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
@@ -732,6 +772,7 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
     openGroups,
     setOpenGroups,
     renderAddFinding,
+    onUndoStagedChange,
     checkScopeStatus,
   };
 
