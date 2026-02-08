@@ -38,7 +38,7 @@ interface SourceFile {
 
 const isValidFile = (file: File): boolean => {
   if (file.webkitRelativePath.includes("node_modules")) return false;
-  if (file.name.endsWith(".sol")) return true;
+  if (file.name.endsWith(".sol") || file.name.endsWith(".rs")) return true;
   const validNames = [
     "foundry.toml",
     "remappings.txt",
@@ -46,6 +46,8 @@ const isValidFile = (file: File): boolean => {
     "yarn.lock",
     "package-lock.json",
     ".gitmodules",
+    "Cargo.toml",
+    "Anchor.toml",
   ];
   if (validNames.includes(file.name)) return true;
   return false;
@@ -83,6 +85,7 @@ const FolderStep: React.FC<{
       toastId.current = toast.loading("Uploading and parsing code...");
     },
     onError: (err) => {
+      console.log(err);
       if (isApiError(err)) {
         handleMutationError({ err, toastId: toastId.current, message: "Something went wrong" });
       } else {
@@ -165,9 +168,7 @@ const FolderStep: React.FC<{
       setField("zip", zipBlob);
 
       const displayableFiles = validFiles.filter((sf) => {
-        if (!sf.path.endsWith(".sol")) return false;
-        const pathSegments = sf.path.split("/");
-        return pathSegments[1] !== "lib";
+        return sf.path.endsWith(".sol") || sf.path.endsWith(".rs");
       });
       setSelectedFile(displayableFiles[0] || null);
       updateFormState({ type: "SET_ERRORS", errors: {} });
@@ -365,9 +366,7 @@ const FolderStep: React.FC<{
                   (
                   {
                     sourceFilesRef.current.filter((sf) => {
-                      if (!sf.path.endsWith(".sol")) return false;
-                      const pathSegments = sf.path.split("/");
-                      return pathSegments[1] !== "lib";
+                      return sf.path.endsWith(".sol") || sf.path.endsWith(".rs");
                     }).length
                   }
                   )
@@ -387,9 +386,7 @@ const FolderStep: React.FC<{
               <div className="border-r border-border overflow-y-auto min-h-0">
                 {sourceFilesRef.current
                   .filter((sf) => {
-                    if (!sf.path.endsWith(".sol")) return false;
-                    const pathSegments = sf.path.split("/");
-                    return pathSegments[1] !== "lib";
+                    return sf.path.endsWith(".sol") || sf.path.endsWith(".rs");
                   })
                   .map((sourceFile) => (
                     <div key={sourceFile.path} className="space-y-1">
