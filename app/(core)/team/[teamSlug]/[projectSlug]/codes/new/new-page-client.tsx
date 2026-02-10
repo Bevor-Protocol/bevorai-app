@@ -27,23 +27,19 @@ const Steps: React.FC<{
   const handleSuccess = React.useCallback(
     (id: string) => {
       unregisterRef.current = registerCallback("code", "team", id, (payload) => {
-        if (payload.data.status === "parsing" || payload.data.status === "embedding") {
-          sseToastId.current = toast.loading("Post-processing code...");
-        } else if (payload.data.status == "success") {
-          toast.success("Post-processing successful", {
+        if (payload.data.status === "processing") {
+          sseToastId.current = toast.loading("Processing code...");
+        } else if (payload.data.status === "success") {
+          toast.success("Processing successful", {
             id: sseToastId.current,
           });
           sseToastId.current = undefined;
-        } else if (
-          payload.data.status === "failed_parsing" ||
-          payload.data.status === "failed_embedding"
-        ) {
-          toast.error("Post-processing failed", {
+        } else if (payload.data.status === "failed") {
+          toast.error("Processing failed", {
             id: sseToastId.current,
           });
           sseToastId.current = undefined;
         } else {
-          // something else, just handle it.
           toast.dismiss(sseToastId.current);
           sseToastId.current = undefined;
         }

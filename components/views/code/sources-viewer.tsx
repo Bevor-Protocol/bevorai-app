@@ -42,6 +42,11 @@ const nodeTypeGroups = [
     nodeType: "ContractDefinition",
   },
   {
+    key: "programs",
+    title: "Programs",
+    nodeType: "ProgramDefinition",
+  },
+  {
     key: "functions",
     title: "Functions",
     nodeType: "FunctionDefinition",
@@ -71,6 +76,21 @@ const nodeTypeGroups = [
     title: "Events",
     nodeType: "EventDefinition",
   },
+  {
+    key: "accounts",
+    title: "Accounts",
+    nodeType: "AccountDefinition",
+  },
+  {
+    key: "contexts",
+    title: "Contexts",
+    nodeType: "ContextDefinition",
+  },
+  // {
+  //   key: "constraints",
+  //   title: "Constraints",
+  //   nodeType: "ConstraintDefinition",
+  // },
 ];
 
 const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
@@ -91,6 +111,8 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
         return r.data;
       }),
   });
+
+  console.log(nodesQuery.data);
 
   const nodeGroups = useMemo(() => {
     if (!nodesQuery.data) return [];

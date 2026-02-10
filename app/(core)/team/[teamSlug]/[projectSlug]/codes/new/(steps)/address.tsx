@@ -54,7 +54,7 @@ const ContractAddressStep: React.FC<{
         id: toastId.current,
       });
 
-      if (status === "embedding" || status === "parsed") {
+      if (status === "processing" || status === "success") {
         onSuccess?.(id);
       }
     },
@@ -85,7 +85,7 @@ const ContractAddressStep: React.FC<{
     });
   };
 
-  if (mutation.isSuccess) {
+  if (mutation.isSuccess && mutation.data.status === "success") {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">

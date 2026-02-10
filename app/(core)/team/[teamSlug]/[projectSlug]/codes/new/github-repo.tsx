@@ -25,7 +25,7 @@ const GithubRepoStep: React.FC<{
   const sseToastId = React.useRef<string | number | undefined>(undefined);
   const unregisterRef = React.useRef<() => void | undefined>(undefined);
   const [processingStatus, setProcessingStatus] = React.useState<
-    "waiting" | "parsing" | "embedding" | "success" | "failed" | null
+    "waiting" | "processing" | "success" | "failed" | null
   >(null);
   const [createdCodeId, setCreatedCodeId] = React.useState<string | null>(null);
 
@@ -65,14 +65,9 @@ const GithubRepoStep: React.FC<{
           toast.loading("Processing code version...", {
             id: sseToastId.current,
           });
-        } else if (payload.data.status === "parsing") {
-          setProcessingStatus("parsing");
-          toast.loading("Parsing code...", {
-            id: sseToastId.current,
-          });
-        } else if (payload.data.status === "parsed" || payload.data.status === "embedding") {
-          setProcessingStatus("embedding");
-          toast.loading("Embedding code...", {
+        } else if (payload.data.status === "processing") {
+          setProcessingStatus("processing");
+          toast.loading("Processing code...", {
             id: sseToastId.current,
           });
         } else if (payload.data.status === "success") {
@@ -81,10 +76,7 @@ const GithubRepoStep: React.FC<{
             id: sseToastId.current,
           });
           sseToastId.current = undefined;
-        } else if (
-          payload.data.status === "failed_parsing" ||
-          payload.data.status === "failed_embedding"
-        ) {
+        } else if (payload.data.status === "failed") {
           setProcessingStatus("failed");
           toast.error("Processing failed", {
             id: sseToastId.current,
@@ -146,14 +138,9 @@ const GithubRepoStep: React.FC<{
         toast.loading("Processing code version...", {
           id: sseToastId.current,
         });
-      } else if (status === "parsing") {
-        setProcessingStatus("parsing");
-        toast.loading("Parsing code...", {
-          id: sseToastId.current,
-        });
-      } else if (status === "parsed" || status === "embedding") {
-        setProcessingStatus("embedding");
-        toast.loading("Embedding code...", {
+      } else if (status === "processing") {
+        setProcessingStatus("processing");
+        toast.loading("Processing code...", {
           id: sseToastId.current,
         });
       } else if (status === "success") {
@@ -162,7 +149,7 @@ const GithubRepoStep: React.FC<{
           id: sseToastId.current,
         });
         sseToastId.current = undefined;
-      } else if (status === "failed_parsing" || status === "failed_embedding") {
+      } else if (status === "failed") {
         setProcessingStatus("failed");
         toast.error("Processing failed", {
           id: sseToastId.current,
@@ -269,11 +256,9 @@ const GithubRepoStep: React.FC<{
     const statusText =
       processingStatus === "waiting"
         ? "Waiting to process..."
-        : processingStatus === "parsing"
-          ? "Parsing code..."
-          : processingStatus === "embedding"
-            ? "Embedding code..."
-            : "Processing...";
+        : processingStatus === "processing"
+          ? "Processing code..."
+          : "Processing...";
 
     return (
       <div className="max-w-2xl mx-auto space-y-8">

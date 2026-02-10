@@ -96,7 +96,7 @@ const FileStep: React.FC<{
         id: uploadToastId.current,
       });
 
-      if (status === "embedding" || status === "parsed") {
+      if (status === "processing" || status === "success") {
         onSuccess?.(id);
       }
     },
@@ -127,7 +127,7 @@ const FileStep: React.FC<{
         id: pasteToastId.current,
       });
 
-      if (status === "embedding" || status === "parsed") {
+      if (status === "processing" || status === "success") {
         onSuccess?.(id);
       }
     },
@@ -360,7 +360,7 @@ const FileStep: React.FC<{
 
   const currentMutation = activeTab === "upload" ? uploadMutation : pasteMutation;
 
-  if (currentMutation.isSuccess) {
+  if (currentMutation.isSuccess && currentMutation.data.status === "success") {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">

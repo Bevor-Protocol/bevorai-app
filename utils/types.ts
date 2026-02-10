@@ -139,6 +139,9 @@ export interface NodeSchemaI {
   id: string;
   source_id: string;
   contract_id?: string;
+  program_id?: string;
+  context_id?: string;
+  account_id?: string;
   generic_id?: string;
   node_type: string;
   src_start_pos: number;
@@ -279,14 +282,7 @@ export interface ProjectsPaginationI extends PaginationI {
 /* CODE VERSION */
 export interface CodeCreateSchemaI {
   id: string;
-  status:
-    | "waiting"
-    | "parsing"
-    | "parsed"
-    | "failed_parsing"
-    | "embedding"
-    | "failed_embedding"
-    | "success";
+  status: "waiting" | "processing" | "success" | "failed";
 }
 
 export interface CodeVersionSchemaI extends BaseSchema {
@@ -296,14 +292,7 @@ export interface CodeVersionSchemaI extends BaseSchema {
   source_type: SourceTypeEnum;
   solc_version?: string;
   branch?: string;
-  status:
-    | "waiting"
-    | "parsing"
-    | "parsed"
-    | "failed_parsing"
-    | "embedding"
-    | "failed_embedding"
-    | "success";
+  status: "waiting" | "processing" | "success" | "failed";
   commit?: GithubCommitSchemaI;
   repository?: GithubRepositorySchemaI;
 }

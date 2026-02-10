@@ -177,6 +177,8 @@ export const getNodeTypeColor = (nodeType: string): string => {
   switch (nodeType) {
     case "ContractDefinition":
       return "bg-purple-500";
+    case "ProgramDefinition":
+      return "bg-purple-500";
     case "FunctionDefinition":
       return "bg-blue-500";
     case "ModifierDefinition":
@@ -189,6 +191,12 @@ export const getNodeTypeColor = (nodeType: string): string => {
       return "bg-red-500";
     case "EventDefinition":
       return "bg-yellow-500";
+    case "AccountDefinition":
+      return "bg-cyan-500";
+    case "ContextDefinition":
+      return "bg-indigo-500";
+    case "ConstraintDefinition":
+      return "bg-amber-500";
     default:
       return "bg-gray-400";
   }

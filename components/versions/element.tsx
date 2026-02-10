@@ -251,7 +251,7 @@ const CodeVersionActions: React.FC<{
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        {(version.status === "failed_parsing" || version.status === "failed_embedding") && (
+        {version.status === "failed" && (
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
@@ -322,20 +322,14 @@ export const getStatusIndicator = (status: CodeVersionSchemaI["status"]): React.
 
   switch (status) {
     case "waiting":
-      statusText = "Processing";
+      statusText = "Waiting";
       circleColor = "bg-neutral-400 animate-pulse";
       break;
-    case "parsing":
+    case "processing":
       statusText = "Processing";
-      circleColor = "bg-neutral-400 animate-pulse";
-      break;
-    case "embedding":
-    case "parsed":
-      statusText = "Post-Processing";
       circleColor = "bg-blue-400 animate-pulse";
       break;
-    case "failed_parsing":
-    case "failed_embedding":
+    case "failed":
       statusText = "Failed";
       circleColor = "bg-destructive";
       break;

@@ -15,23 +15,22 @@ const getStatusIndicator = (status: CodeMappingSchemaI["status"]): React.ReactNo
           <span className="capitalize">Waiting</span>
         </div>
       );
-    case "embedding":
-    case "parsing":
-    case "parsed":
+    case "processing":
       return (
         <div className="flex items-center gap-1">
           <div className="size-3 rounded-full bg-blue-400 shrink-0 animate-pulse" />
-          <span className="capitalize">Post-Processing</span>
+          <span className="capitalize">Processing</span>
         </div>
       );
-    case "failed_parsing":
-    case "failed_embedding":
+    case "failed":
       return (
         <div className="flex items-center gap-1">
           <XCircle className="size-3 text-destructive shrink-0" />
           <span className="capitalize">Failed</span>
         </div>
       );
+    case "success":
+      return null;
     default:
       return null;
   }

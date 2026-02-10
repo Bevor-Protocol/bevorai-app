@@ -23,8 +23,22 @@ const getNodeType = (nodeType: string): React.ReactElement => {
         </Badge>
       );
     case "ContractDefinition":
+    case "ProgramDefinition":
       return (
         <Badge variant="purple" className="text-xs">
+          {nodeType.replace("Definition", "").toLowerCase()}
+        </Badge>
+      );
+    case "AccountDefinition":
+    case "ContextDefinition":
+      return (
+        <Badge variant="cyan" className="text-xs">
+          {nodeType.replace("Definition", "").toLowerCase()}
+        </Badge>
+      );
+    case "ConstraintDefinition":
+      return (
+        <Badge variant="amber" className="text-xs">
           {nodeType.replace("Definition", "").toLowerCase()}
         </Badge>
       );

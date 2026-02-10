@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
+import { useSSE } from "@/providers/sse";
 import {
   CreateCodeFromPublicGithubFormValues,
   createCodeFromPublicGithubSchema,
@@ -13,7 +14,7 @@ import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, GitCommitHorizontal, XCircle } from "lucide-react";
 import Link from "next/link";
-import React, { useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const RepoUrlStep: React.FC<{
@@ -22,6 +23,13 @@ const RepoUrlStep: React.FC<{
   onSuccess?: (id: string) => void;
 }> = ({ project, parentId, onSuccess }) => {
   const queryClient = useQueryClient();
+  const { registerCallback } = useSSE();
+  const sseToastId = useRef<string | number | undefined>(undefined);
+  const unregisterRef = useRef<() => void | undefined>(undefined);
+  const [processingStatus, setProcessingStatus] = useState<
+    "waiting" | "processing" | "success" | "failed" | null
+  >(null);
+  const [createdCodeId, setCreatedCodeId] = useState<string | null>(null);
 
   const initialState: CreateCodeFromPublicGithubFormValues = {
     url: "",
@@ -32,6 +40,52 @@ const RepoUrlStep: React.FC<{
 
   const toastId = useRef<string | number>(undefined);
 
+  const handleSuccess = useCallback(
+    (id: string) => {
+      setCreatedCodeId(id);
+      unregisterRef.current = registerCallback("code", "team", id, (payload) => {
+        if (payload.data.status === "waiting") {
+          setProcessingStatus("waiting");
+          toast.loading("Processing code version...", {
+            id: sseToastId.current,
+          });
+        } else if (payload.data.status === "processing") {
+          setProcessingStatus("processing");
+          toast.loading("Processing code...", {
+            id: sseToastId.current,
+          });
+        } else if (payload.data.status === "success") {
+          setProcessingStatus("success");
+          toast.success("Code version processed successfully", {
+            id: sseToastId.current,
+          });
+          sseToastId.current = undefined;
+        } else if (payload.data.status === "failed") {
+          setProcessingStatus("failed");
+          toast.error("Processing failed", {
+            id: sseToastId.current,
+          });
+          sseToastId.current = undefined;
+        } else {
+          toast.dismiss(sseToastId.current);
+          sseToastId.current = undefined;
+        }
+      });
+    },
+    [registerCallback],
+  );
+
+  useEffect(() => {
+    return (): void => {
+      if (sseToastId.current) {
+        toast.dismiss(sseToastId.current);
+      }
+      if (unregisterRef.current) {
+        unregisterRef.current();
+      }
+    };
+  }, []);
+
   const mutation = useMutation({
     mutationFn: async (data: CreateCodeFromPublicGithubFormValues) =>
       codeActions.contractUploadPublicRepo(project.team.slug, project.id, data).then((r) => {
@@ -40,25 +94,43 @@ const RepoUrlStep: React.FC<{
       }),
     onMutate: () => {
       updateFormState({ type: "SET_ERRORS", errors: {} });
-      toastId.current = toast.loading("Uploading and parsing code...");
+      toastId.current = toast.loading("Uploading code...");
     },
     onError: () => {
       toast.dismiss(toastId.current);
+      setProcessingStatus(null);
+      setCreatedCodeId(null);
       updateFormState({
         type: "SET_ERRORS",
-        errors: { address: "Something went wrong" },
+        errors: { url: "Something went wrong" },
       });
     },
     onSuccess: ({ id, status, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
-      toast.success("Successfully uploaded code", {
+      setProcessingStatus("waiting");
+      sseToastId.current = toast.loading("Code version created. Processing in background...", {
         id: toastId.current,
       });
 
-      if (status === "embedding" || status === "parsed") {
-        onSuccess?.(id);
+      handleSuccess(id);
+      if (status === "waiting") {
+        setProcessingStatus("waiting");
+        toast.loading("Processing code version...", {
+          id: sseToastId.current,
+        });
+      } else if (status === "processing") {
+        setProcessingStatus("processing");
+        toast.loading("Processing code...", {
+          id: sseToastId.current,
+        });
+      } else if (status === "success") {
+        setProcessingStatus("success");
+        toast.success("Code version processed successfully", {
+          id: sseToastId.current,
+        });
+        sseToastId.current = undefined;
       }
     },
   });
@@ -84,7 +156,7 @@ const RepoUrlStep: React.FC<{
     mutation.mutate(parsed.data);
   };
 
-  if (mutation.isSuccess) {
+  if (processingStatus === "success" && createdCodeId) {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">
@@ -96,10 +168,76 @@ const RepoUrlStep: React.FC<{
             Your contract has been uploaded and is ready for analysis.
           </p>
           <Button asChild className="mt-4">
-            <Link href={`/team/${project.team.slug}/${project.slug}/codes/${mutation.data.id}`}>
+            <Link href={`/team/${project.team.slug}/${project.slug}/codes/${createdCodeId}`}>
               View Version
             </Link>
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (processingStatus === "failed" && createdCodeId) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-8">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
+            <XCircle className="size-8 text-destructive" />
+          </div>
+          <h2 className="text-2xl font-bold">Processing Failed</h2>
+          <p className="text-muted-foreground">
+            The code version was created but processing failed. You can still view it or try creating
+            another version.
+          </p>
+          <div className="flex gap-4 justify-center mt-6">
+            <Button asChild variant="outline">
+              <Link href={`/team/${project.team.slug}/${project.slug}/codes/${createdCodeId}`}>
+                View Version
+              </Link>
+            </Button>
+            <Button
+              onClick={() => {
+                mutation.reset();
+                setProcessingStatus(null);
+                setCreatedCodeId(null);
+                updateFormState({ type: "RESET", initialValues: initialState });
+              }}
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (processingStatus && createdCodeId) {
+    const statusText =
+      processingStatus === "waiting"
+        ? "Waiting to process..."
+        : processingStatus === "processing"
+          ? "Processing code..."
+          : "Processing...";
+
+    return (
+      <div className="max-w-2xl mx-auto space-y-8">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto">
+            <div className="size-8 rounded-full bg-blue-400 animate-pulse" />
+          </div>
+          <h2 className="text-2xl font-bold">Processing Code Version</h2>
+          <p className="text-muted-foreground">{statusText}</p>
+          <p className="text-sm text-muted-foreground">
+            This may take a few moments. You can view the version now, but it may not be fully
+            processed yet.
+          </p>
+          <div className="flex gap-4 justify-center mt-6">
+            <Button asChild variant="outline">
+              <Link href={`/team/${project.team.slug}/${project.slug}/codes/${createdCodeId}`}>
+                View Version
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     );
