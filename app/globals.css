@@ -72,6 +72,10 @@
   --green-foreground: oklch(0.723 0.219 149.579);
   --purple: oklch(0.85 0.15 280 / 15%);
   --purple-foreground: oklch(0.65 0.18 280);
+  --cyan: oklch(0.75 0.15 200 / 20%);
+  --cyan-foreground: oklch(0.65 0.18 200);
+  --amber: oklch(0.8 0.15 70 / 20%);
+  --amber-foreground: oklch(0.7 0.18 70);
 
   --logo-dot: oklch(0.65 0 0);
   --link: oklch(70.7% 0.165 254.624);

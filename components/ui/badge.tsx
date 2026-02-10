@@ -19,6 +19,8 @@ const badgeVariants = cva(
         blue: "border-transparent bg-blue text-blue-foreground [a&]:hover:bg-secondary/90",
         green: "border-transparent bg-green text-green-foreground [a&]:hover:bg-secondary/90",
         purple: "border-transparent bg-purple text-purple-foreground [a&]:hover:bg-secondary/90",
+        cyan: "border-transparent bg-cyan text-cyan-foreground [a&]:hover:bg-secondary/90",
+        amber: "border-transparent bg-amber text-amber-foreground [a&]:hover:bg-secondary/90",
       },
       size: {
         default: "px-2 py-0.5 text-sm rounded-sm",
