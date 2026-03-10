@@ -102,7 +102,6 @@ export const issueSSEToken = async (claims: {
   code_version_id?: string;
   analysis_node_id?: string;
 }): ApiResponse<string> => {
-  console.log("ISSUING TOKEN WITH CLAIMS", claims);
   return api
     .post("/events/auth", { ...claims })
     .then((response) => {
@@ -110,6 +109,33 @@ export const issueSSEToken = async (claims: {
       return {
         ok: true as const,
         data: response.data.token,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
+};
+
+export const getSigningToken = async (
+  teamSlug: string,
+  data: {
+    parent_id?: string;
+    project_id: string;
+  },
+): ApiResponse<string> => {
+  return api
+    .post("/codes/create/signing-key", data, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.signing_key,
         requestId,
       };
     })

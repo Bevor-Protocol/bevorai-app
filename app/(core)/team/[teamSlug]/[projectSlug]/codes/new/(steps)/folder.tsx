@@ -1,17 +1,18 @@
 "use client";
 
-import { codeActions } from "@/actions/bevor";
+import { authActions, tokenActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
 import { useSSE } from "@/providers/sse";
+import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { handleMutationError } from "@/utils/helpers";
 import { UploadCodeFolderFormValues, uploadCodeFolderSchema } from "@/utils/schema";
 import { isApiError, ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { solidity } from "@replit/codemirror-lang-solidity";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
 import { githubDark } from "@uiw/codemirror-theme-github";
 import { basicSetup } from "codemirror";
 import { zipSync } from "fflate";
@@ -37,17 +38,34 @@ interface SourceFile {
   file: File;
 }
 
+type FolderUploadResponse = {
+  id: string;
+  status: "waiting" | "processing" | "success" | "failed" | "partial";
+  toInvalidate: QueryKey[];
+};
+
+const supportsRequestStreaming = (): boolean => {
+  try {
+    // Browser support for streaming request bodies requires `duplex: "half"`.
+    // TS DOM typings may not include `duplex` in all environments, so we cast here.
+    new Request("https://example.com", {
+      method: "POST",
+      body: new ReadableStream(),
+      duplex: "half" as const,
+    } as RequestInit & { duplex: "half" });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const isValidFile = (file: File): boolean => {
-  if (file.webkitRelativePath.includes("node_modules")) return false;
-  if (file.webkitRelativePath.includes(".git") || file.webkitRelativePath.includes(".github"))
-    return false;
-  if (
-    file.webkitRelativePath.includes("/target/") ||
-    file.webkitRelativePath.includes("/vendor/") ||
-    file.webkitRelativePath.includes("/tools/") ||
-    file.webkitRelativePath.includes("/lib/")
-  )
-    return false;
+  const path = (file.webkitRelativePath || file.name).replace(/\\/g, "/");
+  const pathSegments = path.split("/");
+  const fileName = pathSegments[pathSegments.length - 1]?.toLowerCase() ?? "";
+
+  if (pathSegments.includes(".git") || pathSegments.includes(".github")) return false;
+  if (fileName.startsWith(".env")) return false;
   return true;
 };
 
@@ -126,11 +144,84 @@ const FolderStep: React.FC<{
   }, []);
 
   const mutation = useMutation({
-    mutationFn: async (data: UploadCodeFolderFormValues) =>
-      codeActions.contractUploadFolder(project.team.slug, project.id, data).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
+    mutationFn: async (data: UploadCodeFolderFormValues): Promise<FolderUploadResponse> => {
+      const [apiBaseUrl, signingToken] = await Promise.all([
+        authActions.getBaseUrl(),
+        tokenActions
+          .getSigningToken(project.team.slug, {
+            project_id: project.id,
+            parent_id: data.parent_id,
+          })
+          .then((r) => {
+            if (!r.ok) throw r;
+            return r.data;
+          }),
+      ]);
+
+      const toInvalidate: QueryKey[] = [
+        [QUERY_KEYS.ANALYSES],
+        [QUERY_KEYS.CODES, project.team.slug],
+      ];
+      const searchParams = new URLSearchParams({ signing_key: signingToken });
+      if (data.parent_id) {
+        toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+      }
+      const uploadUrl = `${apiBaseUrl}/codes/create/folder?${searchParams.toString()}`;
+
+      const uploadHeaders: HeadersInit = {
+        "Content-Type": "application/zip",
+      };
+
+      let response: Response;
+      try {
+        if (supportsRequestStreaming()) {
+          const streamingRequestInit = {
+            method: "POST",
+            headers: uploadHeaders,
+            // body: data.zip.stream(),
+            body: data.zip,
+            // duplex: "half" as const,
+          } as unknown as RequestInit;
+
+          response = await fetch(uploadUrl, streamingRequestInit);
+        } else {
+          response = await fetch(uploadUrl, {
+            method: "POST",
+            headers: uploadHeaders,
+            body: data.zip,
+          });
+        }
+      } catch (err) {
+        console.log(err);
+        throw err;
+      }
+
+      const requestId = response.headers.get("bevor-request-id") ?? "";
+      let responseData: unknown = null;
+      try {
+        responseData = await response.json();
+      } catch {
+        responseData = null;
+      }
+
+      if (!response.ok) {
+        throw {
+          ok: false as const,
+          error: responseData ?? { message: "Failed to upload folder" },
+          requestId,
+        };
+      }
+
+      if (!responseData || typeof responseData !== "object") {
+        throw {
+          ok: false as const,
+          error: { message: "Invalid upload response from API" },
+          requestId,
+        };
+      }
+
+      return { ...(responseData as Omit<FolderUploadResponse, "toInvalidate">), toInvalidate };
+    },
     onMutate: () => {
       updateFormState({ type: "SET_ERRORS", errors: {} });
       toastId.current = toast.loading("Uploading code...");
