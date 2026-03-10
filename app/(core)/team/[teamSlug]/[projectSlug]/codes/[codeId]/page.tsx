@@ -1,6 +1,7 @@
 import { chatActions, codeActions, userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import CodeVersionSubnav from "@/components/subnav/code-version";
+import CollapsibleChatPanel from "@/components/views/chat/code-panel";
 import CodeMetadata from "@/components/views/code/metadata";
 import SourcesViewer from "@/components/views/code/sources-viewer";
 import { getQueryClient } from "@/lib/config/query";
@@ -10,7 +11,6 @@ import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import CollapsibleChatPanel from "./collapsible-chat-panel";
 
 export const dynamic = "force-dynamic"; // Or 'auto' if you want caching
 export const revalidate = 0; // Disable ISR if not needed

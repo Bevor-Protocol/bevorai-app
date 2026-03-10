@@ -1,15 +1,22 @@
 import { tokenActions } from "@/actions/bevor";
-import axios from "axios";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 // Protected routes that require authentication
 const publicRoutes = ["/shared", "/sign-in", "/not-found", "/404", "/500"];
 
-const forceLogout = async (request: NextRequest): Promise<NextResponse> => {
+const forceLogout = async (
+  request: NextRequest,
+  reason: string = "unknown",
+): Promise<NextResponse> => {
   const refreshToken = request.cookies.get("bevor-refresh-token");
+  console.warn("[auth] forceLogout", {
+    reason,
+    path: request.nextUrl.pathname,
+    hasRefreshToken: !!refreshToken?.value,
+  });
   if (refreshToken) {
-    await tokenActions.revokeToken(refreshToken.value);
+    await tokenActions.revokeToken(refreshToken.value, `proxy.forceLogout:${reason}`);
   }
 
   const logoutRedirect = NextResponse.redirect(new URL("/sign-in", request.url));
@@ -64,7 +71,7 @@ const attemptRefresh = async (
     if (isSignIn) {
       return response;
     }
-    return forceLogout(request);
+    return forceLogout(request, "refresh_failed");
   }
 };
 
@@ -95,41 +102,29 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
   // do NOT use the "use server" equivalent. It isn't accessible in middleware edge context
 
   if (!isPublicRoute) {
-    try {
-      await tokenActions.validateToken();
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        if (err.response?.data) {
-          switch (err.response.data.code) {
-            case "invalid_team_membership": {
-              // either attempting access to a team they don't belong to, or the slug was changed
-              // and they weren't aware. In either instance, route to / and let that logic decide what to do.
-              const teamsRedirect = NextResponse.redirect(new URL("/", request.url));
-              teamsRedirect.cookies.delete("bevor-recent-team");
-              return teamsRedirect;
-            }
-            case "session_token_expired":
-              return await attemptRefresh(request, response);
-            default:
-              // session_revoked, session_token_invalid, or other
-              return forceLogout(request);
-          }
-        } else {
-          return forceLogout(request);
+    const validationResult = await tokenActions.validateToken();
+    if (!validationResult.ok) {
+      const errorCode = validationResult.error?.code;
+      switch (errorCode) {
+        case "invalid_team_membership": {
+          // either attempting access to a team they don't belong to, or the slug was changed
+          // and they weren't aware. In either instance, route to / and let that logic decide what to do.
+          const teamsRedirect = NextResponse.redirect(new URL("/", request.url));
+          teamsRedirect.cookies.delete("bevor-recent-team");
+          return teamsRedirect;
         }
-      } else {
-        // some unexpected error;
-        return forceLogout(request);
+        case "session_token_expired":
+          return await attemptRefresh(request, response);
+        default:
+          // session_revoked, session_token_invalid, or other
+          return forceLogout(request, `validate_failed:${errorCode ?? "unknown"}`);
       }
     }
   }
 
   if (pathname.startsWith("/sign-in") && !searchParams.has("method")) {
-    try {
-      await tokenActions.validateToken().then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      });
+    const validationResult = await tokenActions.validateToken();
+    if (validationResult.ok) {
       // If we got here, they're already logged in → redirect them away
       const lastTeam = request.cookies.get("bevor-recent-team");
       if (lastTeam) {
@@ -137,7 +132,7 @@ const proxy = async (request: NextRequest): Promise<NextResponse> => {
       } else {
         return NextResponse.redirect(new URL("/", request.url));
       }
-    } catch {
+    } else {
       return await attemptRefresh(request, response, true);
     }
   }

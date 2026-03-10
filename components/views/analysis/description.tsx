@@ -3,6 +3,7 @@
 import { analysisActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -13,13 +14,14 @@ import { AnalysisNodeSchemaI, FindingSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
 const FindingDescription: React.FC<{
   teamSlug: string;
   nodeId: string;
   finding: FindingSchemaI;
-  setSelectedFinding: React.Dispatch<React.SetStateAction<FindingSchemaI | undefined>>;
+  setSelectedFinding: (finding?: FindingSchemaI) => void;
 }> = ({ teamSlug, nodeId, finding, setSelectedFinding }) => {
   const [tab, setTab] = useState("description");
   const [feedbackText, setFeedbackText] = useState<string>("");
@@ -85,8 +87,8 @@ const FindingDescription: React.FC<{
   };
 
   return (
-    <div className={cn("border rounded-lg overflow-hidden flex flex-col h-[250px]", "finding")}>
-      <div className="flex justify-between items-center">
+    <div className="flex flex-col h-full min-h-0">
+      <div className="flex items-center justify-between shrink-0 px-4 py-2">
         <Subnav className="w-fit px-0">
           <SubnavButton
             isActive={tab === "description"}
@@ -110,78 +112,86 @@ const FindingDescription: React.FC<{
             Feedback
           </SubnavButton>
         </Subnav>
-        <Badge variant="outline" size="sm" className="mr-2">
+        <Badge variant="outline" size="sm">
           {truncateId(finding.id)}
         </Badge>
       </div>
-      {tab === "description" && (
-        <div className="space-y-4 p-4">
-          {finding.explanation && <p className="text-sm leading-relaxed">{finding.explanation}</p>}
-          {finding.reference && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase">Reference</h4>
-              <p className="text-sm leading-relaxed">{finding.reference}</p>
-            </div>
-          )}
-          {!finding.explanation && !finding.reference && (
-            <p className="text-sm text-muted-foreground">No description or reference available.</p>
-          )}
-        </div>
-      )}
-      {tab === "recommendation" && (
-        <div className="space-y-2 px-4 py-2">
-          {finding.recommendation ? (
-            <p className="text-sm leading-relaxed">{finding.recommendation}</p>
-          ) : (
-            <p className="text-sm">No recommendation available.</p>
-          )}
-        </div>
-      )}
-      {tab === "feedback" && (
-        <div className="space-y-4 px-4 py-2">
-          <Textarea
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            placeholder="Enter your feedback..."
-            rows={4}
-          />
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => handleSubmitFeedback(finding.id, true)}
-                disabled={submitFeedbackMutation.isPending}
-              >
-                <ThumbsUp
-                  className={cn(
-                    "size-4 text-muted-foreground hover:text-foreground",
-                    pendingVerification === true && "text-green-400",
-                  )}
-                />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => handleSubmitFeedback(finding.id, false)}
-                disabled={submitFeedbackMutation.isPending}
-              >
-                <ThumbsDown
-                  className={cn(
-                    "size-4 text-muted-foreground hover:text-foreground",
-                    pendingVerification === false && "text-destructive",
-                  )}
-                />
-              </Button>
+      <ScrollArea className="flex-1 min-h-0">
+        {tab === "description" && (
+          <div className="p-4">
+            {finding.explanation && (
+              <ReactMarkdown className="markdown">{finding.explanation}</ReactMarkdown>
+            )}
+            {finding.reference && (
+              <div className="space-y-2 mt-4">
+                <h4 className="text-xs font-medium text-muted-foreground uppercase">Reference</h4>
+                <ReactMarkdown className="markdown">{finding.reference}</ReactMarkdown>
+              </div>
+            )}
+            {!finding.explanation && !finding.reference && (
+              <p className="text-sm text-muted-foreground">
+                No description or reference available.
+              </p>
+            )}
+          </div>
+        )}
+        {tab === "recommendation" && (
+          <div className="p-4">
+            {finding.recommendation ? (
+              <ReactMarkdown className="markdown">{finding.recommendation}</ReactMarkdown>
+            ) : (
+              <p className="text-sm">No recommendation available.</p>
+            )}
+          </div>
+        )}
+        {tab === "feedback" && (
+          <div className="p-4">
+            <div className="space-y-4">
+              <Textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                placeholder="Enter your feedback..."
+                rows={4}
+              />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleSubmitFeedback(finding.id, true)}
+                    disabled={submitFeedbackMutation.isPending}
+                  >
+                    <ThumbsUp
+                      className={cn(
+                        "size-4 text-muted-foreground hover:text-foreground",
+                        pendingVerification === true && "text-green-400",
+                      )}
+                    />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleSubmitFeedback(finding.id, false)}
+                    disabled={submitFeedbackMutation.isPending}
+                  >
+                    <ThumbsDown
+                      className={cn(
+                        "size-4 text-muted-foreground hover:text-foreground",
+                        pendingVerification === false && "text-destructive",
+                      )}
+                    />
+                  </Button>
+                </div>
+              </div>
+              {finding?.feedback && !feedbackText && (
+                <p className="text-xs text-muted-foreground italic">
+                  Current feedback: {finding.feedback}
+                </p>
+              )}
             </div>
           </div>
-          {finding?.feedback && !feedbackText && (
-            <p className="text-xs text-muted-foreground italic">
-              Current feedback: {finding.feedback}
-            </p>
-          )}
-        </div>
-      )}
+        )}
+      </ScrollArea>
     </div>
   );
 };

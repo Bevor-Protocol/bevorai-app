@@ -1,11 +1,14 @@
-import { analysisActions, codeActions, userActions } from "@/actions/bevor";
+import { analysisActions, chatActions, codeActions, userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import AnalysisSubnav from "@/components/subnav/analysis";
+import CollapsibleChatPanel from "@/components/views/chat/code-panel";
 import CodeMetadata from "@/components/views/code/metadata";
 import SourcesViewer from "@/components/views/code/sources-viewer";
 import { getQueryClient } from "@/lib/config/query";
+import { ChatProvider } from "@/providers/chat";
 import { CodeProvider } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
+import { extractChatsQuery } from "@/utils/query-params";
 import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
@@ -32,7 +35,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
       return r.data;
     });
 
-  const [, sources, user] = await Promise.all([
+  const [code, sources, user] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(analysis.code_version_id),
       queryFn: () =>
@@ -59,6 +62,21 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
     }),
   ]);
 
+  const chatQuery = extractChatsQuery({
+    project_slug: resolvedParams.projectSlug,
+    code_version_id: code.id,
+    chat_type: "code",
+  });
+
+  const chats = await queryClient.fetchQuery({
+    queryKey: generateQueryKey.chats(resolvedParams.teamSlug, chatQuery),
+    queryFn: () =>
+      chatActions.getChats(resolvedParams.teamSlug, chatQuery).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
   // Prefetch the initial source data so it's available immediately on the client
   let initialSourceId = source ?? null;
   if (initialSourceId) {
@@ -70,6 +88,8 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   if (!initialSourceId) {
     initialSourceId = sources.length ? sources[0].id : null;
   }
+
+  const initialChatId = chats && chats.results.length ? chats.results[0].id : null;
 
   let position: { start: number; end: number } | undefined;
   if (node) {
@@ -86,17 +106,34 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <CodeProvider
-        initialSourceId={initialSourceId}
-        initialPosition={position}
-        codeId={analysis.code_version_id}
+      <ChatProvider
         {...resolvedParams}
+        chatType="code"
+        initialChatId={initialChatId}
+        codeId={analysis.code_version_id}
       >
-        <Container subnav={<AnalysisSubnav />}>
-          <CodeMetadata userId={user.id} codeId={analysis.code_version_id} {...resolvedParams} />
-          <SourcesViewer {...resolvedParams} codeId={analysis.code_version_id} />
-        </Container>
-      </CodeProvider>
+        <CodeProvider
+          initialSourceId={initialSourceId}
+          initialPosition={position}
+          codeId={analysis.code_version_id}
+          {...resolvedParams}
+        >
+          <Container subnav={<AnalysisSubnav />} contain>
+            <CodeMetadata
+              userId={user.id}
+              codeId={analysis.code_version_id}
+              {...resolvedParams}
+              allowActions
+            />
+            <div className="flex flex-1 min-h-0 gap-4">
+              <div className="min-h-0 flex-1">
+                <SourcesViewer {...resolvedParams} codeId={analysis.code_version_id} />
+              </div>
+              <CollapsibleChatPanel codeId={code.id} {...resolvedParams} />
+            </div>
+          </Container>
+        </CodeProvider>
+      </ChatProvider>
     </HydrationBoundary>
   );
 };

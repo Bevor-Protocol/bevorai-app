@@ -28,7 +28,7 @@ const TeamCodesPage: AsyncComponent<ProjectPageProps> = async ({ params, searchP
     <Container subnav={<TeamSubnav />}>
       <div className="max-w-7xl mx-auto">
         <div className="border-b">
-          <div className="py-6 flex items-start justify-between">
+          <div className="p-6 flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-semibold mb-1">Code Versions</h1>
             </div>

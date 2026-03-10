@@ -64,7 +64,7 @@ export const AnalysisNodesView: React.FC<{
   const isEmpty = nodesQuery.data && nodesQuery.data.results.length === 0;
 
   return (
-    <div className="flex flex-col space-y-6">
+    <div className="flex flex-col">
       <AnalysisNodeFilters
         teamSlug={teamSlug}
         filters={filters}

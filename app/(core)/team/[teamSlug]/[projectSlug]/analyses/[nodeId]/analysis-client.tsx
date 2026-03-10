@@ -2,12 +2,12 @@
 
 import { analysisActions } from "@/actions/bevor";
 import AnalysisHolder from "@/components/views/analysis/holder";
+import CollapsibleChatPanel from "@/components/views/chat/analysis-panel";
 import { useChat } from "@/providers/chat";
 import { generateQueryKey } from "@/utils/constants";
 import { FindingSchemaI } from "@/utils/types";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import React, { useMemo } from "react";
-import CollapsibleChatPanel from "./collapsible-chat-panel";
 
 interface AnalysisClientProps {
   teamSlug: string;

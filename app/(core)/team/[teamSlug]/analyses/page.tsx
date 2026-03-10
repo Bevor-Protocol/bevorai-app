@@ -30,7 +30,7 @@ const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
     <Container subnav={<TeamSubnav />}>
       <div className="max-w-7xl mx-auto">
         <div className="border-b">
-          <div className="px-6 py-6 flex items-start justify-between">
+          <div className="p-6 flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-semibold mb-1">Analyses</h1>
               <p className="text-sm text-muted-foreground">
@@ -41,13 +41,11 @@ const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
             <AnalysisCreate {...resolvedParams} />
           </div>
         </div>
-        <div className="px-6 py-6">
-          <AnalysisNodesView
-            initialQuery={initialQuery}
-            defaultQuery={defaultQuery}
-            {...resolvedParams}
-          />
-        </div>
+        <AnalysisNodesView
+          initialQuery={initialQuery}
+          defaultQuery={defaultQuery}
+          {...resolvedParams}
+        />
       </div>
     </Container>
   );

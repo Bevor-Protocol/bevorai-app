@@ -46,6 +46,10 @@ export interface FindingSchemaI {
   validated_at?: Date;
   invalidated_at?: Date;
   feedback?: string;
+  locations: {
+    code_version_node_id: string;
+    field_name?: string;
+  }[];
 }
 
 // users "own" nodes, denoted by the "is_owner". This field is what will impact
@@ -150,6 +154,17 @@ export interface NodeSchemaI {
   signature?: string;
   path: string;
   is_auditable: boolean;
+  fields_metadata: {
+    name: string;
+    type?: string;
+    value?: string;
+    mutability?: string;
+    discriminant?: string;
+    constraints: {
+      name: string;
+      value?: string;
+    }[];
+  }[];
 }
 
 export interface NodeWithContentSchemaI extends NodeSchemaI {

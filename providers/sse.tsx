@@ -234,6 +234,18 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return (): void => disconnect();
   }, [disconnect]);
 
+  useEffect(() => {
+    const closeConnection = (): void => {
+      disconnect();
+    };
+    window.addEventListener("beforeunload", closeConnection);
+    window.addEventListener("pagehide", closeConnection);
+    return (): void => {
+      window.removeEventListener("beforeunload", closeConnection);
+      window.removeEventListener("pagehide", closeConnection);
+    };
+  }, [disconnect]);
+
   const subscribe = useCallback(
     (eventType: EventType, claim: ClaimType, onMessage: (payload: SSEPayload) => void): string => {
       const subscriptionId = `sub-${Date.now()}-${Math.random()}`;

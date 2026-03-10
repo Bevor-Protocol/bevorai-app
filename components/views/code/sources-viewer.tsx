@@ -39,58 +39,58 @@ const nodeTypeGroups = [
   {
     key: "contracts",
     title: "Contracts",
-    nodeType: "ContractDefinition",
+    nodeTypes: ["contract_declaration"],
   },
   {
     key: "programs",
     title: "Programs",
-    nodeType: "ProgramDefinition",
+    nodeTypes: ["ProgramDefinition"],
   },
   {
     key: "functions",
     title: "Functions",
-    nodeType: "FunctionDefinition",
+    nodeTypes: ["function_definition", "constructor_definition"],
   },
   {
     key: "modifiers",
     title: "Modifiers",
-    nodeType: "ModifierDefinition",
+    nodeTypes: ["modifier_definition"],
   },
   {
     key: "variables",
     title: "State Variables",
-    nodeType: "VariableDeclaration",
+    nodeTypes: ["state_variable_declaration"],
   },
   {
     key: "structs",
     title: "Structs",
-    nodeType: "StructDefinition",
+    nodeTypes: ["struct_declaration"],
   },
   {
     key: "errors",
     title: "Errors",
-    nodeType: "ErrorDefinition",
+    nodeTypes: ["error_declaration"],
   },
   {
     key: "events",
     title: "Events",
-    nodeType: "EventDefinition",
+    nodeTypes: ["event_definition"],
   },
   {
     key: "accounts",
     title: "Accounts",
-    nodeType: "AccountDefinition",
+    nodeTypes: ["AccountDefinition"],
   },
   {
     key: "contexts",
     title: "Contexts",
-    nodeType: "ContextDefinition",
+    nodeTypes: ["ContextDefinition"],
   },
-  // {
-  //   key: "constraints",
-  //   title: "Constraints",
-  //   nodeType: "ConstraintDefinition",
-  // },
+  {
+    key: "modules",
+    title: "Modules",
+    nodeTypes: ["ModuleDeclaration"],
+  },
 ];
 
 const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
@@ -112,12 +112,10 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
       }),
   });
 
-  console.log(nodesQuery.data);
-
   const nodeGroups = useMemo(() => {
     if (!nodesQuery.data) return [];
     return nodeTypeGroups.map((group) => {
-      const values = nodesQuery.data.filter((n) => n.node_type === group.nodeType);
+      const values = nodesQuery.data.filter((n) => group.nodeTypes.includes(n.node_type));
       return {
         ...group,
         values,

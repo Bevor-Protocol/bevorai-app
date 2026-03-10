@@ -116,7 +116,7 @@ export const logout = async (): ApiResponse<void> => {
     cookieStore.delete("bevor-recent-team");
     redirect("/sign-in");
   }
-  return revokeToken(refreshToken).then(() => {
+  return revokeToken(refreshToken, "authActions.logout").then(() => {
     cookieStore.delete("bevor-token");
     cookieStore.delete("bevor-refresh-token");
     cookieStore.delete("bevor-recent-team");

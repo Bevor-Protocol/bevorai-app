@@ -1,6 +1,8 @@
 "use client";
 
 import { analysisActions, codeActions } from "@/actions/bevor";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generateQueryKey } from "@/utils/constants";
 import { FindingSchemaI } from "@/utils/types";
@@ -19,9 +21,21 @@ const AnalysisHolder: React.FC<{
   initialFinding?: FindingSchemaI;
   onAddFindingToContext?: (finding: FindingSchemaI) => void;
 }> = ({ teamSlug, projectSlug, nodeId, initialFinding, onAddFindingToContext }) => {
-  const [selectedFinding, setSelectedFinding] = useState<FindingSchemaI | undefined>(
+  const [selectedFinding, setSelectedFindingState] = useState<FindingSchemaI | undefined>(
     initialFinding,
   );
+  const [selectedNodeId, setSelectedNodeId] = useState<string | undefined>(
+    initialFinding?.code_version_node_id,
+  );
+  const setSelectedFinding: React.Dispatch<React.SetStateAction<FindingSchemaI | undefined>> = (
+    value,
+  ) => {
+    setSelectedFindingState((prev) => {
+      const nextFinding = typeof value === "function" ? value(prev) : value;
+      setSelectedNodeId(nextFinding?.code_version_node_id);
+      return nextFinding;
+    });
+  };
 
   const { data: version, isLoading } = useSuspenseQuery({
     queryKey: generateQueryKey.analysisDetailed(nodeId),
@@ -33,15 +47,13 @@ const AnalysisHolder: React.FC<{
   });
 
   const nodeQuery = useQuery({
-    queryKey: generateQueryKey.codeNode(selectedFinding?.code_version_node_id ?? ""),
+    queryKey: generateQueryKey.codeNode(selectedNodeId ?? ""),
     queryFn: () =>
-      codeActions
-        .getNode(teamSlug, version.code_version_id, selectedFinding?.code_version_node_id ?? "")
-        .then((r) => {
-          if (!r.ok) throw r;
-          return r.data;
-        }),
-    enabled: !!selectedFinding,
+      codeActions.getNode(teamSlug, version.code_version_id, selectedNodeId ?? "").then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    enabled: !!selectedNodeId,
   });
 
   useEffect(() => {
@@ -69,27 +81,23 @@ const AnalysisHolder: React.FC<{
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Findings</h2>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6 min-w-0">
-          <Skeleton className="h-full" />
-          <Skeleton className="h-full" />
-        </div>
+      <div className="flex h-full gap-4">
+        <Skeleton className="w-80 h-full" />
+        <Skeleton className="flex-1 h-full" />
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 min-w-0 max-w-full h-full">
+    <div className="flex h-full max-w-full mx-auto w-full gap-4">
       <AnalysisScopes
         version={version}
         selectedFinding={selectedFinding}
         onSelectFinding={setSelectedFinding}
       />
+
       {!selectedFinding ? (
-        <div className="flex items-center justify-center text-center py-12">
+        <div className="flex-1 flex items-center justify-center text-center py-12">
           <div>
             <Shield className="size-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">No Findings</h3>
@@ -97,23 +105,41 @@ const AnalysisHolder: React.FC<{
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-2 w-full h-full min-h-0 overflow-hidden">
-          <FindingMetadata
-            teamSlug={teamSlug}
-            projectSlug={projectSlug}
-            nodeId={nodeId}
-            finding={selectedFinding}
-            nodeQuery={nodeQuery}
-            onAddFindingToContext={onAddFindingToContext}
-          />
-          <AnalysisCodeSnippet nodeQuery={nodeQuery} />
-          <FindingDescription
-            teamSlug={teamSlug}
-            nodeId={nodeId}
-            finding={selectedFinding}
-            setSelectedFinding={setSelectedFinding}
-          />
-        </div>
+        <ResizablePanelGroup direction="vertical" className="flex-1 min-h-0">
+          <ResizablePanel defaultSize={50} minSize={30}>
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between p-4 border-b shrink-0">
+                <FindingMetadata
+                  teamSlug={teamSlug}
+                  projectSlug={projectSlug}
+                  nodeId={nodeId}
+                  finding={selectedFinding}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNodeId={setSelectedNodeId}
+                  nodeQuery={nodeQuery}
+                  onAddFindingToContext={onAddFindingToContext}
+                />
+              </div>
+              <ScrollArea className="flex-1 min-h-0">
+                <AnalysisCodeSnippet nodeQuery={nodeQuery} />
+              </ScrollArea>
+            </div>
+          </ResizablePanel>
+
+          <ResizableHandle />
+
+          {/* Details panel */}
+          <ResizablePanel defaultSize={50} minSize={30}>
+            <div className="flex flex-col h-full">
+              <FindingDescription
+                teamSlug={teamSlug}
+                nodeId={nodeId}
+                finding={selectedFinding}
+                setSelectedFinding={setSelectedFinding}
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       )}
     </div>
   );

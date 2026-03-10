@@ -39,21 +39,16 @@ interface SourceFile {
 
 const isValidFile = (file: File): boolean => {
   if (file.webkitRelativePath.includes("node_modules")) return false;
-  if (file.name.endsWith(".sol") || file.name.endsWith(".rs")) return true;
-  const validNames = [
-    "foundry.toml",
-    "remappings.txt",
-    "package.json",
-    "yarn.lock",
-    "package-lock.json",
-    ".gitmodules",
-    "Cargo.toml",
-    "Anchor.toml",
-    "Cargo.lock",
-    "Cargo.lock.bak",
-  ];
-  if (validNames.includes(file.name)) return true;
-  return false;
+  if (file.webkitRelativePath.includes(".git") || file.webkitRelativePath.includes(".github"))
+    return false;
+  if (
+    file.webkitRelativePath.includes("/target/") ||
+    file.webkitRelativePath.includes("/vendor/") ||
+    file.webkitRelativePath.includes("/tools/") ||
+    file.webkitRelativePath.includes("/lib/")
+  )
+    return false;
+  return true;
 };
 
 const FolderStep: React.FC<{

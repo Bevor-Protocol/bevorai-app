@@ -4,14 +4,24 @@ import api from "@/lib/api";
 import { ApiResponse, TokenIssueResponse } from "@/utils/types";
 
 export const validateToken = async (): ApiResponse<{ user_id: string }> => {
-  return api.get("/token/validate").then((response) => {
-    const requestId = response.headers["bevor-request-id"] ?? "";
-    return {
-      ok: true as const,
-      data: response.data,
-      requestId,
-    };
-  });
+  return api
+    .get("/token/validate")
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const refreshToken = async (refreshToken: string): ApiResponse<TokenIssueResponse> => {
@@ -28,14 +38,38 @@ export const refreshToken = async (refreshToken: string): ApiResponse<TokenIssue
     });
 };
 
-export const revokeToken = async (refreshToken: string): ApiResponse<boolean> => {
+export const revokeToken = async (
+  refreshToken: string,
+  source: string = "unknown",
+): ApiResponse<boolean> => {
+  console.log("[auth] revokeToken called", { source });
   return api
-    .post("/token/revoke", { refresh_token: refreshToken }, { headers: { skip_token: true } })
+    .post(
+      "/token/revoke",
+      { refresh_token: refreshToken },
+      {
+        headers: { skip_token: true, "x-bevor-revoke-source": source },
+      },
+    )
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
         ok: true as const,
         data: response.data.success,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      console.error("[auth] revokeToken failed", {
+        source,
+        requestId,
+        code: error.response?.data?.code,
+        message: error.response?.data?.message ?? error.message,
+      });
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
         requestId,
       };
     });

@@ -29,6 +29,7 @@ import AnalysisScopes, {
   getSeverityBadgeClasses,
   levelOrder,
 } from "@/components/views/analysis/scopes";
+import CollapsibleChatPanel from "@/components/views/chat/analysis-panel";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
@@ -44,7 +45,6 @@ import { Plus, Shield } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { codeToHtml } from "shiki";
 import { toast } from "sonner";
-import CollapsibleChatPanel from "./collapsible-chat-panel";
 
 export const getScopeForDraftFinding = (
   finding: DraftFindingSchemaI,

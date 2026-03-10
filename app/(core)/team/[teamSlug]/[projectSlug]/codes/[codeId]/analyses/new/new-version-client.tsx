@@ -531,6 +531,8 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     });
   };
 
+  console.log(analysis);
+
   if (analysis) {
     return (
       <AnalysisStatusDisplay
@@ -542,11 +544,16 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     );
   }
 
+  const handleDeselectAll = (): void => {
+    setSelectedNodes([]);
+    setScopeStrategy("explicit");
+  };
+
   return (
     <>
       <ScopeSelectionControls
         selectedNodes={selectedNodes}
-        onDeselectAll={() => setSelectedNodes([])}
+        onDeselectAll={handleDeselectAll}
         onSubmit={handleSubmit}
         mutation={createAnalysisMutation}
         canSubmit={canSubmit}
@@ -554,11 +561,11 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
         onScopeStrategyChange={setScopeStrategy}
         hasParentVersion={!!parentAnalysis}
       />
-      <div className="py-2 sticky top-0 z-10 bg-background border border-background w-full h-subheader">
-        <ScrollArea>
-          <div className="flex gap-4 items-center justify-start">
+      <div className="pt-2 sticky top-0 z-10 bg-background border border-background w-full">
+        <ScrollArea className="pb-4">
+          <div className="flex gap-4 items-center justify-start h-subheader">
             <div className="text-xs font-medium text-muted-foreground flex gap-1 items-center">
-              <span>Selected scopes:</span>
+              <span className="whitespace-nowrap">Selected scopes:</span>
               <Tooltip>
                 <TooltipTrigger>
                   <InfoIcon className="size-3" />

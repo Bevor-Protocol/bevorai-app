@@ -138,7 +138,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
       setIsExpanded(true);
       setShowSettings(false);
     },
-    onError: () => {
+    onError: (err) => {
+      console.log(err);
       toast.error("Failed to create chat");
     },
   });

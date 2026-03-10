@@ -237,7 +237,7 @@ const CodeMetadata: React.FC<{
               isFromCurrentCodeVersion ? (
                 <Button asChild>
                   <Link
-                    href={`/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}`}
+                    href={`/team/${teamSlug}/${projectSlug}/codes/${codeId}/analyses/new`}
                     onClick={() => setAnalyzeDialogOpen(false)}
                   >
                     Start from scratch
@@ -247,7 +247,7 @@ const CodeMetadata: React.FC<{
                 <>
                   <Button variant="outline" asChild>
                     <Link
-                      href={`/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}`}
+                      href={`/team/${teamSlug}/${projectSlug}/codes/${codeId}/analyses/new`}
                       onClick={() => setAnalyzeDialogOpen(false)}
                     >
                       Start from scratch
@@ -255,7 +255,7 @@ const CodeMetadata: React.FC<{
                   </Button>
                   <Button asChild>
                     <Link
-                      href={`/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}&parentVersionId=${candidateParents[0]?.id}`}
+                      href={`/team/${teamSlug}/${projectSlug}/codes/${codeId}/analyses/new?parentVersionId=${candidateParents[0]?.id}`}
                       onClick={() => setAnalyzeDialogOpen(false)}
                     >
                       Create with parent
@@ -268,8 +268,8 @@ const CodeMetadata: React.FC<{
                 <Link
                   href={
                     selectedParentId
-                      ? `/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}&parentVersionId=${selectedParentId}`
-                      : `/team/${teamSlug}/${projectSlug}/analyses/new?codeVersionId=${version.id}`
+                      ? `/team/${teamSlug}/${projectSlug}/codes/${codeId}/analyses/new?parentVersionId=${selectedParentId}`
+                      : `/team/${teamSlug}/${projectSlug}/codes/${codeId}/analyses/new`
                   }
                   onClick={() => setAnalyzeDialogOpen(false)}
                 >

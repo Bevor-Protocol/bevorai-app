@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSSE } from "@/providers/sse";
 import { AnalysisNodeSchemaI } from "@/utils/types";
 import { AlertCircle, CheckCircle2, Eye, Loader2, XCircle } from "lucide-react";
@@ -75,41 +76,45 @@ const AnalysisStatusDisplay: React.FC<{
   }, [analysis.id, toastRefId, teamSlug, projectSlug, router, registerCallback]);
 
   return (
-    <div className="flex flex-col gap-4 my-8 max-w-5xl m-auto">
-      <div className="flex items-center gap-2 justify-between">
-        <div className="flex gap-2 items-center pl-3">
-          {getStatusIcon(analysis.status)}
-          <span className="text-lg font-semibold">
-            {analysis.status.charAt(0).toUpperCase() + analysis.status.slice(1)}
-          </span>
-          <span>total findings: {analysis.n_findings}</span>
-        </div>
-        <Button asChild className="sticky top-10 z-10" size="lg">
-          <Link href={`/team/${teamSlug}/${projectSlug}/analyses/${analysis.id}`}>
-            <Eye />
-            View Results
-          </Link>
-        </Button>
-      </div>
-      <div className="space-y-2">
-        {analysis.scopes.map((scope) => {
-          const nFindings = getNFindingsPerScope(scope.code_version_node_id);
-          return (
-            <div key={scope.id} className="flex items-center gap-3 p-3 rounded-lg border">
-              {getStatusIcon(scope.status)}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">{scope.name}</p>
-                <p className="text-xs text-muted-foreground font-mono truncate">
-                  {scope.signature}
-                </p>
-              </div>
-              <Badge variant="outline" size="sm" className="shrink-0">
-                {nFindings} finding{nFindings !== 1 ? "s" : ""}
-              </Badge>
+    <div className="min-h-0 max-w-5xl mx-auto w-full flex flex-col h-full">
+      <ScrollArea className="h-0 flex-1 overflow-scroll">
+        <div className="flex flex-col gap-4 pr-4">
+          <div className="flex items-center gap-2 justify-between py-4">
+            <div className="flex gap-2 items-center">
+              {getStatusIcon(analysis.status)}
+              <span className="text-lg font-semibold">
+                {analysis.status.charAt(0).toUpperCase() + analysis.status.slice(1)}
+              </span>
+              <span>total findings: {analysis.n_findings}</span>
             </div>
-          );
-        })}
-      </div>
+            <Button asChild size="lg">
+              <Link href={`/team/${teamSlug}/${projectSlug}/analyses/${analysis.id}`}>
+                <Eye />
+                View Results
+              </Link>
+            </Button>
+          </div>
+          <div className="space-y-2 w-full max-w-5xl">
+            {analysis.scopes.map((scope) => {
+              const nFindings = getNFindingsPerScope(scope.code_version_node_id);
+              return (
+                <div key={scope.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                  {getStatusIcon(scope.status)}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{scope.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono truncate">
+                      {scope.signature}
+                    </p>
+                  </div>
+                  <Badge variant="outline" size="sm" className="shrink-0">
+                    {nFindings} finding{nFindings !== 1 ? "s" : ""}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 };

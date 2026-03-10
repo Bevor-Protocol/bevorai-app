@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
   try {
     const refreshToken = request.cookies.get("bevor-refresh-token");
+    const revokeSource = request.headers.get("x-bevor-revoke-source") ?? "api.token.revoke.route";
     // don't redirect to sign-in. We need to logout of the IDP on the client first.
     const response = NextResponse.json({ success: true }, { status: 202 });
 
@@ -11,7 +12,12 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
       return response;
     }
 
-    await tokenActions.revokeToken(refreshToken.value).then((r) => {
+    console.log("[auth] /api/token/revoke invoked", {
+      revokeSource,
+      hasRefreshToken: !!refreshToken?.value,
+    });
+
+    await tokenActions.revokeToken(refreshToken.value, revokeSource).then((r) => {
       if (!r.ok) throw r;
       return r.data;
     });
