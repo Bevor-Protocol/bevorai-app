@@ -1,6 +1,7 @@
 "use client";
 
 import { analysisActions, codeActions } from "@/actions/bevor";
+import { ONBOARDING_ITEMS, useOnboarding } from "@/hooks/useOnboarding";
 import ShikiViewer from "@/components/shiki-viewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -330,12 +331,13 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   parentAnalysis,
 }) => {
   const queryClient = useQueryClient();
+  const { completeItem } = useOnboarding();
 
   const toastRefId = useRef<string | undefined>(undefined);
 
   const [selectedNodes, setSelectedNodes] = useState<NodeSchemaI[]>([]);
   const [scopeStrategy, setScopeStrategy] = useState<"all" | "explicit" | "parent">(
-    parentAnalysis ? "parent" : "explicit",
+    parentAnalysis ? "parent" : "all",
   );
 
   const { data: sources } = useSuspenseQuery({
@@ -378,6 +380,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
+      completeItem(ONBOARDING_ITEMS.RUN_ANALYSIS);
       toastRefId.current = id;
       toast.loading("Analyzing functions...", { id });
     },

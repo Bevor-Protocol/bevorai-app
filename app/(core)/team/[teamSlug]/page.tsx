@@ -1,5 +1,7 @@
 import { teamActions } from "@/actions/bevor";
 import Container from "@/components/container";
+import { OnboardingChecklist } from "@/components/onboarding/checklist";
+import { OnboardingQuestionnaire } from "@/components/onboarding/questionnaire";
 import TeamSubnav from "@/components/subnav/team";
 import { Icon } from "@/components/ui/icon";
 import { getQueryClient } from "@/lib/config/query";
@@ -18,7 +20,7 @@ interface TeamPageProps {
 const TeamPage: AsyncComponent<TeamPageProps> = async ({ params, searchParams }) => {
   const queryClient = getQueryClient();
   const { teamSlug } = await params;
-  await searchParams;
+  const { is_signup } = await searchParams;
 
   const team = await queryClient.fetchQuery({
     queryKey: generateQueryKey.team(teamSlug),
@@ -31,6 +33,7 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params, searchParams })
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      <OnboardingQuestionnaire isSignup={is_signup === "true"} />
       <Container subnav={<TeamSubnav />}>
         <div className="max-w-7xl mx-auto py-8">
           <div className="border-b pb-6">
@@ -53,11 +56,14 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params, searchParams })
           </div>
           <div className="py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
             <div>
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold mb-4">Projects</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Projects</h3>
                 <CreateProjectButton teamSlug={teamSlug} />
               </div>
-              <ProjectsSection teamSlug={teamSlug} />
+              <div className="space-y-4">
+                <OnboardingChecklist teamSlug={teamSlug} />
+                <ProjectsSection teamSlug={teamSlug} />
+              </div>
             </div>
             <div className="min-w-0">
               <TeamActivities teamSlug={teamSlug} />

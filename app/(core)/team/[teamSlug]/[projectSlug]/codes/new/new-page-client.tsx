@@ -1,6 +1,7 @@
 "use client";
 import RepoUrlStep from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/(steps)/repo";
 import { Button } from "@/components/ui/button";
+import { ONBOARDING_ITEMS, useOnboarding } from "@/hooks/useOnboarding";
 import { useSSE } from "@/providers/sse";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { MoveLeft } from "lucide-react";
@@ -23,9 +24,11 @@ const Steps: React.FC<{
   const unregisterRef = React.useRef<() => void | undefined>(undefined);
 
   const { registerCallback } = useSSE();
+  const { completeItem } = useOnboarding();
 
   const handleSuccess = React.useCallback(
     (id: string) => {
+      completeItem(ONBOARDING_ITEMS.UPLOAD_CODE);
       unregisterRef.current = registerCallback("code", "team", id, (payload) => {
         if (payload.data.status === "processing") {
           sseToastId.current = toast.loading("Processing code...");
@@ -45,7 +48,7 @@ const Steps: React.FC<{
         }
       });
     },
-    [registerCallback],
+    [registerCallback, completeItem],
   );
 
   React.useEffect(() => {
