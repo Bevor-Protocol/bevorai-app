@@ -44,21 +44,6 @@ type FolderUploadResponse = {
   toInvalidate: QueryKey[];
 };
 
-const supportsRequestStreaming = (): boolean => {
-  try {
-    // Browser support for streaming request bodies requires `duplex: "half"`.
-    // TS DOM typings may not include `duplex` in all environments, so we cast here.
-    new Request("https://example.com", {
-      method: "POST",
-      body: new ReadableStream(),
-      duplex: "half" as const,
-    } as RequestInit & { duplex: "half" });
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 const isValidFile = (file: File): boolean => {
   const path = (file.webkitRelativePath || file.name).replace(/\\/g, "/");
   const pathSegments = path.split("/");
@@ -93,6 +78,7 @@ const FolderStep: React.FC<{
   const sourceFilesRef = useRef<SourceFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<SourceFile | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const toastId = useRef<string | number>(undefined);
@@ -166,43 +152,17 @@ const FolderStep: React.FC<{
       if (data.parent_id) {
         toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
       }
-      const uploadUrl = `${apiBaseUrl}/codes/create/folder?${searchParams.toString()}`;
 
-      const uploadHeaders: HeadersInit = {
-        "Content-Type": "application/zip",
-      };
-
-      let response: Response;
-      try {
-        if (supportsRequestStreaming()) {
-          const streamingRequestInit = {
-            method: "POST",
-            headers: uploadHeaders,
-            // body: data.zip.stream(),
-            body: data.zip,
-            // duplex: "half" as const,
-          } as unknown as RequestInit;
-
-          response = await fetch(uploadUrl, streamingRequestInit);
-        } else {
-          response = await fetch(uploadUrl, {
-            method: "POST",
-            headers: uploadHeaders,
-            body: data.zip,
-          });
-        }
-      } catch (err) {
-        console.log(err);
-        throw err;
-      }
+      const response = await fetch(`${apiBaseUrl}/codes/create/folder?${searchParams.toString()}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/zip",
+        },
+        body: data.zip,
+      });
+      const responseData = await response.json();
 
       const requestId = response.headers.get("bevor-request-id") ?? "";
-      let responseData: unknown = null;
-      try {
-        responseData = await response.json();
-      } catch {
-        responseData = null;
-      }
 
       if (!response.ok) {
         throw {
