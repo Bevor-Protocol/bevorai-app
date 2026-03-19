@@ -11,6 +11,7 @@ import { generateQueryKey } from "@/utils/constants";
 import { ChatMessageI, FindingSchemaI } from "@/utils/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ChatEmptyState } from "./chat-empty-state";
@@ -46,6 +47,9 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const { selectedChatId, isMaximized } = useChat();
 
@@ -239,6 +243,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       let buffered = "";
       const decoder = new TextDecoder();
       let finalMessage = "";
+      const references: NonNullable<ChatMessageI["references"]> = [];
       let done = false;
 
       while (!done) {
@@ -262,6 +267,13 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
               }
               setApprovalContent(parsed.content);
               setStreamedContent("");
+            } else if (parsed.event_type === "reference") {
+              if (parsed.id && parsed.content) {
+                const alreadyExists = references.some((reference) => reference.id === parsed.id);
+                if (!alreadyExists) {
+                  references.push({ id: parsed.id, name: parsed.content });
+                }
+              }
             } else {
               setApprovalContent("");
               setPendingApprovalId(null);
@@ -293,6 +305,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           chat_role: "system",
           message: finalMessage,
           tools: [],
+          references: references.length ? references : undefined,
           code_version_id: chatQuery.data.code_version_id,
           analysis_node_id: chatQuery.data.analysis_node_id,
         };
@@ -388,6 +401,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
 
   const showEmptyState = chatMessageQuery.data?.length === 0 && !isLoading;
+  const handleReferenceClick = (nodeId: string): void => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set("node", nodeId);
+    router.push(`${pathname}?${nextParams.toString()}`);
+  };
 
   return (
     <div className={cn("flex flex-col bg-background grow min-h-0 min-w-0")}>
@@ -414,7 +432,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             >
               {chatMessageQuery.data?.map((message) => (
                 <div key={message.id} className="w-full">
-                  <Chat.Message role={message.chat_role} content={message.message} />
+                  <Chat.Message
+                    role={message.chat_role}
+                    content={message.message}
+                    references={message.references}
+                    onReferenceClick={handleReferenceClick}
+                  />
                 </div>
               ))}
               <ChatStreamingContent

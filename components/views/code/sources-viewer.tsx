@@ -35,11 +35,11 @@ interface SourcesViewerProps {
   codeId: string;
 }
 
-const nodeTypeGroups = [
+export const nodeTypeGroups = [
   {
     key: "contracts",
     title: "Contracts",
-    nodeTypes: ["contract_declaration"],
+    nodeTypes: ["contract_declaration", "library_declaration", "interface_declaration"],
   },
   {
     key: "programs",
@@ -122,6 +122,8 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
       };
     });
   }, [nodesQuery.data]);
+
+  console.log(nodeGroups);
 
   if (sources.length === 0) {
     return (

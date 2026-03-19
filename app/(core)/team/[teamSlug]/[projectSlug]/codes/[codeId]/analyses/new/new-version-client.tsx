@@ -27,6 +27,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import NodeSearch from "@/components/views/code/search";
+import { nodeTypeGroups } from "@/components/views/code/sources-viewer";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
 import { generateQueryKey } from "@/utils/constants";
@@ -115,44 +116,6 @@ const ScopeSelectionControls: React.FC<{
   );
 };
 
-const nodeTypeGroups = [
-  {
-    key: "contracts",
-    title: "Contracts",
-    nodeType: "ContractDefinition",
-  },
-  {
-    key: "functions",
-    title: "Functions",
-    nodeType: "FunctionDefinition",
-  },
-  {
-    key: "modifiers",
-    title: "Modifiers",
-    nodeType: "ModifierDefinition",
-  },
-  {
-    key: "variables",
-    title: "State Variables",
-    nodeType: "VariableDeclaration",
-  },
-  {
-    key: "structs",
-    title: "Structs",
-    nodeType: "StructDefinition",
-  },
-  {
-    key: "errors",
-    title: "Errors",
-    nodeType: "ErrorDefinition",
-  },
-  {
-    key: "events",
-    title: "Events",
-    nodeType: "EventDefinition",
-  },
-];
-
 const CodeTreeViewer: React.FC<{
   teamSlug: string;
   codeId: string;
@@ -175,7 +138,7 @@ const CodeTreeViewer: React.FC<{
   const nodeGroups = useMemo(() => {
     if (!nodesQuery.data) return [];
     return nodeTypeGroups.map((group) => {
-      const values = nodesQuery.data.filter((n) => n.node_type === group.nodeType);
+      const values = nodesQuery.data.filter((n) => group.nodeTypes.includes(n.node_type));
       return {
         ...group,
         values,
@@ -530,8 +493,6 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
       ...(parentAnalysis?.id ? { parent_version_id: parentAnalysis.id } : {}),
     });
   };
-
-  console.log(analysis);
 
   if (analysis) {
     return (

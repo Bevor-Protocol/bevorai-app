@@ -142,10 +142,6 @@ export interface TreeResponseI {
 export interface NodeSchemaI {
   id: string;
   source_id: string;
-  contract_id?: string;
-  program_id?: string;
-  context_id?: string;
-  account_id?: string;
   generic_id?: string;
   node_type: string;
   src_start_pos: number;
@@ -182,6 +178,10 @@ export interface ChatMessageI extends BaseSchema {
   chat_role: "user" | "system";
   message: string;
   tools: string[];
+  references?: {
+    id: string;
+    name: string;
+  }[];
   code_version_id: string;
   analysis_node_id?: string;
 }

@@ -83,8 +83,10 @@ const Message: React.FC<
   React.ComponentProps<"div"> & {
     role: ChatMessageI["chat_role"];
     content: string;
+    references?: ChatMessageI["references"];
+    onReferenceClick?: (nodeId: string) => void;
   }
-> = ({ className, role, content, ...props }) => {
+> = ({ className, role, content, references, onReferenceClick, ...props }) => {
   return (
     <div
       className={cn(
@@ -96,6 +98,20 @@ const Message: React.FC<
       {...props}
     >
       <ReactMarkdown className="markdown">{content}</ReactMarkdown>
+      {role === "system" && references && references.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {references.map((reference) => (
+            <button
+              key={`${reference.id}-${reference.name}`}
+              type="button"
+              className="text-sm underline underline-offset-2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => onReferenceClick?.(reference.id)}
+            >
+              {reference.name}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

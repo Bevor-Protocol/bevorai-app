@@ -108,15 +108,19 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
 
   let position: { start: number; end: number } | undefined;
   if (node) {
-    const fetchedNode = await queryClient.fetchQuery({
-      queryKey: generateQueryKey.codeNode(node),
-      queryFn: () =>
-        codeActions.getNode(resolvedParams.teamSlug, resolvedParams.codeId, node).then((r) => {
-          if (!r.ok) throw r;
-          return r.data;
-        }),
-    });
-    position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
+    try {
+      const fetchedNode = await queryClient.fetchQuery({
+        queryKey: generateQueryKey.codeNode(node),
+        queryFn: () =>
+          codeActions.getNode(resolvedParams.teamSlug, resolvedParams.codeId, node).then((r) => {
+            if (!r.ok) throw r;
+            return r.data;
+          }),
+      });
+      initialSourceId = fetchedNode.source_id;
+      position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
+      // eslint-disable-next-line no-empty
+    } catch {}
   }
 
   return (

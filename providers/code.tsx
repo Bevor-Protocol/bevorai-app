@@ -65,6 +65,27 @@ export const CodeProvider: React.FC<{
   });
 
   useEffect(() => {
+    if (codeId !== codeVersionId) {
+      setCodeVersionId(codeId);
+    }
+  }, [codeId, codeVersionId]);
+
+  useEffect(() => {
+    const nextStart = initialPosition?.start;
+    const nextEnd = initialPosition?.end;
+
+    setSourceId((prevSourceId) =>
+      prevSourceId === initialSourceId ? prevSourceId : initialSourceId,
+    );
+    setPositions((prevPosition) => {
+      const prevStart = prevPosition?.start;
+      const prevEnd = prevPosition?.end;
+      if (prevStart === nextStart && prevEnd === nextEnd) return prevPosition;
+      return initialPosition;
+    });
+  }, [initialSourceId, initialPosition]);
+
+  useEffect(() => {
     // if someone lands on this while code is processing, the sources aren't available yet.
     // listen to events, and once they're populated, update the source.
     if (!!sourceId || !sourcesQuery.data?.length) return;
