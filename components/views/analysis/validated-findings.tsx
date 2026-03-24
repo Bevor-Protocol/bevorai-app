@@ -233,7 +233,7 @@ const ValidatedFindingsPanel: React.FC<ValidatedFindingsPanelProps> = ({
   currentFindings,
   selectedFindingId,
 }) => {
-  const { active, pendingRemediation, remediated, remediate, flagForRemediation, restore, remove, hydrated } =
+  const { active, pendingRemediation, remediated, remediate, restore, remove, hydrated } =
     useValidatedFindings(projectSlug);
   const [open, setOpen] = useState(true);
   const [remediatedOpen, setRemediatedOpen] = useState(false);
