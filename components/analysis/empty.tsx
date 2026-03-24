@@ -30,7 +30,7 @@ export const AnalysisEmpty: React.FC<AnalysisEmptyProps> = ({
         <Button asChild size="sm">
           <Link href={analyzeHref}>
             <PlayCircle className="size-4" />
-            Start Analysis
+            Run Analysis
           </Link>
         </Button>
       </div>

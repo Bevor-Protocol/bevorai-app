@@ -6,28 +6,39 @@ import React from "react";
 interface VersionEmptyProps {
   centered?: boolean;
   uploadHref?: string;
+  onUpload?: () => void;
 }
 
-export const VersionEmpty: React.FC<VersionEmptyProps> = ({ centered = false, uploadHref }) => {
-  if (uploadHref) {
+export const VersionEmpty: React.FC<VersionEmptyProps> = ({
+  centered = false,
+  uploadHref,
+  onUpload,
+}) => {
+  if (onUpload || uploadHref) {
     return (
       <div className="rounded-lg border border-dashed p-8 flex flex-col items-center justify-center gap-4 bg-black text-center">
         <div className="p-3 rounded-full bg-muted">
           <FolderOpen className="size-6 text-muted-foreground" />
         </div>
         <div>
-          <h4 className="text-sm font-semibold mb-1">Upload your first smart contract</h4>
+          <h4 className="text-sm font-semibold mb-1">No code versions yet</h4>
           <p className="text-xs text-muted-foreground max-w-xs">
-            Upload Solidity files, scan a deployed contract address, or connect a GitHub repository
-            to get started.
+            Upload Solidity files, scan a deployed contract address, or connect a GitHub repository.
           </p>
         </div>
-        <Button asChild size="sm">
-          <Link href={uploadHref}>
+        {onUpload ? (
+          <Button size="sm" onClick={onUpload}>
             <Upload className="size-4" />
             Upload Code
-          </Link>
-        </Button>
+          </Button>
+        ) : (
+          <Button asChild size="sm">
+            <Link href={uploadHref!}>
+              <Upload className="size-4" />
+              Upload Code
+            </Link>
+          </Button>
+        )}
       </div>
     );
   }

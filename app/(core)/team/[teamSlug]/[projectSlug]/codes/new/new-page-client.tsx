@@ -17,7 +17,8 @@ const steps = ["Code Method", "Code Submission", "Submission"];
 const Steps: React.FC<{
   project: ProjectDetailedSchemaI;
   parentId?: string;
-}> = ({ project, parentId }) => {
+  onClose?: () => void;
+}> = ({ project, parentId, onClose }) => {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [method, setMethod] = React.useState<string | null>(null);
   const sseToastId = React.useRef<string | number | undefined>(undefined);
@@ -29,6 +30,7 @@ const Steps: React.FC<{
   const handleSuccess = React.useCallback(
     (id: string) => {
       completeItem(ONBOARDING_ITEMS.UPLOAD_CODE);
+      onClose?.();
       unregisterRef.current = registerCallback("code", "team", id, (payload) => {
         if (payload.data.status === "processing") {
           sseToastId.current = toast.loading("Processing code...");
@@ -48,7 +50,7 @@ const Steps: React.FC<{
         }
       });
     },
-    [registerCallback, completeItem],
+    [registerCallback, completeItem, onClose],
   );
 
   React.useEffect(() => {
@@ -77,7 +79,7 @@ const Steps: React.FC<{
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full px-4">
       {currentStep === 2 && (
         <Button variant="ghost" onClick={prevStep}>
           <MoveLeft />

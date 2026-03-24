@@ -16,7 +16,7 @@ const CodeVersionSubnav: React.FC = () => {
 
   const navItems = [
     {
-      label: "Code Version",
+      label: "Source Code",
       href: `/team/${teamSlug}/${projectSlug}/codes/${codeId}`,
     },
     {

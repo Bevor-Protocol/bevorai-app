@@ -22,6 +22,7 @@ import {
   AlertCircle,
   Check,
   Copy,
+  FileCode2,
   Globe,
   Leaf,
   Lock,
@@ -186,6 +187,19 @@ const AnalysisMetadata: React.FC<{
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {allowActions && (
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="font-mono text-xs gap-1.5 text-muted-foreground border-dashed hover:text-foreground"
+            >
+              <Link href={`/team/${teamSlug}/${projectSlug}/analyses/${nodeId}/code`}>
+                <FileCode2 className="size-3.5" />
+                Inspect Source Code
+              </Link>
+            </Button>
+          )}
           {allowEditMode && (
             <Button variant="outline" size="sm" asChild>
               <Link

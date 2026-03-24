@@ -69,7 +69,9 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
           : { width: CHAT_PANEL_WIDTH }
       }
     >
-      <div className="flex items-center justify-end gap-1 p-2">
+      <div className="flex items-center justify-between gap-1 px-3 py-2 border-b">
+        <span className="text-xs font-medium text-muted-foreground">Ramp-up on Codebase</span>
+        <div className="flex items-center gap-1">
         {selectedChatId && (
           <Button
             variant="ghost"
@@ -91,6 +93,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
         <Button variant="ghost" size="icon-sm" onClick={toggleExpanded} title="Collapse chat">
           <X className="size-4" />
         </Button>
+        </div>
       </div>
       {showSettings || !selectedChatId ? (
         <ChatThreads chatsQuery={chatsQuery} />

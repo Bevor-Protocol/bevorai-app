@@ -14,7 +14,8 @@ interface BannerRowProps {
   title: string;
   subtitle: string;
   buttonLabel: string;
-  buttonHref: string;
+  buttonHref?: string;
+  onAction?: () => void;
   buttonVariant?: "default" | "outline";
   onDismiss: () => void;
   className?: string;
@@ -28,6 +29,7 @@ const BannerRow: React.FC<BannerRowProps> = ({
   subtitle,
   buttonLabel,
   buttonHref,
+  onAction,
   buttonVariant = "default",
   onDismiss,
   className,
@@ -46,12 +48,19 @@ const BannerRow: React.FC<BannerRowProps> = ({
       </p>
     </div>
     <div className="flex items-center gap-2 shrink-0">
-      <Button asChild size="sm" variant={buttonVariant} className="h-7 text-xs gap-1.5">
-        <Link href={buttonHref}>
+      {onAction ? (
+        <Button size="sm" variant={buttonVariant} className="h-7 text-xs gap-1.5" onClick={onAction}>
           {buttonLabel}
           <ArrowRight className="size-3" />
-        </Link>
-      </Button>
+        </Button>
+      ) : (
+        <Button asChild size="sm" variant={buttonVariant} className="h-7 text-xs gap-1.5">
+          <Link href={buttonHref!}>
+            {buttonLabel}
+            <ArrowRight className="size-3" />
+          </Link>
+        </Button>
+      )}
       <button
         onClick={onDismiss}
         className="text-muted-foreground hover:text-foreground transition-colors"
@@ -65,7 +74,8 @@ const BannerRow: React.FC<BannerRowProps> = ({
 interface HighlightBannerProps {
   hasCode: boolean;
   hasAnalysis: boolean;
-  uploadHref: string;
+  uploadHref?: string;
+  onUpload?: () => void;
   analyzeHref?: string;
   className?: string;
 }
@@ -74,6 +84,7 @@ export const HighlightBanner: React.FC<HighlightBannerProps> = ({
   hasCode,
   hasAnalysis,
   uploadHref,
+  onUpload,
   analyzeHref,
   className,
 }) => {
@@ -100,6 +111,7 @@ export const HighlightBanner: React.FC<HighlightBannerProps> = ({
         subtitle="Upload your first smart contract."
         buttonLabel="Upload Code"
         buttonHref={uploadHref}
+        onAction={onUpload}
         onDismiss={dismissBanner}
         className={className}
       />
@@ -113,8 +125,8 @@ export const HighlightBanner: React.FC<HighlightBannerProps> = ({
         iconClassName="text-green-400"
         borderClassName="border-green-500/30"
         title="Your code is ready."
-        subtitle="Run an analysis to surface security findings."
-        buttonLabel="Start Analysis"
+        subtitle="Run a security analysis to surface vulnerabilities."
+        buttonLabel="Run Analysis"
         buttonHref={analyzeHref}
         buttonVariant="outline"
         onDismiss={dismissBanner}
