@@ -1,48 +1,55 @@
 "use client";
 
 import {
-  activityActions,
-  analysisActions,
-  codeActions,
-  githubActions,
-  projectActions,
+    activityActions,
+    analysisActions,
+    codeActions,
+    githubActions,
+    projectActions,
 } from "@/actions/bevor";
+import Steps from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/new-page-client";
 import ActivityList from "@/components/activity";
 import { AnalysisVersionCompactElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
-import LucideIcon from "@/components/lucide-icon";
+import { HighlightBanner } from "@/components/onboarding/highlight-banner";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeVersionCompactElement } from "@/components/versions/element";
@@ -53,17 +60,18 @@ import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Calendar, Edit, MoreHorizontal, Tag, Trash } from "lucide-react";
+import { Calendar, Edit, MoreHorizontal, PlayCircle, Tag, Trash, Upload } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 
-export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> = ({
-  teamSlug,
-  projectSlug,
-}) => {
+export const ProjectToggle: React.FC<{
+  teamSlug: string;
+  projectSlug: string;
+  onUploadOpen: () => void;
+}> = ({ teamSlug, projectSlug, onUploadOpen }) => {
   const [editOpen, setEditOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
 
@@ -78,46 +86,58 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            <MoreHorizontal className="size-4" />
+      <div className="flex items-center gap-2">
+        {project && project.n_codes > 0 ? (
+          <Button size="sm" asChild>
+            <Link href={`/team/${teamSlug}/${projectSlug}/analyses`}>
+              <PlayCircle className="size-4" />
+              Run Analysis
+            </Link>
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem className="[&_svg]:ml-auto" asChild>
-              <Link href={`/team/${teamSlug}/${projectSlug}/codes/new`}>
+        ) : (
+          <Button size="sm" onClick={onUploadOpen}>
+            <PlayCircle className="size-4" />
+            Run Analysis
+          </Button>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuGroup>
+              <DropdownMenuItem className="[&_svg]:ml-auto" onSelect={onUploadOpen}>
                 Upload Code
-                <LucideIcon assetType="code" />
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Settings</DropdownMenuLabel>
-            <DropdownMenuItem
-              className="[&_svg]:ml-auto"
-              onSelect={() => {
-                setEditOpen(true);
-              }}
-            >
-              Edit project
-              <Edit />
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="[&_svg]:ml-auto"
-              variant="destructive"
-              onSelect={() => {
-                setDeleteOpen(true);
-              }}
-            >
-              Delete project
-              <Trash />
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+                <Upload />
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Settings</DropdownMenuLabel>
+              <DropdownMenuItem
+                className="[&_svg]:ml-auto"
+                onSelect={() => {
+                  setEditOpen(true);
+                }}
+              >
+                Edit project
+                <Edit />
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="[&_svg]:ml-auto"
+                variant="destructive"
+                onSelect={() => {
+                  setDeleteOpen(true);
+                }}
+              >
+                Delete project
+                <Trash />
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       {/* intentionally unmount this, so state resets */}
       {project && editOpen && (
         <ProjectEditDialog onOpenChange={setEditOpen} teamSlug={teamSlug} project={project} />
@@ -360,8 +380,22 @@ export const AnalysesPreview: React.FC<{
       }),
   });
 
+  const { data: project } = useQuery({
+    queryKey: generateQueryKey.project(projectSlug),
+    queryFn: async () =>
+      projectActions.getProject(teamSlug, projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
   if (analyses?.results.length === 0) {
-    return <AnalysisEmpty />;
+    return (
+      <AnalysisEmpty
+        analyzeHref={`/team/${teamSlug}/${projectSlug}/analyses`}
+        hasCode={(project?.n_codes ?? 0) > 0}
+      />
+    );
   }
 
   return (
@@ -384,6 +418,7 @@ export const CodePreview: React.FC<{
   teamSlug: string;
   projectSlug: string;
 }> = ({ teamSlug, projectSlug }) => {
+  const [uploadOpen, setUploadOpen] = React.useState(false);
   const query = { page_size: "3", project_slug: projectSlug };
   const { data: codes, isLoading } = useQuery({
     queryKey: generateQueryKey.codes(teamSlug, query),
@@ -394,23 +429,44 @@ export const CodePreview: React.FC<{
       }),
   });
 
-  if (codes?.results.length === 0) {
-    return <VersionEmpty />;
-  }
+  const { data: project } = useQuery({
+    queryKey: generateQueryKey.project(projectSlug),
+    queryFn: async () =>
+      projectActions.getProject(teamSlug, projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
 
   return (
-    <div className="flex flex-col gap-3">
-      {codes?.results.map((code) => (
-        <Link
-          key={code.id}
-          href={`/team/${teamSlug}/${projectSlug}/codes/${code.id}`}
-          className="block transition-colors hover:bg-accent/50 cursor-pointer"
-        >
-          <CodeVersionCompactElement version={code} />
-        </Link>
-      ))}
-      {isLoading && <Skeleton className="w-full h-12" />}
-    </div>
+    <>
+      <Sheet open={uploadOpen} onOpenChange={setUploadOpen}>
+        <SheetContent side="right" className="sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="border-b pb-4">
+            <SheetTitle>Upload Code</SheetTitle>
+          </SheetHeader>
+          {uploadOpen && project && (
+            <Steps project={project} onClose={() => setUploadOpen(false)} />
+          )}
+        </SheetContent>
+      </Sheet>
+      {codes?.results.length === 0 ? (
+        <VersionEmpty onUpload={() => setUploadOpen(true)} />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {codes?.results.map((code) => (
+            <Link
+              key={code.id}
+              href={`/team/${teamSlug}/${projectSlug}/codes/${code.id}`}
+              className="block transition-colors hover:bg-accent/50 cursor-pointer"
+            >
+              <CodeVersionCompactElement version={code} />
+            </Link>
+          ))}
+          {isLoading && <Skeleton className="w-full h-12" />}
+        </div>
+      )}
+    </>
   );
 };
 
@@ -418,6 +474,8 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
   teamSlug,
   projectSlug,
 }) => {
+  const [uploadOpen, setUploadOpen] = React.useState(false);
+
   const { data: project } = useSuspenseQuery({
     queryKey: generateQueryKey.project(projectSlug),
     queryFn: () =>
@@ -439,7 +497,22 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
 
   console.log(branches);
 
+  const hasCode = project.n_codes > 0;
+  const hasAnalysis = project.n_analyses > 0;
+
   return (
+    <>
+      <Sheet open={uploadOpen} onOpenChange={setUploadOpen}>
+        <SheetContent side="right" className="sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="border-b pb-4">
+            <SheetTitle>Upload Code</SheetTitle>
+          </SheetHeader>
+          {uploadOpen && (
+            <Steps project={project} onClose={() => setUploadOpen(false)} />
+          )}
+        </SheetContent>
+      </Sheet>
+
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
@@ -468,8 +541,18 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
               </a>
             )}
           </div>
-          <ProjectToggle teamSlug={teamSlug} projectSlug={projectSlug} />
+          <ProjectToggle
+            teamSlug={teamSlug}
+            projectSlug={projectSlug}
+            onUploadOpen={() => setUploadOpen(true)}
+          />
         </div>
+        <HighlightBanner
+          hasCode={hasCode}
+          hasAnalysis={hasAnalysis}
+          onUpload={() => setUploadOpen(true)}
+          analyzeHref={`/team/${teamSlug}/${projectSlug}/analyses`}
+        />
         <div className="flex flex-row gap-2 items-center text-sm text-muted-foreground">
           <span>Owner:</span>
           <Icon size="sm" seed={project.created_by_user.id} />
@@ -506,6 +589,43 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
         </div>
       )}
     </div>
+    </>
+  );
+};
+
+export const UploadCodeButton: React.FC<{
+  teamSlug: string;
+  projectSlug: string;
+  variant?: "default" | "outline" | "ghost";
+}> = ({ teamSlug, projectSlug, variant = "outline" }) => {
+  const [uploadOpen, setUploadOpen] = React.useState(false);
+
+  const { data: project } = useQuery({
+    queryKey: generateQueryKey.project(projectSlug),
+    queryFn: async () =>
+      projectActions.getProject(teamSlug, projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  return (
+    <>
+      <Sheet open={uploadOpen} onOpenChange={setUploadOpen}>
+        <SheetContent side="right" className="sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="border-b pb-4">
+            <SheetTitle>Upload Code</SheetTitle>
+          </SheetHeader>
+          {uploadOpen && project && (
+            <Steps project={project} onClose={() => setUploadOpen(false)} />
+          )}
+        </SheetContent>
+      </Sheet>
+      <Button variant={variant} size="sm" onClick={() => setUploadOpen(true)}>
+        <Upload className="size-4" />
+        Upload Code
+      </Button>
+    </>
   );
 };
 

@@ -171,13 +171,12 @@ const CodeMetadata: React.FC<{
           {allowActions && (
             <>
               <Button
-                variant="outline"
                 size="sm"
                 onClick={handleAnalyzeClick}
                 disabled={version.status !== "success"}
               >
                 <Shield className="size-4" />
-                Analyze
+                Run Analysis
               </Button>
             </>
           )}

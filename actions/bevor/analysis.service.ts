@@ -1,6 +1,7 @@
 "use server";
 
 import api from "@/lib/api";
+import type { AxiosError } from "axios";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import {
@@ -42,7 +43,7 @@ export const createAnalysis = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -66,7 +67,7 @@ export const getLeafs = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -87,7 +88,7 @@ export const getDAG = async (teamSlug: string, nodeId: string): ApiResponse<Anal
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -111,7 +112,7 @@ export const getAnalysis = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -137,7 +138,7 @@ export const getAnalysisDetailed = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -163,7 +164,7 @@ export const getFindings = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -186,7 +187,7 @@ export const getScopes = async (teamSlug: string, nodeId: string): ApiResponse<S
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -220,7 +221,7 @@ export const updateFindings = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -251,7 +252,7 @@ export const submitFindingFeedback = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -279,7 +280,7 @@ export const toggleVisibility = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -308,7 +309,7 @@ export const getAnalyses = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -339,7 +340,7 @@ export const forkAnalysis = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -375,7 +376,7 @@ export const mergeAnalysis = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -399,7 +400,7 @@ export const getDraft = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -429,7 +430,7 @@ export const commitDraft = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -457,7 +458,7 @@ export const addStagedFinding = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -487,8 +488,7 @@ export const deleteStagedFinding = async (
         requestId,
       };
     })
-    .catch((error: any) => {
-      console.log(error);
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -517,7 +517,7 @@ export const updateStagedFinding = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,

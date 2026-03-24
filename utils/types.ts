@@ -27,6 +27,7 @@ export interface UserDetailedSchemaI extends UserSchemaI {
   wallet?: string;
   is_google_oauth_connected: boolean;
   is_github_oauth_connected: boolean;
+  onboarding_persona?: string | null;
 }
 
 export interface ScopeSchemaI extends NodeSchemaI {
@@ -690,6 +691,36 @@ export type HrefProps = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+// Project-level validated finding — team-shared source of truth.
+// Lives at the project scope, independent of individual analysis runs.
+// TODO: Replace localStorage persistence in useValidatedFindings with a
+//       backend endpoint (POST /projects/{slug}/validated-findings, etc.)
+//       when the API is ready. The hook interface is designed to be a drop-in swap.
+export interface ProjectValidatedFinding {
+  id: string;
+  // Snapshot of the finding at validation time
+  name: string;
+  level: FindingLevel;
+  type: FindingType;
+  explanation?: string;
+  recommendation?: string;
+  // Provenance — which analysis run / code version surfaced this
+  source_finding_id: string;
+  source_analysis_id: string;
+  code_version_id: string;
+  // Status lifecycle: active → pending_remediation (AI-suggested) → remediated (human-confirmed)
+  status: "active" | "pending_remediation" | "remediated";
+  validated_at: string; // ISO string
+  validated_by_username: string;
+  // Remediation
+  remediated_at?: string;
+  // ID of the code version in which this finding was no longer present.
+  // Set explicitly by a user action or implicitly when a newer analysis
+  // on a different code version no longer contains this finding.
+  remediated_code_version_id?: string;
+  remediated_by_username?: string;
+}
+
 export type AsyncComponent<P = {}> = AsyncFunctionComponent<P>;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

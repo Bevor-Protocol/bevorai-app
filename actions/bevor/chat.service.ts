@@ -1,6 +1,7 @@
 "use server";
 
 import api from "@/lib/api";
+import type { AxiosError } from "axios";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import { ApiResponse, ChatFullSchemaI, ChatMessageI, ChatPaginationI } from "@/utils/types";
@@ -13,12 +14,10 @@ export const initiateCodeChat = async (
   id: string;
   toInvalidate: QueryKey[];
 }> => {
-  console.log("SHOULD CALL", data);
   const toInvalidate = [[QUERY_KEYS.CHATS, teamSlug]];
   return api
     .post("/chats/code", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
-      console.log(response);
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
         ok: true as const,
@@ -29,8 +28,7 @@ export const initiateCodeChat = async (
         requestId,
       };
     })
-    .catch((error: any) => {
-      console.log(error);
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -61,7 +59,7 @@ export const initiateAnalysisChat = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -86,7 +84,7 @@ export const getChats = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -107,7 +105,7 @@ export const getChat = async (teamSlug: string, chatId: string): ApiResponse<Cha
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -131,7 +129,7 @@ export const getChatMessages = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -160,7 +158,7 @@ export const update = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,

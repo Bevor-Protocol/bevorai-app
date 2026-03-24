@@ -22,7 +22,9 @@ const FindingDescription: React.FC<{
   nodeId: string;
   finding: FindingSchemaI;
   setSelectedFinding: (finding?: FindingSchemaI) => void;
-}> = ({ teamSlug, nodeId, finding, setSelectedFinding }) => {
+  // Called when the user thumbs-up a finding — promotes it to the project-level validated list
+  onValidate?: (finding: FindingSchemaI) => void;
+}> = ({ teamSlug, nodeId, finding, setSelectedFinding, onValidate }) => {
   const [tab, setTab] = useState("description");
   const [feedbackText, setFeedbackText] = useState<string>("");
   const [pendingVerification, setPendingVerification] = useState<boolean | null>(null);
@@ -36,31 +38,33 @@ const FindingDescription: React.FC<{
       });
     },
     onSuccess: (_, { findingId, data }) => {
+      let promotedFinding: FindingSchemaI | undefined;
       queryClient.setQueryData<AnalysisNodeSchemaI>(
         generateQueryKey.analysisFindings(nodeId),
         (oldData) => {
           if (!oldData) return oldData;
-          const oldFindings = oldData.findings;
-          const newFindings = oldFindings.map((finding) => {
+          const newFindings = oldData.findings.map((f) => {
             const scope = oldData.scopes.find(
-              (scope) => finding.code_version_node_id == scope.code_version_node_id,
+              (scope) => f.code_version_node_id == scope.code_version_node_id,
             );
-            if (finding.id === findingId && scope) {
+            if (f.id === findingId && scope) {
               const newFinding = {
-                ...finding,
+                ...f,
                 feedback: data.feedback,
                 validated_at: data.is_verified ? new Date() : undefined,
                 invalidated_at: !data.is_verified ? new Date() : undefined,
               };
               setSelectedFinding(newFinding);
+              if (data.is_verified) promotedFinding = newFinding;
               return newFinding;
             }
-            return finding;
+            return f;
           });
           oldData.findings = newFindings;
           return oldData;
         },
       );
+      if (promotedFinding) onValidate?.(promotedFinding);
       toast.success("Feedback submitted successfully");
     },
     onError: (error) => {

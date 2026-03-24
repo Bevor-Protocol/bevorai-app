@@ -1,15 +1,19 @@
 "use client";
 
+import { analysisActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
+import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
-import { FindingSchemaI, NodeSchemaI } from "@/utils/types";
-import { UseQueryResult } from "@tanstack/react-query";
-import { Check, ExternalLink, MessageSquare, X } from "lucide-react";
+import { FindingFeedbackBody } from "@/utils/schema";
+import { AnalysisNodeSchemaI, FindingSchemaI, NodeSchemaI } from "@/utils/types";
+import { useMutation, useQueryClient, UseQueryResult } from "@tanstack/react-query";
+import { ArrowUp, Check, ExternalLink, MessageSquare, X } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import { toast } from "sonner";
 import { getSeverityBadgeClasses } from "./scopes";
 
 const FindingMetadata: React.FC<{
@@ -21,6 +25,7 @@ const FindingMetadata: React.FC<{
   onSelectNodeId?: (nodeId: string) => void;
   nodeQuery: UseQueryResult<NodeSchemaI, Error>;
   onAddFindingToContext?: (finding: FindingSchemaI) => void;
+  onValidate?: (finding: FindingSchemaI) => void;
 }> = ({
   teamSlug,
   projectSlug,
@@ -30,8 +35,10 @@ const FindingMetadata: React.FC<{
   onSelectNodeId,
   nodeQuery,
   onAddFindingToContext,
+  onValidate,
 }) => {
   const { selectedChatId } = useChat();
+  const queryClient = useQueryClient();
   const hasLocations = finding.locations?.length > 0;
   const locationOptions = [
     { code_version_node_id: finding.code_version_node_id, field_name: "entrypoint" },
@@ -40,7 +47,51 @@ const FindingMetadata: React.FC<{
 
   const isValidated = !!finding.validated_at;
   const isInvalidated = !!finding.invalidated_at;
-  const isNotAcknowledged = !isValidated && !isInvalidated;
+
+  const feedbackMutation = useMutation({
+    mutationFn: ({ findingId, data }: { findingId: string; data: FindingFeedbackBody }) =>
+      analysisActions.submitFindingFeedback(teamSlug, nodeId, findingId, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    onSuccess: (_, { findingId, data }) => {
+      let promotedFinding: FindingSchemaI | undefined;
+      queryClient.setQueryData<AnalysisNodeSchemaI>(
+        generateQueryKey.analysisDetailed(nodeId),
+        (oldData) => {
+          if (!oldData) return oldData;
+          const newFindings = oldData.findings.map((f) => {
+            if (f.id === findingId) {
+              const newFinding = {
+                ...f,
+                validated_at: data.is_verified ? new Date() : undefined,
+                invalidated_at: !data.is_verified ? new Date() : undefined,
+              };
+              if (data.is_verified) promotedFinding = newFinding;
+              return newFinding;
+            }
+            return f;
+          });
+          return { ...oldData, findings: newFindings };
+        },
+      );
+      if (promotedFinding) onValidate?.(promotedFinding);
+      toast.success(data.is_verified ? "Finding validated" : "Finding invalidated");
+    },
+    onError: () => toast.error("Failed to submit feedback"),
+  });
+
+  // When already validated, skip the API call and just promote to the project panel.
+  const handleValidate = () => {
+    if (isValidated) {
+      onValidate?.(finding);
+      toast.success("Added to Validated Findings");
+    } else {
+      feedbackMutation.mutate({ findingId: finding.id, data: { is_verified: true } });
+    }
+  };
+  const handleInvalidate = () =>
+    feedbackMutation.mutate({ findingId: finding.id, data: { is_verified: false } });
 
   return (
     <div className="w-full space-y-2">
@@ -51,36 +102,44 @@ const FindingMetadata: React.FC<{
         <Badge variant="outline" className={cn("text-xs", getSeverityBadgeClasses(finding.level))}>
           {finding.level}
         </Badge>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-muted-foreground shrink-0">
           {finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
         </span>
-        {isValidated && (
-          <Badge
-            variant="outline"
-            className="text-xs border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400"
-          >
-            <Check className="size-3 mr-1" />
-            is validated
-          </Badge>
-        )}
-        {isInvalidated && (
-          <Badge
-            variant="outline"
-            className="text-xs border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400"
-          >
-            <X className="size-3 mr-1" />
-            is invalidated
-          </Badge>
-        )}
-        {isNotAcknowledged && (
-          <Badge
-            variant="outline"
-            className="text-xs border-muted-foreground/20 bg-muted-foreground/10 text-muted-foreground"
-          >
-            finding not acknowledged
-          </Badge>
-        )}
-        <div className="ml-auto gap-3 h-8 flex">
+        <div className="ml-auto gap-2 h-8 flex items-center shrink-0">
+          {!isInvalidated && (
+            <Button
+              variant={isValidated ? "outline" : "outline"}
+              size="sm"
+              onClick={handleValidate}
+              disabled={feedbackMutation.isPending}
+              className={cn(
+                "h-7 text-xs gap-1.5",
+                isValidated
+                  ? "border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20"
+                  : "border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/10 hover:border-green-500/50",
+              )}
+            >
+              <Check className="size-3" />
+              {isValidated ? "Validated" : "Validate"}
+            </Button>
+          )}
+          {!isValidated && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleInvalidate}
+              disabled={feedbackMutation.isPending}
+              className={cn(
+                "h-7 text-xs gap-1.5",
+                isInvalidated
+                  ? "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20"
+                  : "border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:border-red-500/50",
+              )}
+            >
+              <X className="size-3" />
+              {isInvalidated ? "Invalidated" : "Invalidate"}
+            </Button>
+          )}
           {onAddFindingToContext && selectedChatId && (
             <Button
               variant="ghost"
@@ -91,7 +150,7 @@ const FindingMetadata: React.FC<{
               <MessageSquare className="size-3" />
             </Button>
           )}
-          <Button variant="ghost" size="sm" asChild className="ml-auto">
+          <Button variant="ghost" size="sm" asChild>
             <Link
               href={{
                 pathname: `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}/code`,

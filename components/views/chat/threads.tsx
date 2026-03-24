@@ -21,7 +21,7 @@ const ChatThreads: React.FC<{ chatsQuery: UseQueryResult<ChatPaginationI, Error>
   return (
     <ScrollArea className="flex-1 min-h-0">
       <div className="px-2 py-3">
-        <div className="px-2 mb-2 text-xs font-semibold text-muted-foreground">Chats</div>
+        <div className="px-2 mb-2 text-xs font-semibold text-muted-foreground">Ramp-up</div>
         {chatsQuery.isLoading ? (
           <div className="space-y-1">
             {Array.from({ length: 4 }).map((_, index) => (
@@ -50,7 +50,7 @@ const ChatThreads: React.FC<{ chatsQuery: UseQueryResult<ChatPaginationI, Error>
               className="w-full mt-2 rounded-md"
               onClick={() => createChatMutation.mutate()}
             >
-              New Chat
+              New Session
             </Button>
           </div>
         ) : (
@@ -59,7 +59,7 @@ const ChatThreads: React.FC<{ chatsQuery: UseQueryResult<ChatPaginationI, Error>
             <div>
               <p className="text-sm font-medium">No chats yet</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Start a conversation about this code
+                Ask questions to ramp up on this codebase
               </p>
             </div>
             <Button
@@ -68,7 +68,7 @@ const ChatThreads: React.FC<{ chatsQuery: UseQueryResult<ChatPaginationI, Error>
               className="rounded-md"
               onClick={() => createChatMutation.mutate()}
             >
-              Start Chat
+              Start Ramp-up
             </Button>
           </div>
         )}

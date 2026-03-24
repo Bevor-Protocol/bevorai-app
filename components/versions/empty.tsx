@@ -1,7 +1,48 @@
-import { Code } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Code, FolderOpen, Upload } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 
-export const VersionEmpty: React.FC<{ centered?: boolean }> = ({ centered = false }) => {
+interface VersionEmptyProps {
+  centered?: boolean;
+  uploadHref?: string;
+  onUpload?: () => void;
+}
+
+export const VersionEmpty: React.FC<VersionEmptyProps> = ({
+  centered = false,
+  uploadHref,
+  onUpload,
+}) => {
+  if (onUpload || uploadHref) {
+    return (
+      <div className="rounded-lg border border-dashed p-8 flex flex-col items-center justify-center gap-4 bg-black text-center">
+        <div className="p-3 rounded-full bg-muted">
+          <FolderOpen className="size-6 text-muted-foreground" />
+        </div>
+        <div>
+          <h4 className="text-sm font-semibold mb-1">No code versions yet</h4>
+          <p className="text-xs text-muted-foreground max-w-xs">
+            Upload Solidity files, scan a deployed contract address, or connect a GitHub repository.
+          </p>
+        </div>
+        {onUpload ? (
+          <Button size="sm" onClick={onUpload}>
+            <Upload className="size-4" />
+            Upload Code
+          </Button>
+        ) : (
+          <Button asChild size="sm">
+            <Link href={uploadHref!}>
+              <Upload className="size-4" />
+              Upload Code
+            </Link>
+          </Button>
+        )}
+      </div>
+    );
+  }
+
   if (!centered) {
     return (
       <div className="flex flex-col py-4 gap-2">

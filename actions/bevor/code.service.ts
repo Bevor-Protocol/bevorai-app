@@ -1,6 +1,7 @@
 "use server";
 
 import api from "@/lib/api";
+import type { AxiosError } from "axios";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import {
@@ -54,7 +55,7 @@ export const contractUploadFolder = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -93,7 +94,7 @@ export const contractUploadFile = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -130,7 +131,7 @@ export const contractUploadPaste = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -167,7 +168,7 @@ export const contractUploadScan = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -204,7 +205,7 @@ export const contractUploadPublicRepo = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -246,7 +247,7 @@ export const createCodeConnectedGithub = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -270,7 +271,7 @@ export const getCodeVersion = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -297,7 +298,7 @@ export const getCodeVersionSimilar = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -323,7 +324,7 @@ export const getSources = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -350,7 +351,7 @@ export const getSource = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -371,7 +372,7 @@ export const getTree = async (teamSlug: string, codeId: string): ApiResponse<Tre
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -396,7 +397,7 @@ export const getNode = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -431,7 +432,7 @@ export const getNodes = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -455,7 +456,7 @@ export const getRelations = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -483,7 +484,7 @@ export const getVersions = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -512,7 +513,7 @@ export const retryEmbedding = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -544,7 +545,7 @@ export const updateCodeVersionParent = async (
         requestId,
       };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,

@@ -56,6 +56,7 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
           teamSlug={teamSlug}
           projectSlug={projectSlug}
           nodeId={nodeId}
+          username={version.user.username}
           initialFinding={initialFinding}
           onAddFindingToContext={addFindingToContext}
         />

@@ -1,6 +1,7 @@
 "use server";
 
 import api from "@/lib/api";
+import type { AxiosError } from "axios";
 import { ActivitySchemaI, ApiResponse } from "@/utils/types";
 
 export const getTeamActivities = async (teamSlug: string): ApiResponse<ActivitySchemaI[]> => {
@@ -10,7 +11,7 @@ export const getTeamActivities = async (teamSlug: string): ApiResponse<ActivityS
       const requestId = response.headers["bevor-request-id"] ?? "";
       return { ok: true as const, data: response.data.results, requestId };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
@@ -35,7 +36,7 @@ export const getProjectActivities = async (
       const requestId = response.headers["bevor-request-id"] ?? "";
       return { ok: true as const, data: response.data.results, requestId };
     })
-    .catch((error: any) => {
+    .catch((error: AxiosError) => {
       const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
       return {
         ok: false as const,
