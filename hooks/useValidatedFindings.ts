@@ -32,14 +32,6 @@ export const useValidatedFindings = (projectSlug: string) => {
     setHydrated(true);
   }, [projectSlug]);
 
-  const persist = useCallback(
-    (next: ProjectValidatedFinding[]) => {
-      setFindings(next);
-      save(projectSlug, next);
-    },
-    [projectSlug],
-  );
-
   // Promote a per-analysis finding to the project-level validated list.
   // Called when a user thumbs-up a finding in the Feedback tab.
   const promote = useCallback(
