@@ -1,18 +1,18 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getChecklistItems, ONBOARDING_ITEMS, useOnboarding } from "@/hooks/useOnboarding";
-import { cn } from "@/lib/utils";
+import { getChecklistItems, ONBOARDING_ITEMS, OnboardingPersona, useOnboarding } from "@/hooks/useOnboarding";
 import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
 
 interface OnboardingChecklistProps {
   teamSlug: string;
+  persona: OnboardingPersona | null;
 }
 
-export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ teamSlug }) => {
-  const { persona, dismissed, completedItems, hydrated, dismiss } = useOnboarding();
+export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ teamSlug, persona }) => {
+  const { dismissed, completedItems, hydrated, dismiss } = useOnboarding();
   const [collapsed, setCollapsed] = useState(false);
 
   if (!hydrated || dismissed) return null;
@@ -31,6 +31,18 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({ teamSl
         return `/team/${teamSlug}/settings/members`;
       case ONBOARDING_ITEMS.CREATE_API_KEY:
         return `/team/${teamSlug}/settings/api`;
+      case ONBOARDING_ITEMS.INSTALL_MCP:
+        return "https://docs.bevor.io/mcp";
+      case ONBOARDING_ITEMS.INSTALL_SKILLS:
+        return "https://docs.bevor.io/skills";
+      case ONBOARDING_ITEMS.ADD_CICD:
+        return "https://docs.bevor.io/cicd";
+      case ONBOARDING_ITEMS.INSTALL_SDK:
+        return "https://docs.bevor.io/sdk";
+      case ONBOARDING_ITEMS.RUN_CUSTOM_AGENT:
+        return `/team/${teamSlug}`;
+      case ONBOARDING_ITEMS.VALIDATE_VULNERABILITY:
+        return `/team/${teamSlug}`;
       default:
         return `/team/${teamSlug}`;
     }

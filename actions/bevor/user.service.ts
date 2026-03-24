@@ -3,11 +3,11 @@
 import api from "@/lib/api";
 import { generateQueryKey } from "@/utils/constants";
 import {
-  ApiResponse,
-  MemberInviteSchema,
-  ProjectsPaginationI,
-  TeamDetailedSchemaI,
-  UserDetailedSchemaI,
+    ApiResponse,
+    MemberInviteSchema,
+    ProjectsPaginationI,
+    TeamDetailedSchemaI,
+    UserDetailedSchemaI,
 } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
@@ -33,7 +33,8 @@ export const get = async (): ApiResponse<UserDetailedSchemaI> => {
 };
 
 export const update = async (data: {
-  username: string;
+  username?: string;
+  onboarding_persona?: string;
 }): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.currentUser()];
   return api

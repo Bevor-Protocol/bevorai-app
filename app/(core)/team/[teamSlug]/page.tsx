@@ -1,9 +1,10 @@
-import { teamActions } from "@/actions/bevor";
+import { teamActions, userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import { OnboardingChecklist } from "@/components/onboarding/checklist";
 import { OnboardingQuestionnaire } from "@/components/onboarding/questionnaire";
 import TeamSubnav from "@/components/subnav/team";
 import { Icon } from "@/components/ui/icon";
+import { OnboardingPersona } from "@/hooks/useOnboarding";
 import { getQueryClient } from "@/lib/config/query";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDate } from "@/utils/helpers";
@@ -14,26 +15,36 @@ import { CreateProjectButton, ProjectsSection, TeamActivities, TeamMembers } fro
 
 interface TeamPageProps {
   params: Promise<{ teamSlug: string }>;
-  searchParams: Promise<{ is_signup?: "true" }>;
 }
 
-const TeamPage: AsyncComponent<TeamPageProps> = async ({ params, searchParams }) => {
+const TeamPage: AsyncComponent<TeamPageProps> = async ({ params }) => {
   const queryClient = getQueryClient();
   const { teamSlug } = await params;
-  const { is_signup } = await searchParams;
 
-  const team = await queryClient.fetchQuery({
-    queryKey: generateQueryKey.team(teamSlug),
-    queryFn: () =>
-      teamActions.getTeam(teamSlug).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-  });
+  const [team, user] = await Promise.all([
+    queryClient.fetchQuery({
+      queryKey: generateQueryKey.team(teamSlug),
+      queryFn: () =>
+        teamActions.getTeam(teamSlug).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
+    }),
+    queryClient.fetchQuery({
+      queryKey: generateQueryKey.currentUser(),
+      queryFn: () =>
+        userActions.get().then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
+    }),
+  ]);
+
+  const persona = (user.onboarding_persona as OnboardingPersona | null | undefined) ?? null;
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <OnboardingQuestionnaire isSignup={is_signup === "true"} />
+      <OnboardingQuestionnaire />
       <Container subnav={<TeamSubnav />}>
         <div className="max-w-7xl mx-auto py-8">
           <div className="border-b pb-6">
@@ -61,7 +72,7 @@ const TeamPage: AsyncComponent<TeamPageProps> = async ({ params, searchParams })
                 <CreateProjectButton teamSlug={teamSlug} />
               </div>
               <div className="space-y-4">
-                <OnboardingChecklist teamSlug={teamSlug} />
+                <OnboardingChecklist teamSlug={teamSlug} persona={persona} />
                 <ProjectsSection teamSlug={teamSlug} />
               </div>
             </div>
