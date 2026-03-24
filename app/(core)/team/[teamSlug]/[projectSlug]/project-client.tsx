@@ -10,7 +10,7 @@ import {
 import ActivityList from "@/components/activity";
 import { AnalysisVersionCompactElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
-import LucideIcon from "@/components/lucide-icon";
+import { HighlightBanner } from "@/components/onboarding/highlight-banner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,7 +53,7 @@ import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
 import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Calendar, Edit, MoreHorizontal, Tag, Trash } from "lucide-react";
+import { Calendar, Edit, MoreHorizontal, Tag, Trash, Upload } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -78,46 +78,45 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            <MoreHorizontal className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem className="[&_svg]:ml-auto" asChild>
-              <Link href={`/team/${teamSlug}/${projectSlug}/codes/new`}>
-                Upload Code
-                <LucideIcon assetType="code" />
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Settings</DropdownMenuLabel>
-            <DropdownMenuItem
-              className="[&_svg]:ml-auto"
-              onSelect={() => {
-                setEditOpen(true);
-              }}
-            >
-              Edit project
-              <Edit />
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="[&_svg]:ml-auto"
-              variant="destructive"
-              onSelect={() => {
-                setDeleteOpen(true);
-              }}
-            >
-              Delete project
-              <Trash />
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-2">
+        <Button asChild size="sm">
+          <Link href={`/team/${teamSlug}/${projectSlug}/codes/new`}>
+            <Upload className="size-4" />
+            Upload Code
+          </Link>
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Settings</DropdownMenuLabel>
+              <DropdownMenuItem
+                className="[&_svg]:ml-auto"
+                onSelect={() => {
+                  setEditOpen(true);
+                }}
+              >
+                Edit project
+                <Edit />
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="[&_svg]:ml-auto"
+                variant="destructive"
+                onSelect={() => {
+                  setDeleteOpen(true);
+                }}
+              >
+                Delete project
+                <Trash />
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       {/* intentionally unmount this, so state resets */}
       {project && editOpen && (
         <ProjectEditDialog onOpenChange={setEditOpen} teamSlug={teamSlug} project={project} />
@@ -360,8 +359,22 @@ export const AnalysesPreview: React.FC<{
       }),
   });
 
+  const { data: project } = useQuery({
+    queryKey: generateQueryKey.project(projectSlug),
+    queryFn: async () =>
+      projectActions.getProject(teamSlug, projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
   if (analyses?.results.length === 0) {
-    return <AnalysisEmpty />;
+    return (
+      <AnalysisEmpty
+        analyzeHref={`/team/${teamSlug}/${projectSlug}/analyses`}
+        hasCode={(project?.n_codes ?? 0) > 0}
+      />
+    );
   }
 
   return (
@@ -395,7 +408,7 @@ export const CodePreview: React.FC<{
   });
 
   if (codes?.results.length === 0) {
-    return <VersionEmpty />;
+    return <VersionEmpty uploadHref={`/team/${teamSlug}/${projectSlug}/codes/new`} />;
   }
 
   return (
@@ -439,6 +452,9 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
 
   console.log(branches);
 
+  const hasCode = project.n_codes > 0;
+  const hasAnalysis = project.n_analyses > 0;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4">
@@ -470,6 +486,12 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
           </div>
           <ProjectToggle teamSlug={teamSlug} projectSlug={projectSlug} />
         </div>
+        <HighlightBanner
+          hasCode={hasCode}
+          hasAnalysis={hasAnalysis}
+          uploadHref={`/team/${teamSlug}/${projectSlug}/codes/new`}
+          analyzeHref={`/team/${teamSlug}/${projectSlug}/analyses`}
+        />
         <div className="flex flex-row gap-2 items-center text-sm text-muted-foreground">
           <span>Owner:</span>
           <Icon size="sm" seed={project.created_by_user.id} />

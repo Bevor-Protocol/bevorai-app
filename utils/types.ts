@@ -27,6 +27,7 @@ export interface UserDetailedSchemaI extends UserSchemaI {
   wallet?: string;
   is_google_oauth_connected: boolean;
   is_github_oauth_connected: boolean;
+  onboarding_persona?: string | null;
 }
 
 export interface ScopeSchemaI extends NodeSchemaI {

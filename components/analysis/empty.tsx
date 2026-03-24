@@ -1,7 +1,42 @@
-import { Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PlayCircle, Shield } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 
-export const AnalysisEmpty: React.FC<{ centered?: boolean }> = ({ centered = false }) => {
+interface AnalysisEmptyProps {
+  centered?: boolean;
+  analyzeHref?: string;
+  hasCode?: boolean;
+}
+
+export const AnalysisEmpty: React.FC<AnalysisEmptyProps> = ({
+  centered = false,
+  analyzeHref,
+  hasCode,
+}) => {
+  if (analyzeHref && hasCode) {
+    return (
+      <div className="rounded-lg border border-dashed p-8 flex flex-col items-center justify-center gap-4 bg-black text-center">
+        <div className="p-3 rounded-full bg-muted">
+          <Shield className="size-6 text-muted-foreground" />
+        </div>
+        <div>
+          <h4 className="text-sm font-semibold mb-1">Run your first analysis</h4>
+          <p className="text-xs text-muted-foreground max-w-xs">
+            Your code is uploaded and ready. Start an AI-powered security analysis to surface
+            vulnerabilities and findings.
+          </p>
+        </div>
+        <Button asChild size="sm">
+          <Link href={analyzeHref}>
+            <PlayCircle className="size-4" />
+            Start Analysis
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
   if (!centered) {
     return (
       <div className="flex flex-col py-4 gap-2">
