@@ -20,11 +20,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getStatusIndicator } from "@/components/versions/element";
+import { CodeMappingSchema, SourceTypeEnum } from "@/types/api/responses/graph";
 import { generateQueryKey } from "@/utils/constants";
-import { SourceTypeEnum } from "@/utils/enums";
 import { explorerUrl, formatDateShort, truncateId, truncateVersion } from "@/utils/helpers";
 import { extractAnalysisNodesQuery } from "@/utils/query-params";
-import { CodeMappingSchemaI } from "@/utils/types";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { GitCommit, Network, Shield } from "lucide-react";
 import Link from "next/link";
@@ -32,7 +31,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import CodeVersionMenu from "./code-version-menu";
 
-const VersionDisplay: React.FC<{ version: CodeMappingSchemaI }> = ({ version }) => {
+const VersionDisplay: React.FC<{ version: CodeMappingSchema }> = ({ version }) => {
   if (
     [SourceTypeEnum.PASTE, SourceTypeEnum.UPLOAD_FILE, SourceTypeEnum.UPLOAD_FOLDER].includes(
       version.source_type,

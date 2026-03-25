@@ -1,7 +1,7 @@
-import { ProfileClient } from "@/app/(core)/user/profile-client";
 import Container from "@/components/container";
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
 import LinkedAccountsClient from "./linked-accounts-client";
+import { ProfileClient } from "./profile-client";
 
 const UserSettingsPage: AsyncComponent = async () => {
   return (

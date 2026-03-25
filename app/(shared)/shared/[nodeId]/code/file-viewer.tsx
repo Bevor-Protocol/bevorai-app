@@ -3,14 +3,14 @@
 import {
   CodeContent,
   CodeDisplay,
+  CodeFileItem,
+  CodeFiles,
+  CodeFileToggle,
   CodeHeader,
   CodeHolder,
   CodeMetadata,
   CodeNodeList,
-  CodeSourceItem,
-  CodeSources,
-  CodeSourceToggle,
-  getSourceColor,
+  getFileColor,
 } from "@/components/ui/code";
 import {
   Select,
@@ -21,26 +21,26 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { CodeSourceSchemaI, NodeSchemaI } from "@/utils/types";
+import { GraphSnapshotFile, GraphSnapshotNode } from "@/types/api/responses/graph";
 import React from "react";
 import { useCode } from "./provider";
 import NodeSearch from "./search";
 import ShikiViewer from "./viewer";
 
-interface SourcesViewerProps {
-  sources: CodeSourceSchemaI[];
+interface FilesViewerProps {
+  sources: GraphSnapshotFile[];
   nodeId: string;
 }
 
-const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, nodeId }) => {
-  const { handleSourceChange, sourceQuery, nodesQuery, containerRef, sourceId } = useCode();
+const FilesViewer: React.FC<FilesViewerProps> = ({ sources, nodeId }) => {
+  const { handleFileChange, fileQuery, nodesQuery, containerRef, fileId } = useCode();
 
   if (sources.length === 0) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 pr-2">
         <div className="border border-border rounded-lg p-6">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-2">Version Sources</h1>
+            <h1 className="text-2xl font-bold mb-2">Version Files</h1>
             <p className="text-muted-foreground">No source files found for this version.</p>
           </div>
         </div>
@@ -61,12 +61,12 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, nodeId }) => {
         n.node_type !== "ModifierDefinition",
     ) ?? [];
 
-  const currentSource = sources.find((s) => s.id === sourceId);
-  const currentFileName = currentSource?.path.split("/").pop() ?? "";
-  const currentSourceColor = currentSource ? getSourceColor(currentSource) : "";
+  const currentFile = sources.find((s) => s.id === fileId);
+  const currentFileName = currentFile?.path.split("/").pop() ?? "";
+  const currentFileColor = currentFile ? getFileColor(currentFile) : "";
 
-  const handleNodeClick = (node: NodeSchemaI): void => {
-    handleSourceChange(node.source_id, {
+  const handleNodeClick = (node: GraphSnapshotNode): void => {
+    handleFileChange(node.id, {
       start: node.src_start_pos,
       end: node.src_end_pos,
     });
@@ -75,13 +75,13 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, nodeId }) => {
   return (
     <CodeHolder ref={containerRef} className="pr-2">
       <CodeMetadata>
-        <CodeSourceToggle>
+        <CodeFileToggle>
           <NodeSearch nodeId={nodeId} className="w-full" />
-          <Select value={sourceId!} onValueChange={(sourceId) => handleSourceChange(sourceId)}>
+          <Select value={fileId!} onValueChange={(fileId) => handleFileChange(fileId)}>
             <SelectTrigger className="max-w-full w-full px-2">
               <SelectValue>
                 <div className="flex gap-2 items-center">
-                  <div className={cn("w-2 h-2 rounded-full shrink-0", currentSourceColor)} />
+                  <div className={cn("w-2 h-2 rounded-full shrink-0", currentFileColor)} />
                   {currentFileName}
                 </div>
               </SelectValue>
@@ -89,13 +89,13 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, nodeId }) => {
             <SelectContent className="w-[300px] overflow-hidden">
               {sources.map((source) => (
                 <SelectItem key={source.id} value={source.id}>
-                  <CodeSourceItem source={source} />
+                  <CodeFileItem source={source} />
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </CodeSourceToggle>
-        <CodeSources>
+        </CodeFileToggle>
+        <CodeFiles>
           {nodesQuery.isLoading ? (
             <>
               <div className="py-2 w-full">
@@ -165,16 +165,16 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ sources, nodeId }) => {
               )}
             </>
           )}
-        </CodeSources>
+        </CodeFiles>
       </CodeMetadata>
       <CodeDisplay>
-        <CodeHeader path={sourceQuery.data?.path} />
+        <CodeHeader path={fileQuery.data?.path} />
         <CodeContent>
-          <ShikiViewer className={sourceQuery.isLoading ? "opacity-50" : ""} />
+          <ShikiViewer className={fileQuery.isLoading ? "opacity-50" : ""} />
         </CodeContent>
       </CodeDisplay>
     </CodeHolder>
   );
 };
 
-export default SourcesViewer;
+export default FilesViewer;

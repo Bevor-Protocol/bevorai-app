@@ -7,9 +7,9 @@ import { AnalysisNodeFilters } from "@/components/filters/nodes";
 import { Pagination } from "@/components/pagination";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { cn } from "@/lib/utils";
+import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { DefaultAnalysisNodesQuery } from "@/utils/query-params";
-import { AnalysisNodeSchemaI } from "@/utils/types";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import React, { useMemo, useState } from "react";
@@ -26,7 +26,7 @@ export const AnalysisNodesHistoryView: React.FC<{
   teamSlug: string;
   initialQuery: typeof DefaultAnalysisNodesQuery;
   defaultQuery: typeof DefaultAnalysisNodesQuery;
-  node: AnalysisNodeSchemaI;
+  node: AnalysisNodeSchema;
 }> = ({ teamSlug, initialQuery, node, defaultQuery }) => {
   const [filters, setFilters] = useState(initialQuery);
   const { debouncedState, timerRef, isWaiting } = useDebouncedState(filters);

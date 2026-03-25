@@ -1,8 +1,8 @@
 import Container from "@/components/container";
 import { ChatsView } from "@/components/screens/chats";
 import ProjectSubnav from "@/components/subnav/project";
+import { AsyncComponent } from "@/types";
 import { DefaultChatsQuery, extractChatsQuery } from "@/utils/query-params";
-import { AsyncComponent } from "@/utils/types";
 
 type ResolvedParams = {
   teamSlug: string;

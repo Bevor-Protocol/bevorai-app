@@ -1,4 +1,4 @@
-import { FindingLevel, FindingType } from "@/utils/enums";
+import { FindingLevelEnum, FindingTypeEnum } from "@/types/api/responses/security";
 import { z } from "zod";
 
 export const createAnalysisSchema = z
@@ -17,8 +17,8 @@ export const createAnalysisSchema = z
 export type createAnalysisFormValues = z.infer<typeof createAnalysisSchema>;
 
 export const analysisFindingBodySchema = z.object({
-  type: z.enum(FindingType),
-  level: z.enum(FindingLevel),
+  type: z.enum(FindingTypeEnum),
+  level: z.enum(FindingLevelEnum),
   name: z.string().min(1, "Name is required"),
   explanation: z.string().min(1, "Explanation is required"),
   recommendation: z.string().min(1, "Recommendation is required"),

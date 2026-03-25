@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { TreeResponseI } from "@/utils/types";
+import { TreeFile } from "@/types/api/responses/graph";
 import {
   ChevronDown,
   ChevronRight,
@@ -15,7 +15,7 @@ import {
 import React, { useState } from "react";
 
 interface ContractTreeProps {
-  tree: TreeResponseI[];
+  tree: TreeFile[];
   selectedScope?: { identifier: string; level: string }[];
   onScopeSelect?: (scope: { identifier: string; level: string }) => void;
   className?: string;
@@ -50,7 +50,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
     return selectedScope.some((scope) => scope.identifier === identifier && scope.level === level);
   };
 
-  const getAnalysisableCount = (source: TreeResponseI): number => {
+  const getAnalysisableCount = (source: TreeFile): number => {
     return source.contracts.reduce(
       (acc, contract) =>
         acc + contract.functions.reduce((acc, func) => acc + Number(func.is_auditable), 0),
@@ -58,11 +58,11 @@ const ContractTree: React.FC<ContractTreeProps> = ({
     );
   };
 
-  const getContractAnalysisableCount = (contract: TreeResponseI["contracts"][0]): number => {
+  const getContractAnalysisableCount = (contract: TreeFile["contracts"][0]): number => {
     return contract.functions.reduce((acc, func) => acc + Number(func.is_auditable), 0);
   };
 
-  const getScopeCount = (source: TreeResponseI): number => {
+  const getScopeCount = (source: TreeFile): number => {
     return source.contracts.reduce(
       (acc, contract) =>
         acc + contract.functions.reduce((acc, func) => acc + Number(func.is_within_scope), 0),
@@ -70,7 +70,7 @@ const ContractTree: React.FC<ContractTreeProps> = ({
     );
   };
 
-  const getContractScopeCount = (contract: TreeResponseI["contracts"][0]): number => {
+  const getContractScopeCount = (contract: TreeFile["contracts"][0]): number => {
     return contract.functions.reduce((acc, func) => acc + Number(func.is_within_scope), 0);
   };
 
@@ -147,9 +147,9 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                         Source
                       </span>
                       <span className="font-medium  truncate">{source.path}</span>
-                      {source.is_imported && (
+                      {source.is_dependency && (
                         <span className="px-2 py-0.5 bg-neutral-700 text-xs  rounded shrink-0">
-                          Imported
+                          Dependency
                         </span>
                       )}
                     </div>
@@ -312,14 +312,6 @@ const ContractTree: React.FC<ContractTreeProps> = ({
                                           </span>
                                           <span className="font-medium  truncate">{func.name}</span>
                                         </div>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center space-x-6 text-xs text-muted-foreground">
-                                      <div className="text-center min-w-[80px]">
-                                        <div className="font-medium ">
-                                          {func.is_override ? "Yes" : "No"}
-                                        </div>
-                                        <div>Override</div>
                                       </div>
                                     </div>
                                     <div className="flex items-center space-x-2 shrink-0">

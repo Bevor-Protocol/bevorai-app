@@ -1,4 +1,4 @@
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
 
 const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children }) => {
   return <div className="min-h-screen bg-black">{children}</div>;

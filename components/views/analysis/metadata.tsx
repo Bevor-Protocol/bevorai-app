@@ -14,9 +14,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDateShort } from "@/utils/helpers";
-import { AnalysisNodeSchemaI } from "@/utils/types";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -36,7 +36,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import AnalysisVersionMenu from "./menu";
 
-const getStatusIndicator = (status: AnalysisNodeSchemaI["status"]): React.ReactNode => {
+const getStatusIndicator = (status: AnalysisNodeSchema["status"]): React.ReactNode => {
   switch (status) {
     case "waiting":
       return (

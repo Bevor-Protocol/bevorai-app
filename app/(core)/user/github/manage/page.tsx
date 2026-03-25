@@ -1,7 +1,7 @@
 import { githubActions } from "@/actions/bevor";
-import { GitHubIntegrationClient } from "@/app/(core)/user/github/manage/github-integration-client";
 import Container from "@/components/container";
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
+import { GitHubIntegrationClient } from "./github-integration-client";
 
 interface PageProps {
   searchParams: Promise<{ teamSlug?: string }>;

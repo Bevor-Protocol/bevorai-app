@@ -20,8 +20,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CodeVersionCompactElement } from "@/components/versions/element";
+import { CodeMappingSchema } from "@/types/api/responses/graph";
 import { generateQueryKey } from "@/utils/constants";
-import { CodeMappingSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUp, GitBranch, MoreHorizontal, Upload } from "lucide-react";
 import Link from "next/link";
@@ -31,7 +31,7 @@ import { toast } from "sonner";
 const CodeVersionMenu: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  version: CodeMappingSchemaI;
+  version: CodeMappingSchema;
 }> = ({ teamSlug, projectSlug, version }) => {
   const queryClient = useQueryClient();
 

@@ -47,7 +47,7 @@ const NodeSearch: React.FC<{
     duration: 500,
   });
 
-  const { handleSourceChange } = useCode();
+  const { handleFileChange } = useCode();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent): void => {
@@ -79,9 +79,9 @@ const NodeSearch: React.FC<{
   const handleSelection = useCallback(
     ({ sourceId, start, end }: { sourceId: string; start: number; end: number }): void => {
       setOpen(false);
-      handleSourceChange(sourceId, { start, end });
+      handleFileChange(sourceId, { start, end });
     },
-    [handleSourceChange],
+    [handleFileChange],
   );
 
   return (

@@ -6,11 +6,11 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { useSSE } from "@/providers/sse";
+import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import {
   CreateCodeFromPublicGithubFormValues,
   createCodeFromPublicGithubSchema,
 } from "@/utils/schema";
-import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, GitCommitHorizontal, XCircle } from "lucide-react";
 import Link from "next/link";
@@ -18,10 +18,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const RepoUrlStep: React.FC<{
-  project: ProjectDetailedSchemaI;
+  project: ProjectDetailedSchema;
   parentId?: string;
   onSuccess?: (id: string) => void;
-}> = ({ project, parentId, onSuccess }) => {
+}> = ({ project, parentId }) => {
   const queryClient = useQueryClient();
   const { registerCallback } = useSSE();
   const sseToastId = useRef<string | number | undefined>(undefined);
@@ -186,8 +186,8 @@ const RepoUrlStep: React.FC<{
           </div>
           <h2 className="text-2xl font-bold">Processing Failed</h2>
           <p className="text-muted-foreground">
-            The code version was created but processing failed. You can still view it or try creating
-            another version.
+            The code version was created but processing failed. You can still view it or try
+            creating another version.
           </p>
           <div className="flex gap-4 justify-center mt-6">
             <Button asChild variant="outline">

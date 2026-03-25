@@ -3,14 +3,14 @@ import { billingActions } from "@/actions/bevor";
 
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { StripeAddon } from "@/types/api/responses/stripe";
 import { generateQueryKey } from "@/utils/constants";
-import { StripeAddonI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 
 export const AddonRow: React.FC<{
   teamSlug: string;
-  addon: StripeAddonI;
+  addon: StripeAddon;
 }> = ({ teamSlug, addon }) => {
   const queryClient = useQueryClient();
 

@@ -1,18 +1,19 @@
 "use server";
 
-import api from "@/lib/api";
-import { generateQueryKey } from "@/utils/constants";
+import { businessApi } from "@/lib/api";
+import { ApiResponse } from "@/types/api";
 import {
-  ApiResponse,
-  MemberInviteSchema,
-  ProjectsPaginationI,
-  TeamDetailedSchemaI,
-  UserDetailedSchemaI,
-} from "@/utils/types";
+  InviteSchema,
+  ProjectDetailedSchema,
+  TeamDetailedSchema,
+  UserDetailedSchema,
+} from "@/types/api/responses/business";
+import { Pagination } from "@/types/api/responses/shared";
+import { generateQueryKey } from "@/utils/constants";
 import { QueryKey } from "@tanstack/react-query";
 
-export const get = async (): ApiResponse<UserDetailedSchemaI> => {
-  return api
+export const get = async (): ApiResponse<UserDetailedSchema> => {
+  return businessApi
     .get("/user")
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -36,7 +37,7 @@ export const update = async (data: {
   username: string;
 }): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.currentUser()];
-  return api
+  return businessApi
     .patch("/user", data)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -56,8 +57,8 @@ export const update = async (data: {
     });
 };
 
-export const invites = async (): ApiResponse<MemberInviteSchema[]> => {
-  return api
+export const invites = async (): ApiResponse<InviteSchema[]> => {
+  return businessApi
     .get("/user/invites")
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -77,8 +78,8 @@ export const invites = async (): ApiResponse<MemberInviteSchema[]> => {
     });
 };
 
-export const projects = async (): ApiResponse<ProjectsPaginationI> => {
-  return api
+export const projects = async (): ApiResponse<Pagination<ProjectDetailedSchema>> => {
+  return businessApi
     .get("/user/projects")
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -98,8 +99,8 @@ export const projects = async (): ApiResponse<ProjectsPaginationI> => {
     });
 };
 
-export const teams = async (): ApiResponse<TeamDetailedSchemaI[]> => {
-  return api
+export const teams = async (): ApiResponse<TeamDetailedSchema[]> => {
+  return businessApi
     .get("/user/teams")
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";

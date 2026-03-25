@@ -1,4 +1,4 @@
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 

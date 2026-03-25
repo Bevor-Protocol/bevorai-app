@@ -3,12 +3,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
-import { ChatPaginationI } from "@/utils/types";
+import { ChatIndex } from "@/types/api/responses/chat";
+import { Pagination } from "@/types/api/responses/shared";
 import { UseQueryResult } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
 import React from "react";
 
-const ChatThreads: React.FC<{ chatsQuery: UseQueryResult<ChatPaginationI, Error> }> = ({
+const ChatThreads: React.FC<{ chatsQuery: UseQueryResult<Pagination<ChatIndex>, Error> }> = ({
   chatsQuery,
 }) => {
   const { selectedChatId, setSelectedChatId, setShowSettings, createChatMutation } = useChat();

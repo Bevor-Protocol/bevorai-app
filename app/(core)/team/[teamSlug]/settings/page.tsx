@@ -1,5 +1,5 @@
 import { teamActions, userActions } from "@/actions/bevor";
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
 import SettingsPageClient from "./settings-page-client";
 
 interface PageProps {

@@ -1,16 +1,17 @@
 "use server";
 
-import api from "@/lib/api";
+import { businessApi } from "@/lib/api";
+import { ApiResponse } from "@/types/api";
+import {
+  InviteSchema,
+  MemberSchema,
+  MemberSchemaWithPermissions,
+  TeamDetailedSchema,
+  TeamSchema,
+} from "@/types/api/responses/business";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { TeamFormValues } from "@/utils/schema";
 import { InviteFormValues, UpdateMemberValues } from "@/utils/schema/invite";
-import {
-  ApiResponse,
-  MemberInviteSchema,
-  MemberSchemaI,
-  TeamDetailedSchemaI,
-  TeamSchemaI,
-} from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 import { cookies } from "next/headers";
 
@@ -18,7 +19,7 @@ export const createTeam = async (
   data: TeamFormValues,
 ): ApiResponse<{ id: string; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [[QUERY_KEYS.TEAMS]];
-  return api
+  return businessApi
     .post("/teams", data)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -41,8 +42,8 @@ export const createTeam = async (
     });
 };
 
-export const getTeam = async (teamSlug: string): ApiResponse<TeamDetailedSchemaI> => {
-  return api
+export const getTeam = async (teamSlug: string): ApiResponse<TeamDetailedSchema> => {
+  return businessApi
     .get("/teams", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -69,7 +70,7 @@ export const deleteTeam = async (
 }> => {
   const toInvalidate = [[QUERY_KEYS.TEAMS], [QUERY_KEYS.PROJECTS]];
   const cookieStore = await cookies();
-  return api
+  return businessApi
     .delete("/teams", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -96,12 +97,12 @@ export const updateTeam = async (
   teamSlug: string,
   data: TeamFormValues,
 ): ApiResponse<{
-  team: TeamSchemaI;
+  team: TeamSchema;
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.TEAMS], [QUERY_KEYS.PROJECTS]];
 
-  return api
+  return businessApi
     .patch("/teams", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -124,8 +125,8 @@ export const updateTeam = async (
     });
 };
 
-export const getInvites = async (teamSlug: string): ApiResponse<MemberInviteSchema[]> => {
-  return api
+export const getInvites = async (teamSlug: string): ApiResponse<InviteSchema[]> => {
+  return businessApi
     .get("/invites", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -153,7 +154,7 @@ export const inviteMembers = async (
     generateQueryKey.invites(teamSlug),
     generateQueryKey.subscription(teamSlug),
   ];
-  return api
+  return businessApi
     .post("/invites", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -185,7 +186,7 @@ export const removeInvite = async (
     generateQueryKey.invites(teamSlug),
     generateQueryKey.subscription(teamSlug),
   ];
-  return api
+  return businessApi
     .delete(`/invites/${inviteId}`)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -215,7 +216,7 @@ export const updateInvite = async (
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [generateQueryKey.invites(teamSlug)];
-  return api
+  return businessApi
     .patch(`/invites/${inviteId}`, data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -248,7 +249,7 @@ export const acceptInvite = async (
     generateQueryKey.teams(),
     [QUERY_KEYS.PROJECTS],
   ];
-  return api
+  return businessApi
     .post(`/invites/${inviteId}`, {})
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -279,7 +280,7 @@ export const updateMember = async (
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [generateQueryKey.members(teamSlug)];
-  return api
+  return businessApi
     .patch(`/members/${memberId}`, data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -311,7 +312,7 @@ export const removeMember = async (
     generateQueryKey.members(teamSlug),
     generateQueryKey.subscription(teamSlug),
   ];
-  return api
+  return businessApi
     .delete(`/members/${memberId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -333,8 +334,8 @@ export const removeMember = async (
     });
 };
 
-export const getMembers = async (teamSlug: string): ApiResponse<MemberSchemaI[]> => {
-  return api
+export const getMembers = async (teamSlug: string): ApiResponse<MemberSchemaWithPermissions[]> => {
+  return businessApi
     .get("/members", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -354,8 +355,8 @@ export const getMembers = async (teamSlug: string): ApiResponse<MemberSchemaI[]>
     });
 };
 
-export const getCurrentMember = async (teamSlug: string): ApiResponse<MemberSchemaI> => {
-  return api
+export const getCurrentMember = async (teamSlug: string): ApiResponse<MemberSchema> => {
+  return businessApi
     .get("/members/current", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";

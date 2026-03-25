@@ -1,12 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { SourceTypeEnum } from "@/utils/enums";
+import { CodeMappingSchema, SourceTypeEnum } from "@/types/api/responses/graph";
 import { explorerUrl, formatDateShort, truncateId, truncateVersion } from "@/utils/helpers";
-import { CodeMappingSchemaI, SharedCodeMappingSchemaI } from "@/utils/types";
 import { GitCommit, Network, XCircle } from "lucide-react";
 
-const getStatusIndicator = (status: CodeMappingSchemaI["status"]): React.ReactNode => {
+const getStatusIndicator = (status: CodeMappingSchema["status"]): React.ReactNode => {
   switch (status) {
     case "waiting":
       return (
@@ -36,7 +35,7 @@ const getStatusIndicator = (status: CodeMappingSchemaI["status"]): React.ReactNo
   }
 };
 
-const VersionDisplay: React.FC<{ version: SharedCodeMappingSchemaI }> = ({ version }) => {
+const VersionDisplay: React.FC<{ version: CodeMappingSchema }> = ({ version }) => {
   if (
     [SourceTypeEnum.PASTE, SourceTypeEnum.UPLOAD_FILE, SourceTypeEnum.UPLOAD_FOLDER].includes(
       version.source_type,
@@ -75,7 +74,7 @@ const VersionDisplay: React.FC<{ version: SharedCodeMappingSchemaI }> = ({ versi
 };
 
 const CodeMetadata: React.FC<{
-  code: SharedCodeMappingSchemaI;
+  code: CodeMappingSchema;
 }> = ({ code }) => {
   return (
     <div className="grid pb-4 lg:pt-4 px-2" style={{ gridTemplateColumns: "250px 1fr" }}>

@@ -2,16 +2,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSSE } from "@/providers/sse";
-import { AnalysisNodeSchemaI } from "@/utils/types";
+import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { AlertCircle, CheckCircle2, Eye, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-const getStatusIcon = (
-  scopeStatus: AnalysisNodeSchemaI["scopes"][0]["status"],
-): React.ReactNode => {
+const getStatusIcon = (scopeStatus: AnalysisNodeSchema["scopes"][0]["status"]): React.ReactNode => {
   switch (scopeStatus) {
     case "waiting":
       return <Loader2 className="size-4 text-neutral-400 animate-spin shrink-0" />;
@@ -29,7 +27,7 @@ const getStatusIcon = (
 };
 
 const AnalysisStatusDisplay: React.FC<{
-  analysis: AnalysisNodeSchemaI;
+  analysis: AnalysisNodeSchema;
   teamSlug: string;
   projectSlug: string;
   toastRefId: string | number | undefined;
@@ -38,14 +36,14 @@ const AnalysisStatusDisplay: React.FC<{
   const { registerCallback } = useSSE();
 
   const getNFindingsPerScope = (nodeId: string): number => {
-    return analysis.findings.filter((f) => f.code_version_node_id === nodeId).length;
+    return analysis.findings.filter((f) => f.source_node_id === nodeId).length;
   };
 
   useEffect(() => {
     if (!toastRefId) return;
 
     const unregister = registerCallback("analysis", "team", analysis.id, (payload) => {
-      const newStatus: AnalysisNodeSchemaI["status"] = payload.data.status;
+      const newStatus: AnalysisNodeSchema["status"] = payload.data.status;
 
       if (newStatus === "success") {
         toast.success("Analysis Complete", {
@@ -96,7 +94,7 @@ const AnalysisStatusDisplay: React.FC<{
           </div>
           <div className="space-y-2 w-full max-w-5xl">
             {analysis.scopes.map((scope) => {
-              const nFindings = getNFindingsPerScope(scope.code_version_node_id);
+              const nFindings = getNFindingsPerScope(scope.source_node_id);
               return (
                 <div key={scope.id} className="flex items-center gap-3 p-3 rounded-lg border">
                   {getStatusIcon(scope.status)}

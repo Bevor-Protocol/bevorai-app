@@ -1,16 +1,25 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { cookies } from "next/headers";
 
-const api = axios.create({
-  baseURL: process.env.API_URL,
+const businessApi = axios.create({
+  baseURL: `${process.env.API_URL}/business`,
+});
+
+const graphApi = axios.create({
+  baseURL: `${process.env.API_URL}/graph`,
+});
+
+const securityApi = axios.create({
+  baseURL: `${process.env.API_URL}/security`,
 });
 
 const sharedAPI = axios.create({
   baseURL: process.env.API_URL,
 });
 
-// Add request interceptor to inject session token
-api.interceptors.request.use(async (config) => {
+const interceptor = async (
+  config: InternalAxiosRequestConfig<any>,
+): Promise<InternalAxiosRequestConfig<any>> => {
   if (config.headers.has("skip_token")) {
     return config;
   }
@@ -31,7 +40,11 @@ api.interceptors.request.use(async (config) => {
   }
   config.headers["Authorization"] = `Bearer ${sessionToken}`;
   return config;
-});
+};
+
+businessApi.interceptors.request.use(interceptor);
+graphApi.interceptors.request.use(interceptor);
+securityApi.interceptors.request.use(interceptor);
 
 const idpApi = axios.create({
   baseURL: process.env.API_URL,
@@ -45,5 +58,4 @@ const streaming_api = axios.create({
   maxContentLength: Infinity,
 });
 
-export default api;
-export { idpApi, sharedAPI, streaming_api };
+export { businessApi, graphApi, idpApi, securityApi, sharedAPI, streaming_api };

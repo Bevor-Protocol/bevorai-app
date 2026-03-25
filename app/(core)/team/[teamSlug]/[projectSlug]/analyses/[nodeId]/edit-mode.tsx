@@ -32,14 +32,20 @@ import AnalysisScopes, {
 import CollapsibleChatPanel from "@/components/views/chat/analysis-panel";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
+import { isApiError } from "@/types/api";
+import {
+  DraftedFindingSchema,
+  DraftSchema,
+  FindingLevelEnum,
+  FindingTypeEnum,
+  ScopeSchema,
+} from "@/types/api/responses/security";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
-import { FindingLevel, FindingType } from "@/utils/enums";
 import {
   AddAnalysisFindingBody,
   AnalysisFindingBody,
   analysisFindingBodySchema,
 } from "@/utils/schema";
-import { DraftFindingSchemaI, DraftSchemaI, isApiError, ScopeSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient, UseQueryResult } from "@tanstack/react-query";
 import { Plus, Shield } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
@@ -47,12 +53,10 @@ import { codeToHtml } from "shiki";
 import { toast } from "sonner";
 
 export const getScopeForDraftFinding = (
-  finding: DraftFindingSchemaI,
-  draftSchema: DraftSchemaI,
-): ScopeSchemaI => {
-  const scope = draftSchema.scopes.find(
-    (s) => s.code_version_node_id === finding.code_version_node_id,
-  );
+  finding: DraftedFindingSchema,
+  draftSchema: DraftSchema,
+): ScopeSchema => {
+  const scope = draftSchema.scopes.find((s) => s.source_node_id === finding.source_node_id);
   if (!scope) {
     throw new Error(`Scope not found for finding ${finding.id}`);
   }
@@ -60,7 +64,7 @@ export const getScopeForDraftFinding = (
 };
 
 const EditFindingMetadata: React.FC<{
-  finding: DraftFindingSchemaI;
+  finding: DraftedFindingSchema;
 }> = ({ finding }) => {
   return (
     <div className="flex items-center gap-3">
@@ -92,10 +96,10 @@ const EditCodeSnippet: React.FC<{
   codeVersionNodeId: string;
   isEditing: boolean;
 }> = ({ teamSlug, codeVersionId, codeVersionNodeId, isEditing }) => {
-  const { data: nodeData, isLoading: isLoadingNode } = useQuery({
-    queryKey: [QUERY_KEYS.CODES, codeVersionId, "nodes", codeVersionNodeId],
+  const { data: nodeContent, isLoading: isLoadingContent } = useQuery({
+    queryKey: [QUERY_KEYS.CODES, codeVersionId, "nodes", codeVersionNodeId, "content"],
     queryFn: () =>
-      codeActions.getNode(teamSlug, codeVersionId, codeVersionNodeId).then((r) => {
+      codeActions.getNodeContent(teamSlug, codeVersionId, codeVersionNodeId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
@@ -105,14 +109,14 @@ const EditCodeSnippet: React.FC<{
   const [html, setHtml] = useState<string>("");
 
   useEffect(() => {
-    if (!nodeData?.content || isEditing) {
+    if (!nodeContent || isEditing) {
       setHtml("");
       return;
     }
 
     const highlightCode = async (): Promise<void> => {
       try {
-        const result = await codeToHtml(nodeData.content, {
+        const result = await codeToHtml(nodeContent, {
           lang: "solidity",
           theme: "github-dark",
           colorReplacements: {},
@@ -120,18 +124,18 @@ const EditCodeSnippet: React.FC<{
         setHtml(result);
       } catch (error) {
         console.error("Error highlighting code:", error);
-        const fallbackHtml = `<pre><code>${nodeData.content}</code></pre>`;
+        const fallbackHtml = `<pre><code>${nodeContent}</code></pre>`;
         setHtml(fallbackHtml);
       }
     };
 
     highlightCode();
-  }, [nodeData?.content, isEditing]);
+  }, [nodeContent, isEditing]);
 
   return (
     <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
       <ScrollArea className="p-2 flex-1 min-h-[300px]">
-        {isLoadingNode || !html ? (
+        {isLoadingContent || !html ? (
           <div className="space-y-2">
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-4 w-2/6" />
@@ -159,7 +163,7 @@ const EditCodeSnippet: React.FC<{
 };
 
 const EditFindingTabs: React.FC<{
-  finding: DraftFindingSchemaI;
+  finding: DraftedFindingSchema;
   onEdit: () => void;
   onDelete: () => void;
   onUndo?: () => void;
@@ -244,11 +248,11 @@ const EditFindingDetail: React.FC<{
   teamSlug: string;
   nodeId: string;
   codeVersionId: string;
-  finding: DraftFindingSchemaI | null;
-  draftQuery: UseQueryResult<DraftSchemaI, Error>;
+  finding: DraftedFindingSchema | null;
+  draftQuery: UseQueryResult<DraftSchema, Error>;
   onFindingDeleted?: (deletedFindingId: string) => void;
   onUndoStagedChange?: (findingId: string) => void;
-  setSelectedFinding: React.Dispatch<React.SetStateAction<DraftFindingSchemaI | null>>;
+  setSelectedFinding: React.Dispatch<React.SetStateAction<DraftedFindingSchema | null>>;
 }> = ({
   teamSlug,
   nodeId,
@@ -318,7 +322,7 @@ const EditFindingDetail: React.FC<{
   useEffect(() => {
     if (finding) {
       setFormData({
-        type: finding.type as FindingType,
+        type: finding.type as FindingTypeEnum,
         level: finding.level,
         name: finding.name,
         explanation: finding.explanation,
@@ -393,13 +397,15 @@ const EditFindingDetail: React.FC<{
           <FieldContent>
             <Select
               value={formData.type}
-              onValueChange={(value) => setFormData({ ...formData, type: value as FindingType })}
+              onValueChange={(value) =>
+                setFormData({ ...formData, type: value as FindingTypeEnum })
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(FindingType).map(([, value]) => (
+                {Object.entries(FindingTypeEnum).map(([, value]) => (
                   <SelectItem key={value} value={value}>
                     {value.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                   </SelectItem>
@@ -413,16 +419,18 @@ const EditFindingDetail: React.FC<{
           <FieldContent>
             <Select
               value={formData.level}
-              onValueChange={(value) => setFormData({ ...formData, level: value as FindingLevel })}
+              onValueChange={(value) =>
+                setFormData({ ...formData, level: value as FindingLevelEnum })
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={FindingLevel.CRITICAL}>Critical</SelectItem>
-                <SelectItem value={FindingLevel.HIGH}>High</SelectItem>
-                <SelectItem value={FindingLevel.MEDIUM}>Medium</SelectItem>
-                <SelectItem value={FindingLevel.LOW}>Low</SelectItem>
+                <SelectItem value={FindingLevelEnum.CRITICAL}>Critical</SelectItem>
+                <SelectItem value={FindingLevelEnum.HIGH}>High</SelectItem>
+                <SelectItem value={FindingLevelEnum.MEDIUM}>Medium</SelectItem>
+                <SelectItem value={FindingLevelEnum.LOW}>Low</SelectItem>
               </SelectContent>
             </Select>
           </FieldContent>
@@ -470,9 +478,7 @@ const EditFindingDetail: React.FC<{
         teamSlug={teamSlug}
         codeVersionId={codeVersionId}
         codeVersionNodeId={
-          draftQuery.data
-            ? getScopeForDraftFinding(finding, draftQuery.data).code_version_node_id
-            : ""
+          draftQuery.data ? getScopeForDraftFinding(finding, draftQuery.data).source_node_id : ""
         }
         isEditing={isEditing}
       />
@@ -500,8 +506,8 @@ const AddFindingDialog: React.FC<{
   isLoading: boolean;
 }> = ({ scopeId, scopeName, open, onOpenChange, onAdd, isLoading }) => {
   const [formData, setFormData] = useState<AnalysisFindingBody>({
-    type: FindingType.LOGIC,
-    level: FindingLevel.MEDIUM,
+    type: FindingTypeEnum.LOGIC,
+    level: FindingLevelEnum.MEDIUM,
     name: "",
     explanation: "",
     recommendation: "",
@@ -517,8 +523,8 @@ const AddFindingDialog: React.FC<{
         ...result.data,
       } as AddAnalysisFindingBody);
       setFormData({
-        type: FindingType.LOGIC,
-        level: FindingLevel.MEDIUM,
+        type: FindingTypeEnum.LOGIC,
+        level: FindingLevelEnum.MEDIUM,
         name: "",
         explanation: "",
         recommendation: "",
@@ -561,13 +567,15 @@ const AddFindingDialog: React.FC<{
             <FieldContent>
               <Select
                 value={formData.type}
-                onValueChange={(value) => setFormData({ ...formData, type: value as FindingType })}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, type: value as FindingTypeEnum })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(FindingType).map(([, value]) => (
+                  {Object.entries(FindingTypeEnum).map(([, value]) => (
                     <SelectItem key={value} value={value}>
                       {value.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                     </SelectItem>
@@ -581,19 +589,19 @@ const AddFindingDialog: React.FC<{
             <FieldLabel>Level</FieldLabel>
             <FieldContent>
               <Select
-                value={formData.level || FindingLevel.MEDIUM}
+                value={formData.level || FindingLevelEnum.MEDIUM}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, level: value as FindingLevel })
+                  setFormData({ ...formData, level: value as FindingLevelEnum })
                 }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={FindingLevel.CRITICAL}>Critical</SelectItem>
-                  <SelectItem value={FindingLevel.HIGH}>High</SelectItem>
-                  <SelectItem value={FindingLevel.MEDIUM}>Medium</SelectItem>
-                  <SelectItem value={FindingLevel.LOW}>Low</SelectItem>
+                  <SelectItem value={FindingLevelEnum.CRITICAL}>Critical</SelectItem>
+                  <SelectItem value={FindingLevelEnum.HIGH}>High</SelectItem>
+                  <SelectItem value={FindingLevelEnum.MEDIUM}>Medium</SelectItem>
+                  <SelectItem value={FindingLevelEnum.LOW}>Low</SelectItem>
                 </SelectContent>
               </Select>
             </FieldContent>
@@ -656,7 +664,7 @@ export const EditClient: React.FC<{
   nodeId: string;
   projectSlug: string;
 }> = ({ teamSlug, nodeId, projectSlug }) => {
-  const [selectedFinding, setSelectedFinding] = useState<DraftFindingSchemaI | null>(null);
+  const [selectedFinding, setSelectedFinding] = useState<DraftedFindingSchema | null>(null);
   const [openAddDialog, setOpenAddDialog] = useState<string | null>(null);
   const [shouldResetFinding, setShouldResetFinding] = useState("");
   const queryClient = useQueryClient();
@@ -771,7 +779,7 @@ export const EditClient: React.FC<{
 
     const deletedFindings = draftQuery.data.staged.filter(
       (f) => f.draft_type === "delete",
-    ) as DraftFindingSchemaI[];
+    ) as DraftedFindingSchema[];
 
     return {
       ...draftQuery.data,

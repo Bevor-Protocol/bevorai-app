@@ -19,8 +19,8 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TeamDetailedSchema } from "@/types/api/responses/business";
 import { generateQueryKey } from "@/utils/constants";
-import { TeamDetailedSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { Github, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -74,7 +74,7 @@ export const TeamActivities: React.FC<{ teamSlug: string }> = ({ teamSlug }) => 
   return <ActivityList activities={activities} className="w-full" />;
 };
 
-export const TeamMembers: React.FC<{ team: TeamDetailedSchemaI }> = ({ team }) => {
+export const TeamMembers: React.FC<{ team: TeamDetailedSchema }> = ({ team }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>

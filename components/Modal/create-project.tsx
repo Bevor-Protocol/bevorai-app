@@ -13,8 +13,8 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useFormReducer } from "@/hooks/useFormReducer";
+import { isApiError } from "@/types/api";
 import { ProjectFormValues, projectFormSchema } from "@/utils/schema";
-import { isApiError } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 

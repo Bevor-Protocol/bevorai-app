@@ -9,8 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { GithubUserInstallationsSchema } from "@/types/api/responses/github";
 import { generateQueryKey } from "@/utils/constants";
-import { GithubInstallationsSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -29,7 +29,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 interface GitHubIntegrationClientProps {
-  installations: GithubInstallationsSchemaI;
+  installations: GithubUserInstallationsSchema;
   defaultInstallationId: number | null;
   teamSlug?: string;
 }

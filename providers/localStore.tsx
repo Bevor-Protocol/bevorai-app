@@ -1,6 +1,6 @@
 "use client";
 
-import { ItemType } from "@/utils/types";
+import { ItemType } from "@/types";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type localStorageKeys = "bevor:starred" | "bevor:chat-panel";

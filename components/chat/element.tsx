@@ -7,21 +7,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { ChatSchema } from "@/types/api/responses/chat";
 import { formatDate, truncateId } from "@/utils/helpers";
-import { ChatSchemaI } from "@/utils/types";
 import { Clock, MessageSquare, MoreHorizontal, User } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
 type ChatElementProps = {
-  chat: ChatSchemaI & { n: number };
+  chat: ChatSchema & { n: number };
   teamSlug: string;
   projectSlug: string;
   isDisabled?: boolean;
 };
 
 const ChatElementMenu: React.FC<{
-  chat: ChatSchemaI;
+  chat: ChatSchema;
   teamSlug: string;
   projectSlug: string;
 }> = ({ chat, teamSlug, projectSlug }) => {
@@ -75,7 +75,7 @@ const ChatElementMenu: React.FC<{
 
 export const ChatElementBare: React.FC<
   {
-    chat: ChatSchemaI;
+    chat: ChatSchema;
     teamSlug: string;
     projectSlug: string;
   } & React.ComponentProps<"div">
@@ -115,7 +115,7 @@ export const ChatElementBare: React.FC<
       </div>
       <div className="text-xs text-muted-foreground whitespace-nowrap text-right">
         {chat.total_messages
-          ? `${chat.total_messages} message${chat.total_messages !== "1" ? "s" : ""}`
+          ? `${chat.total_messages} message${chat.total_messages !== 1 ? "s" : ""}`
           : ""}
       </div>
       <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground whitespace-nowrap">

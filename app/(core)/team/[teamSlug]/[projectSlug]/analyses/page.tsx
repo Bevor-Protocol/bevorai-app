@@ -2,8 +2,8 @@ import Container from "@/components/container";
 import { AnalysisNodesView } from "@/components/screens/nodes";
 import ProjectSubnav from "@/components/subnav/project";
 import { AnalysisCreate } from "@/components/views/analysis/creation";
+import { AsyncComponent } from "@/types";
 import { DefaultAnalysisNodesQuery, extractAnalysisNodesQuery } from "@/utils/query-params";
-import { AsyncComponent } from "@/utils/types";
 
 type ResolvedParams = {
   teamSlug: string;

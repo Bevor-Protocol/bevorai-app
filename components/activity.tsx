@@ -1,6 +1,7 @@
 import LucideIcon from "@/components/lucide-icon";
+import { ItemType } from "@/types";
+import { ActivitySchema } from "@/types/api/responses/business";
 import { formatDate } from "@/utils/helpers";
-import { ActivitySchemaI, ItemType } from "@/utils/types";
 import { Activity } from "lucide-react";
 import Link from "next/link";
 
@@ -31,7 +32,7 @@ const entityTypeToText: Record<string, string> = {
 };
 
 // Entity type to route mapper
-const getEntityRoute = (activity: ActivitySchemaI): string => {
+const getEntityRoute = (activity: ActivitySchema): string => {
   const { entity_type, team_slug, project_slug, related_id } = activity;
 
   switch (entity_type) {
@@ -53,7 +54,7 @@ const getEntityRoute = (activity: ActivitySchemaI): string => {
 };
 
 const ActivityList: React.FC<{
-  activities: ActivitySchemaI[];
+  activities: ActivitySchema[];
   className?: string;
   showHeader?: boolean;
 }> = ({ activities, className, showHeader = true }) => {

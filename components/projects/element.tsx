@@ -2,8 +2,8 @@ import LucideIcon from "@/components/lucide-icon";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { formatDate, formatNumber } from "@/utils/helpers";
-import { ProjectDetailedSchemaI } from "@/utils/types";
 import { Clock, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,7 +41,7 @@ export const ProjectElementLoader: React.FC = () => {
 };
 
 export const ProjectElement: React.FC<{
-  project: ProjectDetailedSchemaI;
+  project: ProjectDetailedSchema;
   showTeam?: boolean;
   isDisabled?: boolean;
 }> = ({ project, showTeam = false, isDisabled = false }) => {

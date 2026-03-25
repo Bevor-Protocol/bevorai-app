@@ -48,10 +48,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { CodeVersionCompactElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { useFormReducer } from "@/hooks/useFormReducer";
+import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
-import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Calendar, Edit, MoreHorizontal, Tag, Trash } from "lucide-react";
 import Image from "next/image";
@@ -137,7 +137,7 @@ export const ProjectToggle: React.FC<{ teamSlug: string; projectSlug: string }> 
 const ProjectEditDialog: React.FC<{
   onOpenChange: (open: boolean) => void;
   teamSlug: string;
-  project: ProjectDetailedSchemaI;
+  project: ProjectDetailedSchema;
 }> = ({ onOpenChange, teamSlug, project }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -268,7 +268,7 @@ const ProjectDeleteAlert: React.FC<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
   teamSlug: string;
-  project: ProjectDetailedSchemaI;
+  project: ProjectDetailedSchema;
 }> = ({ open, onOpenChange, teamSlug, project }) => {
   const queryClient = useQueryClient();
   const router = useRouter();

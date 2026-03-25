@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MemberRoleEnum } from "@/utils/enums";
+import { MemberRoleEnum } from "@/types/api/responses/business";
 import { inviteFormSchema, InviteFormValues, InviteItemValues } from "@/utils/schema/invite";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";

@@ -2,14 +2,14 @@ import { chatActions, codeActions, userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import CodeVersionSubnav from "@/components/subnav/code-version";
 import CollapsibleChatPanel from "@/components/views/chat/code-panel";
+import SourcesViewer from "@/components/views/code/file-viewer";
 import CodeMetadata from "@/components/views/code/metadata";
-import SourcesViewer from "@/components/views/code/sources-viewer";
 import { getQueryClient } from "@/lib/config/query";
 import { ChatProvider } from "@/providers/chat";
 import { CodeProvider } from "@/providers/code";
+import { AsyncComponent } from "@/types";
 import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
-import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 export const dynamic = "force-dynamic"; // Or 'auto' if you want caching
@@ -41,9 +41,9 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         }),
     }),
     queryClient.fetchQuery({
-      queryKey: generateQueryKey.codeSources(resolvedParams.codeId),
+      queryKey: generateQueryKey.codeFiles(resolvedParams.codeId),
       queryFn: () =>
-        codeActions.getSources(resolvedParams.teamSlug, resolvedParams.codeId).then((r) => {
+        codeActions.getFiles(resolvedParams.teamSlug, resolvedParams.codeId).then((r) => {
           if (!r.ok) throw r;
           return r.data;
         }),
@@ -68,7 +68,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
     queryClient.fetchQuery({
       queryKey: generateQueryKey.chats(resolvedParams.teamSlug, chatQuery),
       queryFn: () =>
-        chatActions.getChats(resolvedParams.teamSlug, chatQuery).then((r) => {
+        chatActions.getCodeChats(resolvedParams.teamSlug, chatQuery).then((r) => {
           if (!r.ok) throw r;
           return r.data;
         }),
@@ -80,7 +80,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
       queryClient.fetchQuery({
         queryKey: generateQueryKey.chat(chatId),
         queryFn: () =>
-          chatActions.getChat(resolvedParams.teamSlug, chatId).then((r) => {
+          chatActions.getCodeChat(resolvedParams.teamSlug, chatId).then((r) => {
             if (!r.ok) throw r;
             return r.data;
           }),
@@ -89,6 +89,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   }
 
   const chatResults = await Promise.all(chatPromises);
+
   // Prefetch the initial source data so it's available immediately on the client
   let initialSourceId = source ?? null;
   let initialChatId = chatId ?? null;
@@ -117,7 +118,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
             return r.data;
           }),
       });
-      initialSourceId = fetchedNode.source_id;
+      initialSourceId = fetchedNode.file_id;
       position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
       // eslint-disable-next-line no-empty
     } catch {}
@@ -127,7 +128,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
     <HydrationBoundary state={dehydrate(queryClient)}>
       <ChatProvider {...resolvedParams} chatType="code" initialChatId={initialChatId}>
         <CodeProvider
-          initialSourceId={initialSourceId}
+          initialFileId={initialSourceId}
           initialPosition={position}
           {...resolvedParams}
         >

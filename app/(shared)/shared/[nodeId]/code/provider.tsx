@@ -1,8 +1,8 @@
 "use client";
 
 import { sharedActions } from "@/actions/bevor";
+import { GraphSnapshotFile, GraphSnapshotNode } from "@/types/api/responses/graph";
 import { generateQueryKey } from "@/utils/constants";
-import { CodeSourceWithContentSchemaI, NodeSchemaI } from "@/utils/types";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import React, {
   createContext,
@@ -19,8 +19,8 @@ interface CodeContextValue {
   setPositions: React.Dispatch<React.SetStateAction<{ start: number; end: number } | undefined>>;
   htmlLoaded: boolean;
   setHtmlLoaded: React.Dispatch<React.SetStateAction<boolean>>;
-  sourceId: string | null;
-  setSourceId: React.Dispatch<React.SetStateAction<string | null>>;
+  fileId: string | null;
+  setFileId: React.Dispatch<React.SetStateAction<string | null>>;
   applyHighlight: ({ start, end }: { start: number; end: number }) => void;
   scrollToElement: ({ start, end }: { start: number; end: number }) => void;
   clearHighlight: () => void;
@@ -28,9 +28,9 @@ interface CodeContextValue {
   setCodeVersionId: React.Dispatch<React.SetStateAction<string | null>>;
   containerRef: React.RefObject<HTMLDivElement>;
   isSticky: boolean;
-  handleSourceChange: (sourceId: string, positions?: { start: number; end: number }) => void;
-  sourceQuery: UseQueryResult<CodeSourceWithContentSchemaI, Error>;
-  nodesQuery: UseQueryResult<NodeSchemaI[], Error>;
+  handleFileChange: (fileId: string, positions?: { start: number; end: number }) => void;
+  fileQuery: UseQueryResult<GraphSnapshotFile, Error>;
+  nodesQuery: UseQueryResult<GraphSnapshotNode[], Error>;
 }
 
 const CodeContext = createContext<CodeContextValue | undefined>(undefined);
@@ -39,37 +39,37 @@ export const CodeProvider: React.FC<{
   children: React.ReactNode;
   nodeId: string;
   codeId: string | null;
-  initialSourceId: string | null;
+  initialFileId: string | null;
   initialPosition?: { start: number; end: number };
-}> = ({ children, nodeId, initialSourceId, initialPosition, codeId }) => {
+}> = ({ children, nodeId, initialFileId, initialPosition, codeId }) => {
   const [codeVersionId, setCodeVersionId] = useState(codeId);
   const [positions, setPositions] = useState<{ start: number; end: number } | undefined>(
     initialPosition,
   );
   const [htmlLoaded, setHtmlLoaded] = useState(false);
-  const [sourceId, setSourceId] = useState<string | null>(initialSourceId);
+  const [fileId, setFileId] = useState<string | null>(initialFileId);
   const [isSticky, setIsSticky] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null!); // thing that should stick to top (code holder)
 
-  const sourceQuery = useQuery({
-    queryKey: generateQueryKey.codeSource(nodeId, sourceId ?? ""),
+  const fileQuery = useQuery({
+    queryKey: generateQueryKey.codeFile(nodeId, fileId ?? ""),
     queryFn: () =>
-      sharedActions.getSource(nodeId, sourceId ?? "").then((r) => {
+      sharedActions.getFile(nodeId, fileId ?? "").then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
-    enabled: !!sourceId,
+    enabled: !!fileId,
     staleTime: Infinity,
   });
 
   const nodesQuery = useQuery({
-    queryKey: generateQueryKey.codeNodes(codeVersionId ?? "", { source_id: sourceId! }),
+    queryKey: generateQueryKey.codeNodes(codeVersionId ?? "", { file_id: fileId! }),
     queryFn: () =>
-      sharedActions.getNodes(nodeId, { source_id: sourceId! }).then((r) => {
+      sharedActions.getNodes(nodeId, { file_id: fileId! }).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
-    enabled: !!sourceId,
+    enabled: !!fileId,
     staleTime: Infinity,
   });
 
@@ -90,12 +90,12 @@ export const CodeProvider: React.FC<{
     return (): void => window.removeEventListener("scroll", inferSticky);
   }, [codeVersionId]);
 
-  const handleSourceChange = useCallback(
-    (newSourceId: string, positions?: { start: number; end: number }): void => {
+  const handleFileChange = useCallback(
+    (newFileId: string, positions?: { start: number; end: number }): void => {
       setPositions(positions);
-      if (newSourceId === sourceId) return;
+      if (newFileId === fileId) return;
       setHtmlLoaded(false);
-      setSourceId(newSourceId);
+      setFileId(newFileId);
       if (!positions) {
         if (!containerRef.current) return;
         const codeEl = document.getElementById("code-holder");
@@ -111,7 +111,7 @@ export const CodeProvider: React.FC<{
         });
       }
     },
-    [sourceId],
+    [fileId],
   );
 
   const applyHighlight = useCallback(({ start, end }: { start: number; end: number }): void => {
@@ -183,29 +183,29 @@ export const CodeProvider: React.FC<{
       applyHighlight,
       clearHighlight,
       scrollToElement,
-      sourceId,
-      setSourceId,
+      fileId,
+      setFileId,
       containerRef,
       isSticky,
-      handleSourceChange,
+      handleFileChange,
       codeVersionId,
       setCodeVersionId,
-      sourceQuery,
+      fileQuery,
       nodesQuery,
     }),
     [
       positions,
       htmlLoaded,
-      sourceId,
+      fileId,
       applyHighlight,
       clearHighlight,
-      handleSourceChange,
+      handleFileChange,
       scrollToElement,
       codeVersionId,
       setCodeVersionId,
       isSticky,
       containerRef,
-      sourceQuery,
+      fileQuery,
       nodesQuery,
     ],
   );

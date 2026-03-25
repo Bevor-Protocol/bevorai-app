@@ -1,7 +1,6 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { NodeWithContentSchemaI } from "@/utils/types";
 import { UseQueryResult } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";

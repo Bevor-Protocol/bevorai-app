@@ -1,20 +1,18 @@
 "use client";
 
 import { authActions, tokenActions } from "@/actions/bevor";
-import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
-import { FindingLevel } from "@/utils/enums";
+import { ActivitySchema, InviteSchema } from "@/types/api/responses/business";
+import { ChatIndex } from "@/types/api/responses/chat";
+import { ChatFullSchema, CodeMappingSchema } from "@/types/api/responses/graph";
 import {
-  ActivitySchemaI,
-  AnalysisNodeSchemaI,
-  AnalysisVersionPaginationI,
-  ChatFullSchemaI,
-  ChatPaginationI,
-  CodeMappingSchemaI,
-  CodeVersionsPaginationI,
-  FindingSchemaI,
-  MemberInviteSchema,
-  ScopeSchemaI,
-} from "@/utils/types";
+  AnalysisNodeIndex,
+  AnalysisNodeSchema,
+  FindingLevelEnum,
+  FindingSchema,
+  ScopeSchema,
+} from "@/types/api/responses/security";
+import { Pagination } from "@/types/api/responses/shared";
+import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -116,7 +114,7 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const errorRef = useRef<Event | Error | null>(null);
 
   useEffect(() => {
-    authActions.getBaseUrl().then((url) => setBaseUrl(url + "/events/handler"));
+    authActions.getBaseUrl().then((url) => setBaseUrl(url + "/business/events/handler"));
   }, []);
 
   const disconnect = useCallback((): void => {
@@ -399,7 +397,7 @@ const handleAnalysisStatusUpdate = (queryClient: QueryClient, payload: SSEPayloa
   const analysisQuery = generateQueryKey.analysis(payload.id);
   const analysisDetailedQuery = generateQueryKey.analysisDetailed(payload.id);
 
-  queryClient.setQueryData<AnalysisNodeSchemaI>(analysisDetailedQuery, (oldData) => {
+  queryClient.setQueryData<AnalysisNodeSchema>(analysisDetailedQuery, (oldData) => {
     if (!oldData) return oldData;
     const newData = {
       ...oldData,
@@ -408,7 +406,7 @@ const handleAnalysisStatusUpdate = (queryClient: QueryClient, payload: SSEPayloa
     return newData;
   });
 
-  queryClient.setQueryData<AnalysisNodeSchemaI>(analysisQuery, (oldData) => {
+  queryClient.setQueryData<AnalysisNodeSchema>(analysisQuery, (oldData) => {
     if (!oldData) return oldData;
     return {
       ...oldData,
@@ -416,7 +414,7 @@ const handleAnalysisStatusUpdate = (queryClient: QueryClient, payload: SSEPayloa
     };
   });
 
-  const allActiveListQueries = queryClient.getQueriesData<AnalysisVersionPaginationI>({
+  const allActiveListQueries = queryClient.getQueriesData<Pagination<AnalysisNodeIndex>>({
     queryKey: [QUERY_KEYS.ANALYSES, payload.data.team_slug],
     stale: false,
   });
@@ -425,7 +423,7 @@ const handleAnalysisStatusUpdate = (queryClient: QueryClient, payload: SSEPayloa
     if (!data) return;
     const itemExists = data.results.some((item) => item.id === payload.id);
     if (itemExists) {
-      queryClient.setQueryData<AnalysisVersionPaginationI>(queryKey, (oldData) => {
+      queryClient.setQueryData<Pagination<AnalysisNodeIndex>>(queryKey, (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
@@ -443,7 +441,7 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
 
   const analysisQuery = generateQueryKey.analysis(payload.data.analysis_node_id);
   const analysisDetailedQuery = generateQueryKey.analysisDetailed(payload.data.analysis_node_id);
-  let findings: FindingSchemaI[] = [];
+  let findings: FindingSchema[] = [];
   if (typeof payload.data.findings === "string") {
     try {
       findings = JSON.parse(payload.data.findings);
@@ -452,7 +450,7 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
     }
   }
 
-  queryClient.setQueryData<AnalysisNodeSchemaI>(analysisQuery, (oldData) => {
+  queryClient.setQueryData<AnalysisNodeSchema>(analysisQuery, (oldData) => {
     if (!oldData) return oldData;
     return {
       ...oldData,
@@ -460,7 +458,7 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
     };
   });
 
-  queryClient.setQueryData<AnalysisNodeSchemaI>(analysisDetailedQuery, (oldData) => {
+  queryClient.setQueryData<AnalysisNodeSchema>(analysisDetailedQuery, (oldData) => {
     if (!oldData) return oldData;
 
     const updatedScopes = oldData.scopes.map((scope) =>
@@ -475,23 +473,23 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
     const updatedFindings = oldData.findings.concat(findings);
 
     // this emulates sorting on the backend. We can remove this if we want.
-    const scoreMap: Record<FindingLevel, number> = {
-      [FindingLevel.CRITICAL]: 6,
-      [FindingLevel.HIGH]: 4,
-      [FindingLevel.MEDIUM]: 2,
-      [FindingLevel.LOW]: 1,
+    const scoreMap: Record<FindingLevelEnum, number> = {
+      [FindingLevelEnum.CRITICAL]: 6,
+      [FindingLevelEnum.HIGH]: 4,
+      [FindingLevelEnum.MEDIUM]: 2,
+      [FindingLevelEnum.LOW]: 1,
     };
 
     const scopeScoreMap = new Map<string, number>();
     for (const finding of updatedFindings) {
       const score = scoreMap[finding.level] || 0;
-      const currentScore = scopeScoreMap.get(finding.code_version_node_id) || 0;
-      scopeScoreMap.set(finding.code_version_node_id, currentScore + score);
+      const currentScore = scopeScoreMap.get(finding.source_node_id) || 0;
+      scopeScoreMap.set(finding.source_node_id, currentScore + score);
     }
 
-    const scopesWithScore: [ScopeSchemaI, number][] = updatedScopes.map((scope) => [
+    const scopesWithScore: [ScopeSchema, number][] = updatedScopes.map((scope) => [
       scope,
-      scopeScoreMap.get(scope.code_version_node_id) || 0,
+      scopeScoreMap.get(scope.source_node_id) || 0,
     ]);
 
     scopesWithScore.sort((a, b) => b[1] - a[1]);
@@ -505,7 +503,7 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
     };
   });
 
-  const allActiveListQueries = queryClient.getQueriesData<AnalysisVersionPaginationI>({
+  const allActiveListQueries = queryClient.getQueriesData<Pagination<AnalysisNodeIndex>>({
     queryKey: [QUERY_KEYS.ANALYSES, payload.data.team_slug],
     stale: false,
   });
@@ -514,7 +512,7 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
     if (!data) return;
     const itemExists = data.results.some((item) => item.id === payload.id);
     if (itemExists) {
-      queryClient.setQueryData<AnalysisVersionPaginationI>(queryKey, (oldData) => {
+      queryClient.setQueryData<Pagination<AnalysisNodeIndex>>(queryKey, (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
@@ -532,7 +530,7 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
 const handleInviteUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
   console.log("invite payload", payload);
   const inviteQuery = generateQueryKey.userInvites();
-  queryClient.setQueryData<MemberInviteSchema[]>(inviteQuery, (oldData) => {
+  queryClient.setQueryData<InviteSchema[]>(inviteQuery, (oldData) => {
     if (!oldData) return [payload.data];
     return [...oldData, payload.data];
   });
@@ -541,7 +539,7 @@ const handleInviteUpdate = (queryClient: QueryClient, payload: SSEPayload): void
 const handleChatUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
   console.log("chat payload", payload);
   const chatQuery = generateQueryKey.chat(payload.id);
-  queryClient.setQueryData<ChatFullSchemaI>(chatQuery, (oldData) => {
+  queryClient.setQueryData<ChatFullSchema>(chatQuery, (oldData) => {
     if (!oldData) return oldData;
     return {
       ...oldData,
@@ -549,7 +547,7 @@ const handleChatUpdate = (queryClient: QueryClient, payload: SSEPayload): void =
     };
   });
 
-  const allChatsQueries = queryClient.getQueriesData<ChatPaginationI>({
+  const allChatsQueries = queryClient.getQueriesData<Pagination<ChatIndex>>({
     queryKey: [QUERY_KEYS.CHATS, payload.data.team_slug],
     stale: false,
   });
@@ -558,7 +556,7 @@ const handleChatUpdate = (queryClient: QueryClient, payload: SSEPayload): void =
     if (!data) return;
     const itemExists = data.results.some((item) => item.id === payload.id);
     if (itemExists) {
-      queryClient.setQueryData<ChatPaginationI>(queryKey, (oldData) => {
+      queryClient.setQueryData<Pagination<ChatIndex>>(queryKey, (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
@@ -575,14 +573,14 @@ const handleActivityUpdate = (queryClient: QueryClient, payload: SSEPayload): vo
   console.log("activity payload", payload);
   if (payload.data.team_slug) {
     const teamQuery = generateQueryKey.teamActivities(payload.data.team_slug);
-    queryClient.setQueryData<ActivitySchemaI[]>(teamQuery, (oldData) => {
+    queryClient.setQueryData<ActivitySchema[]>(teamQuery, (oldData) => {
       if (!oldData) return [payload.data];
       return [...oldData, payload.data];
     });
   }
   if (payload.data.project_slug) {
     const projectQuery = generateQueryKey.projectActivities(payload.data.project_slug);
-    queryClient.setQueryData<ActivitySchemaI[]>(projectQuery, (oldData) => {
+    queryClient.setQueryData<ActivitySchema[]>(projectQuery, (oldData) => {
       if (!oldData) return [payload.data];
       return [...oldData, payload.data];
     });
@@ -593,7 +591,7 @@ const handleCodeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload): 
   console.log("code update payload", payload);
   const codeQuery = generateQueryKey.code(payload.id);
 
-  queryClient.setQueryData<CodeMappingSchemaI>(codeQuery, (oldData) => {
+  queryClient.setQueryData<CodeMappingSchema>(codeQuery, (oldData) => {
     if (!oldData) return oldData;
     return {
       ...oldData,
@@ -603,7 +601,7 @@ const handleCodeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload): 
 
   queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CODES, payload.id], refetchType: "all" });
 
-  const allActiveListQueries = queryClient.getQueriesData<CodeVersionsPaginationI>({
+  const allActiveListQueries = queryClient.getQueriesData<Pagination<CodeMappingSchema>>({
     queryKey: [QUERY_KEYS.CODES, payload.data.team_slug],
     stale: false,
   });
@@ -612,7 +610,7 @@ const handleCodeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload): 
     if (!data) return;
     const itemExists = data.results.some((item) => item.id === payload.id);
     if (itemExists) {
-      queryClient.setQueryData<CodeVersionsPaginationI>(queryKey, (oldData) => {
+      queryClient.setQueryData<Pagination<CodeMappingSchema>>(queryKey, (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,

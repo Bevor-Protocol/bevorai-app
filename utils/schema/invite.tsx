@@ -1,4 +1,4 @@
-import { MemberRoleEnum } from "@/utils/enums";
+import { MemberRoleEnum } from "@/types/api/responses/business";
 import z from "zod";
 
 export const inviteItemSchema = z.object({

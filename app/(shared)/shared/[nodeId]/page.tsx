@@ -2,8 +2,9 @@ import { sharedActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import SharedSubnav from "@/components/subnav/shared";
 import { getQueryClient } from "@/lib/config/query";
+import { AsyncComponent } from "@/types";
+import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { AsyncComponent, SharedAnalysisNodeSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import AnalysisHolder from "./client";
 
@@ -19,7 +20,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params }) => {
   const queryClient = getQueryClient();
   const resolvedParams = await params;
 
-  let analysis: SharedAnalysisNodeSchemaI;
+  let analysis: AnalysisNodeSchema;
   try {
     analysis = await queryClient.fetchQuery({
       queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),

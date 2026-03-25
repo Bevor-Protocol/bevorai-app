@@ -15,9 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { UserDetailedSchema } from "@/types/api/responses/business";
 import { start } from "@/utils/auth";
 import { generateQueryKey } from "@/utils/constants";
-import { UserDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Chrome, Github, Mail, RefreshCcw, Settings, X } from "lucide-react";
 import Link from "next/link";
@@ -72,7 +72,7 @@ const LinkedAccountsClient: React.FC = () => {
       // we only manipulate 1 field, just update it.
       queryClient.setQueryData(
         generateQueryKey.currentUser(),
-        (prev: UserDetailedSchemaI): UserDetailedSchemaI => {
+        (prev: UserDetailedSchema): UserDetailedSchema => {
           if (providerName === "github") {
             return { ...prev, is_github_oauth_connected: false };
           } else {

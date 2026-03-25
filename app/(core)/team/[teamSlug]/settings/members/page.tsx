@@ -2,8 +2,8 @@
 
 import { billingActions, teamActions } from "@/actions/bevor";
 import { getQueryClient } from "@/lib/config/query";
+import { AsyncComponent } from "@/types";
 import { generateQueryKey } from "@/utils/constants";
-import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import InviteForm from "./invite-form";
 import MembersTabs, { MembersCount, TeamSeats } from "./members-tabs";

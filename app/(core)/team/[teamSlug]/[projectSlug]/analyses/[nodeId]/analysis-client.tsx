@@ -4,8 +4,8 @@ import { analysisActions } from "@/actions/bevor";
 import AnalysisHolder from "@/components/views/analysis/holder";
 import CollapsibleChatPanel from "@/components/views/chat/analysis-panel";
 import { useChat } from "@/providers/chat";
+import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { FindingSchemaI } from "@/utils/types";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 
@@ -13,7 +13,7 @@ interface AnalysisClientProps {
   teamSlug: string;
   projectSlug: string;
   nodeId: string;
-  initialFinding?: FindingSchemaI;
+  initialFinding?: FindingSchema;
   isOwner: boolean;
 }
 
@@ -41,7 +41,7 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
     return version.findings.filter((finding) => findingAttributeIds.has(finding.id));
   }, [attributes, version.findings]);
 
-  const addFindingToContext = (finding: FindingSchemaI): void => {
+  const addFindingToContext = (finding: FindingSchema): void => {
     addFinding(finding);
   };
 

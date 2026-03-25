@@ -2,7 +2,7 @@ import AppNav from "@/components/nav";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LocalStorageProvider } from "@/providers/localStore";
 import { SSEProvider } from "@/providers/sse";
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
 
 const Layout: AsyncComponent<{ children: React.ReactNode }> = async ({ children }) => {
   return (

@@ -2,14 +2,14 @@ import { analysisActions, chatActions, codeActions, userActions } from "@/action
 import Container from "@/components/container";
 import AnalysisSubnav from "@/components/subnav/analysis";
 import CollapsibleChatPanel from "@/components/views/chat/code-panel";
+import SourcesViewer from "@/components/views/code/file-viewer";
 import CodeMetadata from "@/components/views/code/metadata";
-import SourcesViewer from "@/components/views/code/sources-viewer";
 import { getQueryClient } from "@/lib/config/query";
 import { ChatProvider } from "@/providers/chat";
 import { CodeProvider } from "@/providers/code";
+import { AsyncComponent } from "@/types";
 import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
-import { AsyncComponent } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 type ResolvedParams = {
@@ -20,13 +20,13 @@ type ResolvedParams = {
 
 type Props = {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<{ source?: string; node?: string }>;
+  searchParams: Promise<{ file?: string; node?: string }>;
 };
 
 const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const queryClient = getQueryClient();
   const resolvedParams = await params;
-  const { source, node } = await searchParams;
+  const { file, node } = await searchParams;
 
   const analysis = await analysisActions
     .getAnalysis(resolvedParams.teamSlug, resolvedParams.nodeId)
@@ -35,7 +35,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
       return r.data;
     });
 
-  const [code, sources, user] = await Promise.all([
+  const [code, files, user] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(analysis.code_version_id),
       queryFn: () =>
@@ -45,9 +45,9 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         }),
     }),
     queryClient.fetchQuery({
-      queryKey: generateQueryKey.codeSources(analysis.code_version_id),
+      queryKey: generateQueryKey.codeFiles(analysis.code_version_id),
       queryFn: () =>
-        codeActions.getSources(resolvedParams.teamSlug, analysis.code_version_id).then((r) => {
+        codeActions.getFiles(resolvedParams.teamSlug, analysis.code_version_id).then((r) => {
           if (!r.ok) throw r;
           return r.data;
         }),
@@ -71,22 +71,22 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const chats = await queryClient.fetchQuery({
     queryKey: generateQueryKey.chats(resolvedParams.teamSlug, chatQuery),
     queryFn: () =>
-      chatActions.getChats(resolvedParams.teamSlug, chatQuery).then((r) => {
+      chatActions.getCodeChats(resolvedParams.teamSlug, chatQuery).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
   });
 
   // Prefetch the initial source data so it's available immediately on the client
-  let initialSourceId = source ?? null;
-  if (initialSourceId) {
+  let initialFileId = file ?? null;
+  if (initialFileId) {
     // validate that the query param exists on this code version. If not, unset it, default to first.
-    if (!sources.find((s) => s.id == source)) {
-      initialSourceId = null;
+    if (!files.find((s) => s.id == file)) {
+      initialFileId = null;
     }
   }
-  if (!initialSourceId) {
-    initialSourceId = sources.length ? sources[0].id : null;
+  if (!initialFileId) {
+    initialFileId = files.length ? files[0].id : null;
   }
 
   const initialChatId = chats && chats.results.length ? chats.results[0].id : null;
@@ -113,7 +113,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         codeId={analysis.code_version_id}
       >
         <CodeProvider
-          initialSourceId={initialSourceId}
+          initialFileId={initialFileId}
           initialPosition={position}
           codeId={analysis.code_version_id}
           {...resolvedParams}

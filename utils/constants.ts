@@ -110,17 +110,24 @@ export const generateQueryKey = {
   code: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId],
   codeNodes: (
     codeId: string,
-    filter?: { name?: string; source_id?: string; node_type?: string },
+    filter?: { name?: string; file_id?: string; node_type?: string },
   ): QueryKey => [QUERY_KEYS.CODES, codeId, "nodes", filter],
   codeNode: (codeNodeId: string): QueryKey => [QUERY_KEYS.CODES, codeNodeId, "node"],
   codeRelations: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "relations"],
   codeSimilarity: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "similarity"],
-  codeSources: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "sources"],
-  codeSource: (codeId: string, sourceId: string): QueryKey => [
+  codeFiles: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "files"],
+  codeFile: (codeId: string, fileId: string): QueryKey => [
     QUERY_KEYS.CODES,
     codeId,
-    "source",
-    sourceId,
+    "file",
+    fileId,
+  ],
+  codeFileContent: (codeId: string, fileId: string): QueryKey => [
+    QUERY_KEYS.CODES,
+    codeId,
+    "file",
+    fileId,
+    "content",
   ],
   codeTree: (codeId: string): QueryKey => [QUERY_KEYS.CODES, codeId, "tree"],
   codes: (teamSlug: string, filter: { [key: string]: string | undefined }): QueryKey => [

@@ -1,6 +1,15 @@
 "use server";
 
-import api from "@/lib/api";
+import { graphApi } from "@/lib/api";
+import { ApiResponse } from "@/types/api";
+import {
+  CodeMappingSchema,
+  GraphSnapshotFile,
+  GraphSnapshotNode,
+  RelationSchema,
+  TreeFile,
+} from "@/types/api/responses/graph";
+import { Pagination } from "@/types/api/responses/shared";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import {
@@ -11,29 +20,17 @@ import {
   UploadCodeFileFormValues,
   UploadCodeFolderFormValues,
 } from "@/utils/schema";
-import {
-  ApiResponse,
-  CodeCreateSchemaI,
-  CodeMappingSchemaI,
-  CodeRelationSchemaI,
-  CodeSourceSchemaI,
-  CodeSourceWithContentSchemaI,
-  CodeVersionsPaginationI,
-  NodeSchemaI,
-  NodeWithContentSchemaI,
-  TreeResponseI,
-} from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
 export const contractUploadFolder = async (
   teamSlug: string,
   projectId: string,
   data: UploadCodeFolderFormValues,
-): ApiResponse<
-  CodeCreateSchemaI & {
-    toInvalidate: QueryKey[];
-  }
-> => {
+): ApiResponse<{
+  id: string;
+  status: "waiting" | "processing" | "success" | "failed";
+  toInvalidate: QueryKey[];
+}> => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
   const formData = new FormData();
@@ -44,8 +41,8 @@ export const contractUploadFolder = async (
     toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
   }
 
-  return api
-    .post("/codes/create/folder", formData, { headers: { "bevor-team-slug": teamSlug } })
+  return graphApi
+    .post("/versions/folder", formData, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -68,11 +65,11 @@ export const contractUploadFile = async (
   teamSlug: string,
   projectId: string,
   data: UploadCodeFileFormValues,
-): ApiResponse<
-  CodeCreateSchemaI & {
-    toInvalidate: QueryKey[];
-  }
-> => {
+): ApiResponse<{
+  id: string;
+  status: "waiting" | "processing" | "success" | "failed";
+  toInvalidate: QueryKey[];
+}> => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
   const formData = new FormData();
@@ -83,8 +80,8 @@ export const contractUploadFile = async (
     toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
   }
 
-  return api
-    .post("/codes/create/file", formData, { headers: { "bevor-team-slug": teamSlug } })
+  return graphApi
+    .post("/versions/file", formData, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -107,18 +104,18 @@ export const contractUploadPaste = async (
   teamSlug: string,
   projectId: string,
   data: PasteCodeFileFormValues,
-): ApiResponse<
-  CodeCreateSchemaI & {
-    toInvalidate: QueryKey[];
-  }
-> => {
+): ApiResponse<{
+  id: string;
+  status: "waiting" | "processing" | "success" | "failed";
+  toInvalidate: QueryKey[];
+}> => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
   if (data.parent_id) {
     toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
   }
-  return api
+  return graphApi
     .post(
-      "/codes/create/paste",
+      "/versions/paste",
       { project_id: projectId, ...data },
       { headers: { "bevor-team-slug": teamSlug } },
     )
@@ -144,18 +141,18 @@ export const contractUploadScan = async (
   teamSlug: string,
   projectId: string,
   data: ScanCodeAddressFormValues,
-): ApiResponse<
-  CodeCreateSchemaI & {
-    toInvalidate: QueryKey[];
-  }
-> => {
+): ApiResponse<{
+  id: string;
+  status: "waiting" | "processing" | "success" | "failed";
+  toInvalidate: QueryKey[];
+}> => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
   if (data.parent_id) {
     toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
   }
-  return api
+  return graphApi
     .post(
-      "/codes/create/scan",
+      "/versions/scan",
       { address: data.address, project_id: projectId, parent_id: data.parent_id },
       { headers: { "bevor-team-slug": teamSlug } },
     )
@@ -181,18 +178,18 @@ export const contractUploadPublicRepo = async (
   teamSlug: string,
   projectId: string,
   data: CreateCodeFromPublicGithubFormValues,
-): ApiResponse<
-  CodeCreateSchemaI & {
-    toInvalidate: QueryKey[];
-  }
-> => {
+): ApiResponse<{
+  id: string;
+  status: "waiting" | "processing" | "success" | "failed";
+  toInvalidate: QueryKey[];
+}> => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
   if (data.parent_id) {
     toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
   }
-  return api
+  return graphApi
     .post(
-      "/codes/create/repo",
+      "/versions/repo",
       { url: data.url, project_id: projectId, parent_id: data.parent_id },
       { headers: { "bevor-team-slug": teamSlug } },
     )
@@ -218,18 +215,18 @@ export const createCodeConnectedGithub = async (
   teamSlug: string,
   projectId: string,
   data: CreateCodeFromGithubFormValues,
-): ApiResponse<
-  CodeCreateSchemaI & {
-    toInvalidate: QueryKey[];
-  }
-> => {
+): ApiResponse<{
+  id: string;
+  status: "waiting" | "processing" | "success" | "failed";
+  toInvalidate: QueryKey[];
+}> => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
   if (data.parent_id) {
     toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
   }
-  return api
+  return graphApi
     .post(
-      "/codes/create/connected-repo",
+      "/versions/connected-repo",
       {
         project_id: projectId,
         branch: data.branch,
@@ -259,9 +256,9 @@ export const createCodeConnectedGithub = async (
 export const getCodeVersion = async (
   teamSlug: string,
   codeId: string,
-): ApiResponse<CodeMappingSchemaI> => {
-  return api
-    .get(`/codes/${codeId}`, { headers: { "bevor-team-slug": teamSlug } })
+): ApiResponse<CodeMappingSchema> => {
+  return graphApi
+    .get(`/versions/${codeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -283,10 +280,10 @@ export const getCodeVersion = async (
 export const getCodeVersionSimilar = async (
   teamSlug: string,
   codeId: string,
-): ApiResponse<{ score: number; version: CodeMappingSchemaI }[]> => {
+): ApiResponse<{ score: number; version: CodeMappingSchema }[]> => {
   const searchParams = new URLSearchParams({ limit: "5", threshold: "0.5" });
-  return api
-    .get(`/codes/${codeId}/similarity?${searchParams.toString()}`, {
+  return graphApi
+    .get(`/versions/${codeId}/similarity?${searchParams.toString()}`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -307,12 +304,12 @@ export const getCodeVersionSimilar = async (
     });
 };
 
-export const getSources = async (
+export const getFiles = async (
   teamSlug: string,
   codeId: string,
-): ApiResponse<CodeSourceSchemaI[]> => {
-  return api
-    .get(`/codes/${codeId}/sources`, {
+): ApiResponse<GraphSnapshotFile[]> => {
+  return graphApi
+    .get(`/versions/${codeId}/files`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -333,13 +330,13 @@ export const getSources = async (
     });
 };
 
-export const getSource = async (
+export const getFile = async (
   teamSlug: string,
   codeId: string,
-  sourceId: string,
-): ApiResponse<CodeSourceWithContentSchemaI> => {
-  return api
-    .get(`/codes/${codeId}/sources/${sourceId}`, {
+  fileId: string,
+): ApiResponse<GraphSnapshotFile> => {
+  return graphApi
+    .get(`/versions/${codeId}/files/${fileId}`, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -360,9 +357,36 @@ export const getSource = async (
     });
 };
 
-export const getTree = async (teamSlug: string, codeId: string): ApiResponse<TreeResponseI[]> => {
-  return api
-    .get(`/codes/${codeId}/tree`, { headers: { "bevor-team-slug": teamSlug } })
+export const getFileContent = async (
+  teamSlug: string,
+  codeId: string,
+  fileId: string,
+): ApiResponse<string> => {
+  return graphApi
+    .get(`/versions/${codeId}/files/${fileId}/content`, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.content,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
+};
+
+export const getTree = async (teamSlug: string, codeId: string): ApiResponse<TreeFile[]> => {
+  return graphApi
+    .get(`/versions/${codeId}/tree`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -385,9 +409,9 @@ export const getNode = async (
   teamSlug: string,
   codeId: string,
   nodeId: string,
-): ApiResponse<NodeWithContentSchemaI> => {
-  return api
-    .get(`/codes/${codeId}/nodes/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
+): ApiResponse<GraphSnapshotNode> => {
+  return graphApi
+    .get(`/versions/${codeId}/nodes/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -406,22 +430,49 @@ export const getNode = async (
     });
 };
 
+export const getNodeContent = async (
+  teamSlug: string,
+  codeId: string,
+  nodeId: string,
+): ApiResponse<string> => {
+  return graphApi
+    .get(`/versions/${codeId}/nodes/${nodeId}/content`, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.content,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
+};
+
 export const getNodes = async (
   teamSlug: string,
   codeId: string,
   data?: {
     name?: string;
-    source_id?: string;
+    file_id?: string;
     node_type?: string;
   },
-): ApiResponse<NodeSchemaI[]> => {
+): ApiResponse<GraphSnapshotNode[]> => {
   const searchParams = new URLSearchParams(data);
-  let url = `/codes/${codeId}/nodes`;
+  let url = `/versions/${codeId}/nodes`;
   if (searchParams) {
     url += `?${searchParams.toString()}`;
   }
 
-  return api
+  return graphApi
     .get(url, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -444,9 +495,9 @@ export const getNodes = async (
 export const getRelations = async (
   teamSlug: string,
   codeId: string,
-): ApiResponse<CodeRelationSchemaI> => {
-  return api
-    .get(`/codes/${codeId}/relations`, { headers: { "bevor-team-slug": teamSlug } })
+): ApiResponse<RelationSchema> => {
+  return graphApi
+    .get(`/versions/${codeId}/relations`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -470,11 +521,11 @@ export const getVersions = async (
   filters: {
     [key: string]: string;
   },
-): ApiResponse<CodeVersionsPaginationI> => {
+): ApiResponse<Pagination<CodeMappingSchema>> => {
   const searchParams = buildSearchParams(filters);
 
-  return api
-    .get(`/codes?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
+  return graphApi
+    .get(`/versions?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -496,14 +547,14 @@ export const getVersions = async (
 export const retryEmbedding = async (
   teamSlug: string,
   codeId: string,
-): ApiResponse<
-  CodeCreateSchemaI & {
-    toInvalidate: QueryKey[];
-  }
-> => {
+): ApiResponse<{
+  id: string;
+  status: "waiting" | "processing" | "success" | "failed";
+  toInvalidate: QueryKey[];
+}> => {
   const toInvalidate = [[QUERY_KEYS.CODES, teamSlug]];
-  return api
-    .post(`/codes/${codeId}/retry`, {}, { headers: { "bevor-team-slug": teamSlug } })
+  return graphApi
+    .post(`/versions/${codeId}/retry`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -530,9 +581,9 @@ export const updateCodeVersionParent = async (
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [generateQueryKey.codeRelations(codeId)];
-  return api
+  return graphApi
     .patch(
-      `/codes/${codeId}`,
+      `/versions/${codeId}`,
       { parent_id: parentId },
       { headers: { "bevor-team-slug": teamSlug } },
     )

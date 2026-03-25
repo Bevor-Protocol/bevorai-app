@@ -1,10 +1,11 @@
 "use server";
 
-import api from "@/lib/api";
-import { ActivitySchemaI, ApiResponse } from "@/utils/types";
+import { businessApi } from "@/lib/api";
+import { ApiResponse } from "@/types/api";
+import { ActivitySchema } from "@/types/api/responses/business";
 
-export const getTeamActivities = async (teamSlug: string): ApiResponse<ActivitySchemaI[]> => {
-  return api
+export const getTeamActivities = async (teamSlug: string): ApiResponse<ActivitySchema[]> => {
+  return businessApi
     .get("/activities", { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -23,11 +24,11 @@ export const getTeamActivities = async (teamSlug: string): ApiResponse<ActivityS
 export const getProjectActivities = async (
   teamSlug: string,
   projectSlug: string,
-): ApiResponse<ActivitySchemaI[]> => {
+): ApiResponse<ActivitySchema[]> => {
   const searchParams = new URLSearchParams();
   searchParams.set("project_slug", projectSlug);
 
-  return api
+  return businessApi
     .get(`/activities?${searchParams}`, {
       headers: { "bevor-team-slug": teamSlug },
     })

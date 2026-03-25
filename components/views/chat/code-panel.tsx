@@ -43,7 +43,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
   const chatsQuery = useQuery({
     queryKey: generateQueryKey.chats(teamSlug, chatQuery),
     queryFn: () =>
-      chatActions.getChats(teamSlug, chatQuery).then((r) => {
+      chatActions.getCodeChats(teamSlug, chatQuery).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),

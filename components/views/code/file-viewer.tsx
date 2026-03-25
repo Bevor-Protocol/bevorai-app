@@ -5,14 +5,14 @@ import ShikiViewer from "@/components/shiki-viewer";
 import {
   CodeContent,
   CodeDisplay,
+  CodeFileItem,
+  CodeFiles,
+  CodeFileToggle,
   CodeHeader,
   CodeHolder,
   CodeMetadata,
   CodeNodeList,
-  CodeSourceItem,
-  CodeSources,
-  CodeSourceToggle,
-  getSourceColor,
+  getFileColor,
 } from "@/components/ui/code";
 import {
   Select,
@@ -24,13 +24,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
+import { GraphSnapshotNode } from "@/types/api/responses/graph";
 import { generateQueryKey } from "@/utils/constants";
-import { NodeSchemaI } from "@/utils/types";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 import NodeSearch from "./search";
 
-interface SourcesViewerProps {
+interface FilesViewerProps {
   teamSlug: string;
   codeId: string;
 }
@@ -93,20 +93,14 @@ export const nodeTypeGroups = [
   },
 ];
 
-const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
-  const {
-    handleSourceChange,
-    sourceQuery,
-    nodesQuery,
-    containerRef,
-    contentViewportRef,
-    sourceId,
-  } = useCode();
+const FilesViewer: React.FC<FilesViewerProps> = ({ teamSlug, codeId }) => {
+  const { handleFileChange, fileQuery, nodesQuery, containerRef, contentViewportRef, fileId } =
+    useCode();
 
   const { data: sources } = useSuspenseQuery({
-    queryKey: generateQueryKey.codeSources(codeId),
+    queryKey: generateQueryKey.codeFiles(codeId),
     queryFn: () =>
-      codeActions.getSources(teamSlug, codeId).then((r) => {
+      codeActions.getFiles(teamSlug, codeId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
@@ -123,14 +117,12 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
     });
   }, [nodesQuery.data]);
 
-  console.log(nodeGroups);
-
   if (sources.length === 0) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 pr-2">
         <div className="border border-border rounded-lg p-6">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-2">Version Sources</h1>
+            <h1 className="text-2xl font-bold mb-2">Version Files</h1>
             <p className="text-muted-foreground">No source files found for this version.</p>
           </div>
         </div>
@@ -138,12 +130,12 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
     );
   }
 
-  const currentSource = sources.find((s) => s.id === sourceId);
-  const currentFileName = currentSource?.path.split("/").pop() ?? "";
-  const currentSourceColor = currentSource ? getSourceColor(currentSource) : "";
+  const currentFile = sources.find((s) => s.id === fileId);
+  const currentFileName = currentFile?.path.split("/").pop() ?? "";
+  const currentFileColor = currentFile ? getFileColor(currentFile) : "";
 
-  const handleNodeClick = (node: NodeSchemaI): void => {
-    handleSourceChange(node.source_id, {
+  const handleNodeClick = (node: GraphSnapshotNode): void => {
+    handleFileChange(node.file_id, {
       start: node.src_start_pos,
       end: node.src_end_pos,
     });
@@ -152,13 +144,13 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
   return (
     <CodeHolder ref={containerRef}>
       <CodeMetadata>
-        <CodeSourceToggle>
+        <CodeFileToggle>
           <NodeSearch teamSlug={teamSlug} codeId={codeId} className="w-full" />
-          <Select value={sourceId!} onValueChange={(sourceId) => handleSourceChange(sourceId)}>
+          <Select value={fileId!} onValueChange={(fileId) => handleFileChange(fileId)}>
             <SelectTrigger className="max-w-full w-full px-2">
               <SelectValue>
                 <div className="flex gap-2 items-center">
-                  <div className={cn("w-2 h-2 rounded-full shrink-0", currentSourceColor)} />
+                  <div className={cn("w-2 h-2 rounded-full shrink-0", currentFileColor)} />
                   {currentFileName}
                 </div>
               </SelectValue>
@@ -166,13 +158,13 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
             <SelectContent className="w-[300px] overflow-hidden">
               {sources.map((source) => (
                 <SelectItem key={source.id} value={source.id}>
-                  <CodeSourceItem source={source} />
+                  <CodeFileItem source={source} />
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </CodeSourceToggle>
-        <CodeSources>
+        </CodeFileToggle>
+        <CodeFiles>
           {nodesQuery.isLoading ? (
             <>
               {nodeTypeGroups.map((group) => (
@@ -207,16 +199,16 @@ const SourcesViewer: React.FC<SourcesViewerProps> = ({ teamSlug, codeId }) => {
               )}
             </>
           )}
-        </CodeSources>
+        </CodeFiles>
       </CodeMetadata>
       <CodeDisplay>
-        <CodeHeader path={sourceQuery.data?.path} />
+        <CodeHeader path={fileQuery.data?.path} />
         <CodeContent viewportRef={contentViewportRef}>
-          <ShikiViewer className={sourceQuery.isLoading ? "opacity-50" : ""} />
+          <ShikiViewer className={fileQuery.isLoading ? "opacity-50" : ""} />
         </CodeContent>
       </CodeDisplay>
     </CodeHolder>
   );
 };
 
-export default SourcesViewer;
+export default FilesViewer;

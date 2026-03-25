@@ -13,7 +13,8 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
   const [html, setHtml] = useState<string>("");
   const {
     positions,
-    sourceQuery,
+    fileQuery,
+    fileContentQuery,
     clearHighlight,
     applyHighlight,
     scrollToElement,
@@ -42,7 +43,7 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
       setHtmlLoaded(false);
     }
 
-    if (!sourceQuery.data) {
+    if (!fileQuery.data || !fileContentQuery.data) {
       if (!codeVersionChanged) {
         setHtml("");
         setHtmlLoaded(false);
@@ -51,7 +52,8 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
       return;
     }
 
-    const sourceData = sourceQuery.data;
+    const sourceData = fileQuery.data;
+    const fileContent = fileContentQuery.data;
     const highlightCode = async (): Promise<void> => {
       const currentSourceId = sourceData.id;
       const sourceChanged = lastSourceIdRef.current !== currentSourceId;
@@ -61,7 +63,7 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
       }
 
       try {
-        const result = await codeToHtml(sourceData.content, {
+        const result = await codeToHtml(fileContent, {
           lang: "solidity",
           theme: "github-dark",
           colorReplacements: {},
@@ -76,8 +78,8 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
               span(node, line, col, lineElement, token): void {
                 const charStartPos = token.offset;
                 const charEndPos = charStartPos + token.content.length;
-                const byteStartPos = charToByteIndex(sourceData.content, charStartPos);
-                const byteEndPos = charToByteIndex(sourceData.content, charEndPos);
+                const byteStartPos = charToByteIndex(fileContent, charStartPos);
+                const byteEndPos = charToByteIndex(fileContent, charEndPos);
                 node.properties["data-token"] = `token:${byteStartPos}:${byteEndPos}`;
               },
             },
@@ -88,7 +90,7 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
         isInitialRenderRef.current = false;
       } catch (error) {
         console.error("Error highlighting code:", error);
-        const fallbackHtml = `<pre><code>${sourceData.content}</code></pre>`;
+        const fallbackHtml = `<pre><code>${fileContent}</code></pre>`;
         setHtml(fallbackHtml);
         lastSourceIdRef.current = currentSourceId;
         isInitialRenderRef.current = false;
@@ -97,7 +99,7 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
 
     highlightCode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourceQuery.data, codeVersionId, setHtmlLoaded]);
+  }, [fileQuery.data, fileContentQuery.data, codeVersionId, setHtmlLoaded]);
 
   useLayoutEffect(() => {
     // CodeProvider state updates cause a re-render. Since the className updates are not done
@@ -119,7 +121,7 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
     if (!positions || !htmlLoaded || !html) return;
 
     const htmlChanged = lastHtmlRef.current !== html;
-    const sourceId = sourceQuery.data?.id ?? null;
+    const sourceId = fileQuery.data?.id ?? null;
     const sourceChanged = lastSourceIdRef.current !== sourceId;
 
     applyHighlight(positions);
@@ -130,7 +132,7 @@ const ShikiViewer: React.FC<ShikiViewerProps> = ({ className }) => {
 
     lastHtmlRef.current = html;
     lastSourceIdRef.current = sourceId;
-  }, [html, htmlLoaded, positions, applyHighlight, scrollToElement, sourceQuery.data?.id]);
+  }, [html, htmlLoaded, positions, applyHighlight, scrollToElement, fileQuery.data?.id]);
 
   return (
     <div className="relative grow">

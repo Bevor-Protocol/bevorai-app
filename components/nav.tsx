@@ -22,9 +22,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
+import { InviteSchema, UserDetailedSchema } from "@/types/api/responses/business";
 import { generateQueryKey } from "@/utils/constants";
 import { trimAddress } from "@/utils/helpers";
-import { MemberInviteSchema, UserDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Calendar, ExternalLink, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
@@ -32,7 +32,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 
 const InviteItem: React.FC<{
-  invite: MemberInviteSchema;
+  invite: InviteSchema;
   onClick: () => void;
 }> = ({ invite, onClick }) => {
   return (
@@ -52,9 +52,9 @@ const InviteItem: React.FC<{
   );
 };
 
-const NotificationsDropdown: React.FC<{ invites: MemberInviteSchema[] }> = ({ invites }) => {
+const NotificationsDropdown: React.FC<{ invites: InviteSchema[] }> = ({ invites }) => {
   const queryClient = useQueryClient();
-  const [selectedInvite, setSelectedInvite] = useState<MemberInviteSchema | null>(null);
+  const [selectedInvite, setSelectedInvite] = useState<InviteSchema | null>(null);
 
   const acceptInviteMutation = useMutation({
     mutationFn: async (inviteId: string) =>
@@ -222,7 +222,7 @@ const NotificationsDropdown: React.FC<{ invites: MemberInviteSchema[] }> = ({ in
 };
 
 const UserDropdown: React.FC<{
-  user: UserDetailedSchemaI | null | undefined;
+  user: UserDetailedSchema | null | undefined;
 }> = ({ user }) => {
   const logoutMutation = useMutation({
     mutationFn: async () =>

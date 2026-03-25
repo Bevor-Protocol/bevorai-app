@@ -16,9 +16,9 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
-import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Plus, SlashIcon } from "lucide-react";
 import Link from "next/link";
@@ -82,7 +82,7 @@ const ContainerBreadcrumb: React.FC<{
 
   const teamProjectMapping = useMemo(() => {
     if (!teams || !projects?.results) return {};
-    const mapping: Record<string, ProjectDetailedSchemaI[]> = {};
+    const mapping: Record<string, ProjectDetailedSchema[]> = {};
     for (const team of teams) {
       const projectsInTeam = projects.results.filter((project) => project.team_id == team.id);
       mapping[team.id] = projectsInTeam;

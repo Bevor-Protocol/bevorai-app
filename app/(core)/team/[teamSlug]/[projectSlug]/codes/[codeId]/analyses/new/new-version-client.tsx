@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import {
   CodeContent,
   CodeDisplay,
+  CodeFileItem,
+  CodeFiles,
+  CodeFileToggle,
   CodeHeader,
   CodeHolder,
   CodeMetadata,
   CodeNodeCheckList,
-  CodeSourceItem,
-  CodeSources,
-  CodeSourceToggle,
-  getSourceColor,
+  getFileColor,
 } from "@/components/ui/code";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
@@ -26,13 +26,14 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { nodeTypeGroups } from "@/components/views/code/file-viewer";
 import NodeSearch from "@/components/views/code/search";
-import { nodeTypeGroups } from "@/components/views/code/sources-viewer";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
+import { GraphSnapshotFile, GraphSnapshotNode } from "@/types/api/responses/graph";
+import { AnalysisNodeSchema, ScopeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { createAnalysisFormValues, createAnalysisSchema } from "@/utils/schema";
-import { AnalysisNodeSchemaI, CodeSourceSchemaI, NodeSchemaI, ScopeSchemaI } from "@/utils/types";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
   useMutation,
@@ -50,12 +51,12 @@ interface AnalysisScopeSelectorProps {
   teamSlug: string;
   projectSlug: string;
   codeId: string;
-  parentScopes: ScopeSchemaI[];
-  parentAnalysis?: AnalysisNodeSchemaI;
+  parentScopes: ScopeSchema[];
+  parentAnalysis?: AnalysisNodeSchema;
 }
 
 const ScopeSelectionControls: React.FC<{
-  selectedNodes: NodeSchemaI[];
+  selectedNodes: GraphSnapshotNode[];
   onDeselectAll: () => void;
   onSubmit: () => void;
   mutation: UseMutationResult<
@@ -119,21 +120,21 @@ const ScopeSelectionControls: React.FC<{
 const CodeTreeViewer: React.FC<{
   teamSlug: string;
   codeId: string;
-  sources: CodeSourceSchemaI[];
-  selectedNodes: NodeSchemaI[];
-  onNodeToggle: (node: NodeSchemaI) => void;
-  onSelectAllForSource?: (sourceId: string) => void;
-  onDeselectAllForSource?: (sourceId: string) => void;
+  files: GraphSnapshotFile[];
+  selectedNodes: GraphSnapshotNode[];
+  onNodeToggle: (node: GraphSnapshotNode) => void;
+  onSelectAllForFile?: (fileId: string) => void;
+  onDeselectAllForFile?: (fileId: string) => void;
 }> = ({
   teamSlug,
   codeId,
-  sources,
+  files,
   selectedNodes,
   onNodeToggle,
-  onSelectAllForSource,
-  onDeselectAllForSource,
+  onSelectAllForFile,
+  onDeselectAllForFile,
 }) => {
-  const { handleSourceChange, sourceQuery, containerRef, nodesQuery, sourceId } = useCode();
+  const { handleFileChange, fileQuery, containerRef, nodesQuery, fileId } = useCode();
 
   const nodeGroups = useMemo(() => {
     if (!nodesQuery.data) return [];
@@ -151,21 +152,21 @@ const CodeTreeViewer: React.FC<{
     return nodesQuery.data.filter((node) => node.is_auditable);
   }, [nodesQuery.data]);
 
-  const selectedNodesForSource = useMemo(() => {
-    if (!sourceId) return [];
-    return selectedNodes.filter((node) => node.source_id === sourceId);
-  }, [selectedNodes, sourceId]);
+  const selectedNodesForFile = useMemo(() => {
+    if (!fileId) return [];
+    return selectedNodes.filter((node) => node.file_id === fileId);
+  }, [selectedNodes, fileId]);
 
   const hasAuditableNodes = sourceAuditableNodes.length > 0;
-  const hasSelectedNodes = selectedNodesForSource.length > 0;
-  const showSourceControls = hasAuditableNodes || hasSelectedNodes;
+  const hasSelectedNodes = selectedNodesForFile.length > 0;
+  const showFileControls = hasAuditableNodes || hasSelectedNodes;
 
-  if (sources.length === 0) {
+  if (files.length === 0) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 pr-2">
         <div className="border border-border rounded-lg p-6">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-2">Version Sources</h1>
+            <h1 className="text-2xl font-bold mb-2">Version Files</h1>
             <p className="text-muted-foreground">No source files found for this version.</p>
           </div>
         </div>
@@ -173,14 +174,14 @@ const CodeTreeViewer: React.FC<{
     );
   }
 
-  const currentSource = sources.find((s) => s.id === sourceId);
-  const currentFileName = currentSource?.path.split("/").pop() ?? "";
-  const currentSourceColor = currentSource ? getSourceColor(currentSource) : "";
+  const currentFile = files.find((s) => s.id === fileId);
+  const currentFileName = currentFile?.path.split("/").pop() ?? "";
+  const currentFileColor = currentFile ? getFileColor(currentFile) : "";
 
   const selectedNodeIds = selectedNodes.map((n) => n.id);
 
-  const handleNodeClick = (node: NodeSchemaI): void => {
-    handleSourceChange(node.source_id, {
+  const handleNodeClick = (node: GraphSnapshotNode): void => {
+    handleFileChange(node.file_id, {
       start: node.src_start_pos,
       end: node.src_end_pos,
     });
@@ -189,33 +190,33 @@ const CodeTreeViewer: React.FC<{
   return (
     <CodeHolder ref={containerRef} className="pr-2">
       <CodeMetadata>
-        <CodeSourceToggle>
+        <CodeFileToggle>
           <NodeSearch teamSlug={teamSlug} codeId={codeId} className="w-full" />
-          <Select value={sourceId!} onValueChange={(sourceId) => handleSourceChange(sourceId)}>
+          <Select value={fileId!} onValueChange={(fileId) => handleFileChange(fileId)}>
             <SelectTrigger className="max-w-full w-full px-2">
               <SelectValue>
                 <div className="flex gap-2 items-center">
-                  <div className={cn("w-2 h-2 rounded-full shrink-0", currentSourceColor)} />
+                  <div className={cn("w-2 h-2 rounded-full shrink-0", currentFileColor)} />
                   {currentFileName}
                 </div>
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="w-[300px] overflow-hidden">
-              {sources.map((source) => (
+              {files.map((source) => (
                 <SelectItem key={source.id} value={source.id}>
-                  <CodeSourceItem source={source} />
+                  <CodeFileItem source={source} />
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </CodeSourceToggle>
-        {showSourceControls && (
+        </CodeFileToggle>
+        {showFileControls && (
           <div className="px-2 py-1.5 flex items-center gap-2 border-b border-border">
             <Button
               variant="ghost"
               size="sm"
               className="h-7 text-xs"
-              onClick={() => onSelectAllForSource?.(sourceId!)}
+              onClick={() => onSelectAllForFile?.(fileId!)}
               disabled={!hasAuditableNodes}
             >
               Select All ({sourceAuditableNodes.length})
@@ -224,14 +225,14 @@ const CodeTreeViewer: React.FC<{
               variant="ghost"
               size="sm"
               className="h-7 text-xs"
-              onClick={() => onDeselectAllForSource?.(sourceId!)}
+              onClick={() => onDeselectAllForFile?.(fileId!)}
               disabled={!hasSelectedNodes}
             >
-              Deselect All ({selectedNodesForSource.length})
+              Deselect All ({selectedNodesForFile.length})
             </Button>
           </div>
         )}
-        <CodeSources>
+        <CodeFiles>
           {nodesQuery.isLoading ? (
             <>
               {nodeTypeGroups.map((group) => (
@@ -273,12 +274,12 @@ const CodeTreeViewer: React.FC<{
               )}
             </>
           )}
-        </CodeSources>
+        </CodeFiles>
       </CodeMetadata>
       <CodeDisplay>
-        <CodeHeader path={sourceQuery.data?.path} />
+        <CodeHeader path={fileQuery.data?.path} />
         <CodeContent>
-          <ShikiViewer className={sourceQuery.isLoading ? "opacity-50" : ""} />
+          <ShikiViewer className={fileQuery.isLoading ? "opacity-50" : ""} />
         </CodeContent>
       </CodeDisplay>
     </CodeHolder>
@@ -296,15 +297,15 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
   const toastRefId = useRef<string | undefined>(undefined);
 
-  const [selectedNodes, setSelectedNodes] = useState<NodeSchemaI[]>([]);
+  const [selectedNodes, setSelectedNodes] = useState<GraphSnapshotNode[]>([]);
   const [scopeStrategy, setScopeStrategy] = useState<"all" | "explicit" | "parent">(
     parentAnalysis ? "parent" : "explicit",
   );
 
-  const { data: sources } = useSuspenseQuery({
-    queryKey: generateQueryKey.codeSources(codeId),
+  const { data: files } = useSuspenseQuery({
+    queryKey: generateQueryKey.codeFiles(codeId),
     queryFn: () =>
-      codeActions.getSources(teamSlug, codeId).then((r) => {
+      codeActions.getFiles(teamSlug, codeId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
@@ -386,16 +387,16 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
   useEffect(() => {
     if (scopeStrategy === "all") {
-      setSelectedNodes(allAuditableNodes as NodeSchemaI[]);
+      setSelectedNodes(allAuditableNodes as GraphSnapshotNode[]);
     } else if (scopeStrategy === "parent" && parentAnalysis) {
-      setSelectedNodes(overlappingScopes as NodeSchemaI[]);
+      setSelectedNodes(overlappingScopes as GraphSnapshotNode[]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scopeStrategy, overlappingScopes, allAuditableNodes]);
 
-  const handleNodeToggle = (node: NodeSchemaI): void => {
+  const handleNodeToggle = (node: GraphSnapshotNode): void => {
     if (!node.is_auditable) return;
-    let newScopes: NodeSchemaI[];
+    let newScopes: GraphSnapshotNode[];
     if (selectedNodes.some((n) => n.id === node.id)) {
       newScopes = selectedNodes.filter((n) => n.id !== node.id);
     } else {
@@ -425,14 +426,14 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     }
   };
 
-  const handleSelectAllForSource = useCallback(
-    (sourceId: string): void => {
+  const handleSelectAllForFile = useCallback(
+    (fileId: string): void => {
       if (!allNodes) return;
       const sourceAuditableNodes = allNodes.filter(
-        (node) => node.source_id === sourceId && node.is_auditable,
+        (node) => node.file_id === fileId && node.is_auditable,
       );
       const newSelectedNodes = [
-        ...selectedNodes.filter((n) => n.source_id !== sourceId),
+        ...selectedNodes.filter((n) => n.file_id !== fileId),
         ...sourceAuditableNodes,
       ];
       setSelectedNodes(newSelectedNodes);
@@ -461,9 +462,9 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
     [allNodes, selectedNodes, scopeStrategy, parentScopes, allAuditableNodes],
   );
 
-  const handleDeselectAllForSource = useCallback(
-    (sourceId: string): void => {
-      const newSelectedNodes = selectedNodes.filter((n) => n.source_id !== sourceId);
+  const handleDeselectAllForFile = useCallback(
+    (fileId: string): void => {
+      const newSelectedNodes = selectedNodes.filter((n) => n.file_id !== fileId);
       setSelectedNodes(newSelectedNodes);
 
       if (scopeStrategy === "parent" && parentScopes.length) {
@@ -570,11 +571,11 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
       <CodeTreeViewer
         teamSlug={teamSlug}
         codeId={codeId}
-        sources={sources}
+        files={files}
         selectedNodes={selectedNodes}
         onNodeToggle={handleNodeToggle}
-        onSelectAllForSource={handleSelectAllForSource}
-        onDeselectAllForSource={handleDeselectAllForSource}
+        onSelectAllForFile={handleSelectAllForFile}
+        onDeselectAllForFile={handleDeselectAllForFile}
       />
     </>
   );

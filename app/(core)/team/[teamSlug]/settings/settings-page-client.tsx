@@ -18,9 +18,13 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { MemberRoleEnum } from "@/utils/enums";
+import {
+  MemberRoleEnum,
+  MemberSchema,
+  TeamDetailedSchema,
+  UserDetailedSchema,
+} from "@/types/api/responses/business";
 import { teamFormSchema, TeamFormValues } from "@/utils/schema";
-import { MemberSchemaI, TeamDetailedSchemaI, UserDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Check, Copy, LogOut, Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -28,9 +32,9 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 
 interface SettingsPageClientProps {
-  team: TeamDetailedSchemaI;
-  member: MemberSchemaI;
-  user: UserDetailedSchemaI;
+  team: TeamDetailedSchema;
+  member: MemberSchema;
+  user: UserDetailedSchema;
 }
 
 const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ team, member }) => {

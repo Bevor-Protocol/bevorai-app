@@ -32,24 +32,23 @@ import { Icon } from "@/components/ui/icon";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InviteSchema, MemberRoleEnum } from "@/types/api/responses/business";
 import { generateQueryKey } from "@/utils/constants";
-import { MemberRoleEnum } from "@/utils/enums";
 import { trimAddress } from "@/utils/helpers";
 import { UpdateMemberValues } from "@/utils/schema/invite";
-import { MemberInviteSchema } from "@/utils/types";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Mail, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 
 interface InvitesListProps {
   teamSlug: string;
-  invites: MemberInviteSchema[];
+  invites: InviteSchema[];
   isLoading: boolean;
 }
 
 const InvitesList: React.FC<InvitesListProps> = ({ teamSlug, invites, isLoading }) => {
   const queryClient = useQueryClient();
-  const [selectedInvite, setSelectedInvite] = useState<MemberInviteSchema | null>(null);
+  const [selectedInvite, setSelectedInvite] = useState<InviteSchema | null>(null);
   const [selectedAction, setSelectedAction] = useState<"update" | null>(null);
   const [selectedRole, setSelectedRole] = useState<MemberRoleEnum>(MemberRoleEnum.MEMBER);
 
@@ -104,7 +103,7 @@ const InvitesList: React.FC<InvitesListProps> = ({ teamSlug, invites, isLoading 
     });
   };
 
-  const handleAction = (invite: MemberInviteSchema, action: "update"): void => {
+  const handleAction = (invite: InviteSchema, action: "update"): void => {
     setSelectedInvite(invite);
     setSelectedRole(invite.role);
     setSelectedAction(action);

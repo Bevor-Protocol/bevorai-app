@@ -11,8 +11,8 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { formatDate, formatDateShort, truncateId } from "@/utils/helpers";
-import { AnalysisNodeSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUp,
@@ -67,7 +67,7 @@ export const AnalysisElementLoader: React.FC = () => {
 
 export const AnalysisVersionPreviewElement: React.FC<
   {
-    analysisVersion: AnalysisNodeSchemaI;
+    analysisVersion: AnalysisNodeSchema;
   } & React.ComponentProps<"div">
 > = ({ analysisVersion, className, ...props }) => {
   return (
@@ -120,7 +120,7 @@ const getTriggerIcon = (trigger: string): React.ReactElement => {
 };
 
 const AnalysisVersionActions: React.FC<{
-  analysisVersion: AnalysisNodeSchemaI;
+  analysisVersion: AnalysisNodeSchema;
 }> = ({ analysisVersion }) => {
   const pathname = usePathname();
 
@@ -195,7 +195,7 @@ const AnalysisVersionActions: React.FC<{
 
 export const AnalysisVersionElementBare: React.FC<
   {
-    analysisVersion: AnalysisNodeSchemaI;
+    analysisVersion: AnalysisNodeSchema;
     isPreview?: boolean;
     showActions?: boolean;
   } & React.ComponentProps<"div">
@@ -305,7 +305,7 @@ export const AnalysisVersionElementBare: React.FC<
 
 export const AnalysisVersionCompactElement: React.FC<
   {
-    analysisVersion: AnalysisNodeSchemaI;
+    analysisVersion: AnalysisNodeSchema;
     isPreview?: boolean;
   } & React.ComponentProps<"div">
 > = ({ analysisVersion, className, ...props }) => {
@@ -348,7 +348,7 @@ export const AnalysisVersionCompactElement: React.FC<
 
 export const AnalysisVersionElement: React.FC<
   {
-    analysisVersion: AnalysisNodeSchemaI;
+    analysisVersion: AnalysisNodeSchema;
     isDisabled?: boolean;
     link?: string;
     showActions?: boolean;
@@ -374,7 +374,7 @@ export const AnalysisVersionElement: React.FC<
 };
 
 export const AnalysisElementMenu: React.FC<{
-  analysis: AnalysisNodeSchemaI;
+  analysis: AnalysisNodeSchema;
   teamSlug: string;
 }> = ({ analysis, teamSlug }) => {
   const queryClient = useQueryClient();

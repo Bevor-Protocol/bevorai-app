@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
+import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { ScanCodeAddressFormValues, scanCodeAddressSchema } from "@/utils/schema";
-import { ProjectDetailedSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, Globe, XCircle } from "lucide-react";
 import Link from "next/link";
@@ -14,7 +14,7 @@ import React, { useRef } from "react";
 import { toast } from "sonner";
 
 const ContractAddressStep: React.FC<{
-  project: ProjectDetailedSchemaI;
+  project: ProjectDetailedSchema;
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ project, parentId, onSuccess }) => {

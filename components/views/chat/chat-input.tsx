@@ -6,9 +6,10 @@ import * as Chat from "@/components/ui/chat";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
+import { GraphSnapshotNode } from "@/types/api/responses/graph";
+import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
-import { FindingSchemaI, NodeSchemaI } from "@/utils/types";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, GitBranch, Minus, Pencil, Plus, Send } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -16,8 +17,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 interface ChatInputProps {
   teamSlug: string;
   codeId: string;
-  findingContext?: FindingSchemaI[];
-  availableFindings?: FindingSchemaI[];
+  findingContext?: FindingSchema[];
+  availableFindings?: FindingSchema[];
   onRemoveFindingFromContext?: (findingId: string) => void;
   onSendMessage: (
     message: string,
@@ -510,7 +511,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const insertAutocompleteItem = (item: NodeSchemaI): void => {
+  const insertAutocompleteItem = (item: GraphSnapshotNode): void => {
     if (!contentEditableRef.current || !atPositionRef.current) return;
 
     const selection = window.getSelection();

@@ -2,8 +2,8 @@ import Container from "@/components/container";
 import { CodeVersionsView } from "@/components/screens/code-versions";
 import ProjectSubnav from "@/components/subnav/project";
 import { Button } from "@/components/ui/button";
+import { AsyncComponent } from "@/types";
 import { DefaultCodesQuery, extractCodesQuery } from "@/utils/query-params";
-import { AsyncComponent } from "@/utils/types";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 

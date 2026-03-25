@@ -12,15 +12,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { UserDetailedSchema } from "@/types/api/responses/business";
 import { trimAddress } from "@/utils/helpers";
-import { UserDetailedSchemaI } from "@/utils/types";
 import { useMutation } from "@tanstack/react-query";
 import { ChevronsUpDown, ExternalLink, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
 export const UserNavigation: React.FC<{
-  user: UserDetailedSchemaI | null | undefined;
+  user: UserDetailedSchema | null | undefined;
 }> = ({ user }) => {
   const logoutMutation = useMutation({
     mutationFn: async () =>

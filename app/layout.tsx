@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import QueryProvider from "@/providers/query";
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
 import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { Figtree } from "next/font/google";

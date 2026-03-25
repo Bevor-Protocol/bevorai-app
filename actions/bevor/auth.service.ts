@@ -1,7 +1,8 @@
 "use server";
 
-import api, { idpApi } from "@/lib/api";
-import { ApiResponse, TokenIssueResponse } from "@/utils/types";
+import { businessApi, idpApi } from "@/lib/api";
+import { ApiResponse } from "@/types/api";
+import { TokenIssueResponse } from "@/types/api/responses/business";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revokeToken } from "./token.service";
@@ -21,7 +22,7 @@ export const magicLink = async (
   },
 ): ApiResponse<boolean> => {
   return idpApi
-    .post("/user/auth/magic-link", { ...data, email })
+    .post("/business/user/auth/magic-link", { ...data, email })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -46,7 +47,7 @@ export const authenticate = async (data: {
 }): ApiResponse<TokenIssueResponse> => {
   // the token acts as the authorization. This handles authentication + token issuance.
   return idpApi
-    .post("/user/auth/authenticate", data)
+    .post("/business/user/auth/authenticate", data)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -66,7 +67,7 @@ export const authenticate = async (data: {
 };
 
 export const getAttachToken = async (providerName: string): ApiResponse<string> => {
-  return api
+  return businessApi
     .get(`/user/auth/attach?provider_name=${providerName}`)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -87,7 +88,7 @@ export const getAttachToken = async (providerName: string): ApiResponse<string> 
 };
 
 export const detachOAuth = async (providerName: "google" | "github"): ApiResponse<null> => {
-  return api
+  return businessApi
     .delete(`/user/auth/oauth/${providerName}`)
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";

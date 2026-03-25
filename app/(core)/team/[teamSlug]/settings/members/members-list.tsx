@@ -33,22 +33,25 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toTitleCase } from "@/lib/utils";
+import {
+  MemberRoleEnum,
+  MemberSchema,
+  MemberSchemaWithPermissions,
+} from "@/types/api/responses/business";
 import { generateQueryKey } from "@/utils/constants";
-import { MemberRoleEnum } from "@/utils/enums";
-import { MemberSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
 import React, { useState } from "react";
 
 interface MembersListProps {
   teamSlug: string;
-  members: MemberSchemaI[];
+  members: MemberSchemaWithPermissions[];
   isLoading: boolean;
 }
 
 const MembersList: React.FC<MembersListProps> = ({ teamSlug, members, isLoading }) => {
   const queryClient = useQueryClient();
-  const [selectedMember, setSelectedMember] = useState<MemberSchemaI | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberSchema | null>(null);
   const [selectedAction, setSelectedAction] = useState<"leave" | "remove" | "update" | null>(null);
   const [selectedRole, setSelectedRole] = useState<MemberRoleEnum>(MemberRoleEnum.MEMBER);
 
@@ -96,7 +99,7 @@ const MembersList: React.FC<MembersListProps> = ({ teamSlug, members, isLoading 
     });
   };
 
-  const handleAction = (member: MemberSchemaI, action: "leave" | "remove" | "update"): void => {
+  const handleAction = (member: MemberSchema, action: "leave" | "remove" | "update"): void => {
     setSelectedMember(member);
     setSelectedRole(member.role);
     setSelectedAction(action);

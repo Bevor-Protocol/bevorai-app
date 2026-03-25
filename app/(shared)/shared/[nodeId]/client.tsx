@@ -10,16 +10,17 @@ import AnalysisScopes, {
 } from "@/components/views/analysis/scopes";
 import AnalysisCodeSnippet from "@/components/views/analysis/snippet";
 import { cn } from "@/lib/utils";
+import { GraphSnapshotNode } from "@/types/api/responses/graph";
+import { AnalysisNodeSchema, FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
-import { FindingSchemaI, NodeSchemaI, SharedAnalysisNodeSchemaI } from "@/utils/types";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { Check, ExternalLink, Shield, X } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
 const FindingDescription: React.FC<{
-  finding: FindingSchemaI;
+  finding: FindingSchema;
 }> = ({ finding }) => {
   const [tab, setTab] = useState("description");
 
@@ -85,8 +86,8 @@ const FindingDescription: React.FC<{
 
 const FindingMetadata: React.FC<{
   nodeId: string;
-  finding: FindingSchemaI;
-  nodeQuery: UseQueryResult<NodeSchemaI, Error>;
+  finding: FindingSchema;
+  nodeQuery: UseQueryResult<GraphSnapshotNode, Error>;
 }> = ({ nodeId, finding, nodeQuery }) => {
   const isValidated = !!finding.validated_at;
   const isInvalidated = !!finding.invalidated_at;
@@ -131,7 +132,7 @@ const FindingMetadata: React.FC<{
         <Link
           href={{
             pathname: `/shared/${nodeId}/code`,
-            query: { source: nodeQuery.data?.source_id, node: nodeQuery.data?.id },
+            query: { source: nodeQuery.data?.id, node: nodeQuery.data?.id },
           }}
         >
           Source <ExternalLink className="size-3" />
@@ -142,14 +143,14 @@ const FindingMetadata: React.FC<{
 };
 
 const AnalysisHolder: React.FC<{
-  analysis: SharedAnalysisNodeSchemaI;
+  analysis: AnalysisNodeSchema;
 }> = ({ analysis }) => {
-  const [selectedFinding, setSelectedFinding] = useState<FindingSchemaI | undefined>(undefined);
+  const [selectedFinding, setSelectedFinding] = useState<FindingSchema | undefined>(undefined);
 
   const nodeQuery = useQuery({
     queryKey: generateQueryKey.codeNode(selectedFinding?.id ?? ""),
     queryFn: () =>
-      sharedActions.getNode(analysis.id, selectedFinding?.code_version_node_id ?? "").then((r) => {
+      sharedActions.getNode(analysis.id, selectedFinding?.source_node_id ?? "").then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
@@ -163,9 +164,7 @@ const AnalysisHolder: React.FC<{
         if (isFound) {
           break;
         }
-        const findings = analysis.findings.filter(
-          (f) => f.code_version_node_id === scope.code_version_node_id,
-        );
+        const findings = analysis.findings.filter((f) => f.source_node_id === scope.source_node_id);
         for (const level of levelOrder) {
           const firstFinding = findings.find((finding) => finding.level === level);
           if (firstFinding) {

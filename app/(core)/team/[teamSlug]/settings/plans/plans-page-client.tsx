@@ -6,8 +6,9 @@ import { billingActions } from "@/actions/bevor";
 import { AddonRow } from "@/components/billing/addon";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TeamSchema } from "@/types/api/responses/business";
+import { StripeAddon, StripePlan } from "@/types/api/responses/stripe";
 import { generateQueryKey } from "@/utils/constants";
-import { StripeAddonI, StripePlanI, TeamSchemaI } from "@/utils/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Info, Lock } from "lucide-react";
 import React from "react";
@@ -30,8 +31,8 @@ const getFeatureName = (feature: string): string => {
 };
 
 const PlanCard: React.FC<{
-  plan: StripePlanI;
-  team: TeamSchemaI;
+  plan: StripePlan;
+  team: TeamSchema;
 }> = ({ plan, team }) => {
   const checkoutMutation = useMutation({
     mutationFn: () =>
@@ -143,7 +144,7 @@ const PlanCard: React.FC<{
               </div>
             </div>
           </div>
-          <div className="flex-shrink-0 sm:ml-6">
+          <div className="shrink-0 sm:ml-6">
             {plan.is_active ? (
               <span className="bg-green-500  text-xs px-3 py-1 rounded-full">Current</span>
             ) : (
@@ -162,7 +163,7 @@ const PlanCard: React.FC<{
   );
 };
 
-export const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
+export const PlansSection: React.FC<{ team: TeamSchema }> = ({ team }) => {
   const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: generateQueryKey.products(team.slug),
     queryFn: () =>
@@ -190,8 +191,8 @@ export const PlansSection: React.FC<{ team: TeamSchemaI }> = ({ team }) => {
   return (
     <div className="space-y-4">
       {plans
-        ?.sort((a: StripePlanI, b: StripePlanI) => a.base_price - b.base_price)
-        .map((plan: StripePlanI) => (
+        ?.sort((a: StripePlan, b: StripePlan) => a.base_price - b.base_price)
+        .map((plan: StripePlan) => (
           <PlanCard key={plan.id} plan={plan} team={team} />
         ))}
     </div>
@@ -228,7 +229,7 @@ export const AddonsSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 
   return (
     <div className="space-y-4">
-      {addons.map((addon: StripeAddonI) => (
+      {addons.map((addon: StripeAddon) => (
         <AddonRow teamSlug={teamSlug} key={addon.id} addon={addon} />
       ))}
     </div>

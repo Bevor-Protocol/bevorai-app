@@ -1,7 +1,7 @@
 "use server";
 
 import { userActions } from "@/actions/bevor";
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 

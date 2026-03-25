@@ -1,4 +1,4 @@
-import { ItemType } from "@/utils/types";
+import { ItemType } from "@/types";
 import {
   BotMessageSquare,
   Box,

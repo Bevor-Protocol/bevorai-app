@@ -1,8 +1,8 @@
 import Container from "@/components/container";
 import { CodeVersionsView } from "@/components/screens/code-versions";
 import TeamSubnav from "@/components/subnav/team";
+import { AsyncComponent } from "@/types";
 import { DefaultCodesQuery, extractCodesQuery } from "@/utils/query-params";
-import { AsyncComponent } from "@/utils/types";
 import { CodeCreate } from "./codes-client";
 
 interface ResolvedParams {

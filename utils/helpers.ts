@@ -1,5 +1,7 @@
+import { DropdownOption } from "@/types";
+import { ApiError } from "@/types/api";
+import { CodeMappingSchema } from "@/types/api/responses/graph";
 import { BLOCK_EXPLORER_BASE_URLS } from "@/utils/constants";
-import { ApiError, CodeMappingSchemaI, DropdownOption } from "@/utils/types";
 import { toast } from "sonner";
 import { Address } from "viem";
 
@@ -100,7 +102,7 @@ export const explorerUrl = (network: string, address: string): string => {
   return explorer + "/address/" + address;
 };
 
-export const commitUrl = (version: CodeMappingSchemaI): string => {
+export const commitUrl = (version: CodeMappingSchema): string => {
   const org = version.repository?.account.login;
   const repo = version.repository?.name;
   const sha = version.commit?.sha;

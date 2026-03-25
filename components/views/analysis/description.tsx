@@ -7,10 +7,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { AnalysisNodeSchema, FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
 import { FindingFeedbackBody } from "@/utils/schema";
-import { AnalysisNodeSchemaI, FindingSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -20,8 +20,8 @@ import { toast } from "sonner";
 const FindingDescription: React.FC<{
   teamSlug: string;
   nodeId: string;
-  finding: FindingSchemaI;
-  setSelectedFinding: (finding?: FindingSchemaI) => void;
+  finding: FindingSchema;
+  setSelectedFinding: (finding?: FindingSchema) => void;
 }> = ({ teamSlug, nodeId, finding, setSelectedFinding }) => {
   const [tab, setTab] = useState("description");
   const [feedbackText, setFeedbackText] = useState<string>("");
@@ -36,21 +36,21 @@ const FindingDescription: React.FC<{
       });
     },
     onSuccess: (_, { findingId, data }) => {
-      queryClient.setQueryData<AnalysisNodeSchemaI>(
+      queryClient.setQueryData<AnalysisNodeSchema>(
         generateQueryKey.analysisFindings(nodeId),
         (oldData) => {
           if (!oldData) return oldData;
           const oldFindings = oldData.findings;
           const newFindings = oldFindings.map((finding) => {
             const scope = oldData.scopes.find(
-              (scope) => finding.code_version_node_id == scope.code_version_node_id,
+              (scope) => finding.source_node_id == scope.source_node_id,
             );
             if (finding.id === findingId && scope) {
               const newFinding = {
                 ...finding,
                 feedback: data.feedback,
-                validated_at: data.is_verified ? new Date() : undefined,
-                invalidated_at: !data.is_verified ? new Date() : undefined,
+                validated_at: data.is_verified ? new Date().toString() : undefined,
+                invalidated_at: !data.is_verified ? new Date().toString() : undefined,
               };
               setSelectedFinding(newFinding);
               return newFinding;

@@ -2,7 +2,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { CodeSourceSchemaI, NodeSchemaI } from "@/utils/types";
+import { GraphSnapshotFile, GraphSnapshotNode } from "@/types/api/responses/graph";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { FileText } from "lucide-react";
 import React from "react";
@@ -33,10 +33,7 @@ export const CodeCounter: React.FC<React.ComponentProps<"div">> = ({ className, 
   );
 };
 
-export const CodeSourceToggle: React.FC<React.ComponentProps<"div">> = ({
-  className,
-  ...props
-}) => {
+export const CodeFileToggle: React.FC<React.ComponentProps<"div">> = ({ className, ...props }) => {
   return (
     <div className="bg-background">
       <div
@@ -47,15 +44,15 @@ export const CodeSourceToggle: React.FC<React.ComponentProps<"div">> = ({
   );
 };
 
-export const CodeSourceItem: React.FC<
+export const CodeFileItem: React.FC<
   React.ComponentProps<"div"> & {
-    source: CodeSourceSchemaI;
+    source: GraphSnapshotFile;
   }
 > = ({ source, ...props }) => {
   return (
     <div className="flex justify-center items-start flex-col min-w-0 w-full h-full" {...props}>
       <div className="flex items-center gap-2 mb-1 min-w-0 w-full">
-        <div className={cn("w-2 h-2 rounded-full shrink-0", getSourceColor(source))} />
+        <div className={cn("w-2 h-2 rounded-full shrink-0", getFileColor(source))} />
         <span className="text-sm font-medium truncate min-w-0">{getFileName(source.path)}</span>
       </div>
       <div className="text-xs text-muted-foreground truncate w-full text-left">
@@ -65,7 +62,7 @@ export const CodeSourceItem: React.FC<
   );
 };
 
-export const getSourceColor = (source: CodeSourceSchemaI): string => {
+export const getFileColor = (source: GraphSnapshotFile): string => {
   return source.is_known_target
     ? "bg-green-500"
     : source.n_entry_points > 0
@@ -108,7 +105,7 @@ export const CodeHeader: React.FC<React.ComponentProps<"div"> & { path?: string 
   );
 };
 
-export const CodeSources: React.FC<
+export const CodeFiles: React.FC<
   React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
     viewportRef?: React.RefObject<HTMLDivElement>;
   }
@@ -118,9 +115,9 @@ export const CodeSources: React.FC<
   );
 };
 
-export const CodeSource: React.FC<
+export const CodeFile: React.FC<
   React.ComponentProps<"div"> & {
-    source: CodeSourceSchemaI;
+    source: GraphSnapshotFile;
     isActive: boolean;
   }
 > = ({ source, isActive = false, ...props }) => {
@@ -212,8 +209,8 @@ export const getNodeTypeColor = (nodeType: string): string => {
 };
 
 export const CodeNodeList: React.FC<{
-  node: NodeSchemaI;
-  onNodeClick: (node: NodeSchemaI) => void;
+  node: GraphSnapshotNode;
+  onNodeClick: (node: GraphSnapshotNode) => void;
 }> = ({ node, onNodeClick }) => {
   return (
     <div
@@ -227,11 +224,11 @@ export const CodeNodeList: React.FC<{
 };
 
 export const CodeNodeCheckList: React.FC<{
-  node: NodeSchemaI;
+  node: GraphSnapshotNode;
   isChecked: boolean;
   isDisabled: boolean;
-  onNodeToggle: (node: NodeSchemaI) => void;
-  onNodeClick: (node: NodeSchemaI) => void;
+  onNodeToggle: (node: GraphSnapshotNode) => void;
+  onNodeClick: (node: GraphSnapshotNode) => void;
 }> = ({ node, isChecked, isDisabled, onNodeToggle, onNodeClick }) => {
   return (
     <div className="flex items-center gap-2">

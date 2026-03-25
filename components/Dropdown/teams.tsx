@@ -5,14 +5,15 @@ import { DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { SearchInput } from "@/components/ui/input";
-import { HrefProps, TeamSchemaI } from "@/utils/types";
+import { HrefProps } from "@/types";
+import { TeamSchema } from "@/types/api/responses/business";
 import { Check, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 
 interface TeamsDropdownProps {
-  teams: TeamSchemaI[];
+  teams: TeamSchema[];
 }
 
 const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
@@ -37,7 +38,7 @@ const TeamsDropdown: React.FC<TeamsDropdownProps> = ({ teams }) => {
     setTeamsShow(filteredTeams);
   }, [teams, teamFilter]);
 
-  const newRoute = (teamItem: TeamSchemaI): string => {
+  const newRoute = (teamItem: TeamSchema): string => {
     if (!params.teamSlug || params.nodeId || params.chatId || params.codeId) {
       return `/team/${params.teamSlug}`;
     }

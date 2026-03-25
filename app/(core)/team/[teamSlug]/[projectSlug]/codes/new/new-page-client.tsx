@@ -2,7 +2,7 @@
 import RepoUrlStep from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/(steps)/repo";
 import { Button } from "@/components/ui/button";
 import { useSSE } from "@/providers/sse";
-import { ProjectDetailedSchemaI } from "@/utils/types";
+import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { MoveLeft } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import MethodSelection from "./(steps)/method";
 const steps = ["Code Method", "Code Submission", "Submission"];
 
 const Steps: React.FC<{
-  project: ProjectDetailedSchemaI;
+  project: ProjectDetailedSchema;
   parentId?: string;
 }> = ({ project, parentId }) => {
   const [currentStep, setCurrentStep] = React.useState(1);

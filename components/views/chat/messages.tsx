@@ -7,8 +7,9 @@ import { Loader } from "@/components/ui/loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
+import { ChatMessageSchema } from "@/types/api/responses/chat";
+import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { ChatMessageI, FindingSchemaI } from "@/utils/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -21,8 +22,8 @@ import { ChatStreamingContent } from "./chat-streaming-content";
 interface ChatMessagesProps {
   teamSlug: string;
   codeId: string;
-  findingContext?: FindingSchemaI[];
-  availableFindings?: FindingSchemaI[];
+  findingContext?: FindingSchema[];
+  availableFindings?: FindingSchema[];
   maxWidth?: string;
   onRemoveFindingFromContext?: (findingId: string) => void;
 }
@@ -51,7 +52,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const { selectedChatId, isMaximized } = useChat();
+  const { selectedChatId, isMaximized, chatType } = useChat();
 
   const chatMessageQuery = useQuery({
     queryKey: generateQueryKey.chatMessages(selectedChatId!),
@@ -66,7 +67,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const chatQuery = useQuery({
     queryKey: generateQueryKey.chat(selectedChatId!),
     queryFn: () =>
-      chatActions.getChat(teamSlug, selectedChatId!).then((r) => {
+      (chatType === "analysis"
+        ? chatActions.getSecurityChat(teamSlug, selectedChatId!)
+        : chatActions.getCodeChat(teamSlug, selectedChatId!)
+      ).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
@@ -182,7 +186,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   }, [checkScrollPosition, chatMessageQuery.data?.length]);
 
   const sendMessage = async (data: {
-    message: ChatMessageI;
+    message: ChatMessageSchema;
     chatId: string;
     approval_id?: string;
     is_approved?: boolean;
@@ -243,7 +247,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       let buffered = "";
       const decoder = new TextDecoder();
       let finalMessage = "";
-      const references: NonNullable<ChatMessageI["references"]> = [];
+      const references: NonNullable<ChatMessageSchema["references"]> = [];
       let done = false;
 
       while (!done) {
@@ -298,21 +302,21 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       }
 
       if (finalMessage) {
-        const systemMessageData: ChatMessageI = {
+        const systemMessageData: ChatMessageSchema = {
           id: (Date.now() + 1).toString(),
           created_at: new Date().toISOString(),
           chat_id: chatQuery.data.id,
           chat_role: "system",
           message: finalMessage,
           tools: [],
-          references: references.length ? references : undefined,
+          references: references.length ? references : [],
           code_version_id: chatQuery.data.code_version_id,
           analysis_node_id: chatQuery.data.analysis_node_id,
         };
         // we already optimistically added the user message upon submission.
         queryClient.setQueryData(
           generateQueryKey.chatMessages(selectedChatId!),
-          (oldData: ChatMessageI[]) => {
+          (oldData: ChatMessageSchema[]) => {
             return [...oldData, systemMessageData];
           },
         );
@@ -326,7 +330,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       // undo the optimistically added user message.
       queryClient.setQueryData(
         generateQueryKey.chatMessages(selectedChatId!),
-        (oldData: ChatMessageI[]) => {
+        (oldData: ChatMessageSchema[]) => {
           const newData = oldData.slice(0, -1);
           return newData;
         },
@@ -344,13 +348,14 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     if (!chatQuery.data) return;
     if (!message.trim()) return;
 
-    const userMessage: ChatMessageI = {
+    const userMessage: ChatMessageSchema = {
       id: Date.now().toString(),
       created_at: new Date().toISOString(),
       chat_id: chatQuery.data.id,
       chat_role: "user",
       message: message.trim(),
       tools: [],
+      references: [],
       code_version_id: chatQuery.data.code_version_id,
       analysis_node_id: chatQuery.data.analysis_node_id,
     };
@@ -358,7 +363,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     // optimistically add it.
     queryClient.setQueryData(
       generateQueryKey.chatMessages(selectedChatId!),
-      (oldData: ChatMessageI[]) => {
+      (oldData: ChatMessageSchema[]) => {
         return [...oldData, userMessage];
       },
     );
@@ -375,13 +380,14 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
 
     // fake message. Can likely remove and just pass approvalId. We do not add this to the query client.
     // if a user leaves the page then comes back, this should not be shown (And it's not stored in the DB).
-    const userMessage: ChatMessageI = {
+    const userMessage: ChatMessageSchema = {
       id: Date.now().toString(),
       created_at: new Date().toISOString(),
       chat_id: chatQuery.data.id,
       chat_role: "user",
       message: "",
       tools: [],
+      references: [],
       code_version_id: chatQuery.data.code_version_id,
       analysis_node_id: chatQuery.data.analysis_node_id,
     };

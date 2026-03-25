@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PaginationI } from "@/utils/types";
+import { Pagination as PaginationI } from "@/types/api/responses/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React from "react";
 
@@ -11,7 +11,7 @@ Generic pagination pattern.
 */
 export const Pagination: React.FC<{
   handlePage: (page: number) => void;
-  results?: PaginationI;
+  results?: PaginationI<any>;
   className?: string;
 }> = ({ handlePage, results, className }) => {
   const currentPage = results?.page ?? 0;

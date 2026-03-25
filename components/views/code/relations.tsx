@@ -7,15 +7,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CodeVersionCompactElement } from "@/components/versions/element";
-import { CodeMappingSchemaI, CodeRelationSchemaI } from "@/utils/types";
+import { CodeMappingSchema, RelationSchema } from "@/types/api/responses/graph";
 import { ArrowUp, GitBranch } from "lucide-react";
 import Link from "next/link";
 
 const ParentButton: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  relations?: CodeRelationSchemaI;
-  similarVersions?: { score: number; version: CodeMappingSchemaI }[];
+  relations?: RelationSchema;
+  similarVersions?: { score: number; version: CodeMappingSchema }[];
   onSetParent: (parentId: string) => void;
   isUpdating: boolean;
 }> = ({ teamSlug, projectSlug, relations, similarVersions, onSetParent, isUpdating }) => {
@@ -98,7 +98,7 @@ const ParentButton: React.FC<{
 const ChildrenButton: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  relations?: CodeRelationSchemaI;
+  relations?: RelationSchema;
 }> = ({ teamSlug, projectSlug, relations }) => {
   const hasChildren = relations?.children && relations.children.length > 0;
 
@@ -141,8 +141,8 @@ const ChildrenButton: React.FC<{
 const Relations: React.FC<{
   teamSlug: string;
   projectSlug: string;
-  relations?: CodeRelationSchemaI;
-  similarVersions?: { score: number; version: CodeMappingSchemaI }[];
+  relations?: RelationSchema;
+  similarVersions?: { score: number; version: CodeMappingSchema }[];
   onSetParent: (parentId: string) => void;
   isUpdating: boolean;
 }> = ({ teamSlug, projectSlug, relations, similarVersions, onSetParent, isUpdating }) => {

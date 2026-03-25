@@ -1,13 +1,14 @@
 "use server";
 
-import api from "@/lib/api";
+import { businessApi } from "@/lib/api";
+import { ApiResponse } from "@/types/api";
+import { AuthSchema } from "@/types/api/responses/business";
 import { generateQueryKey } from "@/utils/constants";
 import { KeyFormValues } from "@/utils/schema/key";
-import { ApiResponse, AuthSchema } from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
 export const listKeys = async (teamSlug: string): ApiResponse<AuthSchema[]> => {
-  return api.get("/auth", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
+  return businessApi.get("/auth", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
     return response.data.results;
   });
 };
@@ -17,7 +18,7 @@ export const createKey = async (
   data: KeyFormValues,
 ): ApiResponse<{ api_key: string; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.apiKeys(teamSlug)];
-  return api
+  return businessApi
     .post("/auth", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -45,7 +46,7 @@ export const refreshKey = async (
   keyId: string,
 ): ApiResponse<{ api_key: string; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.apiKeys(teamSlug)];
-  return api
+  return businessApi
     .post(`/auth/${keyId}`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -73,7 +74,7 @@ export const revokeKey = async (
   keyId: string,
 ): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.apiKeys(teamSlug)];
-  return api
+  return businessApi
     .delete(`/auth/${keyId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";

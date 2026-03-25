@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
 import { useSSE } from "@/providers/sse";
+import { isApiError } from "@/types/api";
+import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { handleMutationError } from "@/utils/helpers";
 import { UploadCodeFolderFormValues, uploadCodeFolderSchema } from "@/utils/schema";
-import { isApiError, ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { solidity } from "@replit/codemirror-lang-solidity";
@@ -55,7 +56,7 @@ const isValidFile = (file: File): boolean => {
 };
 
 const FolderStep: React.FC<{
-  project: ProjectDetailedSchemaI;
+  project: ProjectDetailedSchema;
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ project, parentId }) => {
@@ -153,13 +154,16 @@ const FolderStep: React.FC<{
         toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
       }
 
-      const response = await fetch(`${apiBaseUrl}/codes/create/folder?${searchParams.toString()}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/zip",
+      const response = await fetch(
+        `${apiBaseUrl}/graph/versions/folder?${searchParams.toString()}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/zip",
+          },
+          body: data.zip,
         },
-        body: data.zip,
-      });
+      );
       const responseData = await response.json();
 
       const requestId = response.headers.get("bevor-request-id") ?? "";

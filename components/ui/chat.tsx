@@ -1,7 +1,8 @@
 import LucideIcon from "@/components/lucide-icon";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { ChatMessageI, NodeSchemaI } from "@/utils/types";
+import { ChatMessageSchema } from "@/types/api/responses/chat";
+import { GraphSnapshotNode } from "@/types/api/responses/graph";
 import {
   AlertTriangle,
   Calendar,
@@ -17,9 +18,9 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 
 type AutocompleteProps = {
-  attributes: NodeSchemaI[];
+  attributes: GraphSnapshotNode[];
   selectedAutocompleteIndex: number;
-  insertAutocompleteItem: (item: NodeSchemaI) => void;
+  insertAutocompleteItem: (item: GraphSnapshotNode) => void;
 };
 
 const AutoComplete: React.FC<AutocompleteProps> = ({
@@ -81,9 +82,9 @@ const AutoComplete: React.FC<AutocompleteProps> = ({
 
 const Message: React.FC<
   React.ComponentProps<"div"> & {
-    role: ChatMessageI["chat_role"];
+    role: ChatMessageSchema["chat_role"];
     content: string;
-    references?: ChatMessageI["references"];
+    references?: ChatMessageSchema["references"];
     onReferenceClick?: (nodeId: string) => void;
   }
 > = ({ className, role, content, references, onReferenceClick, ...props }) => {

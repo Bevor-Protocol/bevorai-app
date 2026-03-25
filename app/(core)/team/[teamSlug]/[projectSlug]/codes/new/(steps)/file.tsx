@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
+import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import {
   PasteCodeFileFormValues,
   UploadCodeFileFormValues,
   pasteCodeFileSchema,
   uploadCodeFileSchema,
 } from "@/utils/schema";
-import { ProjectDetailedSchemaI } from "@/utils/types";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { solidity } from "@replit/codemirror-lang-solidity";
@@ -35,7 +35,7 @@ interface SourceFile {
 }
 
 const FileStep: React.FC<{
-  project: ProjectDetailedSchemaI;
+  project: ProjectDetailedSchema;
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ project, parentId, onSuccess }) => {

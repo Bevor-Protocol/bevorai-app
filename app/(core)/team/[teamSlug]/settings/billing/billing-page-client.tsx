@@ -14,9 +14,13 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  PlanStatusEnum,
+  StripeAddon,
+  StripeSubscription,
+  StripeSubscriptionLimit,
+} from "@/types/api/responses/stripe";
 import { generateQueryKey } from "@/utils/constants";
-import { PlanStatusEnum } from "@/utils/enums";
-import { StripeAddonI, StripeSubscriptionI, StripeSubscriptionLimit } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -301,7 +305,7 @@ const PaymentMethodSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
 };
 
 const CurrentSubscription: React.FC<{
-  subscription: StripeSubscriptionI;
+  subscription: StripeSubscription;
   teamSlug: string;
 }> = ({ subscription, teamSlug }) => {
   const queryClient = useQueryClient();
@@ -528,7 +532,7 @@ const AddonsSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
     <div className="border border-border rounded-lg p-6 mb-8">
       <h3 className="text-lg font-semibold  mb-4">Add-ons</h3>
       <div className="space-y-4">
-        {addons.map((addon: StripeAddonI) => (
+        {addons.map((addon: StripeAddon) => (
           <AddonRow teamSlug={teamSlug} key={addon.id} addon={addon} />
         ))}
       </div>
@@ -536,7 +540,7 @@ const AddonsSection: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   );
 };
 
-const NoSubscription: React.FC<{ teamSlug: string; subscription?: StripeSubscriptionI }> = ({
+const NoSubscription: React.FC<{ teamSlug: string; subscription?: StripeSubscription }> = ({
   teamSlug,
   subscription,
 }) => {

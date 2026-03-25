@@ -11,13 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
-import { TeamSchemaI } from "@/utils/types";
+import { TeamSchema } from "@/types/api/responses/business";
 // Removed Privy wallet dependency
 import { ExternalLink, LayoutDashboardIcon, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
-export const Profile: React.FC<{ userId: string; teams: TeamSchemaI[] }> = ({ userId, teams }) => {
+export const Profile: React.FC<{ userId: string; teams: TeamSchema[] }> = ({ userId, teams }) => {
   const defaultTeam = teams.find((team) => team.is_default);
 
   return (

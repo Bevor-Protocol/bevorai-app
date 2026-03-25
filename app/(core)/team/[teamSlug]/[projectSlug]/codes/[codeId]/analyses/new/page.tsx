@@ -3,8 +3,9 @@ import Container from "@/components/container";
 import CodeVersionSubnav from "@/components/subnav/code-version";
 import { getQueryClient } from "@/lib/config/query";
 import { CodeProvider } from "@/providers/code";
+import { AsyncComponent } from "@/types";
+import { AnalysisNodeSchema, ScopeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { AnalysisNodeSchemaI, AsyncComponent, ScopeSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import NewVersionClient from "./new-version-client";
 
@@ -26,8 +27,8 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   const resolvedParams = await params;
   const { parentVersionId } = await searchParams;
 
-  let parentAnalysis: AnalysisNodeSchemaI | undefined;
-  let parentScopes: ScopeSchemaI[] | undefined;
+  let parentAnalysis: AnalysisNodeSchema | undefined;
+  let parentScopes: ScopeSchema[] | undefined;
 
   if (parentVersionId) {
     [parentAnalysis, , parentScopes] = await Promise.all([
@@ -68,19 +69,19 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   }
 
   const sources = await queryClient.fetchQuery({
-    queryKey: generateQueryKey.codeSources(resolvedParams.codeId),
+    queryKey: generateQueryKey.codeFiles(resolvedParams.codeId),
     queryFn: () =>
-      codeActions.getSources(resolvedParams.teamSlug, resolvedParams.codeId).then((r) => {
+      codeActions.getFiles(resolvedParams.teamSlug, resolvedParams.codeId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
   });
 
-  const initialSourceId = sources.length ? sources[0].id : null;
+  const initialFileId = sources.length ? sources[0].id : null;
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <CodeProvider initialSourceId={initialSourceId} {...resolvedParams}>
+      <CodeProvider initialFileId={initialFileId} {...resolvedParams}>
         <Container subnav={<CodeVersionSubnav />} contain>
           <NewVersionClient
             {...resolvedParams}

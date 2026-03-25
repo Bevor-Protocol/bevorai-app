@@ -1,4 +1,4 @@
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
 
 interface PageProps {
   params: Promise<{ teamSlug: string }>;

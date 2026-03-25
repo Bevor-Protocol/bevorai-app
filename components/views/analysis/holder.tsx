@@ -4,8 +4,8 @@ import { analysisActions, codeActions } from "@/actions/bevor";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { FindingSchemaI } from "@/utils/types";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Shield } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -18,21 +18,21 @@ const AnalysisHolder: React.FC<{
   nodeId: string;
   teamSlug: string;
   projectSlug: string;
-  initialFinding?: FindingSchemaI;
-  onAddFindingToContext?: (finding: FindingSchemaI) => void;
+  initialFinding?: FindingSchema;
+  onAddFindingToContext?: (finding: FindingSchema) => void;
 }> = ({ teamSlug, projectSlug, nodeId, initialFinding, onAddFindingToContext }) => {
-  const [selectedFinding, setSelectedFindingState] = useState<FindingSchemaI | undefined>(
+  const [selectedFinding, setSelectedFindingState] = useState<FindingSchema | undefined>(
     initialFinding,
   );
   const [selectedNodeId, setSelectedNodeId] = useState<string | undefined>(
-    initialFinding?.code_version_node_id,
+    initialFinding?.source_node_id,
   );
-  const setSelectedFinding: React.Dispatch<React.SetStateAction<FindingSchemaI | undefined>> = (
+  const setSelectedFinding: React.Dispatch<React.SetStateAction<FindingSchema | undefined>> = (
     value,
   ) => {
     setSelectedFindingState((prev) => {
       const nextFinding = typeof value === "function" ? value(prev) : value;
-      setSelectedNodeId(nextFinding?.code_version_node_id);
+      setSelectedNodeId(nextFinding?.source_node_id);
       return nextFinding;
     });
   };
@@ -63,9 +63,7 @@ const AnalysisHolder: React.FC<{
         if (isFound) {
           break;
         }
-        const findings = version.findings.filter(
-          (f) => f.code_version_node_id === scope.code_version_node_id,
-        );
+        const findings = version.findings.filter((f) => f.source_node_id === scope.source_node_id);
         for (const level of levelOrder) {
           const firstFinding = findings.find((finding) => finding.level === level);
           if (firstFinding) {

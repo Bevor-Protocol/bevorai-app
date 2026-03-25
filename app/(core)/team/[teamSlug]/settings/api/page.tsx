@@ -1,4 +1,4 @@
-import { AsyncComponent } from "@/utils/types";
+import { AsyncComponent } from "@/types";
 import { ApiKeyCreate, ApiKeyTable } from "./api-key-management-client";
 
 interface PageProps {

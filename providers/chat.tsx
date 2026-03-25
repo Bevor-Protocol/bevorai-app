@@ -1,9 +1,9 @@
 "use client";
 
 import { analysisActions, chatActions } from "@/actions/bevor";
+import { DraftSchema, FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
-import { DraftSchemaI, FindingSchemaI } from "@/utils/types";
 import {
   QueryKey,
   useMutation,
@@ -31,7 +31,7 @@ interface ChatContextValue {
   addAttribute: (attribute: ChatAttribute) => void;
   removeAttribute: (type: "node" | "finding", id: string) => void;
   clearAttributes: () => void;
-  addFinding: (finding: FindingSchemaI) => void;
+  addFinding: (finding: FindingSchema) => void;
   removeFinding: (findingId: string) => void;
   clearFindings: () => void;
   createChatMutation: UseMutationResult<
@@ -48,7 +48,7 @@ interface ChatContextValue {
   analysisNodeId: string | null;
   teamSlug: string;
   projectSlug: string;
-  draft?: DraftSchemaI;
+  draft?: DraftSchema;
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
@@ -172,7 +172,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   }, []);
 
   const addFinding = useCallback(
-    (finding: FindingSchemaI) => {
+    (finding: FindingSchema) => {
       addAttribute({
         type: "finding",
         id: finding.id,

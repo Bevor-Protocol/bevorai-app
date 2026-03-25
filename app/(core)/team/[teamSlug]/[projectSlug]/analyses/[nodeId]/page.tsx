@@ -4,9 +4,10 @@ import AnalysisSubnav from "@/components/subnav/analysis";
 import AnalysisMetadata from "@/components/views/analysis/metadata";
 import { getQueryClient } from "@/lib/config/query";
 import { ChatProvider } from "@/providers/chat";
+import { AsyncComponent } from "@/types";
+import { AnalysisNodeSchema, FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
-import { AnalysisNodeSchemaI, AsyncComponent, FindingSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import AnalysisClient from "./analysis-client";
@@ -29,8 +30,8 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   const resolvedSearchParams = await searchParams;
 
   const isEditMode = resolvedSearchParams.mode === "edit";
-  let analysis: AnalysisNodeSchemaI;
-  let initialFinding: FindingSchemaI | undefined;
+  let analysis: AnalysisNodeSchema;
+  let initialFinding: FindingSchema | undefined;
 
   if (isEditMode) {
     // still need to prefetch the analysisDetailed for the AnalysisMetadata component.
@@ -90,7 +91,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
       queryClient.fetchQuery({
         queryKey: generateQueryKey.chats(resolvedParams.teamSlug, chatQuery),
         queryFn: () =>
-          chatActions.getChats(resolvedParams.teamSlug, chatQuery).then((r) => {
+          chatActions.getSecurityChats(resolvedParams.teamSlug, chatQuery).then((r) => {
             if (!r.ok) throw r;
             return r.data;
           }),
@@ -102,10 +103,12 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
         queryClient.fetchQuery({
           queryKey: generateQueryKey.chat(resolvedSearchParams.chatId),
           queryFn: () =>
-            chatActions.getChat(resolvedParams.teamSlug, resolvedSearchParams.chatId!).then((r) => {
-              if (!r.ok) throw r;
-              return r.data;
-            }),
+            chatActions
+              .getSecurityChat(resolvedParams.teamSlug, resolvedSearchParams.chatId!)
+              .then((r) => {
+                if (!r.ok) throw r;
+                return r.data;
+              }),
         }),
       );
     }

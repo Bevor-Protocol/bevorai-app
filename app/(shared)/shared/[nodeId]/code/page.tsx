@@ -2,12 +2,13 @@ import { sharedActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import SharedSubnav from "@/components/subnav/shared";
 import { getQueryClient } from "@/lib/config/query";
+import { AsyncComponent } from "@/types";
+import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { AsyncComponent, SharedAnalysisNodeSchemaI } from "@/utils/types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import SourcesViewer from "./file-viewer";
 import CodeMetadata from "./metadata";
 import { CodeProvider } from "./provider";
-import SourcesViewer from "./sources-viewer";
 
 type ResolvedParams = {
   nodeId: string;
@@ -23,7 +24,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const { source, node } = await searchParams;
 
-  let analysis: SharedAnalysisNodeSchemaI;
+  let analysis: AnalysisNodeSchema;
   try {
     analysis = await queryClient.fetchQuery({
       queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),
@@ -51,9 +52,9 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
         }),
     }),
     queryClient.fetchQuery({
-      queryKey: generateQueryKey.codeSources(resolvedParams.nodeId),
+      queryKey: generateQueryKey.codeFiles(resolvedParams.nodeId),
       queryFn: () =>
-        sharedActions.getSources(resolvedParams.nodeId).then((r) => {
+        sharedActions.getFiles(resolvedParams.nodeId).then((r) => {
           if (!r.ok) throw r;
           return r.data;
         }),
@@ -61,15 +62,15 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   ]);
 
   // Prefetch the initial source data so it's available immediately on the client
-  let initialSourceId = source ?? null;
-  if (initialSourceId) {
+  let initialFileId = source ?? null;
+  if (initialFileId) {
     // validate that the query param exists on this code version. If not, unset it, default to first.
     if (!sources.find((s) => s.id == source)) {
-      initialSourceId = null;
+      initialFileId = null;
     }
   }
-  if (!initialSourceId) {
-    initialSourceId = sources.length ? sources[0].id : null;
+  if (!initialFileId) {
+    initialFileId = sources.length ? sources[0].id : null;
   }
 
   let position: { start: number; end: number } | undefined;
@@ -88,7 +89,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <CodeProvider
-        initialSourceId={initialSourceId}
+        initialFileId={initialFileId}
         initialPosition={position}
         codeId={analysis.code_version_id}
         {...resolvedParams}

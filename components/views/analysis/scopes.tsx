@@ -12,24 +12,25 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { FindingLevel, FindingType } from "@/utils/enums";
 import {
-  AnalysisNodeSchemaI,
-  AnalysisScopesVersionI,
-  DraftFindingSchemaI,
-  FindingSchemaI,
-  ScopeSchemaI,
-} from "@/utils/types";
+  AnalysisNodeSchema,
+  DraftedFindingSchema,
+  DraftSchema,
+  FindingLevelEnum,
+  FindingSchema,
+  FindingTypeEnum,
+  ScopeSchema,
+} from "@/types/api/responses/security";
 import { AlertCircle, AlertTriangle, ChevronDown, Info, XCircle } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 const isDraftFinding = (
-  finding: FindingSchemaI | DraftFindingSchemaI,
-): finding is DraftFindingSchemaI => {
+  finding: FindingSchema | DraftedFindingSchema,
+): finding is DraftedFindingSchema => {
   return "is_draft" in finding && finding.is_draft === true;
 };
 
-const renderDraftBadges = (finding: FindingSchemaI | DraftFindingSchemaI): React.ReactNode => {
+const renderDraftBadges = (finding: FindingSchema | DraftedFindingSchema): React.ReactNode => {
   if (!isDraftFinding(finding)) return null;
 
   return (
@@ -48,9 +49,9 @@ const renderDraftBadges = (finding: FindingSchemaI | DraftFindingSchemaI): React
   );
 };
 
-const renderDraftDelete = <T extends FindingSchemaI | DraftFindingSchemaI>(
+const renderDraftDelete = <T extends FindingSchema | DraftedFindingSchema>(
   finding: T,
-  level: FindingLevel,
+  level: FindingLevelEnum,
   onSelectFinding?: (finding: T) => void,
   isSelected?: boolean,
 ): React.ReactNode | null => {
@@ -77,7 +78,7 @@ const renderDraftDelete = <T extends FindingSchemaI | DraftFindingSchemaI>(
   );
 };
 
-export const getSeverityIcon = (level: FindingLevel): React.ReactElement => {
+export const getSeverityIcon = (level: FindingLevelEnum): React.ReactElement => {
   switch (level.toLowerCase()) {
     case "critical":
       return <XCircle className="size-4 text-red-500" />;
@@ -92,7 +93,7 @@ export const getSeverityIcon = (level: FindingLevel): React.ReactElement => {
   }
 };
 
-export const getSeverityColor = (level: FindingLevel): string => {
+export const getSeverityColor = (level: FindingLevelEnum): string => {
   switch (level.toLowerCase()) {
     case "critical":
       return "border-red-500/20 bg-red-500/5";
@@ -107,7 +108,7 @@ export const getSeverityColor = (level: FindingLevel): string => {
   }
 };
 
-export const getSeverityBadgeClasses = (level: FindingLevel): string => {
+export const getSeverityBadgeClasses = (level: FindingLevelEnum): string => {
   switch (level.toLowerCase()) {
     case "critical":
       return "border-red-500/20 text-red-600 dark:text-red-400";
@@ -123,31 +124,31 @@ export const getSeverityBadgeClasses = (level: FindingLevel): string => {
 };
 
 export const levelOrder = [
-  FindingLevel.CRITICAL,
-  FindingLevel.HIGH,
-  FindingLevel.MEDIUM,
-  FindingLevel.LOW,
+  FindingLevelEnum.CRITICAL,
+  FindingLevelEnum.HIGH,
+  FindingLevelEnum.MEDIUM,
+  FindingLevelEnum.LOW,
 ];
 
-const severityScoreMap: Record<FindingLevel, number> = {
-  [FindingLevel.CRITICAL]: 6,
-  [FindingLevel.HIGH]: 4,
-  [FindingLevel.MEDIUM]: 2,
-  [FindingLevel.LOW]: 1,
+const severityScoreMap: Record<FindingLevelEnum, number> = {
+  [FindingLevelEnum.CRITICAL]: 6,
+  [FindingLevelEnum.HIGH]: 4,
+  [FindingLevelEnum.MEDIUM]: 2,
+  [FindingLevelEnum.LOW]: 1,
 };
 
 export const getScopeForFinding = (
-  finding: FindingSchemaI | DraftFindingSchemaI,
+  finding: FindingSchema | DraftedFindingSchema,
   version: FindingData,
-): ScopeSchemaI => {
-  const scope = version.scopes.find((s) => s.code_version_node_id === finding.code_version_node_id);
+): ScopeSchema => {
+  const scope = version.scopes.find((s) => s.source_node_id === finding.source_node_id);
   if (!scope) {
     throw new Error(`Scope not found for finding ${finding.id}`);
   }
   return scope;
 };
 
-const getScopeStatusIndicator = (status: ScopeSchemaI["status"]): React.ReactNode => {
+const getScopeStatusIndicator = (status: ScopeSchema["status"]): React.ReactNode => {
   switch (status) {
     case "waiting":
       return (
@@ -186,18 +187,18 @@ const getScopeStatusIndicator = (status: ScopeSchemaI["status"]): React.ReactNod
 type GroupingMode = "scope" | "severity" | "type";
 
 const getFindingsCountByLevel = (
-  findings: (FindingSchemaI | DraftFindingSchemaI)[],
-): Record<FindingLevel, number> => {
+  findings: (FindingSchema | DraftedFindingSchema)[],
+): Record<FindingLevelEnum, number> => {
   const counts = {
-    [FindingLevel.CRITICAL]: 0,
-    [FindingLevel.HIGH]: 0,
-    [FindingLevel.MEDIUM]: 0,
-    [FindingLevel.LOW]: 0,
-  } as Record<FindingLevel, number>;
+    [FindingLevelEnum.CRITICAL]: 0,
+    [FindingLevelEnum.HIGH]: 0,
+    [FindingLevelEnum.MEDIUM]: 0,
+    [FindingLevelEnum.LOW]: 0,
+  } as Record<FindingLevelEnum, number>;
 
   findings.forEach((finding) => {
     if (finding.level in counts) {
-      counts[finding.level as FindingLevel]++;
+      counts[finding.level as FindingLevelEnum]++;
     }
   });
 
@@ -205,10 +206,10 @@ const getFindingsCountByLevel = (
 };
 
 type FindingData =
-  | { scopes: ScopeSchemaI[]; findings: FindingSchemaI[] }
-  | { scopes: ScopeSchemaI[]; findings: DraftFindingSchemaI[] };
+  | { scopes: ScopeSchema[]; findings: FindingSchema[] }
+  | { scopes: ScopeSchema[]; findings: DraftedFindingSchema[] };
 
-type GroupingProps<T extends FindingSchemaI | DraftFindingSchemaI> = {
+type GroupingProps<T extends FindingSchema | DraftedFindingSchema> = {
   version: FindingData;
   selectedFinding?: T;
   onSelectFinding: (finding: T) => void;
@@ -219,19 +220,19 @@ type GroupingProps<T extends FindingSchemaI | DraftFindingSchemaI> = {
   checkScopeStatus?: boolean;
 };
 
-const ScopeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
+const ScopeGrouping = <T extends FindingSchema | DraftedFindingSchema>({
   version,
   selectedFinding,
   onSelectFinding,
   openGroups,
   setOpenGroups,
   renderAddFinding,
-  onUndoStagedChange,
+  // onUndoStagedChange,
   checkScopeStatus = true,
 }: GroupingProps<T>): React.ReactElement => {
   const groups = version.scopes.map((scope) => ({
     scope,
-    findings: version.findings.filter((f) => f.code_version_node_id === scope.code_version_node_id),
+    findings: version.findings.filter((f) => f.source_node_id === scope.source_node_id),
   }));
 
   return (
@@ -392,13 +393,13 @@ const ScopeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
   );
 };
 
-const SeverityGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
+const SeverityGrouping = <T extends FindingSchema | DraftedFindingSchema>({
   version,
   selectedFinding,
   onSelectFinding,
   openGroups,
   setOpenGroups,
-  onUndoStagedChange,
+  // onUndoStagedChange,
 }: GroupingProps<T>): React.ReactElement => {
   const groups = levelOrder.map((level) => ({
     key: level,
@@ -513,17 +514,17 @@ const SeverityGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
   );
 };
 
-const TypeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
+const TypeGrouping = <T extends FindingSchema | DraftedFindingSchema>({
   version,
   selectedFinding,
   onSelectFinding,
   openGroups,
   setOpenGroups,
-  onUndoStagedChange,
+  // onUndoStagedChange,
 }: GroupingProps<T>): React.ReactElement => {
   // Initialize all types with empty arrays
-  const typeGroups = new Map<string, FindingSchemaI[]>();
-  Object.values(FindingType).forEach((type) => {
+  const typeGroups = new Map<string, FindingSchema[]>();
+  Object.values(FindingTypeEnum).forEach((type) => {
     typeGroups.set(type, []);
   });
 
@@ -538,12 +539,12 @@ const TypeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
   const groups = Array.from(typeGroups.entries())
     .map(([key, findings]) => {
       const sortedFindings = [...findings].sort((a, b) => {
-        const scoreA = severityScoreMap[a.level as FindingLevel] ?? 0;
-        const scoreB = severityScoreMap[b.level as FindingLevel] ?? 0;
+        const scoreA = severityScoreMap[a.level as FindingLevelEnum] ?? 0;
+        const scoreB = severityScoreMap[b.level as FindingLevelEnum] ?? 0;
         return scoreB - scoreA;
       });
       const totalScore = sortedFindings.reduce(
-        (sum, f) => sum + (severityScoreMap[f.level as FindingLevel] ?? 0),
+        (sum, f) => sum + (severityScoreMap[f.level as FindingLevelEnum] ?? 0),
         0,
       );
       return { key, findings: sortedFindings, totalScore };
@@ -687,7 +688,7 @@ const TypeGrouping = <T extends FindingSchemaI | DraftFindingSchemaI>({
   );
 };
 
-const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
+const AnalysisScopes = <T extends FindingSchema | DraftedFindingSchema>({
   version,
   selectedFinding,
   onSelectFinding,
@@ -696,7 +697,7 @@ const AnalysisScopes = <T extends FindingSchemaI | DraftFindingSchemaI>({
   onUndoStagedChange,
   checkScopeStatus = true,
 }: {
-  version?: AnalysisNodeSchemaI | AnalysisScopesVersionI;
+  version?: AnalysisNodeSchema | DraftSchema;
   selectedFinding?: T;
   onSelectFinding: (finding: T) => void;
   disableGrouping?: boolean;

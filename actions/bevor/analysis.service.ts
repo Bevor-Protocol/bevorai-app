@@ -1,6 +1,16 @@
 "use server";
 
-import api from "@/lib/api";
+import { securityApi } from "@/lib/api";
+import { ApiResponse } from "@/types/api";
+import {
+  AnalysisDagSchema,
+  AnalysisNodeIndex,
+  AnalysisNodeSchema,
+  DraftSchema,
+  FindingSchema,
+  ScopeSchema,
+} from "@/types/api/responses/security";
+import { Pagination } from "@/types/api/responses/shared";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import {
@@ -10,15 +20,6 @@ import {
   FindingFeedbackBody,
   UpdateAnalysisNodeBody,
 } from "@/utils/schema";
-import {
-  AnalysisDagSchemaI,
-  AnalysisNodeSchemaI,
-  AnalysisVersionPaginationI,
-  ApiResponse,
-  DraftSchemaI,
-  FindingSchemaI,
-  ScopeSchemaI,
-} from "@/utils/types";
 import { QueryKey } from "@tanstack/react-query";
 
 export const createAnalysis = async (
@@ -29,7 +30,7 @@ export const createAnalysis = async (
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
-  return api
+  return securityApi
     .post("/analyses", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -55,8 +56,8 @@ export const createAnalysis = async (
 export const getLeafs = async (
   teamSlug: string,
   nodeId: string,
-): ApiResponse<AnalysisNodeSchemaI[]> => {
-  return api
+): ApiResponse<AnalysisNodeSchema[]> => {
+  return securityApi
     .get(`/analyses/${nodeId}/leafs`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -76,8 +77,8 @@ export const getLeafs = async (
     });
 };
 
-export const getDAG = async (teamSlug: string, nodeId: string): ApiResponse<AnalysisDagSchemaI> => {
-  return api
+export const getDAG = async (teamSlug: string, nodeId: string): ApiResponse<AnalysisDagSchema> => {
+  return securityApi
     .get(`/analyses/${nodeId}/dag`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -100,8 +101,8 @@ export const getDAG = async (teamSlug: string, nodeId: string): ApiResponse<Anal
 export const getAnalysis = async (
   teamSlug: string,
   nodeId: string,
-): ApiResponse<AnalysisNodeSchemaI> => {
-  return api
+): ApiResponse<AnalysisNodeSchema> => {
+  return securityApi
     .get(`/analyses/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -124,8 +125,8 @@ export const getAnalysis = async (
 export const getAnalysisDetailed = async (
   teamSlug: string,
   nodeId: string,
-): ApiResponse<AnalysisNodeSchemaI> => {
-  return api
+): ApiResponse<AnalysisNodeSchema> => {
+  return securityApi
     .get(`/analyses/${nodeId}?with_findings=true&with_scopes=true`, {
       headers: { "bevor-team-slug": teamSlug },
     })
@@ -150,8 +151,8 @@ export const getAnalysisDetailed = async (
 export const getFindings = async (
   teamSlug: string,
   nodeId: string,
-): ApiResponse<FindingSchemaI[]> => {
-  return api
+): ApiResponse<FindingSchema[]> => {
+  return securityApi
     .get(`/analyses/${nodeId}/findings`, {
       headers: { "bevor-team-slug": teamSlug },
     })
@@ -173,8 +174,8 @@ export const getFindings = async (
     });
 };
 
-export const getScopes = async (teamSlug: string, nodeId: string): ApiResponse<ScopeSchemaI[]> => {
-  return api
+export const getScopes = async (teamSlug: string, nodeId: string): ApiResponse<ScopeSchema[]> => {
+  return securityApi
     .get(`/analyses/${nodeId}/scopes`, {
       headers: { "bevor-team-slug": teamSlug },
     })
@@ -205,7 +206,7 @@ export const updateFindings = async (
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
-  return api
+  return securityApi
     .patch(`/analyses/${nodeId}/findings`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
@@ -237,7 +238,7 @@ export const submitFindingFeedback = async (
   data: FindingFeedbackBody,
 ): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisFindings(nodeId)];
-  return api
+  return securityApi
     .post(`/analyses/${nodeId}/findings/${findingId}`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
@@ -267,7 +268,7 @@ export const toggleVisibility = async (
 ): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analyses(teamSlug), generateQueryKey.analysis(nodeId)];
 
-  return api
+  return securityApi
     .patch(`/analyses/${nodeId}/visibility`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -294,9 +295,9 @@ export const getAnalyses = async (
   filters: {
     [key: string]: string;
   },
-): ApiResponse<AnalysisVersionPaginationI> => {
+): ApiResponse<Pagination<AnalysisNodeIndex>> => {
   const searchParams = buildSearchParams(filters);
-  return api
+  return securityApi
     .get(`/analyses?${searchParams}`, {
       headers: { "bevor-team-slug": teamSlug },
     })
@@ -326,7 +327,7 @@ export const forkAnalysis = async (
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
-  return api
+  return securityApi
     .post(`/analyses/${analysisNodeId}/fork`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -358,7 +359,7 @@ export const mergeAnalysis = async (
   toInvalidate: QueryKey[];
 }> => {
   const toInvalidate = [[QUERY_KEYS.ANALYSES, teamSlug]];
-  return api
+  return securityApi
     .post(
       `/analyses/${toAnalysisNodeId}/merge`,
       { from_analysis_node_id: fromAnalysisNodeId },
@@ -388,8 +389,8 @@ export const mergeAnalysis = async (
 export const getDraft = async (
   teamSlug: string,
   analysisNodeId: string,
-): ApiResponse<DraftSchemaI> => {
-  return api
+): ApiResponse<DraftSchema> => {
+  return securityApi
     .get(`/analyses/${analysisNodeId}/draft`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -415,7 +416,7 @@ export const commitDraft = async (
 ): ApiResponse<{
   id: string;
 }> => {
-  return api
+  return securityApi
     .post(
       `/analyses/${analysisNodeId}/draft/commit`,
       {},
@@ -445,7 +446,7 @@ export const addStagedFinding = async (
   data: AddAnalysisFindingBody,
 ): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisDraft(analysisNodeId)];
-  return api
+  return securityApi
     .post(`/analyses/${analysisNodeId}/draft/add`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
@@ -473,7 +474,7 @@ export const deleteStagedFinding = async (
   findingId: string,
 ): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisDraft(analysisNodeId)];
-  return api
+  return securityApi
     .post(
       `/analyses/${analysisNodeId}/draft/delete/${findingId}`,
       {},
@@ -505,7 +506,7 @@ export const updateStagedFinding = async (
   data: AnalysisFindingBody,
 ): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisDraft(analysisNodeId)];
-  return api
+  return securityApi
     .post(`/analyses/${analysisNodeId}/draft/edit/${findingId}`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })

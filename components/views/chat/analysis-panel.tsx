@@ -6,9 +6,9 @@ import ChatClosed from "@/components/views/chat/closed";
 import { ChatMessages } from "@/components/views/chat/messages";
 import ChatThreads from "@/components/views/chat/threads";
 import { useChat } from "@/providers/chat";
+import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
-import { FindingSchemaI } from "@/utils/types";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Maximize2, Minimize2, Settings, X } from "lucide-react";
 
@@ -16,7 +16,7 @@ interface CollapsibleChatPanelProps {
   teamSlug: string;
   projectSlug: string;
   nodeId: string;
-  findingContext?: FindingSchemaI[];
+  findingContext?: FindingSchema[];
   onRemoveFindingFromContext?: (findingId: string) => void;
 }
 
@@ -58,7 +58,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
   const chatsQuery = useQuery({
     queryKey: generateQueryKey.chats(teamSlug, chatQuery),
     queryFn: () =>
-      chatActions.getChats(teamSlug, chatQuery).then((r) => {
+      chatActions.getSecurityChats(teamSlug, chatQuery).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),

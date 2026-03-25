@@ -1,10 +1,11 @@
 "use server";
 
-import api from "@/lib/api";
-import { ApiResponse, TokenIssueResponse } from "@/utils/types";
+import { businessApi, graphApi } from "@/lib/api";
+import { ApiResponse } from "@/types/api";
+import { TokenIssueResponse } from "@/types/api/responses/business";
 
 export const validateToken = async (): ApiResponse<{ user_id: string }> => {
-  return api
+  return businessApi
     .get("/token/validate")
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -26,7 +27,7 @@ export const validateToken = async (): ApiResponse<{ user_id: string }> => {
 
 export const refreshToken = async (refreshToken: string): ApiResponse<TokenIssueResponse> => {
   // does not require authorization. We'll look for session expiry and valid refresh tokens in the api.
-  return api
+  return businessApi
     .post("/token/refresh", { refresh_token: refreshToken }, { headers: { skip_token: true } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -43,7 +44,7 @@ export const revokeToken = async (
   source: string = "unknown",
 ): ApiResponse<boolean> => {
   console.log("[auth] revokeToken called", { source });
-  return api
+  return businessApi
     .post(
       "/token/revoke",
       { refresh_token: refreshToken },
@@ -76,7 +77,7 @@ export const revokeToken = async (
 };
 
 export const revokeAllTokens = async (): ApiResponse<boolean> => {
-  return api
+  return businessApi
     .post("/token/revoke/all")
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -102,7 +103,7 @@ export const issueSSEToken = async (claims: {
   code_version_id?: string;
   analysis_node_id?: string;
 }): ApiResponse<string> => {
-  return api
+  return businessApi
     .post("/events/auth", { ...claims })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
@@ -129,8 +130,8 @@ export const getSigningToken = async (
     project_id: string;
   },
 ): ApiResponse<string> => {
-  return api
-    .post("/codes/create/signing-key", data, { headers: { "bevor-team-slug": teamSlug } })
+  return graphApi
+    .post("/versions/signing-key", data, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {

@@ -1,5 +1,5 @@
-import { AsyncComponent } from "@/utils/types";
 import { cn } from "@/lib/utils";
+import { AsyncComponent } from "@/types";
 
 const Content: AsyncComponent<{ children: React.ReactNode; className?: string }> = async ({
   children,

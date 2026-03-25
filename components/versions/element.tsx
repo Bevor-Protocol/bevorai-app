@@ -11,7 +11,7 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { SourceTypeEnum } from "@/utils/enums";
+import { CodeMappingSchema, CodeVersionSchema, SourceTypeEnum } from "@/types/api/responses/graph";
 import {
   commitUrl,
   explorerUrl,
@@ -20,7 +20,6 @@ import {
   truncateId,
   truncateVersion,
 } from "@/utils/helpers";
-import { CodeMappingSchemaI, CodeVersionSchemaI } from "@/utils/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUp,
@@ -56,7 +55,7 @@ const formatSourceType = (sourceType: SourceTypeEnum): string => {
   }
 };
 
-const VersionDisplay: React.FC<{ version: CodeMappingSchemaI; showRepo?: boolean }> = ({
+const VersionDisplay: React.FC<{ version: CodeMappingSchema; showRepo?: boolean }> = ({
   version,
   showRepo = false,
 }) => {
@@ -136,7 +135,7 @@ export const CodeVersionElementLoader: React.FC = () => {
 };
 
 export const VersionMeta: React.FC<{
-  version: CodeVersionSchemaI;
+  version: CodeMappingSchema;
 }> = ({ version }) => {
   return (
     <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -175,7 +174,7 @@ export const VersionMeta: React.FC<{
 
 export const CodeVersionCompactElement: React.FC<
   {
-    version: CodeMappingSchemaI;
+    version: CodeMappingSchema;
   } & React.ComponentProps<"div">
 > = ({ version, className, ...props }) => {
   return (
@@ -208,7 +207,7 @@ export const CodeVersionCompactElement: React.FC<
 };
 
 const CodeVersionActions: React.FC<{
-  version: CodeMappingSchemaI;
+  version: CodeMappingSchema;
   teamSlug: string;
 }> = ({ version, teamSlug }) => {
   const queryClient = useQueryClient();
@@ -316,7 +315,7 @@ const CodeVersionActions: React.FC<{
   );
 };
 
-export const getStatusIndicator = (status: CodeVersionSchemaI["status"]): React.ReactNode => {
+export const getStatusIndicator = (status: CodeVersionSchema["status"]): React.ReactNode => {
   let statusText: string;
   let circleColor: string;
 
@@ -349,7 +348,7 @@ export const getStatusIndicator = (status: CodeVersionSchemaI["status"]): React.
 
 export const CodeVersionElementBare: React.FC<
   {
-    version: CodeMappingSchemaI;
+    version: CodeMappingSchema;
     teamSlug: string;
     showRepo?: boolean;
     showActions?: boolean;
@@ -414,7 +413,7 @@ export const CodeVersionElementBare: React.FC<
 };
 
 export const CodeVersionElement: React.FC<{
-  version: CodeMappingSchemaI;
+  version: CodeMappingSchema;
   teamSlug: string;
   isDisabled?: boolean;
   showRepo?: boolean;

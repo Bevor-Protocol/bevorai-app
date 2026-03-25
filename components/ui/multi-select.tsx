@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Pill } from "@/components/ui/pill";
 import { cn } from "@/lib/utils";
-import { DropdownOption } from "@/utils/types";
+import { DropdownOption } from "@/types";
 import { ChevronDown, X } from "lucide-react";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
