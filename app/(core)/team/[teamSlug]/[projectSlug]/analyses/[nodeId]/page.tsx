@@ -154,6 +154,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
             />
           ) : (
             <AnalysisClient
+              codeVersionId={codeVersionId}
               teamSlug={resolvedParams.teamSlug}
               projectSlug={resolvedParams.projectSlug}
               nodeId={resolvedParams.nodeId}

@@ -11,6 +11,7 @@ import React, { useMemo } from "react";
 
 interface AnalysisClientProps {
   teamSlug: string;
+  codeVersionId: string;
   projectSlug: string;
   nodeId: string;
   initialFinding?: FindingSchema;
@@ -19,6 +20,7 @@ interface AnalysisClientProps {
 
 const AnalysisClient: React.FC<AnalysisClientProps> = ({
   teamSlug,
+  codeVersionId,
   projectSlug,
   nodeId,
   initialFinding,
@@ -53,6 +55,7 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
     <div className="flex flex-1 min-h-0 gap-4">
       <div className="min-h-0 min-w-0 flex-1">
         <AnalysisHolder
+          codeVersionId={codeVersionId}
           teamSlug={teamSlug}
           projectSlug={projectSlug}
           nodeId={nodeId}

@@ -391,7 +391,7 @@ export const getDraft = async (
   analysisNodeId: string,
 ): ApiResponse<DraftSchema> => {
   return securityApi
-    .get(`/analyses/${analysisNodeId}/draft`, { headers: { "bevor-team-slug": teamSlug } })
+    .get(`/drafts/${analysisNodeId}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -417,11 +417,7 @@ export const commitDraft = async (
   id: string;
 }> => {
   return securityApi
-    .post(
-      `/analyses/${analysisNodeId}/draft/commit`,
-      {},
-      { headers: { "bevor-team-slug": teamSlug } },
-    )
+    .post(`/drafts/${analysisNodeId}/commit`, {}, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
@@ -447,7 +443,7 @@ export const addStagedFinding = async (
 ): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisDraft(analysisNodeId)];
   return securityApi
-    .post(`/analyses/${analysisNodeId}/draft/add`, data, {
+    .post(`/drafts/${analysisNodeId}/add`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {
@@ -476,7 +472,7 @@ export const deleteStagedFinding = async (
   const toInvalidate = [generateQueryKey.analysisDraft(analysisNodeId)];
   return securityApi
     .post(
-      `/analyses/${analysisNodeId}/draft/delete/${findingId}`,
+      `/drafts/${analysisNodeId}/delete/${findingId}`,
       {},
       { headers: { "bevor-team-slug": teamSlug } },
     )
@@ -507,7 +503,7 @@ export const updateStagedFinding = async (
 ): ApiResponse<{ toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.analysisDraft(analysisNodeId)];
   return securityApi
-    .post(`/analyses/${analysisNodeId}/draft/edit/${findingId}`, data, {
+    .post(`/drafts/${analysisNodeId}/edit/${findingId}`, data, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => {

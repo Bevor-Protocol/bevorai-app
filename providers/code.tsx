@@ -1,7 +1,7 @@
 "use client";
 
 import { codeActions } from "@/actions/bevor";
-import { GraphSnapshotFile, GraphSnapshotNode } from "@/types/api/responses/graph";
+import { GraphSnapshotFile, GraphSnapshotNode, TreeFile } from "@/types/api/responses/graph";
 import { generateQueryKey } from "@/utils/constants";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import React, {
@@ -33,6 +33,7 @@ interface CodeContextValue {
   fileQuery: UseQueryResult<GraphSnapshotFile, Error>;
   fileContentQuery: UseQueryResult<string, Error>;
   nodesQuery: UseQueryResult<GraphSnapshotNode[], Error>;
+  treeQuery: UseQueryResult<TreeFile[], Error>;
 }
 
 const CodeContext = createContext<CodeContextValue | undefined>(undefined);
@@ -123,6 +124,17 @@ export const CodeProvider: React.FC<{
         return r.data;
       }),
     enabled: !!fileId && !!codeVersionId,
+    staleTime: Infinity,
+  });
+
+  const treeQuery = useQuery({
+    queryKey: generateQueryKey.codeTree(codeVersionId ?? ""),
+    queryFn: () =>
+      codeActions.getTree(teamSlug, codeVersionId ?? "").then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    enabled: !!codeVersionId,
     staleTime: Infinity,
   });
 
@@ -251,6 +263,7 @@ export const CodeProvider: React.FC<{
       fileQuery,
       fileContentQuery,
       nodesQuery,
+      treeQuery,
     }),
     [
       positions,
@@ -268,6 +281,7 @@ export const CodeProvider: React.FC<{
       fileQuery,
       fileContentQuery,
       nodesQuery,
+      treeQuery,
     ],
   );
 

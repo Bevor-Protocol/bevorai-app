@@ -16,11 +16,12 @@ import AnalysisCodeSnippet from "./snippet";
 
 const AnalysisHolder: React.FC<{
   nodeId: string;
+  codeVersionId: string;
   teamSlug: string;
   projectSlug: string;
   initialFinding?: FindingSchema;
   onAddFindingToContext?: (finding: FindingSchema) => void;
-}> = ({ teamSlug, projectSlug, nodeId, initialFinding, onAddFindingToContext }) => {
+}> = ({ teamSlug, codeVersionId, projectSlug, nodeId, initialFinding, onAddFindingToContext }) => {
   const [selectedFinding, setSelectedFindingState] = useState<FindingSchema | undefined>(
     initialFinding,
   );
@@ -119,7 +120,11 @@ const AnalysisHolder: React.FC<{
                 />
               </div>
               <ScrollArea className="flex-1 min-h-0">
-                <AnalysisCodeSnippet nodeQuery={nodeQuery} />
+                <AnalysisCodeSnippet
+                  teamSlug={teamSlug}
+                  codeId={codeVersionId}
+                  nodeId={selectedNodeId ?? ""}
+                />
               </ScrollArea>
             </div>
           </ResizablePanel>

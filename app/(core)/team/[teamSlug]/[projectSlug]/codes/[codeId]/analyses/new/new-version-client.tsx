@@ -30,7 +30,7 @@ import { nodeTypeGroups } from "@/components/views/code/file-viewer";
 import NodeSearch from "@/components/views/code/search";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
-import { GraphSnapshotFile, GraphSnapshotNode } from "@/types/api/responses/graph";
+import { GraphSnapshotFile, TreeFunction } from "@/types/api/responses/graph";
 import { AnalysisNodeSchema, ScopeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { createAnalysisFormValues, createAnalysisSchema } from "@/utils/schema";
@@ -56,7 +56,7 @@ interface AnalysisScopeSelectorProps {
 }
 
 const ScopeSelectionControls: React.FC<{
-  selectedNodes: GraphSnapshotNode[];
+  selectedNodes: TreeFunction[];
   onDeselectAll: () => void;
   onSubmit: () => void;
   mutation: UseMutationResult<
@@ -121,8 +121,8 @@ const CodeTreeViewer: React.FC<{
   teamSlug: string;
   codeId: string;
   files: GraphSnapshotFile[];
-  selectedNodes: GraphSnapshotNode[];
-  onNodeToggle: (node: GraphSnapshotNode) => void;
+  selectedNodes: TreeFunction[];
+  onNodeToggle: (node: TreeFunction) => void;
   onSelectAllForFile?: (fileId: string) => void;
   onDeselectAllForFile?: (fileId: string) => void;
 }> = ({
@@ -134,27 +134,23 @@ const CodeTreeViewer: React.FC<{
   onSelectAllForFile,
   onDeselectAllForFile,
 }) => {
-  const { handleFileChange, fileQuery, containerRef, nodesQuery, fileId } = useCode();
+  const { handleFileChange, fileQuery, containerRef, treeQuery, fileId } = useCode();
 
-  const nodeGroups = useMemo(() => {
-    if (!nodesQuery.data) return [];
-    return nodeTypeGroups.map((group) => {
-      const values = nodesQuery.data.filter((n) => group.nodeTypes.includes(n.node_type));
-      return {
-        ...group,
-        values,
-      };
-    });
-  }, [nodesQuery.data]);
+  const nodesForCurrentFile = useMemo(() => {
+    if (!treeQuery.data || !fileId) return [];
+    const currentTreeFile = treeQuery.data.find((file) => file.id === fileId);
+    if (!currentTreeFile) return [];
+
+    return currentTreeFile.contracts.flatMap((contract) => contract.functions);
+  }, [treeQuery.data, fileId]);
 
   const sourceAuditableNodes = useMemo(() => {
-    if (!nodesQuery.data) return [];
-    return nodesQuery.data.filter((node) => node.is_auditable);
-  }, [nodesQuery.data]);
+    return nodesForCurrentFile.filter((node) => node.is_auditable);
+  }, [nodesForCurrentFile]);
 
   const selectedNodesForFile = useMemo(() => {
     if (!fileId) return [];
-    return selectedNodes.filter((node) => node.file_id === fileId);
+    return selectedNodes.filter((node) => node.source_id === fileId);
   }, [selectedNodes, fileId]);
 
   const hasAuditableNodes = sourceAuditableNodes.length > 0;
@@ -180,12 +176,14 @@ const CodeTreeViewer: React.FC<{
 
   const selectedNodeIds = selectedNodes.map((n) => n.id);
 
-  const handleNodeClick = (node: GraphSnapshotNode): void => {
-    handleFileChange(node.file_id, {
+  const handleNodeClick = (node: TreeFunction): void => {
+    handleFileChange(node.source_id, {
       start: node.src_start_pos,
       end: node.src_end_pos,
     });
   };
+
+  console.log(nodesForCurrentFile);
 
   return (
     <CodeHolder ref={containerRef} className="pr-2">
@@ -233,7 +231,7 @@ const CodeTreeViewer: React.FC<{
           </div>
         )}
         <CodeFiles>
-          {nodesQuery.isLoading ? (
+          {treeQuery.isLoading ? (
             <>
               {nodeTypeGroups.map((group) => (
                 <div key={group.key} className="py-2 w-full">
@@ -251,28 +249,21 @@ const CodeTreeViewer: React.FC<{
               ))}
             </>
           ) : (
-            <>
-              {nodeGroups.map(
-                (group) =>
-                  group.values.length > 0 && (
-                    <div key={group.key} className="py-2 w-full">
-                      <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                        {group.title} ({group.values.length})
-                      </div>
-                      {group.values.map((node) => (
-                        <CodeNodeCheckList
-                          key={node.id}
-                          node={node}
-                          isChecked={selectedNodeIds.includes(node.id)}
-                          isDisabled={false}
-                          onNodeToggle={onNodeToggle}
-                          onNodeClick={handleNodeClick}
-                        />
-                      ))}
-                    </div>
-                  ),
-              )}
-            </>
+            <div className="py-2 w-full">
+              <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                Functions ({nodesForCurrentFile.length})
+              </div>
+              {nodesForCurrentFile.map((node) => (
+                <CodeNodeCheckList
+                  key={node.id}
+                  node={node}
+                  isChecked={selectedNodeIds.includes(node.id)}
+                  isDisabled={false}
+                  onNodeToggle={onNodeToggle}
+                  onNodeClick={handleNodeClick}
+                />
+              ))}
+            </div>
           )}
         </CodeFiles>
       </CodeMetadata>
@@ -294,10 +285,11 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   parentAnalysis,
 }) => {
   const queryClient = useQueryClient();
+  const { treeQuery } = useCode();
 
   const toastRefId = useRef<string | undefined>(undefined);
 
-  const [selectedNodes, setSelectedNodes] = useState<GraphSnapshotNode[]>([]);
+  const [selectedNodes, setSelectedNodes] = useState<TreeFunction[]>([]);
   const [scopeStrategy, setScopeStrategy] = useState<"all" | "explicit" | "parent">(
     parentAnalysis ? "parent" : "explicit",
   );
@@ -318,16 +310,6 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
         if (!r.ok) throw r;
         return r.data;
       }),
-  });
-
-  const { data: allNodes } = useQuery({
-    queryKey: generateQueryKey.codeNodes(codeId),
-    queryFn: () =>
-      codeActions.getNodes(teamSlug, codeId).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-    staleTime: Infinity,
   });
 
   const createAnalysisMutation = useMutation({
@@ -375,28 +357,36 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   });
 
   const allAuditableNodes = useMemo(() => {
-    if (!allNodes) return [];
-    return allNodes.filter((node) => node.is_auditable);
-  }, [allNodes]);
+    if (!treeQuery.data) return [];
+    return treeQuery.data.flatMap((file) =>
+      file.contracts.flatMap((contract) => contract.functions.filter((func) => func.is_auditable)),
+    );
+  }, [treeQuery.data]);
 
   const overlappingScopes = useMemo(() => {
     if (!parentScopes.length || !allAuditableNodes) return [];
-    const existingGenericIds = parentScopes.map((s) => s.generic_id).filter(Boolean);
-    return allAuditableNodes.filter((node) => existingGenericIds.includes(node.generic_id));
+    const existingScopeIdentifiers = new Set(
+      parentScopes.map((s) => (s as ScopeSchema & { generic_id?: string }).generic_id || s.id),
+    );
+    return allAuditableNodes.filter((node) =>
+      existingScopeIdentifiers.has(
+        (node as TreeFunction & { generic_id?: string }).generic_id || node.id,
+      ),
+    );
   }, [parentScopes, allAuditableNodes]);
 
   useEffect(() => {
     if (scopeStrategy === "all") {
-      setSelectedNodes(allAuditableNodes as GraphSnapshotNode[]);
+      setSelectedNodes(allAuditableNodes);
     } else if (scopeStrategy === "parent" && parentAnalysis) {
-      setSelectedNodes(overlappingScopes as GraphSnapshotNode[]);
+      setSelectedNodes(overlappingScopes);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scopeStrategy, overlappingScopes, allAuditableNodes]);
 
-  const handleNodeToggle = (node: GraphSnapshotNode): void => {
+  const handleNodeToggle = (node: TreeFunction): void => {
     if (!node.is_auditable) return;
-    let newScopes: GraphSnapshotNode[];
+    let newScopes: TreeFunction[];
     if (selectedNodes.some((n) => n.id === node.id)) {
       newScopes = selectedNodes.filter((n) => n.id !== node.id);
     } else {
@@ -428,12 +418,12 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
 
   const handleSelectAllForFile = useCallback(
     (fileId: string): void => {
-      if (!allNodes) return;
-      const sourceAuditableNodes = allNodes.filter(
-        (node) => node.file_id === fileId && node.is_auditable,
+      if (!allAuditableNodes.length) return;
+      const sourceAuditableNodes = allAuditableNodes.filter(
+        (node) => node.source_id === fileId && node.is_auditable,
       );
       const newSelectedNodes = [
-        ...selectedNodes.filter((n) => n.file_id !== fileId),
+        ...selectedNodes.filter((n) => n.source_id !== fileId),
         ...sourceAuditableNodes,
       ];
       setSelectedNodes(newSelectedNodes);
@@ -459,12 +449,12 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
         setScopeStrategy("all");
       }
     },
-    [allNodes, selectedNodes, scopeStrategy, parentScopes, allAuditableNodes],
+    [selectedNodes, scopeStrategy, parentScopes, allAuditableNodes],
   );
 
   const handleDeselectAllForFile = useCallback(
     (fileId: string): void => {
-      const newSelectedNodes = selectedNodes.filter((n) => n.file_id !== fileId);
+      const newSelectedNodes = selectedNodes.filter((n) => n.source_id !== fileId);
       setSelectedNodes(newSelectedNodes);
 
       if (scopeStrategy === "parent" && parentScopes.length) {

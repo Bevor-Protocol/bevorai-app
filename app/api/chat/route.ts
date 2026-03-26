@@ -72,7 +72,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       async start(controller: ReadableStreamDefaultController): Promise<void> {
         try {
           const response = await streaming_api.post(
-            `/chats/${chatId}/stream`,
+            `/security/chats/${chatId}/stream`,
             { ...rest },
             {
               headers: {

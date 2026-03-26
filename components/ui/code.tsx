@@ -2,7 +2,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { GraphSnapshotFile, GraphSnapshotNode } from "@/types/api/responses/graph";
+import { GraphSnapshotFile, GraphSnapshotNode, TreeFunction } from "@/types/api/responses/graph";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { FileText } from "lucide-react";
 import React from "react";
@@ -63,9 +63,13 @@ export const CodeFileItem: React.FC<
 };
 
 export const getFileColor = (source: GraphSnapshotFile): string => {
-  return source.is_known_target
+  const sourceMeta = source as GraphSnapshotFile & {
+    is_known_target?: boolean;
+    n_entry_points?: number;
+  };
+  return sourceMeta.is_known_target
     ? "bg-green-500"
-    : source.n_entry_points > 0
+    : (sourceMeta.n_entry_points ?? 0) > 0
       ? "bg-orange-500"
       : "bg-gray-400";
 };
@@ -130,16 +134,7 @@ export const CodeFile: React.FC<
       {...props}
     >
       <div className="flex items-center gap-2 mb-1">
-        <div
-          className={cn(
-            "w-2 h-2 rounded-full",
-            source.is_known_target
-              ? "bg-green-500"
-              : source.n_entry_points > 0
-                ? "bg-orange-500"
-                : "bg-gray-400",
-          )}
-        />
+        <div className={cn("w-2 h-2 rounded-full", getFileColor(source))} />
         <span className="text-sm font-medium truncate">{getFileName(source.path)}</span>
       </div>
       <div className="text-xs text-neutral-500 truncate">{getDirectoryPath(source.path)}</div>
@@ -224,11 +219,11 @@ export const CodeNodeList: React.FC<{
 };
 
 export const CodeNodeCheckList: React.FC<{
-  node: GraphSnapshotNode;
+  node: TreeFunction;
   isChecked: boolean;
   isDisabled: boolean;
-  onNodeToggle: (node: GraphSnapshotNode) => void;
-  onNodeClick: (node: GraphSnapshotNode) => void;
+  onNodeToggle: (node: TreeFunction) => void;
+  onNodeClick: (node: TreeFunction) => void;
 }> = ({ node, isChecked, isDisabled, onNodeToggle, onNodeClick }) => {
   return (
     <div className="flex items-center gap-2">
@@ -237,7 +232,18 @@ export const CodeNodeCheckList: React.FC<{
         checked={isChecked}
         onCheckedChange={() => onNodeToggle(node)}
       />
-      <CodeNodeList node={node} onNodeClick={onNodeClick} />
+      <div
+        className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm text-sm transition-colors"
+        onClick={() => onNodeClick(node)}
+      >
+        <div
+          className={cn(
+            "w-1.5 h-1.5 rounded-full shrink-0",
+            getNodeTypeColor("function_definition"),
+          )}
+        />
+        <span className="truncate">{node.name}</span>
+      </div>
     </div>
   );
 };
