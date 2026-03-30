@@ -27,7 +27,7 @@ async function pollCodeStatus(
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const encoder = new TextEncoder();
+  const _encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {

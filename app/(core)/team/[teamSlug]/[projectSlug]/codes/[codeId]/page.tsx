@@ -120,8 +120,9 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
       });
       initialSourceId = fetchedNode.file_id;
       position = { start: fetchedNode.src_start_pos, end: fetchedNode.src_end_pos };
-      // eslint-disable-next-line no-empty
-    } catch {}
+    } catch {
+      // Intentionally empty — fetch failure is non-critical
+    }
   }
 
   return (
