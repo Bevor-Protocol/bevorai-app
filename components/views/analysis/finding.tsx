@@ -8,7 +8,7 @@ import { GraphSnapshotNode } from "@/types/api/responses/graph";
 import { FindingSchema } from "@/types/api/responses/security";
 import { truncateId } from "@/utils/helpers";
 import { UseQueryResult } from "@tanstack/react-query";
-import { Check, ExternalLink, MessageSquare, X } from "lucide-react";
+import { Check, ExternalLink, MessageSquare, ShieldCheck, ShieldPlus, X } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { getSeverityBadgeClasses } from "./scopes";
@@ -21,7 +21,9 @@ const FindingMetadata: React.FC<{
   selectedNodeId?: string;
   onSelectNodeId?: (nodeId: string) => void;
   nodeQuery: UseQueryResult<GraphSnapshotNode, Error>;
+  validatedFindingNames?: Set<string>;
   onAddFindingToContext?: (finding: FindingSchema) => void;
+  onAddToValidated?: (finding: FindingSchema) => void;
 }> = ({
   teamSlug,
   projectSlug,
@@ -30,7 +32,9 @@ const FindingMetadata: React.FC<{
   selectedNodeId,
   onSelectNodeId,
   nodeQuery,
+  validatedFindingNames,
   onAddFindingToContext,
+  onAddToValidated,
 }) => {
   const { selectedChatId } = useChat();
   const hasLocations = finding.locations?.length > 0;
@@ -85,6 +89,25 @@ const FindingMetadata: React.FC<{
           </Badge>
         )}
         <div className="ml-auto gap-3 h-8 flex">
+          {validatedFindingNames?.has(`${finding.name}::${finding.level}`) ? (
+            <Badge
+              variant="outline"
+              className="h-7 px-2.5 text-xs gap-1.5 border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400 cursor-default"
+            >
+              <ShieldCheck className="size-3" />
+              Validated
+            </Badge>
+          ) : onAddToValidated ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onAddToValidated(finding)}
+              className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <ShieldPlus className="size-3" />
+              Validate
+            </Button>
+          ) : null}
           {onAddFindingToContext && selectedChatId && (
             <Button
               variant="ghost"

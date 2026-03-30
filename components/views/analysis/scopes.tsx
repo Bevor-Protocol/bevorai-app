@@ -21,7 +21,7 @@ import {
   FindingTypeEnum,
   ScopeSchema,
 } from "@/types/api/responses/security";
-import { AlertCircle, AlertTriangle, ChevronDown, Info, XCircle } from "lucide-react";
+import { AlertCircle, AlertTriangle, ChevronDown, Info, ShieldCheck, XCircle } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 const isDraftFinding = (
@@ -218,6 +218,7 @@ type GroupingProps<T extends FindingSchema | DraftedFindingSchema> = {
   renderAddFinding?: (scopeId: string, scopeName: string) => React.ReactNode;
   onUndoStagedChange?: (findingId: string) => void;
   checkScopeStatus?: boolean;
+  validatedFindingNames?: Set<string>;
 };
 
 const ScopeGrouping = <T extends FindingSchema | DraftedFindingSchema>({
@@ -229,6 +230,7 @@ const ScopeGrouping = <T extends FindingSchema | DraftedFindingSchema>({
   renderAddFinding,
   // onUndoStagedChange,
   checkScopeStatus = true,
+  validatedFindingNames,
 }: GroupingProps<T>): React.ReactElement => {
   const groups = version.scopes.map((scope) => ({
     scope,
@@ -349,6 +351,7 @@ const ScopeGrouping = <T extends FindingSchema | DraftedFindingSchema>({
                                 </React.Fragment>
                               );
 
+                            const isValidated = validatedFindingNames?.has(`${finding.name}::${finding.level}`);
                             return (
                               <div
                                 key={finding.id || index}
@@ -371,6 +374,9 @@ const ScopeGrouping = <T extends FindingSchema | DraftedFindingSchema>({
                                   <span className="text-sm font-medium truncate">
                                     {finding.name}
                                   </span>
+                                  {isValidated && (
+                                    <ShieldCheck className="size-3 shrink-0 text-green-500" />
+                                  )}
                                   {renderDraftBadges(finding)}
                                 </div>
                               </div>
@@ -400,6 +406,7 @@ const SeverityGrouping = <T extends FindingSchema | DraftedFindingSchema>({
   openGroups,
   setOpenGroups,
   // onUndoStagedChange,
+  validatedFindingNames,
 }: GroupingProps<T>): React.ReactElement => {
   const groups = levelOrder.map((level) => ({
     key: level,
@@ -457,6 +464,7 @@ const SeverityGrouping = <T extends FindingSchema | DraftedFindingSchema>({
                       const isSelected = selectedFinding?.id === finding.id;
                       const findingTyped = finding as T;
                       const findingScope = getScopeForFinding(finding, version);
+                      const isValidated = validatedFindingNames?.has(`${finding.name}::${finding.level}`);
 
                       const deleteRender = renderDraftDelete(
                         findingTyped,
@@ -494,6 +502,9 @@ const SeverityGrouping = <T extends FindingSchema | DraftedFindingSchema>({
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <span className="text-sm font-medium truncate">{finding.name}</span>
+                              {isValidated && (
+                                <ShieldCheck className="size-3 shrink-0 text-green-500" />
+                              )}
                               {renderDraftBadges(finding)}
                             </div>
                             <div className="text-xs text-muted-foreground font-mono truncate">
@@ -521,6 +532,7 @@ const TypeGrouping = <T extends FindingSchema | DraftedFindingSchema>({
   openGroups,
   setOpenGroups,
   // onUndoStagedChange,
+  validatedFindingNames,
 }: GroupingProps<T>): React.ReactElement => {
   // Initialize all types with empty arrays
   const typeGroups = new Map<string, FindingSchema[]>();
@@ -623,6 +635,7 @@ const TypeGrouping = <T extends FindingSchema | DraftedFindingSchema>({
                             const isSelected = selectedFinding?.id === finding.id;
                             const findingTyped = finding as T;
                             const findingScope = getScopeForFinding(finding, version);
+                            const isValidated = validatedFindingNames?.has(`${finding.name}::${finding.level}`);
 
                             const deleteRender = renderDraftDelete(
                               findingTyped,
@@ -665,6 +678,9 @@ const TypeGrouping = <T extends FindingSchema | DraftedFindingSchema>({
                                     <span className="text-sm font-medium truncate">
                                       {finding.name}
                                     </span>
+                                    {isValidated && (
+                                      <ShieldCheck className="size-3 shrink-0 text-green-500" />
+                                    )}
                                     {renderDraftBadges(finding)}
                                   </div>
                                   <div className="text-xs text-muted-foreground font-mono truncate">
@@ -696,6 +712,7 @@ const AnalysisScopes = <T extends FindingSchema | DraftedFindingSchema>({
   renderAddFinding,
   onUndoStagedChange,
   checkScopeStatus = true,
+  validatedFindingNames,
 }: {
   version?: AnalysisNodeSchema | DraftSchema;
   selectedFinding?: T;
@@ -704,6 +721,7 @@ const AnalysisScopes = <T extends FindingSchema | DraftedFindingSchema>({
   renderAddFinding?: (scopeId: string, scopeName: string) => React.ReactNode;
   onUndoStagedChange?: (findingId: string) => void;
   checkScopeStatus?: boolean;
+  validatedFindingNames?: Set<string>;
 }): React.ReactElement => {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [groupingMode, setGroupingMode] = useState<GroupingMode>("scope");
@@ -775,6 +793,7 @@ const AnalysisScopes = <T extends FindingSchema | DraftedFindingSchema>({
     renderAddFinding,
     onUndoStagedChange,
     checkScopeStatus,
+    validatedFindingNames,
   };
 
   return (

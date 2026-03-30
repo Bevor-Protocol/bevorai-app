@@ -39,6 +39,7 @@ export const QUERY_KEYS = {
   GITHUB_INSTALLATIONS: "github-installations",
   GITHUB_REPOSITORIES: "github-repositories",
   GITHUB_BRANCHES: "github-branches",
+  VALIDATED_FINDINGS: "validated-findings",
 };
 
 export const NETWORKS = [
@@ -165,6 +166,11 @@ export const generateQueryKey = {
   customer: (teamSlug: string): QueryKey => [QUERY_KEYS.CUSTOMERS, teamSlug],
   paymentMethods: (teamSlug: string): QueryKey => [QUERY_KEYS.PAYMENT_METHODS, teamSlug],
   products: (teamSlug: string): QueryKey => [QUERY_KEYS.PRODUCTS, teamSlug],
+
+  validatedFindings: (projectSlug: string): QueryKey => [
+    QUERY_KEYS.VALIDATED_FINDINGS,
+    projectSlug,
+  ],
 
   githubInstallations: (): QueryKey => [QUERY_KEYS.GITHUB_INSTALLATIONS],
   githubRepositories: (installationId: number, teamSlug?: string): QueryKey => [

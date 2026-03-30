@@ -6,6 +6,7 @@ import {
   codeActions,
   githubActions,
   projectActions,
+  validatedFindingActions,
 } from "@/actions/bevor";
 import ActivityList from "@/components/activity";
 import { AnalysisVersionCompactElement } from "@/components/analysis/element";
@@ -48,12 +49,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { CodeVersionCompactElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { useFormReducer } from "@/hooks/useFormReducer";
-import { ProjectDetailedSchema } from "@/types/api/responses/business";
+import { ProjectDetailedSchema, ValidatedFindingSchema } from "@/types/api/responses/business";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Calendar, Edit, MoreHorizontal, Tag, Trash } from "lucide-react";
+import { Calendar, CheckCheck, ChevronDown, ChevronRight, Edit, MoreHorizontal, RotateCcw, ShieldCheck, Tag, Trash, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -360,22 +361,40 @@ export const AnalysesPreview: React.FC<{
       }),
   });
 
-  if (analyses?.results.length === 0) {
-    return <AnalysisEmpty />;
-  }
+  const mostRecentId = analyses?.results[0]?.id;
 
   return (
-    <div className="flex flex-col gap-3">
-      {analyses?.results.map((analysis) => (
-        <Link
-          key={analysis.id}
-          href={`/team/${teamSlug}/${projectSlug}/analyses/${analysis.id}`}
-          className="block transition-colors hover:bg-accent/50 cursor-pointer"
-        >
-          <AnalysisVersionCompactElement key={analysis.id} analysisVersion={analysis} />
-        </Link>
-      ))}
-      {isLoading && <Skeleton className="w-full h-12" />}
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold">Recent Analyses</h3>
+        <div className="flex items-center gap-2">
+          {mostRecentId && (
+            <Button variant="default" size="sm" className="h-7 text-xs" asChild>
+              <Link href={`/team/${teamSlug}/${projectSlug}/analyses/${mostRecentId}`}>
+                Open latest
+              </Link>
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" asChild>
+            <Link href={`/team/${teamSlug}/${projectSlug}/analyses`}>View all</Link>
+          </Button>
+        </div>
+      </div>
+
+      {!isLoading && analyses?.results.length === 0 && <AnalysisEmpty />}
+
+      <div className="flex flex-col gap-3">
+        {analyses?.results.map((analysis) => (
+          <Link
+            key={analysis.id}
+            href={`/team/${teamSlug}/${projectSlug}/analyses/${analysis.id}`}
+            className="block transition-colors hover:bg-accent/50 cursor-pointer"
+          >
+            <AnalysisVersionCompactElement analysisVersion={analysis} />
+          </Link>
+        ))}
+        {isLoading && <Skeleton className="w-full h-12" />}
+      </div>
     </div>
   );
 };
@@ -410,6 +429,209 @@ export const CodePreview: React.FC<{
         </Link>
       ))}
       {isLoading && <Skeleton className="w-full h-12" />}
+    </div>
+  );
+};
+
+const severityOrder = ["critical", "high", "medium", "low"];
+
+const severityBadgeClass: Record<string, string> = {
+  critical: "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400",
+  high: "border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  medium: "border-yellow-500/30 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
+  low: "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400",
+};
+
+const ValidatedFindingRow: React.FC<{
+  finding: ValidatedFindingSchema;
+  teamSlug: string;
+  projectSlug: string;
+  onRemediate: (id: string, isRemediated: boolean) => void;
+  onRemove: (id: string) => void;
+  isPending: boolean;
+}> = ({ finding, teamSlug, projectSlug, onRemediate, onRemove, isPending }) => (
+  <div className="flex items-start gap-3 py-2.5 px-3 rounded-md border border-border bg-card hover:bg-accent/30 transition-colors group">
+    <ShieldCheck className="size-4 mt-0.5 shrink-0 text-muted-foreground" />
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium truncate">{finding.name}</span>
+        <Badge
+          variant="outline"
+          size="sm"
+          className={severityBadgeClass[finding.level] ?? ""}
+        >
+          {finding.level}
+        </Badge>
+        <span className="text-xs text-muted-foreground">
+          {finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+        </span>
+      </div>
+      <div className="text-xs text-muted-foreground mt-0.5">
+        <Link
+          href={`/team/${teamSlug}/${projectSlug}/analyses/${finding.analysis_node_id}`}
+          className="hover:underline hover:text-foreground transition-colors"
+        >
+          analysis {finding.analysis_node_id.slice(0, 8)}
+        </Link>
+      </div>
+    </div>
+    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+      {finding.is_remediated ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          title="Mark as unresolved"
+          disabled={isPending}
+          onClick={() => onRemediate(finding.id, false)}
+        >
+          <RotateCcw className="size-3" />
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          title="Mark as remediated"
+          disabled={isPending}
+          onClick={() => onRemediate(finding.id, true)}
+        >
+          <CheckCheck className="size-3" />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        title="Remove from validated list"
+        disabled={isPending}
+        onClick={() => onRemove(finding.id)}
+      >
+        <X className="size-3" />
+      </Button>
+    </div>
+  </div>
+);
+
+export const ValidatedFindings: React.FC<{ teamSlug: string; projectSlug: string }> = ({
+  teamSlug,
+  projectSlug,
+}) => {
+  const queryClient = useQueryClient();
+  const [remediatedOpen, setRemediatedOpen] = React.useState(false);
+
+  const { data: findings = [], isLoading } = useQuery({
+    queryKey: generateQueryKey.validatedFindings(projectSlug),
+    queryFn: () =>
+      validatedFindingActions.getValidatedFindings(teamSlug, projectSlug).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  const remediateMutation = useMutation({
+    mutationFn: ({ id, isRemediated }: { id: string; isRemediated: boolean }) =>
+      validatedFindingActions
+        .updateValidatedFinding(teamSlug, projectSlug, id, { is_remediated: isRemediated })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+    },
+    onError: () => {
+      toast.error("Failed to update finding");
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (id: string) =>
+      validatedFindingActions.removeValidatedFinding(teamSlug, projectSlug, id).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    onSuccess: ({ toInvalidate }) => {
+      toInvalidate.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+    },
+    onError: () => {
+      toast.error("Failed to remove finding");
+    },
+  });
+
+  const isPending = remediateMutation.isPending || removeMutation.isPending;
+
+  const active = findings
+    .filter((f) => !f.is_remediated)
+    .sort(
+      (a, b) => severityOrder.indexOf(a.level) - severityOrder.indexOf(b.level),
+    );
+  const remediated = findings.filter((f) => f.is_remediated);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <h3 className="text-sm font-semibold">Validated Findings</h3>
+        {findings.length > 0 && (
+          <Badge variant="outline" size="sm" className="text-xs">
+            {active.length} active
+          </Badge>
+        )}
+      </div>
+
+      {isLoading && <Skeleton className="w-full h-10" />}
+
+      {!isLoading && findings.length === 0 && (
+        <p className="text-xs text-muted-foreground py-2">
+          No validated findings yet. Click "Validate" on any finding in an analysis to add it here.
+        </p>
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        {active.map((finding) => (
+          <ValidatedFindingRow
+            key={finding.id}
+            finding={finding}
+            teamSlug={teamSlug}
+            projectSlug={projectSlug}
+            onRemediate={(id, isRemediated) => remediateMutation.mutate({ id, isRemediated })}
+            onRemove={(id) => removeMutation.mutate(id)}
+            isPending={isPending}
+          />
+        ))}
+      </div>
+
+      {remediated.length > 0 && (
+        <div className="mt-3">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
+            onClick={() => setRemediatedOpen((o) => !o)}
+          >
+            {remediatedOpen ? (
+              <ChevronDown className="size-3" />
+            ) : (
+              <ChevronRight className="size-3" />
+            )}
+            <span>{remediated.length} remediated</span>
+          </button>
+          {remediatedOpen && (
+            <div className="flex flex-col gap-1.5 pl-2 border-l-2 border-purple/40">
+              {remediated.map((finding) => (
+                <div key={finding.id} className="opacity-70">
+                  <ValidatedFindingRow
+                    finding={finding}
+                    teamSlug={teamSlug}
+                    projectSlug={projectSlug}
+                    onRemediate={(id, isRemediated) =>
+                      remediateMutation.mutate({ id, isRemediated })
+                    }
+                    onRemove={(id) => removeMutation.mutate(id)}
+                    isPending={isPending}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

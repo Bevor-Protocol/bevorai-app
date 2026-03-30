@@ -20,8 +20,10 @@ const AnalysisHolder: React.FC<{
   teamSlug: string;
   projectSlug: string;
   initialFinding?: FindingSchema;
+  validatedFindingNames?: Set<string>;
   onAddFindingToContext?: (finding: FindingSchema) => void;
-}> = ({ teamSlug, codeVersionId, projectSlug, nodeId, initialFinding, onAddFindingToContext }) => {
+  onAddToValidated?: (finding: FindingSchema) => void;
+}> = ({ teamSlug, codeVersionId, projectSlug, nodeId, initialFinding, validatedFindingNames, onAddFindingToContext, onAddToValidated }) => {
   const [selectedFinding, setSelectedFindingState] = useState<FindingSchema | undefined>(
     initialFinding,
   );
@@ -93,6 +95,7 @@ const AnalysisHolder: React.FC<{
         version={version}
         selectedFinding={selectedFinding}
         onSelectFinding={setSelectedFinding}
+        validatedFindingNames={validatedFindingNames}
       />
 
       {!selectedFinding ? (
@@ -116,7 +119,9 @@ const AnalysisHolder: React.FC<{
                   selectedNodeId={selectedNodeId}
                   onSelectNodeId={setSelectedNodeId}
                   nodeQuery={nodeQuery}
+                  validatedFindingNames={validatedFindingNames}
                   onAddFindingToContext={onAddFindingToContext}
+                  onAddToValidated={onAddToValidated}
                 />
               </div>
               <ScrollArea className="flex-1 min-h-0">
