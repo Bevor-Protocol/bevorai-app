@@ -431,7 +431,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             viewportRef={scrollViewportRef as React.RefObject<HTMLDivElement>}
           >
             <div
-              className="flex flex-col gap-4 px-2 overflow-x-hidden"
+              className="flex flex-col gap-4 px-3 py-3 overflow-x-hidden"
               style={{
                 maxWidth: isMaximized ? "44rem" : maxWidth || "24rem",
               }}

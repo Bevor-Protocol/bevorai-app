@@ -13,13 +13,13 @@ interface ChatEmptyStateProps {
 export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({ onSendMessage }) => {
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center px-4">
         <Chat.EmptyCta>
-          <p className="text-2xl font-medium mb-1">Start a conversation</p>
-          <p className="text-lg text-muted-foreground">Ask questions about this code</p>
+          <p className="text-lg font-medium mb-1">Start a conversation</p>
+          <p className="text-sm text-muted-foreground">Ask questions about this code</p>
         </Chat.EmptyCta>
       </div>
-      <div className="pb-4">
+      <div className="pb-3 px-1">
         <Chat.EmptyActions>
           {[
             "What are the core contracts of this codebase?",

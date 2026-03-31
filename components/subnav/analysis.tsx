@@ -19,14 +19,10 @@ const AnalysisSubnav: React.FC = () => {
       label: "Analysis",
       href: `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}`,
     },
-    {
-      label: "Source Code",
-      href: `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}/code`,
-    },
-    {
-      label: "History",
-      href: `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}/history`,
-    },
+    // {
+    //   label: "History",
+    //   href: `/team/${teamSlug}/${projectSlug}/analyses/${nodeId}/history`,
+    // },
   ];
 
   const isActive = (href: string): boolean => {

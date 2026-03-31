@@ -10,7 +10,7 @@ import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { extractChatsQuery } from "@/utils/query-params";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Maximize2, Minimize2, Settings, X } from "lucide-react";
+import { History, Maximize2, Minimize2, X } from "lucide-react";
 
 interface CollapsibleChatPanelProps {
   teamSlug: string;
@@ -70,8 +70,8 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
 
   return (
     <aside
-      className={`flex flex-col min-h-0 pr-2 bg-background ${
-        isMaximized ? "fixed right-0 z-50 shadow-2xl border-l" : "relative"
+      className={`flex flex-col min-h-0 bg-background border border-border rounded-lg overflow-hidden ${
+        isMaximized ? "fixed right-0 z-50 shadow-2xl" : "relative"
       }`}
       style={
         isMaximized
@@ -84,7 +84,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
           : { width: CHAT_PANEL_WIDTH }
       }
     >
-      <div className="flex items-center justify-end gap-1 p-2">
+      <div className="flex items-center justify-end gap-1 px-2 h-subheader border-b border-border shrink-0">
         {selectedChatId && (
           <Button
             variant="ghost"
@@ -92,7 +92,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
             onClick={() => setShowSettings(!showSettings)}
             title="Show chat list"
           >
-            <Settings className="size-4" />
+            <History className="size-4" />
           </Button>
         )}
         <Button

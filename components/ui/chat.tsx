@@ -92,7 +92,7 @@ const Message: React.FC<
     <div
       className={cn(
         "relative",
-        role === "user" && "rounded-lg px-2.5 py-1 bg-blue-600 max-w-2xl ml-auto",
+        role === "user" && "rounded-lg rounded-br-none px-3 py-2 bg-background border border-blue-500/60 max-w-2xl ml-auto text-[13px]",
         role === "system" && "max-w-none",
         className,
       )}
@@ -131,13 +131,13 @@ const EmptyCta: React.FC<React.ComponentProps<"div">> = ({ className, ...props }
 };
 
 const EmptyActions: React.FC<React.ComponentProps<"div">> = ({ ...props }) => {
-  return <div className="flex gap-4 w-full items-end flex-wrap" {...props} />;
+  return <div className="flex flex-col gap-2 w-full" {...props} />;
 };
 
 const EmptyAction: React.FC<React.ComponentProps<"div">> = ({ children, ...props }) => {
   return (
     <div
-      className="border rounded-xl animate-appear transition-all p-4 pr-8 relative leading-relaxed h-full cursor-pointer hover:border-muted-foreground/60 min-w-30 grow"
+      className="border border-border rounded-lg animate-appear transition-colors p-3 pr-8 relative leading-relaxed cursor-pointer hover:bg-white/[0.03] hover:border-zinc-600 text-[13px] text-muted-foreground"
       {...props}
     >
       <LucideIcon

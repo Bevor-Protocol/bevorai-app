@@ -21,8 +21,7 @@ import {
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { GitFork, GitMerge, Lock, MoreHorizontal, Shield, Unlock } from "lucide-react";
-import Link from "next/link";
+import { GitFork, GitMerge, Lock, MoreHorizontal, Unlock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -125,19 +124,6 @@ const AnalysisVersionMenu: React.FC<{
                   Make Public
                 </>
               )}
-            </DropdownMenuItem>
-          )}
-          {isOwner && (
-            <DropdownMenuItem asChild>
-              <Link
-                href={{
-                  pathname: `/team/${teamSlug}/${projectSlug}/analyses/new`,
-                  query: { parentVersionId: nodeId },
-                }}
-              >
-                <Shield className="size-4" />
-                Create New Analysis
-              </Link>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onSelect={() => setShowForkDialog(true)}>
