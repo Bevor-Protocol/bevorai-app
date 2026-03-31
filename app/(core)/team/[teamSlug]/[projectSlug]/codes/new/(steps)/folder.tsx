@@ -59,7 +59,7 @@ const FolderStep: React.FC<{
   project: ProjectDetailedSchema;
   parentId?: string;
   onSuccess?: (id: string) => void;
-}> = ({ project, parentId }) => {
+}> = ({ project, parentId, onSuccess }) => {
   const queryClient = useQueryClient();
   const { registerCallback } = useSSE();
   const sseToastId = useRef<string | number | undefined>(undefined);
@@ -212,6 +212,7 @@ const FolderStep: React.FC<{
         id: toastId.current,
       });
 
+      onSuccess?.(id);
       handleSuccess(id);
       if (status === "waiting") {
         setProcessingStatus("waiting");

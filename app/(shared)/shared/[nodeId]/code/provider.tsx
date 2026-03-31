@@ -30,6 +30,7 @@ interface CodeContextValue {
   isSticky: boolean;
   handleFileChange: (fileId: string, positions?: { start: number; end: number }) => void;
   fileQuery: UseQueryResult<GraphSnapshotFile, Error>;
+  fileContentQuery: UseQueryResult<string, Error>;
   nodesQuery: UseQueryResult<GraphSnapshotNode[], Error>;
 }
 
@@ -55,6 +56,17 @@ export const CodeProvider: React.FC<{
     queryKey: generateQueryKey.codeFile(nodeId, fileId ?? ""),
     queryFn: () =>
       sharedActions.getFile(nodeId, fileId ?? "").then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    enabled: !!fileId,
+    staleTime: Infinity,
+  });
+
+  const fileContentQuery = useQuery({
+    queryKey: generateQueryKey.codeFileContent(nodeId, fileId ?? ""),
+    queryFn: () =>
+      sharedActions.getFileContent(nodeId, fileId ?? "").then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
@@ -191,6 +203,7 @@ export const CodeProvider: React.FC<{
       codeVersionId,
       setCodeVersionId,
       fileQuery,
+      fileContentQuery,
       nodesQuery,
     }),
     [
@@ -206,6 +219,7 @@ export const CodeProvider: React.FC<{
       isSticky,
       containerRef,
       fileQuery,
+      fileContentQuery,
       nodesQuery,
     ],
   );

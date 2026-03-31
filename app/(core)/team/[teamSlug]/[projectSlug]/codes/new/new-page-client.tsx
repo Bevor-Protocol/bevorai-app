@@ -96,10 +96,10 @@ const Steps: React.FC<{
         <FileStep project={project} parentId={parentId} onSuccess={handleSuccess} />
       )}
       {currentStep === 2 && method === "folder" && (
-        <FolderStep project={project} parentId={parentId} onSuccess={handleSuccess} />
+        <FolderStep project={project} parentId={parentId} />
       )}
       {currentStep === 2 && method === "repo" && (
-        <RepoUrlStep project={project} parentId={parentId} onSuccess={handleSuccess} />
+        <RepoUrlStep project={project} parentId={parentId} />
       )}
     </div>
   );

@@ -4,16 +4,17 @@ import { activityActions, analysisActions, projectActions } from "@/actions/bevo
 import ActivityList from "@/components/activity";
 import { AnalysisVersionElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
-import LucideIcon from "@/components/lucide-icon";
-import CreateProjectModal from "@/components/Modal/create-project";
 import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
+import AnalyzeClient from "@/app/(core)/team/[teamSlug]/analyze/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
@@ -22,39 +23,85 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { TeamDetailedSchema } from "@/types/api/responses/business";
 import { generateQueryKey } from "@/utils/constants";
 import { useQuery } from "@tanstack/react-query";
-import { Github, Plus } from "lucide-react";
+import { Code, Folder, GitBranch, GitCommitHorizontal, Globe, Plus, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [method, setMethod] = useState<string | null>(null);
+
+  const openUpload = (m: string) => {
+    setMethod(m);
+    setOpen(true);
+  };
+
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm">
             <Plus className="size-4" />
-            Create Project
+            New Project
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => setOpen(true)} className="cursor-pointer">
-            <LucideIcon assetType="project" />
-            New project
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+            Upload method
+          </DropdownMenuLabel>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => openUpload("file")}>
+            <Upload className="size-4 text-blue-400" />
+            Upload / Write File
+          </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => openUpload("folder")}>
+            <Folder className="size-4 text-yellow-400" />
+            Upload Folder
+          </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => openUpload("scan")}>
+            <Globe className="size-4 text-purple-400" />
+            Explorer Scan
+          </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => openUpload("repo")}>
+            <GitCommitHorizontal className="size-4" />
+            Public Repository
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onClick={() => router.push(`/team/${teamSlug}/settings/api`)}
+          >
+            <Code className="size-4 text-orange-400" />
+            MCP / IDE Integration
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => router.push(`/user/github/manage?teamSlug=${teamSlug}`)}
             className="cursor-pointer"
+            onClick={() => router.push(`/user/github/manage?teamSlug=${teamSlug}`)}
           >
-            <Github />
-            Create from GitHub repo
+            <GitBranch className="size-4" />
+            GitHub Connection
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <CreateProjectModal teamSlug={teamSlug} setOpen={setOpen} />
+
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) setMethod(null);
+        }}
+      >
+        <DialogContent
+          className="max-w-6xl w-full h-[85vh] flex flex-col overflow-hidden p-6 gap-0"
+          showCloseButton={true}
+        >
+          {method && (
+            <AnalyzeClient
+              teamSlug={teamSlug}
+              initialMethod={method}
+              onBack={() => setOpen(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>

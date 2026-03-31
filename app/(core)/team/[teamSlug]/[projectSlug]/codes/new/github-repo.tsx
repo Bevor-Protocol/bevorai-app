@@ -272,13 +272,13 @@ const GithubRepoStep: React.FC<{
             This may take a few moments. You can view the version now, but it may not be fully
             processed yet.
           </p>
-          <div className="flex gap-4 justify-center mt-6">
+          {/* <div className="flex gap-4 justify-center mt-6">
             <Button asChild variant="outline">
               <Link href={`/team/${project.team.slug}/${project.slug}/codes/${createdCodeId}`}>
                 View Version
               </Link>
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
     );

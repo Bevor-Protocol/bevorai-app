@@ -11,3 +11,4 @@ export * as sharedActions from "./shared.service";
 export * as teamActions from "./team.service";
 export * as tokenActions from "./token.service";
 export * as userActions from "./user.service";
+export * as validatedFindingActions from "./validated-findings.service";

@@ -121,46 +121,15 @@ const ContainerBreadcrumb: React.FC<{
   };
 
   const projectLink = useMemo(() => {
-    const basePath = `/team/${teamSlug}/${projectSlug}`;
-
-    if (pathname.startsWith(`${basePath}/analyses/`)) {
-      return `${basePath}/analyses`;
-    }
-
-    if (pathname.startsWith(`${basePath}/codes/`)) {
-      return `${basePath}/codes`;
-    }
-
-    if (pathname.startsWith(`${basePath}/chats/`)) {
-      return `${basePath}/chats`;
-    }
-
-    return basePath;
-  }, [teamSlug, projectSlug, pathname]);
+    return `/team/${teamSlug}/${projectSlug}`;
+  }, [teamSlug, projectSlug]);
 
   const teamLink = useMemo(() => {
-    const basePath = `/team/${teamSlug}`;
-    if (codeId) {
-      return `${basePath}/codes`;
-    }
-    if (nodeId) {
-      return `${basePath}/analyses`;
-    }
-    if (pathname.includes("/analyses")) {
-      return `${basePath}/analyses`;
-    }
-    if (pathname.includes("/codes")) {
-      return `${basePath}/codes`;
-    }
-    return basePath;
-  }, [teamSlug, pathname, codeId, nodeId]);
+    return `/team/${teamSlug}`;
+  }, [teamSlug]);
 
   const getEquivalentTeamRoute = (newTeamSlug: string): string => {
-    if (!teamSlug) {
-      return `/team/${newTeamSlug}`;
-    }
-
-    return teamLink.replace(teamSlug as string, newTeamSlug);
+    return `/team/${newTeamSlug}`;
   };
 
   const displayedTeamId =

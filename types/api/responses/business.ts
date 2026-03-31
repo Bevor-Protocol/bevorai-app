@@ -165,3 +165,20 @@ export interface SseClaimsBody {
 export interface SseTokenResponse {
   token: string;
 }
+
+export interface ValidatedFindingSchema {
+  id: string;
+  created_at: string;
+  finding_id: string;
+  analysis_node_id: string;
+  is_remediated: boolean;
+  type: string;
+  level: string;
+  name: string;
+  explanation: string;
+  recommendation?: string;
+  reference?: string;
+  validated_at?: string;
+  invalidated_at?: string;
+  feedback?: string;
+}

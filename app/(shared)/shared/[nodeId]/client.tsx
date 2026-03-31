@@ -215,7 +215,7 @@ const AnalysisHolder: React.FC<{
         ) : (
           <div className="space-y-4">
             <FindingMetadata nodeId={analysis.id} finding={selectedFinding} nodeQuery={nodeQuery} />
-            <AnalysisCodeSnippet nodeQuery={nodeQuery} />
+            <AnalysisCodeSnippet teamSlug={analysis.team_slug} codeId={analysis.code_version_id} nodeId={selectedFinding.source_node_id} />
             <FindingDescription finding={selectedFinding} />
           </div>
         )}

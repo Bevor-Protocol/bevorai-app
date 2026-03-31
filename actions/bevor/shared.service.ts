@@ -114,6 +114,27 @@ export const getFile = async (analysisId: string, fileId: string): ApiResponse<a
     });
 };
 
+export const getFileContent = async (analysisId: string, fileId: string): ApiResponse<string> => {
+  return sharedAPI
+    .get(`/shared/analyses/${analysisId}/code/files/${fileId}/content`)
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.content,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
+};
+
 export const getNodes = async (
   analysisId: string,
   data?: {
