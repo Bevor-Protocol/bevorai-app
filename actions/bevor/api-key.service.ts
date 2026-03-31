@@ -8,9 +8,24 @@ import { KeyFormValues } from "@/utils/schema/key";
 import { QueryKey } from "@tanstack/react-query";
 
 export const listKeys = async (teamSlug: string): ApiResponse<AuthSchema[]> => {
-  return businessApi.get("/auth", { headers: { "bevor-team-slug": teamSlug } }).then((response) => {
-    return response.data.results;
-  });
+  return businessApi
+    .get("/auth", { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.results,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
 };
 
 export const createKey = async (

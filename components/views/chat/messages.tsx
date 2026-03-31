@@ -1,6 +1,6 @@
 "use client";
 
-import { chatActions } from "@/actions/bevor";
+import { authActions, chatActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import * as Chat from "@/components/ui/chat";
 import { Loader } from "@/components/ui/loader";
@@ -45,6 +45,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [pendingApprovalId, setPendingApprovalId] = useState<string | null>(null);
   const [approvalContent, setApprovalContent] = useState<string>("");
+  /** Redis-backed stream token (folder-upload style); TTL extended server-side on each stream POST. */
+  const [browserStreamKey, setBrowserStreamKey] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
@@ -53,6 +55,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const searchParams = useSearchParams();
 
   const { selectedChatId, isMaximized, chatType } = useChat();
+
+  useEffect(() => {
+    setBrowserStreamKey(null);
+  }, [selectedChatId]);
 
   const chatMessageQuery = useQuery({
     queryKey: generateQueryKey.chatMessages(selectedChatId!),
@@ -218,37 +224,77 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         throw new Error(`Failed to serialize message: ${errorMessage}`);
       }
 
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: bodyString,
-      });
+      const streamService = chatType === "analysis" ? "security" : "graph";
+      const apiBaseUrl = await authActions.getBaseUrl();
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = `API request failed: ${response.statusText}`;
-        try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error || errorMessage;
-        } catch {
-          if (errorText) {
-            errorMessage = errorText;
-          }
+      const mintStreamKey = async (): Promise<string> => {
+        const keyRes = await chatActions.getChatStreamKey(teamSlug, data.chatId, streamService);
+        if (!keyRes.ok) {
+          throw new Error(
+            typeof keyRes.error === "object" && keyRes.error && "message" in keyRes.error
+              ? String((keyRes.error as { message?: string }).message)
+              : "Failed to authorize chat stream",
+          );
         }
-        throw new Error(errorMessage);
-      }
+        const key = keyRes.data;
+        setBrowserStreamKey(key);
+        return key;
+      };
+
+      const response = await (async (): Promise<Response> => {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const streamKey =
+            attempt === 0 && browserStreamKey ? browserStreamKey : await mintStreamKey();
+
+          const streamUrl = new URL(
+            `${streamService}/chats/${encodeURIComponent(data.chatId)}/stream`,
+            `${apiBaseUrl}/`,
+          );
+          streamUrl.searchParams.set("stream_key", streamKey);
+
+          const res = await fetch(streamUrl.toString(), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Bevor-Team-Slug": teamSlug,
+            },
+            body: bodyString,
+          });
+
+          if (res.ok) {
+            return res;
+          }
+
+          if (res.status === 401 && attempt === 0) {
+            setBrowserStreamKey(null);
+            await res.text();
+            continue;
+          }
+
+          const errorText = await res.text();
+          let errorMessage = `API request failed: ${res.statusText}`;
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.error || errorMessage;
+          } catch {
+            if (errorText) {
+              errorMessage = errorText;
+            }
+          }
+          throw new Error(errorMessage);
+        }
+        throw new Error("Chat stream authorization failed after retry");
+      })();
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error("No reader available");
 
-      setIsAwaitingResponse(false);
       let buffered = "";
       const decoder = new TextDecoder();
       let finalMessage = "";
       const references: NonNullable<ChatMessageSchema["references"]> = [];
       let done = false;
+      let receivedFirstStreamEvent = false;
 
       while (!done) {
         const result = await reader.read();
@@ -264,6 +310,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           if (!line.trim()) continue;
           try {
             const parsed = JSON.parse(line);
+
+            if (!receivedFirstStreamEvent) {
+              receivedFirstStreamEvent = true;
+              setIsAwaitingResponse(false);
+            }
 
             if (parsed.event_type === "approval") {
               if (parsed.id) {

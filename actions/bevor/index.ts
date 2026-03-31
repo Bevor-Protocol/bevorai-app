@@ -1,4 +1,5 @@
 export * as activityActions from "./activity.service";
+export * as adminActions from "./admin.service";
 export * as analysisActions from "./analysis.service";
 export * as apiKeyActions from "./api-key.service";
 export * as authActions from "./auth.service";

@@ -60,6 +60,8 @@ export const ApiKeyTable: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
       }),
   });
 
+  console.log(apiKeys, isLoading);
+
   const regenerateApiKeyMutation = useMutation({
     mutationFn: async (keyId: string) =>
       apiKeyActions.refreshKey(teamSlug, keyId).then((r) => {

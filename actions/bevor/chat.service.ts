@@ -169,6 +169,32 @@ export const getSecurityChat = async (
     });
 };
 
+export const getChatStreamKey = async (
+  teamSlug: string,
+  chatId: string,
+  service: "graph" | "security",
+): ApiResponse<string> => {
+  const client = service === "graph" ? graphApi : securityApi;
+  return client
+    .post(`/chats/${chatId}/stream-key`, {}, { headers: { "bevor-team-slug": teamSlug } })
+    .then((response) => {
+      const requestId = response.headers["bevor-request-id"] ?? "";
+      return {
+        ok: true as const,
+        data: response.data.stream_key as string,
+        requestId,
+      };
+    })
+    .catch((error: any) => {
+      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
+      return {
+        ok: false as const,
+        error: error.response?.data ?? { message: error.message },
+        requestId,
+      };
+    });
+};
+
 export const getChatMessages = async (
   teamSlug: string,
   chatId: string,

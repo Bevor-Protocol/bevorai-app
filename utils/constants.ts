@@ -40,6 +40,7 @@ export const QUERY_KEYS = {
   GITHUB_REPOSITORIES: "github-repositories",
   GITHUB_BRANCHES: "github-branches",
   VALIDATED_FINDINGS: "validated-findings",
+  ADMIN: "admin",
 };
 
 export const NETWORKS = [
@@ -178,4 +179,47 @@ export const generateQueryKey = {
     installationId,
     teamSlug ?? "",
   ],
+
+  adminUsersSearch: (q: string): QueryKey => [QUERY_KEYS.ADMIN, "users", "search", q],
+  adminUsersRecent: (limit: number): QueryKey => [QUERY_KEYS.ADMIN, "users", "recent", limit],
+  adminUsersAdmins: (): QueryKey => [QUERY_KEYS.ADMIN, "users", "admins"],
+  adminUsersByProvider: (): QueryKey => [QUERY_KEYS.ADMIN, "users", "by-provider"],
+  adminUser: (userId: string): QueryKey => [QUERY_KEYS.ADMIN, "user", userId],
+  adminUserMemberships: (userId: string): QueryKey => [
+    QUERY_KEYS.ADMIN,
+    "user",
+    userId,
+    "memberships",
+  ],
+  adminUserOauth: (userId: string): QueryKey => [QUERY_KEYS.ADMIN, "user", userId, "oauth"],
+
+  adminTeamsSearch: (q: string): QueryKey => [QUERY_KEYS.ADMIN, "teams", "search", q],
+  adminTeam: (teamId: string): QueryKey => [QUERY_KEYS.ADMIN, "team", teamId],
+  adminTeamMembers: (teamId: string): QueryKey => [QUERY_KEYS.ADMIN, "team", teamId, "members"],
+  adminTeamProjects: (teamId: string): QueryKey => [QUERY_KEYS.ADMIN, "team", teamId, "projects"],
+  adminTeamProject: (teamId: string, projectId: string): QueryKey => [
+    QUERY_KEYS.ADMIN,
+    "team",
+    teamId,
+    "project",
+    projectId,
+  ],
+  adminTeamProjectAnalysisNodes: (teamId: string, projectId: string): QueryKey => [
+    QUERY_KEYS.ADMIN,
+    "team",
+    teamId,
+    "project",
+    projectId,
+    "analysis-nodes",
+  ],
+  adminTeamInvites: (teamId: string): QueryKey => [QUERY_KEYS.ADMIN, "team", teamId, "invites"],
+
+  adminMetricCountUsers: (): QueryKey => [QUERY_KEYS.ADMIN, "metrics", "count-users"],
+  adminMetricTeamsActive: (): QueryKey => [QUERY_KEYS.ADMIN, "metrics", "teams-active"],
+  adminMetricProjectsActive: (): QueryKey => [QUERY_KEYS.ADMIN, "metrics", "projects-active"],
+  adminMetricAnalysisNodes: (): QueryKey => [QUERY_KEYS.ADMIN, "metrics", "analysis-nodes"],
+  adminMetricChatThreads: (): QueryKey => [QUERY_KEYS.ADMIN, "metrics", "chat-threads"],
+  adminUserSignupBounds: (): QueryKey => [QUERY_KEYS.ADMIN, "metrics", "signup-bounds"],
+  adminTsSignups: (days: number): QueryKey => [QUERY_KEYS.ADMIN, "timeseries", "signups", days],
+  adminTeamsByPlan: (): QueryKey => [QUERY_KEYS.ADMIN, "metrics", "teams-by-plan"],
 };
