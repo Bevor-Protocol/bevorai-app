@@ -39,10 +39,10 @@ const ProjectSubnav: React.FC = () => {
       href: analysisHref,
       activePrefix: `/team/${teamSlug}/${projectSlug}/analyses`,
     },
-    {
-      label: "My Chats",
-      href: `/team/${teamSlug}/${projectSlug}/chats`,
-    },
+    // {
+    //   label: "My Chats",
+    //   href: `/team/${teamSlug}/${projectSlug}/chats`,
+    // },
   ];
 
   const isActive = (item: (typeof navItems)[number]): boolean => {

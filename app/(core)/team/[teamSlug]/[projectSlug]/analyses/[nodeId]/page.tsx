@@ -1,4 +1,4 @@
-import { analysisActions, chatActions } from "@/actions/bevor";
+import { analysisActions, chatActions, codeActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import AnalysisSubnav from "@/components/subnav/analysis";
 import AnalysisMetadata from "@/components/views/analysis/metadata";
@@ -70,6 +70,16 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
 
   const isOwner = analysis.is_owner;
   const codeVersionId = analysis.code_version_id;
+
+  // Prefetch code files so CodeProvider has them immediately
+  await queryClient.prefetchQuery({
+    queryKey: generateQueryKey.codeFiles(codeVersionId),
+    queryFn: () =>
+      codeActions.getFiles(resolvedParams.teamSlug, codeVersionId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
 
   if (resolvedSearchParams.findingId) {
     initialFinding = analysis.findings.find(

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
@@ -23,9 +24,11 @@ import {
   Check,
   Copy,
   Globe,
+  Info,
   Leaf,
   Lock,
   Pencil,
+  RefreshCw,
   TreeDeciduous,
   X,
   XCircle,
@@ -186,6 +189,37 @@ const AnalysisMetadata: React.FC<{
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {allowActions && isOwner && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <RefreshCw className="size-4" />
+                  Rerun
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 text-sm">
+                <div className="flex gap-2.5">
+                  <Info className="size-4 text-yellow-400 shrink-0 mt-0.5" />
+                  <div className="space-y-2">
+                    <p className="font-medium text-foreground">Only rerun if something seems broken.</p>
+                    <p className="text-muted-foreground text-[13px] leading-relaxed">
+                      For incremental changes or follow-up questions, the <span className="text-foreground font-medium">chat feature</span> is faster and more precise. A full rerun re-analyzes the entire codebase from scratch.
+                    </p>
+                    <Button size="sm" variant="outline" className="w-full mt-1" asChild>
+                      <Link
+                        href={{
+                          pathname: `/team/${teamSlug}/${projectSlug}/analyses/new`,
+                          query: { parentVersionId: nodeId },
+                        }}
+                      >
+                        Rerun Analysis
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
           {allowEditMode && (
             <Button variant="outline" size="sm" asChild>
               <Link

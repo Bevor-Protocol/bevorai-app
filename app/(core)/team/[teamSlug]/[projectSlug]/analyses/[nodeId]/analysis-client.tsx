@@ -1,8 +1,9 @@
 "use client";
 
 import { analysisActions, validatedFindingActions } from "@/actions/bevor";
-import AnalysisHolder from "@/components/views/analysis/holder";
+import CombinedView from "@/components/views/analysis/combined-view";
 import CollapsibleChatPanel from "@/components/views/chat/analysis-panel";
+import { CodeProvider } from "@/providers/code";
 import { useChat } from "@/providers/chat";
 import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
@@ -24,7 +25,6 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
   codeVersionId,
   projectSlug,
   nodeId,
-  initialFinding,
   isOwner,
 }) => {
   const { addFinding, removeFinding, attributes } = useChat();
@@ -90,29 +90,35 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
   });
 
   return (
-    <div className="flex flex-1 min-h-0 gap-4">
-      <div className="min-h-0 min-w-0 flex-1">
-        <AnalysisHolder
-          codeVersionId={codeVersionId}
-          teamSlug={teamSlug}
-          projectSlug={projectSlug}
-          nodeId={nodeId}
-          initialFinding={initialFinding}
-          validatedFindingNames={validatedFindingNames}
-          onAddFindingToContext={addFindingToContext}
-          onAddToValidated={(finding) => addToValidatedMutation.mutate(finding)}
-        />
+    <CodeProvider
+      codeId={codeVersionId}
+      initialFileId={null}
+      teamSlug={teamSlug}
+    >
+      <div className="flex flex-1 min-h-0 gap-4">
+        <div className="min-h-0 min-w-0 flex-1">
+          <CombinedView
+            codeVersionId={codeVersionId}
+            teamSlug={teamSlug}
+            projectSlug={projectSlug}
+            nodeId={nodeId}
+            version={version}
+            validatedFindingNames={validatedFindingNames}
+            onAddFindingToContext={addFindingToContext}
+            onAddToValidated={(finding) => addToValidatedMutation.mutate(finding)}
+          />
+        </div>
+        {isOwner && (
+          <CollapsibleChatPanel
+            teamSlug={teamSlug}
+            projectSlug={projectSlug}
+            nodeId={nodeId}
+            findingContext={findingContext}
+            onRemoveFindingFromContext={removeFindingFromContext}
+          />
+        )}
       </div>
-      {isOwner && (
-        <CollapsibleChatPanel
-          teamSlug={teamSlug}
-          projectSlug={projectSlug}
-          nodeId={nodeId}
-          findingContext={findingContext}
-          onRemoveFindingFromContext={removeFindingFromContext}
-        />
-      )}
-    </div>
+    </CodeProvider>
   );
 };
 

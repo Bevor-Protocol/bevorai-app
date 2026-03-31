@@ -667,7 +667,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col relative mt-auto">
+    <form onSubmit={handleSubmit} className="flex flex-col relative mt-auto p-3 pt-2">
       {hasStagedChanges && (
         <div className="border-t border-l border-r rounded-tl-lg rounded-tr-lg bg-card overflow-hidden mx-4">
           <Button
@@ -713,7 +713,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </div>
         </div>
       )}
-      <div className="rounded-xl border bg-card p-2 shadow-sm">
+      <div className="rounded-lg border border-border bg-zinc-950 p-2">
         <div
           ref={contentEditableRef}
           contentEditable
