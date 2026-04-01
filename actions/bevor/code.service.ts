@@ -519,7 +519,7 @@ export const getRelations = async (
 export const getVersions = async (
   teamSlug: string,
   filters: {
-    [key: string]: string;
+    [key: string]: string | undefined;
   },
 ): ApiResponse<Pagination<CodeMappingSchema>> => {
   const searchParams = buildSearchParams(filters);

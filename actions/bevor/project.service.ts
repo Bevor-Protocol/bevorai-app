@@ -43,7 +43,7 @@ export const createProject = async (
 export const getProjects = async (
   teamSlug: string,
   filters: {
-    [key: string]: string;
+    [key: string]: string | undefined;
   },
 ): ApiResponse<Pagination<ProjectDetailedSchema>> => {
   const searchParams = buildSearchParams(filters);

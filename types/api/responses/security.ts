@@ -72,11 +72,20 @@ export interface FindingSchema extends AnalysisFinding {
   status: FindingStatusEnum;
   feedback?: string;
   locations: FindingLocationSchema[];
+  source_node_id: string;
+  validated_at?: string;
+  invalidated_at?: string;
 }
 
 export interface DraftFindingSchema extends FindingSchema {
   is_draft: boolean;
   operation?: FindingOperation;
+  base_finding_id?: string;
+}
+
+export interface DraftedFindingSchema extends FindingSchema {
+  is_draft: boolean;
+  draft_type: FindingDraftState;
   base_finding_id?: string;
 }
 
@@ -105,6 +114,16 @@ export interface AnalysisNodeSchema {
   merged_from_node_id?: string;
   parent_node_id?: string;
   children: string[];
+  findings: FindingSchema[];
+  scopes: ScopeSchema[];
+}
+
+export interface DraftSchema {
+  scopes: ScopeSchema[];
+  findings: DraftedFindingSchema[];
+  staged: DraftedFindingSchema[];
+  n_scopes: number;
+  n_findings: number;
 }
 
 export interface AnalysisNodeIndex extends AnalysisNodeSchema {
