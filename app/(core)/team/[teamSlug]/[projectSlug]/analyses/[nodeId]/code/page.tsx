@@ -1,15 +1,12 @@
-import { analysisActions, chatActions, codeActions, userActions } from "@/actions/bevor";
+import { analysisActions, codeActions, userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import AnalysisSubnav from "@/components/subnav/analysis";
-import CollapsibleChatPanel from "@/components/views/chat/code-panel";
 import SourcesViewer from "@/components/views/code/file-viewer";
 import CodeMetadata from "@/components/views/code/metadata";
 import { getQueryClient } from "@/lib/config/query";
-import { ChatProvider } from "@/providers/chat";
 import { CodeProvider } from "@/providers/code";
 import { AsyncComponent } from "@/types";
 import { generateQueryKey } from "@/utils/constants";
-import { extractQueryParams } from "@/utils/query-params";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 type ResolvedParams = {
@@ -35,7 +32,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
       return r.data;
     });
 
-  const [code, files, user] = await Promise.all([
+  const [, files, user] = await Promise.all([
     queryClient.fetchQuery({
       queryKey: generateQueryKey.code(analysis.code_version_id),
       queryFn: () =>
@@ -62,21 +59,6 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
     }),
   ]);
 
-  const chatQuery = extractQueryParams({
-    project_slug: resolvedParams.projectSlug,
-    code_version_id: code.id,
-    chat_type: "code",
-  });
-
-  const chats = await queryClient.fetchQuery({
-    queryKey: generateQueryKey.chats(resolvedParams.teamSlug, chatQuery),
-    queryFn: () =>
-      chatActions.getCodeChats(resolvedParams.teamSlug, chatQuery).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-  });
-
   // Prefetch the initial source data so it's available immediately on the client
   let initialFileId = file ?? null;
   if (initialFileId) {
@@ -88,8 +70,6 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
   if (!initialFileId) {
     initialFileId = files.length ? files[0].id : null;
   }
-
-  const initialChatId = chats && chats.results.length ? chats.results[0].id : null;
 
   let position: { start: number; end: number } | undefined;
   if (node) {
@@ -106,34 +86,26 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ChatProvider
-        {...resolvedParams}
-        chatType="code"
-        initialChatId={initialChatId}
+      <CodeProvider
+        initialFileId={initialFileId}
+        initialPosition={position}
         codeId={analysis.code_version_id}
+        {...resolvedParams}
       >
-        <CodeProvider
-          initialFileId={initialFileId}
-          initialPosition={position}
-          codeId={analysis.code_version_id}
-          {...resolvedParams}
-        >
-          <Container subnav={<AnalysisSubnav />} contain>
-            <CodeMetadata
-              userId={user.id}
-              codeId={analysis.code_version_id}
-              {...resolvedParams}
-              allowActions
-            />
-            <div className="flex flex-1 min-h-0 gap-4">
-              <div className="min-h-0 flex-1">
-                <SourcesViewer {...resolvedParams} codeId={analysis.code_version_id} />
-              </div>
-              <CollapsibleChatPanel codeId={code.id} {...resolvedParams} />
+        <Container subnav={<AnalysisSubnav />} contain>
+          <CodeMetadata
+            userId={user.id}
+            codeId={analysis.code_version_id}
+            {...resolvedParams}
+            allowActions
+          />
+          <div className="flex flex-1 min-h-0">
+            <div className="min-h-0 flex-1">
+              <SourcesViewer {...resolvedParams} codeId={analysis.code_version_id} />
             </div>
-          </Container>
-        </CodeProvider>
-      </ChatProvider>
+          </div>
+        </Container>
+      </CodeProvider>
     </HydrationBoundary>
   );
 };

@@ -91,6 +91,8 @@ const CombinedView: React.FC<CombinedViewProps> = ({
   return (
     <div className="flex h-full min-h-0 w-full">
       <FileTreeFindings
+        teamSlug={teamSlug}
+        codeId={codeVersionId}
         selectedFindingId={selectedFindingId}
         onFindingClick={handleFindingClick}
         findings={findings}

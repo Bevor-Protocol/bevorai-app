@@ -35,7 +35,7 @@ export const extractQueryParams = (params?: Record<string, ParamValue>): QueryPa
 /*
 Strip out empty fields to produce a query param string
 */
-export const buildSearchParams = (query: { [key: string]: string }): string => {
+export const buildSearchParams = (query: { [key: string]: string | undefined }): string => {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([k, v]) => {
     if (v) {

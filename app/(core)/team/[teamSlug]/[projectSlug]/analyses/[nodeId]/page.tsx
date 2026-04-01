@@ -1,13 +1,11 @@
-import { analysisActions, chatActions, codeActions } from "@/actions/bevor";
+import { analysisActions, codeActions } from "@/actions/bevor";
 import Container from "@/components/container";
-import AnalysisSubnav from "@/components/subnav/analysis";
+import ProjectSubnav from "@/components/subnav/project";
 import AnalysisMetadata from "@/components/views/analysis/metadata";
 import { getQueryClient } from "@/lib/config/query";
-import { ChatProvider } from "@/providers/chat";
 import { AsyncComponent } from "@/types";
 import { DraftFindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { extractQueryParams } from "@/utils/query-params";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import AnalysisClient from "./analysis-client";
 
@@ -67,70 +65,19 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
     initialFinding = findings.find((finding) => finding.id == resolvedSearchParams.findingId);
   }
 
-  let initialChatId = resolvedSearchParams.chatId ?? null;
-
-  if (isOwner) {
-    const chatQuery = extractQueryParams({
-      project_slug: resolvedParams.projectSlug,
-      code_version_id: codeVersionId,
-      analysis_id: resolvedParams.nodeId,
-      chat_type: "analysis",
-    });
-
-    const chatPromises = [
-      queryClient.fetchQuery({
-        queryKey: generateQueryKey.chats(resolvedParams.teamSlug, chatQuery),
-        queryFn: () =>
-          chatActions.getSecurityChats(resolvedParams.teamSlug, chatQuery).then((r) => {
-            if (!r.ok) throw r;
-            return r.data;
-          }),
-      }),
-    ];
-
-    if (resolvedSearchParams.chatId) {
-      chatPromises.push(
-        queryClient.fetchQuery({
-          queryKey: generateQueryKey.chat(resolvedSearchParams.chatId),
-          queryFn: () =>
-            chatActions
-              .getSecurityChat(resolvedParams.teamSlug, resolvedSearchParams.chatId!)
-              .then((r) => {
-                if (!r.ok) throw r;
-                return r.data;
-              }),
-        }),
-      );
-    }
-
-    const chatResults = await Promise.all(chatPromises);
-    if (!initialChatId) {
-      const chats = chatResults[0];
-      initialChatId = chats && chats.results.length ? chats.results[0].id : null;
-    }
-  }
-
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ChatProvider
-        {...resolvedParams}
-        chatType="analysis"
-        initialChatId={initialChatId}
-        codeId={codeVersionId}
-        analysisNodeId={resolvedParams.nodeId}
-      >
-        <Container subnav={<AnalysisSubnav />} contain>
-          <AnalysisMetadata {...resolvedParams} allowActions isOwner={isOwner} />
-          <AnalysisClient
-            codeVersionId={codeVersionId}
-            teamSlug={resolvedParams.teamSlug}
-            projectSlug={resolvedParams.projectSlug}
-            nodeId={resolvedParams.nodeId}
-            initialFinding={initialFinding}
-            isOwner={isOwner}
-          />
-        </Container>
-      </ChatProvider>
+      <Container subnav={<ProjectSubnav />} contain>
+        <AnalysisMetadata {...resolvedParams} allowActions isOwner={isOwner} />
+        <AnalysisClient
+          codeVersionId={codeVersionId}
+          teamSlug={resolvedParams.teamSlug}
+          projectSlug={resolvedParams.projectSlug}
+          nodeId={resolvedParams.nodeId}
+          initialFinding={initialFinding}
+          isOwner={isOwner}
+        />
+      </Container>
     </HydrationBoundary>
   );
 };
