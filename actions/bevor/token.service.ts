@@ -101,7 +101,7 @@ export const issueSSEToken = async (claims: {
   team_slug?: string;
   project_slug?: string;
   code_version_id?: string;
-  analysis_node_id?: string;
+  analysis_id?: string;
 }): ApiResponse<string> => {
   return businessApi
     .post("/events/auth", { ...claims })

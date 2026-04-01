@@ -7,15 +7,15 @@ import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { generateQueryKey } from "@/utils/constants";
-import { DefaultProjectsQuery } from "@/utils/query-params";
+import type { QueryParamsRecord } from "@/utils/query-params";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
 export const ProjectsView: React.FC<{
   teamSlug: string;
-  initialQuery: typeof DefaultProjectsQuery;
-  defaultQuery: typeof DefaultProjectsQuery;
+  initialQuery: QueryParamsRecord;
+  defaultQuery: QueryParamsRecord;
 }> = ({ teamSlug, initialQuery, defaultQuery }) => {
   // initial query will come from the server. Subsequent queries/filters will stay on the client.
   // we want to take advantage of client-side caching.
@@ -33,14 +33,10 @@ export const ProjectsView: React.FC<{
   });
 
   const isAnySearched = useMemo(() => {
+    const ignored = new Set(["page_size", "page", "order", "order_by"]);
     return Object.entries(filters)
-      .filter(([k]) => !["page_size", "page", "order"].includes(k))
-      .some(
-        ([k, v]) =>
-          !!v &&
-          defaultQuery[k as keyof typeof DefaultProjectsQuery] !=
-            filters[k as keyof typeof DefaultProjectsQuery],
-      );
+      .filter(([k]) => !ignored.has(k))
+      .some(([k, v]) => !!v && defaultQuery[k] !== filters[k]);
   }, [filters, defaultQuery]);
 
   const handlePage = (page: number): void => {

@@ -2,7 +2,7 @@ import Container from "@/components/container";
 import { CodeVersionsView } from "@/components/screens/code-versions";
 import TeamSubnav from "@/components/subnav/team";
 import { AsyncComponent } from "@/types";
-import { DefaultCodesQuery, extractCodesQuery } from "@/utils/query-params";
+import { extractQueryParams } from "@/utils/query-params";
 import { CodeCreate } from "./codes-client";
 
 interface ResolvedParams {
@@ -18,11 +18,11 @@ const TeamCodesPage: AsyncComponent<ProjectPageProps> = async ({ params, searchP
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const initialQuery = extractCodesQuery({
+  const initialQuery = extractQueryParams({
     ...resolvedSearchParams,
   });
 
-  const defaultQuery = { ...DefaultCodesQuery };
+  const defaultQuery = {};
 
   return (
     <Container subnav={<TeamSubnav />}>

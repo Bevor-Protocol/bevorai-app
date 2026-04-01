@@ -9,7 +9,7 @@ import { ChatProvider } from "@/providers/chat";
 import { CodeProvider } from "@/providers/code";
 import { AsyncComponent } from "@/types";
 import { generateQueryKey } from "@/utils/constants";
-import { extractChatsQuery } from "@/utils/query-params";
+import { extractQueryParams } from "@/utils/query-params";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 export const dynamic = "force-dynamic"; // Or 'auto' if you want caching
@@ -58,7 +58,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
     }),
   ]);
 
-  const chatQuery = extractChatsQuery({
+  const chatQuery = extractQueryParams({
     project_slug: resolvedParams.projectSlug,
     code_version_id: code.id,
     chat_type: "code",

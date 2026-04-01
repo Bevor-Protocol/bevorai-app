@@ -31,7 +31,7 @@ export const AdminTeamsClient: React.FC = () => {
   const teamsQuery = useQuery({
     queryKey: generateQueryKey.adminTeamsSearch(trimmed),
     queryFn: async () =>
-      adminActions.adminTeamsSearch(trimmed ? { q: trimmed } : undefined).then((r) => {
+      adminActions.adminTeamsSearch(trimmed ? { search: trimmed } : undefined).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),

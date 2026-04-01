@@ -54,7 +54,19 @@ import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Calendar, CheckCheck, ChevronDown, ChevronRight, Edit, MoreHorizontal, RotateCcw, ShieldCheck, Tag, Trash, X } from "lucide-react";
+import {
+  Calendar,
+  CheckCheck,
+  ChevronDown,
+  ChevronRight,
+  Edit,
+  MoreHorizontal,
+  RotateCcw,
+  ShieldCheck,
+  Tag,
+  Trash,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -455,11 +467,7 @@ const ValidatedFindingRow: React.FC<{
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-sm font-medium truncate">{finding.name}</span>
-        <Badge
-          variant="outline"
-          size="sm"
-          className={severityBadgeClass[finding.level] ?? ""}
-        >
+        <Badge variant="outline" size="sm" className={severityBadgeClass[finding.level] ?? ""}>
           {finding.level}
         </Badge>
         <span className="text-xs text-muted-foreground">
@@ -468,10 +476,10 @@ const ValidatedFindingRow: React.FC<{
       </div>
       <div className="text-xs text-muted-foreground mt-0.5">
         <Link
-          href={`/team/${teamSlug}/${projectSlug}/analyses/${finding.analysis_node_id}`}
+          href={`/team/${teamSlug}/${projectSlug}/analyses/${finding.analysis_id}`}
           className="hover:underline hover:text-foreground transition-colors"
         >
-          analysis {finding.analysis_node_id.slice(0, 8)}
+          analysis {finding.analysis_id.slice(0, 8)}
         </Link>
       </div>
     </div>
@@ -560,9 +568,7 @@ export const ValidatedFindings: React.FC<{ teamSlug: string; projectSlug: string
 
   const active = findings
     .filter((f) => !f.is_remediated)
-    .sort(
-      (a, b) => severityOrder.indexOf(a.level) - severityOrder.indexOf(b.level),
-    );
+    .sort((a, b) => severityOrder.indexOf(a.level) - severityOrder.indexOf(b.level));
   const remediated = findings.filter((f) => f.is_remediated);
 
   return (

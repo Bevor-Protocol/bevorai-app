@@ -1,4 +1,8 @@
-import { FindingLevelEnum, FindingTypeEnum } from "@/types/api/responses/security";
+import {
+  FindingLevelEnum,
+  FindingStatusEnum,
+  FindingTypeEnum,
+} from "@/types/api/responses/security";
 import { z } from "zod";
 
 export const teamFormSchema = z.object({
@@ -109,16 +113,9 @@ export const addAnalysisFindingBodySchema = analysisFindingBodySchema.extend({
 
 export type AddAnalysisFindingBody = z.infer<typeof addAnalysisFindingBodySchema>;
 
-export const updateAnalysisNodeBodySchema = z.object({
-  findings_remove: z.array(z.string()).default([]),
-  findings_add: z.array(analysisFindingBodySchema).default([]),
-});
-
-export type UpdateAnalysisNodeBody = z.infer<typeof updateAnalysisNodeBodySchema>;
-
-export const findingFeedbackSchema = z.object({
+export const findingUpdateBody = z.object({
   feedback: z.string().optional(),
-  is_verified: z.boolean().optional(),
+  status: z.enum(FindingStatusEnum).optional(),
 });
 
-export type FindingFeedbackBody = z.infer<typeof findingFeedbackSchema>;
+export type FindingUpdateBody = z.infer<typeof findingUpdateBody>;

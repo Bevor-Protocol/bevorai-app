@@ -3,28 +3,27 @@ import { AnalysisNodesView } from "@/components/screens/nodes";
 import TeamSubnav from "@/components/subnav/team";
 import { AnalysisCreate } from "@/components/views/analysis/creation";
 import { AsyncComponent } from "@/types";
-import { DefaultAnalysisNodesQuery, extractAnalysisNodesQuery } from "@/utils/query-params";
+import { AnalysesQueryParams } from "@/types/api/requests/security";
+import { extractQueryParams } from "@/utils/query-params";
 
 type ResolvedParams = {
   teamSlug: string;
 };
 
-interface ProjectAnalysesPageProps {
+interface TeamAnalysesPageProps {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<Partial<typeof DefaultAnalysisNodesQuery>>;
+  searchParams: Promise<Partial<AnalysesQueryParams>>;
 }
 
-const TeamAnalysesPage: AsyncComponent<ProjectAnalysesPageProps> = async ({
+const TeamAnalysesPage: AsyncComponent<TeamAnalysesPageProps> = async ({
   params,
   searchParams,
 }) => {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const initialQuery = extractAnalysisNodesQuery({
-    ...resolvedSearchParams,
-  });
-  const defaultQuery = { ...DefaultAnalysisNodesQuery };
+  const initialQuery = extractQueryParams(resolvedSearchParams);
+  const defaultQuery = {};
 
   return (
     <Container subnav={<TeamSubnav />}>

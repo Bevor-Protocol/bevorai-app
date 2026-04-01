@@ -22,7 +22,7 @@ export interface ChatMessageSchema {
   message: string;
   tools: ToolCall[];
   code_version_id: string;
-  analysis_node_id: string | null;
+  analysis_id: string | null;
   references: { id: string; name?: string }[];
 }
 
@@ -34,7 +34,7 @@ export interface ChatSchema {
   user: UserSchema;
   total_messages: number;
   code_version_id: string;
-  analysis_node_id: string | null;
+  analysis_id: string | null;
   title: string | null;
   chat_type: ChatType;
 }

@@ -23,19 +23,26 @@ const AnalysisHolder: React.FC<{
   validatedFindingNames?: Set<string>;
   onAddFindingToContext?: (finding: FindingSchema) => void;
   onAddToValidated?: (finding: FindingSchema) => void;
-}> = ({ teamSlug, codeVersionId, projectSlug, nodeId, initialFinding, validatedFindingNames, onAddFindingToContext, onAddToValidated }) => {
+}> = ({
+  teamSlug,
+  codeVersionId,
+  projectSlug,
+  nodeId,
+  initialFinding,
+  validatedFindingNames,
+  onAddFindingToContext,
+  onAddToValidated,
+}) => {
   const [selectedFinding, setSelectedFindingState] = useState<FindingSchema | undefined>(
     initialFinding,
   );
-  const [selectedNodeId, setSelectedNodeId] = useState<string | undefined>(
-    initialFinding?.source_node_id,
-  );
+  const [selectedNodeId, setSelectedNodeId] = useState<string | undefined>(initialFinding?.node_id);
   const setSelectedFinding: React.Dispatch<React.SetStateAction<FindingSchema | undefined>> = (
     value,
   ) => {
     setSelectedFindingState((prev) => {
       const nextFinding = typeof value === "function" ? value(prev) : value;
-      setSelectedNodeId(nextFinding?.source_node_id);
+      setSelectedNodeId(nextFinding?.node_id);
       return nextFinding;
     });
   };
@@ -43,11 +50,13 @@ const AnalysisHolder: React.FC<{
   const { data: version, isLoading } = useSuspenseQuery({
     queryKey: generateQueryKey.analysisDetailed(nodeId),
     queryFn: async () =>
-      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
+      analysisActions.getAnalysis(teamSlug, nodeId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
   });
+
+  const 
 
   const nodeQuery = useQuery({
     queryKey: generateQueryKey.codeNode(selectedNodeId ?? ""),

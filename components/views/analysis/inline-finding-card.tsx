@@ -5,10 +5,10 @@ import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
-import { FindingSchema } from "@/types/api/responses/security";
+import { FindingSchema, FindingStatusEnum } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
-import { FindingFeedbackBody } from "@/utils/schema";
+import { FindingUpdateBody } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
@@ -21,7 +21,7 @@ import {
   ThumbsUp,
   X,
 } from "lucide-react";
-import React, { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import AnalysisCodeSnippet from "./snippet";
@@ -71,7 +71,7 @@ const SEVERITY_CONFIG: Record<
   },
 };
 
-const getSeverityConfig = (level: string) =>
+const getSeverityConfig = (level: string): { [key: string]: string } =>
   SEVERITY_CONFIG[level.toLowerCase()] ?? {
     border: "border-l-zinc-500",
     badge: "bg-zinc-500/15 text-zinc-400 border-zinc-500/25 font-semibold",
@@ -97,23 +97,23 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
     ref,
   ) => {
     const { selectedChatId } = useChat();
-    const [selectedNodeId, setSelectedNodeId] = useState<string>(finding.source_node_id);
+    const [selectedNodeId, setSelectedNodeId] = useState<string>(finding.node_id);
     const [tab, setTab] = useState("description");
     const [feedbackText, setFeedbackText] = useState<string>(finding.feedback ?? "");
     const [pendingVerification, setPendingVerification] = useState<boolean | null>(
-      finding.validated_at ? true : finding.invalidated_at ? false : null,
+      finding.status === FindingStatusEnum.VALIDATED,
     );
     const queryClient = useQueryClient();
 
     useEffect(() => {
       setFeedbackText(finding.feedback ?? "");
-      setPendingVerification(finding.validated_at ? true : finding.invalidated_at ? false : null);
-    }, [finding.id, finding.feedback, finding.validated_at, finding.invalidated_at]);
+      setPendingVerification(finding.status === FindingStatusEnum.VALIDATED);
+    }, [finding.id, finding.feedback, finding.status]);
 
     const submitFeedback = useMutation({
-      mutationFn: ({ findingId, data }: { findingId: string; data: FindingFeedbackBody }) =>
+      mutationFn: ({ findingId, data }: { findingId: string; data: FindingUpdateBody }) =>
         import("@/actions/bevor").then(({ analysisActions }) =>
-          analysisActions.submitFindingFeedback(teamSlug, nodeId, findingId, data).then((r) => {
+          analysisActions.updateFinding(teamSlug, nodeId, findingId, data).then((r) => {
             if (!r.ok) throw r;
             return r.data;
           }),
@@ -129,19 +129,22 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
       setPendingVerification(isVerified);
       submitFeedback.mutate({
         findingId,
-        data: { feedback: feedbackText || undefined, is_verified: isVerified },
+        data: {
+          feedback: feedbackText || undefined,
+          status: isVerified ? FindingStatusEnum.VALIDATED : FindingStatusEnum.INVALIDATED,
+        },
       });
     };
 
     const sevConfig = getSeverityConfig(finding.level);
-    const isValidated = !!finding.validated_at;
-    const isInvalidated = !!finding.invalidated_at;
+    const isValidated = finding.status == FindingStatusEnum.VALIDATED;
+    const isInvalidated = finding.status == FindingStatusEnum.INVALIDATED;
     const isNotAcknowledged = !isValidated && !isInvalidated;
     const isInValidatedList = validatedFindingNames?.has(`${finding.name}::${finding.level}`);
 
     const hasLocations = finding.locations?.length > 0;
     const locationOptions = [
-      { source_node_id: finding.source_node_id, field_name: "entrypoint" },
+      { source_node_id: finding.node_id, field_name: "entrypoint" },
       ...finding.locations,
     ];
 
@@ -157,10 +160,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
         )}
       >
         {/* ── Collapsed header ─────────────────────────────────────────────── */}
-        <div
-          className="flex items-start gap-0 cursor-pointer select-none"
-          onClick={onToggle}
-        >
+        <div className="flex items-start gap-0 cursor-pointer select-none" onClick={onToggle}>
           {/* Left meta column */}
           <div className="flex-1 min-w-0 px-3 pt-2.5 pb-2">
             {/* Row 1: severity badge + finding name */}
@@ -248,11 +248,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
               onToggle();
             }}
           >
-            {isExpanded ? (
-              <ChevronUp className="size-3.5" />
-            ) : (
-              <ChevronDown className="size-3.5" />
-            )}
+            {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
           </button>
         </div>
 
@@ -375,10 +371,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                         className="text-zinc-500 hover:text-green-400"
                       >
                         <ThumbsUp
-                          className={cn(
-                            "size-4",
-                            pendingVerification === true && "text-green-400",
-                          )}
+                          className={cn("size-4", pendingVerification === true && "text-green-400")}
                         />
                       </Button>
                       <Button
@@ -389,10 +382,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                         className="text-zinc-500 hover:text-red-400"
                       >
                         <ThumbsDown
-                          className={cn(
-                            "size-4",
-                            pendingVerification === false && "text-red-400",
-                          )}
+                          className={cn("size-4", pendingVerification === false && "text-red-400")}
                         />
                       </Button>
                     </div>

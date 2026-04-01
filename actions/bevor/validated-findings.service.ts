@@ -35,7 +35,7 @@ export const getValidatedFindings = async (
 export const addValidatedFinding = async (
   teamSlug: string,
   projectSlug: string,
-  data: { finding_id: string; analysis_node_id: string },
+  data: { finding_id: string; analysis_id: string },
 ): ApiResponse<{ record: ValidatedFindingSchema; toInvalidate: QueryKey[] }> => {
   const toInvalidate = [generateQueryKey.validatedFindings(projectSlug)];
   return businessApi

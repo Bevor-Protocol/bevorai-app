@@ -8,7 +8,7 @@ import ChatThreads from "@/components/views/chat/threads";
 import { useChat } from "@/providers/chat";
 import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { extractChatsQuery } from "@/utils/query-params";
+import { extractQueryParams } from "@/utils/query-params";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { History, Maximize2, Minimize2, X } from "lucide-react";
 
@@ -40,18 +40,27 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
   } = useChat();
 
   const { data: version } = useSuspenseQuery({
-    queryKey: generateQueryKey.analysisDetailed(nodeId),
+    queryKey: generateQueryKey.analysis(nodeId),
     queryFn: () =>
-      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
+      analysisActions.getAnalysis(teamSlug, nodeId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
   });
 
-  const chatQuery = extractChatsQuery({
+  const { data: findings } = useSuspenseQuery({
+    queryKey: generateQueryKey.analysisFindings(nodeId),
+    queryFn: () =>
+      analysisActions.getAnalysisFindings(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  const chatQuery = extractQueryParams({
     project_slug: projectSlug,
     code_version_id: version.code_version_id,
-    analysis_node_id: version.id,
+    analysis_id: version.id,
     chat_type: "analysis",
   });
 
@@ -115,7 +124,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
             teamSlug={teamSlug}
             codeId={version.code_version_id}
             findingContext={findingContext}
-            availableFindings={version.findings}
+            availableFindings={findings}
             onRemoveFindingFromContext={onRemoveFindingFromContext}
             maxWidth={CHAT_PANEL_WIDTH}
           />

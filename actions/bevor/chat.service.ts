@@ -1,7 +1,8 @@
 "use server";
 
+import { apiRequest, withRequestId } from "@/actions/base";
 import { graphApi, securityApi } from "@/lib/api";
-import { ApiResponse } from "@/types/api";
+import { GraphChatsQueryParams, SecurityChatsQueryParams } from "@/types/api/requests/chat";
 import { ChatIndex, ChatMessageSchema } from "@/types/api/responses/chat";
 import { ChatFullSchema } from "@/types/api/responses/graph";
 import { Pagination } from "@/types/api/responses/shared";
@@ -9,241 +10,96 @@ import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { buildSearchParams } from "@/utils/query-params";
 import { QueryKey } from "@tanstack/react-query";
 
-export const initiateCodeChat = async (
-  teamSlug: string,
-  data: { code_version_id: string },
-): ApiResponse<{
-  id: string;
-  toInvalidate: QueryKey[];
-}> => {
+export const initiateCodeChat = apiRequest<
+  [teamSlug: string, data: { code_version_id: string }],
+  { id: string; toInvalidate: QueryKey[] }
+>(async (teamSlug, data) => {
   const toInvalidate = [[QUERY_KEYS.CHATS, teamSlug]];
   return graphApi
     .post("/chats/code", data, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: {
-          id: response.data.id,
-          toInvalidate,
-        },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) =>
+      withRequestId(response, {
+        id: response.data.id,
+        toInvalidate,
+      }),
+    );
+});
 
-export const initiateAnalysisChat = async (
-  teamSlug: string,
-  data: { analysis_node_id: string },
-): ApiResponse<{
-  id: string;
-  toInvalidate: QueryKey[];
-}> => {
+export const initiateAnalysisChat = apiRequest<
+  [teamSlug: string, data: { analysis_id: string }],
+  { id: string; toInvalidate: QueryKey[] }
+>(async (teamSlug, data) => {
   const toInvalidate = [[QUERY_KEYS.CHATS, teamSlug]];
   return securityApi
     .post("/chats/analysis", data, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: {
-          id: response.data.id,
-          toInvalidate,
-        },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) =>
+      withRequestId(response, {
+        id: response.data.id,
+        toInvalidate,
+      }),
+    );
+});
 
-export const getCodeChats = async (
-  teamSlug: string,
-  filters: { [key: string]: string },
-): ApiResponse<Pagination<ChatIndex>> => {
-  const searchParams = buildSearchParams(filters);
+export const getCodeChats = apiRequest<
+  [teamSlug: string, query: GraphChatsQueryParams],
+  Pagination<ChatIndex>
+>(async (teamSlug, query) => {
+  const searchParams = buildSearchParams(query as { [key: string]: string });
   return graphApi
     .get(`/chats?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data));
+});
 
-export const getSecurityChats = async (
-  teamSlug: string,
-  filters: { [key: string]: string },
-): ApiResponse<Pagination<ChatIndex>> => {
-  const searchParams = buildSearchParams(filters);
+export const getSecurityChats = apiRequest<
+  [teamSlug: string, query: SecurityChatsQueryParams],
+  Pagination<ChatIndex>
+>(async (teamSlug, query) => {
+  const searchParams = buildSearchParams(query as { [key: string]: string });
   return graphApi
     .get(`/chats?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data));
+});
 
-export const getCodeChat = async (
-  teamSlug: string,
-  chatId: string,
-): ApiResponse<ChatFullSchema> => {
-  return graphApi
-    .get(`/chats/${chatId}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+export const getCodeChat = apiRequest<[teamSlug: string, chatId: string], ChatFullSchema>(
+  async (teamSlug, chatId) =>
+    graphApi
+      .get(`/chats/${chatId}`, { headers: { "bevor-team-slug": teamSlug } })
+      .then((response) => withRequestId(response, response.data)),
+);
 
-export const getSecurityChat = async (
-  teamSlug: string,
-  chatId: string,
-): ApiResponse<ChatFullSchema> => {
-  return securityApi
-    .get(`/chats/${chatId}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+export const getSecurityChat = apiRequest<[teamSlug: string, chatId: string], ChatFullSchema>(
+  async (teamSlug, chatId) =>
+    securityApi
+      .get(`/chats/${chatId}`, { headers: { "bevor-team-slug": teamSlug } })
+      .then((response) => withRequestId(response, response.data)),
+);
 
-export const getChatStreamKey = async (
-  teamSlug: string,
-  chatId: string,
-  service: "graph" | "security",
-): ApiResponse<string> => {
+export const getChatStreamKey = apiRequest<
+  [teamSlug: string, chatId: string, service: "graph" | "security"],
+  string
+>(async (teamSlug, chatId, service) => {
   const client = service === "graph" ? graphApi : securityApi;
   return client
     .post(`/chats/${chatId}/stream-key`, {}, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data.stream_key as string,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data.stream_key as string));
+});
 
-export const getChatMessages = async (
-  teamSlug: string,
-  chatId: string,
-): ApiResponse<ChatMessageSchema[]> => {
-  return graphApi
-    .get(`/chats/${chatId}/messages`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data.results,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+export const getChatMessages = apiRequest<[teamSlug: string, chatId: string], ChatMessageSchema[]>(
+  async (teamSlug, chatId) =>
+    graphApi
+      .get(`/chats/${chatId}/messages`, { headers: { "bevor-team-slug": teamSlug } })
+      .then((response) => withRequestId(response, response.data.results)),
+);
 
-export const update = async (
-  teamSlug: string,
-  chatId: string,
-  data: { analysis_version_id: string },
-): ApiResponse<{ toInvalidate: QueryKey[] }> => {
-  // we do NOT allow for changing the code version within a chat. That should spawn a new chat thread
-  // what we do allow for is "upgrading" a chat to start pulling in context of an analysis, or just changing the
-  // analysis node that it looks like + manipulates.
+// we do NOT allow for changing the code version within a chat. That should spawn a new chat thread
+// what we do allow for is "upgrading" a chat to start pulling in context of an analysis, or just changing the
+// analysis node that it looks like + manipulates.
+export const update = apiRequest<
+  [teamSlug: string, chatId: string, data: { analysis_version_id: string }],
+  { toInvalidate: QueryKey[] }
+>(async (teamSlug, chatId, data) => {
   const toInvalidate = [generateQueryKey.chat(chatId)];
   return graphApi
     .patch(`/chats/${chatId}`, data, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: { toInvalidate },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, { toInvalidate }));
+});

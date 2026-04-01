@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
 import { GraphSnapshotNode } from "@/types/api/responses/graph";
-import { AnalysisNodeSchema, FindingSchema } from "@/types/api/responses/security";
+import { DraftFindingSchema, FindingSchema } from "@/types/api/responses/security";
 import { ChevronDown, ChevronRight, FileCode, Folder, FolderOpen, ShieldCheck } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { levelOrder } from "./scopes";
@@ -16,12 +16,9 @@ export interface FindingWithNode {
 }
 
 interface FileTreeFindingsProps {
-  version: AnalysisNodeSchema;
-  nodeMap: Map<string, GraphSnapshotNode>;
+  findings: DraftFindingSchema[];
   selectedFindingId: string | null;
   onFindingClick: (finding: FindingSchema) => void;
-  validatedFindingNames?: Set<string>;
-  nodesLoading: boolean;
 }
 
 // ── Tree data structures ─────────────────────────────────────────────────────
@@ -44,7 +41,11 @@ type TreeEntry = FolderNode | FileLeaf;
 
 /** Build a nested folder tree from a flat list of { path, fileId, findings }. */
 function buildTree(
-  files: { path: string; fileId: string; findings: { finding: FindingSchema; node: GraphSnapshotNode }[] }[],
+  files: {
+    path: string;
+    fileId: string;
+    findings: { finding: FindingSchema; node: GraphSnapshotNode }[];
+  }[],
 ): TreeEntry[] {
   const root: FolderNode = { kind: "folder", name: "", children: [] };
 
@@ -101,14 +102,14 @@ function folderHasFindings(folder: FolderNode): boolean {
 
 /** Sort tree: folders first, then files; alphabetically within each group. */
 function sortTree(entries: TreeEntry[]): TreeEntry[] {
-  return [...entries].sort((a, b) => {
-    if (a.kind !== b.kind) return a.kind === "folder" ? -1 : 1;
-    return a.name.localeCompare(b.name);
-  }).map((entry) =>
-    entry.kind === "folder"
-      ? { ...entry, children: sortTree(entry.children) }
-      : entry,
-  );
+  return [...entries]
+    .sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === "folder" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    })
+    .map((entry) =>
+      entry.kind === "folder" ? { ...entry, children: sortTree(entry.children) } : entry,
+    );
 }
 
 // ── Sub-components ───────────────────────────────────────────────────────────
@@ -148,18 +149,16 @@ const FolderRow: React.FC<{
         onClick={() => togglePath(fullPath)}
       >
         <span className="text-zinc-600 group-hover:text-zinc-400 shrink-0 transition-colors">
-          {isOpen ? (
-            <ChevronDown className="size-3" />
-          ) : (
-            <ChevronRight className="size-3" />
-          )}
+          {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
         </span>
         {isOpen ? (
           <FolderOpen className="size-3.5 shrink-0 text-[#e8b84b]" />
         ) : (
           <Folder className="size-3.5 shrink-0 text-[#c9a227]" />
         )}
-        <span className="text-[12.5px] text-zinc-300 truncate leading-none ml-0.5">{node.name}</span>
+        <span className="text-[12.5px] text-zinc-300 truncate leading-none ml-0.5">
+          {node.name}
+        </span>
       </div>
 
       {isOpen && (
@@ -260,10 +259,16 @@ const FileRow: React.FC<{
       >
         <span className="text-zinc-600 group-hover:text-zinc-400 shrink-0 w-3 transition-colors">
           {hasFindings ? (
-            isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />
+            isOpen ? (
+              <ChevronDown className="size-3" />
+            ) : (
+              <ChevronRight className="size-3" />
+            )
           ) : null}
         </span>
-        <FileCode className={cn("size-3.5 shrink-0", isCurrentFile ? "text-blue-400" : "text-zinc-500")} />
+        <FileCode
+          className={cn("size-3.5 shrink-0", isCurrentFile ? "text-blue-400" : "text-zinc-500")}
+        />
         <span
           className={cn(
             "text-[12.5px] truncate flex-1 min-w-0 leading-none ml-0.5",
@@ -337,29 +342,31 @@ const FileRow: React.FC<{
 // ── Main component ───────────────────────────────────────────────────────────
 
 const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
-  version,
-  nodeMap,
+  findings,
   selectedFindingId,
   onFindingClick,
-  validatedFindingNames,
-  nodesLoading,
 }) => {
-  const { treeQuery, fileId, handleFileChange } = useCode();
+  const { treeQuery, fileId, handleFileChange, nodesQuery } = useCode();
   const [openPaths, setOpenPaths] = useState<Set<string>>(new Set());
   const hasAutoExpandedRef = useRef(false);
+
+  const validatedFindingNames = useMemo(
+    () => new Set(findings.map((vf) => `${vf.name}::${vf.level}`)),
+    [findings],
+  );
 
   // Build map: file_id -> findings
   const findingsByFileId = useMemo(() => {
     const map = new Map<string, { finding: FindingSchema; node: GraphSnapshotNode }[]>();
-    for (const finding of version.findings) {
-      const node = nodeMap.get(finding.source_node_id);
+    for (const finding of findings) {
+      const node = nodesQuery.data?.find((n) => n.id == finding.node_id);
       if (!node) continue;
       const arr = map.get(node.file_id) ?? [];
       arr.push({ finding, node });
       map.set(node.file_id, arr);
     }
     return map;
-  }, [version.findings, nodeMap]);
+  }, [findings, nodesQuery.data]);
 
   // Build the folder tree from treeQuery files
   const tree = useMemo(() => {
@@ -380,7 +387,7 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
     if (paths.length > 0) setOpenPaths(new Set(paths));
   }, [tree]);
 
-  const togglePath = (path: string) => {
+  const togglePath = (path: string): void => {
     setOpenPaths((prev) => {
       const next = new Set(prev);
       if (next.has(path)) next.delete(path);
@@ -392,9 +399,9 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
   // Auto-open folders containing the selected finding's file
   React.useEffect(() => {
     if (!selectedFindingId) return;
-    const finding = version.findings.find((f) => f.id === selectedFindingId);
+    const finding = findings.find((f) => f.id === selectedFindingId);
     if (!finding) return;
-    const node = nodeMap.get(finding.source_node_id);
+    const node = nodesQuery.data?.find((n) => n.id == finding.node_id);
     if (!node) return;
     // Find the file in treeQuery
     const treeFile = treeQuery.data?.find((f) => f.id === node.file_id);
@@ -411,9 +418,9 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
       pathsToOpen.forEach((p) => next.add(p));
       return next;
     });
-  }, [selectedFindingId, version.findings, nodeMap, treeQuery.data]);
+  }, [selectedFindingId, findings, nodesQuery.data, treeQuery.data]);
 
-  if (treeQuery.isLoading || nodesLoading) {
+  if (treeQuery.isLoading || nodesQuery.isLoading) {
     return (
       <div className="shrink-0 h-full flex flex-col border-r border-border" style={{ width: 264 }}>
         <div className="px-3 h-subheader flex items-center border-b border-border shrink-0">

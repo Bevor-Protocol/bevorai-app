@@ -362,7 +362,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           tools: [],
           references: references.length ? references : [],
           code_version_id: chatQuery.data.code_version_id,
-          analysis_node_id: chatQuery.data.analysis_node_id,
+          analysis_id: chatQuery.data.analysis_id,
         };
         // we already optimistically added the user message upon submission.
         queryClient.setQueryData(
@@ -408,7 +408,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       tools: [],
       references: [],
       code_version_id: chatQuery.data.code_version_id,
-      analysis_node_id: chatQuery.data.analysis_node_id,
+      analysis_id: chatQuery.data.analysis_id,
     };
 
     // optimistically add it.
@@ -440,7 +440,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       tools: [],
       references: [],
       code_version_id: chatQuery.data.code_version_id,
-      analysis_node_id: chatQuery.data.analysis_node_id,
+      analysis_id: chatQuery.data.analysis_id,
     };
 
     const approvalId = pendingApprovalId;

@@ -2,12 +2,12 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCode } from "@/providers/code";
-import { FindingSchema } from "@/types/api/responses/security";
 import { GraphSnapshotNode } from "@/types/api/responses/graph";
+import { FindingSchema } from "@/types/api/responses/security";
+import { FileText } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { codeToHtml } from "shiki";
 import InlineFindingCard from "./inline-finding-card";
-import { FileText } from "lucide-react";
 
 export interface FindingWithNode {
   finding: FindingSchema;
@@ -23,7 +23,6 @@ interface CodeWithAnnotationsProps {
   selectedFindingId: string | null;
   expandedFindingIds: Set<string>;
   onToggleFinding: (findingId: string) => void;
-  validatedFindingNames?: Set<string>;
   onAddFindingToContext?: (finding: FindingSchema) => void;
   onAddToValidated?: (finding: FindingSchema) => void;
 }
@@ -75,7 +74,6 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
   selectedFindingId,
   expandedFindingIds,
   onToggleFinding,
-  validatedFindingNames,
   onAddFindingToContext,
   onAddToValidated,
 }) => {
@@ -109,13 +107,13 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
           colorReplacements: {},
           transformers: [
             {
-              code(node) {
+              code(node): void {
                 this.addClassToHast(node, "language-sol");
               },
-              line(node, line) {
+              line(node, line): void {
                 node.properties["data-line"] = line;
               },
-              span(node, _line, _col, _lineEl, token) {
+              span(node, _line, _col, _lineEl, token): void {
                 const charStart = token.offset;
                 const charEnd = charStart + token.content.length;
                 const encoder = new TextEncoder();
@@ -167,14 +165,15 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
         el.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }, 80);
-    return () => clearTimeout(timer);
+    return (): void => clearTimeout(timer);
   }, [selectedFindingId, lines]);
 
   const setFindingRef = useCallback(
-    (findingId: string) => (el: HTMLDivElement | null) => {
-      if (el) findingRefs.current.set(findingId, el);
-      else findingRefs.current.delete(findingId);
-    },
+    (findingId: string): ((el: HTMLDivElement | null) => void) =>
+      (el: HTMLDivElement | null): void => {
+        if (el) findingRefs.current.set(findingId, el);
+        else findingRefs.current.delete(findingId);
+      },
     [],
   );
 
@@ -208,7 +207,10 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
         {isLoading ? (
           <div className="p-4 space-y-2">
             {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className={`h-4 ${i % 3 === 0 ? "w-1/2" : i % 3 === 1 ? "w-2/3" : "w-1/3"}`} />
+              <Skeleton
+                key={i}
+                className={`h-4 ${i % 3 === 0 ? "w-1/2" : i % 3 === 1 ? "w-2/3" : "w-1/3"}`}
+              />
             ))}
           </div>
         ) : lines.length === 0 ? (
@@ -230,9 +232,21 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
           <div className="min-h-full bg-background">
             <pre
               className="!m-0 !p-0 shiki github-dark shiki-container"
-              style={{ backgroundColor: "transparent", color: preStyle.color, fontFamily: "inherit" }}
+              style={{
+                backgroundColor: "transparent",
+                color: preStyle.color,
+                fontFamily: "inherit",
+              }}
             >
-              <code className="language-sol" style={{ fontFamily: "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace", fontSize: "0.8125rem", lineHeight: "1.6" }}>
+              <code
+                className="language-sol"
+                style={{
+                  fontFamily:
+                    "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace",
+                  fontSize: "0.8125rem",
+                  lineHeight: "1.6",
+                }}
+              >
                 {lines.map((lineInner, idx) => {
                   const lineNum = idx + 1;
                   const lineFindings = findingsByEndLine.get(lineNum) ?? [];
@@ -268,7 +282,6 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
                               codeVersionId={codeVersionId}
                               isExpanded={expandedFindingIds.has(finding.id)}
                               onToggle={() => onToggleFinding(finding.id)}
-                              validatedFindingNames={validatedFindingNames}
                               onAddFindingToContext={onAddFindingToContext}
                               onAddToValidated={onAddToValidated}
                             />

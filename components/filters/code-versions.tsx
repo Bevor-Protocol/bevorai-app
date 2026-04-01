@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { cn } from "@/lib/utils";
 import { generateQueryKey, NETWORKS } from "@/utils/constants";
-import { DefaultCodesQuery } from "@/utils/query-params";
+import type { QueryParamsRecord } from "@/utils/query-params";
 import { useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, X } from "lucide-react";
 import React, { useState } from "react";
@@ -28,8 +28,8 @@ const SOURCE_TYPES = [
 
 const FilterContent: React.FC<{
   teamSlug: string;
-  filters: typeof DefaultCodesQuery;
-  setFilters: React.Dispatch<React.SetStateAction<typeof DefaultCodesQuery>>;
+  filters: QueryParamsRecord;
+  setFilters: React.Dispatch<React.SetStateAction<QueryParamsRecord>>;
   includeProject: boolean;
   variant?: "mobile" | "desktop";
 }> = ({ teamSlug, filters, setFilters, includeProject, variant = "mobile" }) => {
@@ -208,8 +208,8 @@ const FilterContent: React.FC<{
 
 export const CodeVersionFilters: React.FC<{
   teamSlug: string;
-  filters: typeof DefaultCodesQuery;
-  setFilters: React.Dispatch<React.SetStateAction<typeof DefaultCodesQuery>>;
+  filters: QueryParamsRecord;
+  setFilters: React.Dispatch<React.SetStateAction<QueryParamsRecord>>;
   isAnySearched: boolean;
   handleClear: () => void;
   includeProject: boolean;

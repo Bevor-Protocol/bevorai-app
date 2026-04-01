@@ -27,7 +27,7 @@ export type SSEClaims = {
   team_slug?: string | null;
   project_slug?: string | null;
   code_version_id?: string | null;
-  analysis_node_id?: string | null;
+  analysis_id?: string | null;
   chat_id?: string | null;
 };
 
@@ -89,7 +89,7 @@ const deriveClaimsFromPath = (params: {
     claims.code_version_id = params.codeId;
   }
   if (params.nodeId && typeof params.nodeId === "string") {
-    claims.analysis_node_id = params.nodeId;
+    claims.analysis_id = params.nodeId;
   }
   if (params.chatId && typeof params.chatId === "string") {
     claims.chat_id = params.chatId;
@@ -439,8 +439,8 @@ const handleAnalysisStatusUpdate = (queryClient: QueryClient, payload: SSEPayloa
 const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
   console.log("analysis scope update payload", payload);
 
-  const analysisQuery = generateQueryKey.analysis(payload.data.analysis_node_id);
-  const analysisDetailedQuery = generateQueryKey.analysisDetailed(payload.data.analysis_node_id);
+  const analysisQuery = generateQueryKey.analysis(payload.data.analysis_id);
+  const analysisDetailedQuery = generateQueryKey.analysisDetailed(payload.data.analysis_id);
   let findings: FindingSchema[] = [];
   if (typeof payload.data.findings === "string") {
     try {

@@ -3,11 +3,11 @@
 import { analysisActions, validatedFindingActions } from "@/actions/bevor";
 import CombinedView from "@/components/views/analysis/combined-view";
 import CollapsibleChatPanel from "@/components/views/chat/analysis-panel";
-import { CodeProvider } from "@/providers/code";
 import { useChat } from "@/providers/chat";
+import { CodeProvider } from "@/providers/code";
 import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 import { toast } from "sonner";
 
@@ -31,34 +31,29 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
   const queryClient = useQueryClient();
 
   const { data: version } = useSuspenseQuery({
-    queryKey: generateQueryKey.analysisDetailed(nodeId),
+    queryKey: generateQueryKey.analysis(nodeId),
     queryFn: async () =>
-      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
+      analysisActions.getAnalysis(teamSlug, nodeId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
   });
 
-  const { data: validatedFindings = [] } = useQuery({
-    queryKey: generateQueryKey.validatedFindings(projectSlug),
-    queryFn: () =>
-      validatedFindingActions.getValidatedFindings(teamSlug, projectSlug).then((r) => {
-        if (!r.ok) return [];
+  const { data: findings } = useSuspenseQuery({
+    queryKey: generateQueryKey.analysisFindings(nodeId),
+    queryFn: async () =>
+      analysisActions.getAnalysisFindings(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
         return r.data;
       }),
   });
-
-  const validatedFindingNames = useMemo(
-    () => new Set(validatedFindings.map((vf) => `${vf.name}::${vf.level}`)),
-    [validatedFindings],
-  );
 
   const findingContext = useMemo(() => {
     const findingAttributeIds = new Set(
       attributes.filter((attr) => attr.type === "finding").map((attr) => attr.id),
     );
-    return version.findings.filter((finding) => findingAttributeIds.has(finding.id));
-  }, [attributes, version.findings]);
+    return findings.filter((finding) => findingAttributeIds.has(finding.id));
+  }, [attributes, findings]);
 
   const addFindingToContext = (finding: FindingSchema): void => {
     addFinding(finding);
@@ -73,7 +68,7 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
       validatedFindingActions
         .addValidatedFinding(teamSlug, projectSlug, {
           finding_id: finding.id,
-          analysis_node_id: nodeId,
+          analysis_id: nodeId,
         })
         .then((r) => {
           if (!r.ok) throw r;
@@ -90,11 +85,7 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
   });
 
   return (
-    <CodeProvider
-      codeId={codeVersionId}
-      initialFileId={null}
-      teamSlug={teamSlug}
-    >
+    <CodeProvider codeId={codeVersionId} initialFileId={null} teamSlug={teamSlug}>
       <div className="flex flex-1 min-h-0 gap-4">
         <div className="min-h-0 min-w-0 flex-1">
           <CombinedView
@@ -103,7 +94,7 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
             projectSlug={projectSlug}
             nodeId={nodeId}
             version={version}
-            validatedFindingNames={validatedFindingNames}
+            findings={findings}
             onAddFindingToContext={addFindingToContext}
             onAddToValidated={(finding) => addToValidatedMutation.mutate(finding)}
           />

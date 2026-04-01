@@ -2,7 +2,7 @@ import Container from "@/components/container";
 import { ChatsView } from "@/components/screens/chats";
 import ProjectSubnav from "@/components/subnav/project";
 import { AsyncComponent } from "@/types";
-import { DefaultChatsQuery, extractChatsQuery } from "@/utils/query-params";
+import { extractQueryParams } from "@/utils/query-params";
 
 type ResolvedParams = {
   teamSlug: string;
@@ -18,12 +18,12 @@ const ChatsPage: AsyncComponent<ChatsPageProps> = async ({ params, searchParams 
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const initialQuery = extractChatsQuery({
+  const initialQuery = extractQueryParams({
     ...resolvedSearchParams,
     project_slug: resolvedParams.projectSlug,
   });
 
-  const defaultQuery = { ...DefaultChatsQuery, project_slug: resolvedParams.projectSlug };
+  const defaultQuery = { project_slug: resolvedParams.projectSlug };
 
   return (
     <Container subnav={<ProjectSubnav />}>

@@ -1,16 +1,6 @@
 "use client";
 
 import { analysisActions } from "@/actions/bevor";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -18,7 +8,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDateShort } from "@/utils/helpers";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   Check,
@@ -27,16 +17,11 @@ import {
   Info,
   Leaf,
   Lock,
-  Pencil,
   RefreshCw,
   TreeDeciduous,
-  X,
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 import AnalysisVersionMenu from "./menu";
 
 const getStatusIndicator = (status: AnalysisNodeSchema["status"]): React.ReactNode => {
@@ -78,46 +63,18 @@ const AnalysisMetadata: React.FC<{
   teamSlug: string;
   projectSlug: string;
   nodeId: string;
-  isEditMode: boolean;
-  allowEditMode?: boolean;
   allowActions?: boolean;
   isOwner?: boolean;
-}> = ({
-  teamSlug,
-  projectSlug,
-  nodeId,
-  isEditMode,
-  allowEditMode = false,
-  allowActions = false,
-  isOwner = false,
-}) => {
+}> = ({ teamSlug, projectSlug, nodeId, allowActions = false, isOwner = false }) => {
   const { isCopied, copy } = useCopyToClipboard();
-  const [openCommitDialog, setOpenCommitDialog] = useState(false);
-  const router = useRouter();
 
   const { data: version } = useSuspenseQuery({
-    queryKey: generateQueryKey.analysisDetailed(nodeId),
+    queryKey: generateQueryKey.analysis(nodeId),
     queryFn: async () =>
-      analysisActions.getAnalysisDetailed(teamSlug, nodeId).then((r) => {
+      analysisActions.getAnalysis(teamSlug, nodeId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
-  });
-
-  const commitMutation = useMutation({
-    mutationFn: () =>
-      analysisActions.commitDraft(teamSlug, nodeId).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-    onSuccess: ({ id }) => {
-      setOpenCommitDialog(false);
-      toast.success("Changes committed successfully");
-      router.push(`/team/${teamSlug}/${projectSlug}/analyses/${id}`);
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to commit changes");
-    },
   });
 
   return (
@@ -201,9 +158,13 @@ const AnalysisMetadata: React.FC<{
                 <div className="flex gap-2.5">
                   <Info className="size-4 text-yellow-400 shrink-0 mt-0.5" />
                   <div className="space-y-2">
-                    <p className="font-medium text-foreground">Only rerun if something seems broken.</p>
+                    <p className="font-medium text-foreground">
+                      Only rerun if something seems broken.
+                    </p>
                     <p className="text-muted-foreground text-[13px] leading-relaxed">
-                      For incremental changes or follow-up questions, the <span className="text-foreground font-medium">chat feature</span> is faster and more precise. A full rerun re-analyzes the entire codebase from scratch.
+                      For incremental changes or follow-up questions, the{" "}
+                      <span className="text-foreground font-medium">chat feature</span> is faster
+                      and more precise. A full rerun re-analyzes the entire codebase from scratch.
                     </p>
                     <Button size="sm" variant="outline" className="w-full mt-1" asChild>
                       <Link
@@ -220,57 +181,7 @@ const AnalysisMetadata: React.FC<{
               </PopoverContent>
             </Popover>
           )}
-          {allowEditMode && (
-            <Button variant="outline" size="sm" asChild>
-              <Link
-                href={{
-                  pathname: `/team/${teamSlug}/${projectSlug}/analyses/${version.id}`,
-                  query: !isEditMode ? { mode: "edit" } : {},
-                }}
-              >
-                {isEditMode ? (
-                  <>
-                    <X className="size-4" />
-                    Exit Edit
-                  </>
-                ) : (
-                  <>
-                    <Pencil className="size-4" />
-                    Edit
-                  </>
-                )}
-              </Link>
-            </Button>
-          )}
-          {isEditMode && (
-            <AlertDialog open={openCommitDialog} onOpenChange={setOpenCommitDialog}>
-              <Button
-                onClick={() => setOpenCommitDialog(true)}
-                disabled={commitMutation.isPending}
-                size="sm"
-              >
-                {commitMutation.isPending ? "Committing..." : "Commit Changes"}
-              </Button>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Commit Changes</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will create a new analysis version with your staged changes and set the
-                    current version as its parent. Are you sure you want to continue?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => commitMutation.mutate()}
-                    disabled={commitMutation.isPending}
-                  >
-                    {commitMutation.isPending ? "Committing..." : "Commit Changes"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+
           {allowActions ? (
             <AnalysisVersionMenu
               teamSlug={teamSlug}

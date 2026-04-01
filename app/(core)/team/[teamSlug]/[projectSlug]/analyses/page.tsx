@@ -3,7 +3,8 @@ import { AnalysisNodesView } from "@/components/screens/nodes";
 import ProjectSubnav from "@/components/subnav/project";
 import { AnalysisCreate } from "@/components/views/analysis/creation";
 import { AsyncComponent } from "@/types";
-import { DefaultAnalysisNodesQuery, extractAnalysisNodesQuery } from "@/utils/query-params";
+import type { AnalysesQueryParams } from "@/types/api/requests/security";
+import { extractQueryParams } from "@/utils/query-params";
 
 type ResolvedParams = {
   teamSlug: string;
@@ -12,23 +13,20 @@ type ResolvedParams = {
 
 interface PageProps {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<Partial<typeof DefaultAnalysisNodesQuery>>;
+  searchParams: Promise<Partial<AnalysesQueryParams>>;
 }
 
 const AnalysisNodesPage: AsyncComponent<PageProps> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const initialQuery = extractAnalysisNodesQuery({
+  const initialQuery = extractQueryParams({
     ...resolvedSearchParams,
     project_slug: resolvedParams.projectSlug,
     is_leaf: "true",
   });
 
-  const defaultQuery = {
-    ...DefaultAnalysisNodesQuery,
-    project_slug: resolvedParams.projectSlug,
-  };
+  const defaultQuery = { project_slug: resolvedParams.projectSlug };
 
   return (
     <Container subnav={<ProjectSubnav />}>

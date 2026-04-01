@@ -8,7 +8,7 @@ import { VersionEmpty } from "@/components/versions/empty";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
-import { DefaultCodesQuery } from "@/utils/query-params";
+import type { QueryParamsRecord } from "@/utils/query-params";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import React, { useMemo, useState } from "react";
@@ -23,8 +23,8 @@ import React, { useMemo, useState } from "react";
 
 export const CodeVersionsView: React.FC<{
   teamSlug: string;
-  initialQuery: typeof DefaultCodesQuery;
-  defaultQuery: typeof DefaultCodesQuery;
+  initialQuery: QueryParamsRecord;
+  defaultQuery: QueryParamsRecord;
   showRepo?: boolean;
 }> = ({ teamSlug, initialQuery, defaultQuery, showRepo = false }) => {
   const [filters, setFilters] = useState(initialQuery);
@@ -41,14 +41,10 @@ export const CodeVersionsView: React.FC<{
   });
 
   const isAnySearched = useMemo(() => {
+    const ignored = new Set(["page_size", "page", "order", "order_by"]);
     return Object.entries(filters)
-      .filter(([k]) => !["page_size", "page", "order"].includes(k))
-      .some(
-        ([k, v]) =>
-          !!v &&
-          defaultQuery[k as keyof typeof DefaultCodesQuery] !=
-            filters[k as keyof typeof DefaultCodesQuery],
-      );
+      .filter(([k]) => !ignored.has(k))
+      .some(([k, v]) => !!v && defaultQuery[k] !== filters[k]);
   }, [filters, defaultQuery]);
 
   const handlePage = (page: number): void => {

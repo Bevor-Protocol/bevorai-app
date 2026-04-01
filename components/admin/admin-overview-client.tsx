@@ -27,7 +27,7 @@ const formatStatDisplay = (value: string | number | null | undefined): string | 
 
 const StatCard: React.FC<{
   title: string;
-  value: string | number | null;
+  value?: number | null;
   loading: boolean;
   description?: string;
 }> = ({ title, value, loading, description }) => (

@@ -3,7 +3,8 @@ import Container from "@/components/container";
 import { AnalysisNodesView } from "@/components/screens/nodes";
 import CodeVersionSubnav from "@/components/subnav/code-version";
 import { AsyncComponent } from "@/types";
-import { DefaultAnalysisNodesQuery, extractAnalysisNodesQuery } from "@/utils/query-params";
+import type { AnalysesQueryParams } from "@/types/api/requests/security";
+import { extractQueryParams } from "@/utils/query-params";
 
 type ResolvedParams = {
   teamSlug: string;
@@ -13,14 +14,14 @@ type ResolvedParams = {
 
 interface PageProps {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<Partial<typeof DefaultAnalysisNodesQuery> & { user?: string }>;
+  searchParams: Promise<Partial<AnalysesQueryParams> & { user?: string }>;
 }
 
 const AnalysisNodesPage: AsyncComponent<PageProps> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const { user, ...resolvedSearchParams } = await searchParams;
 
-  const initialQuery = extractAnalysisNodesQuery({
+  const initialQuery = extractQueryParams({
     ...resolvedSearchParams,
     project_slug: resolvedParams.projectSlug,
     code_version_id: resolvedParams.codeId,
@@ -35,7 +36,6 @@ const AnalysisNodesPage: AsyncComponent<PageProps> = async ({ params, searchPara
   }
 
   const defaultQuery = {
-    ...DefaultAnalysisNodesQuery,
     project_slug: resolvedParams.projectSlug,
     code_version_id: resolvedParams.codeId,
   };

@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { generateQueryKey } from "@/utils/constants";
-import { DefaultProjectsQuery } from "@/utils/query-params";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import React, { useState } from "react";
@@ -30,9 +29,9 @@ const CreateCodeModal: React.FC<{
   const [projectSlug, setProjectSlug] = useState("");
 
   const { data: projects } = useQuery({
-    queryKey: generateQueryKey.projects(teamSlug, DefaultProjectsQuery),
+    queryKey: generateQueryKey.projects(teamSlug, {}),
     queryFn: async () =>
-      projectActions.getProjects(teamSlug, DefaultProjectsQuery).then((r) => {
+      projectActions.getProjects(teamSlug, {}).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),

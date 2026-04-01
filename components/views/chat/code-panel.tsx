@@ -7,7 +7,7 @@ import { ChatMessages } from "@/components/views/chat/messages";
 import ChatThreads from "@/components/views/chat/threads";
 import { useChat } from "@/providers/chat";
 import { generateQueryKey } from "@/utils/constants";
-import { extractChatsQuery } from "@/utils/query-params";
+import { extractQueryParams } from "@/utils/query-params";
 import { useQuery } from "@tanstack/react-query";
 import { Maximize2, Minimize2, Settings, X } from "lucide-react";
 
@@ -34,7 +34,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
     selectedChatId,
   } = useChat();
 
-  const chatQuery = extractChatsQuery({
+  const chatQuery = extractQueryParams({
     project_slug: projectSlug,
     code_version_id: codeId,
     chat_type: "code",

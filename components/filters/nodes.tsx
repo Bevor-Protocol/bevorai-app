@@ -14,7 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { cn } from "@/lib/utils";
 import { generateQueryKey } from "@/utils/constants";
-import { DefaultAnalysisNodesQuery } from "@/utils/query-params";
+import type { AnalysisNodesQuery } from "@/utils/query-params";
 import { useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -23,8 +23,8 @@ const triggerItems = ["manual_run", "chat", "manual_edit", "fork", "merge"];
 
 const FilterContent: React.FC<{
   teamSlug: string;
-  filters: typeof DefaultAnalysisNodesQuery;
-  setFilters: React.Dispatch<React.SetStateAction<typeof DefaultAnalysisNodesQuery>>;
+  filters: AnalysisNodesQuery;
+  setFilters: React.Dispatch<React.SetStateAction<AnalysisNodesQuery>>;
   includeProject: boolean;
   variant?: "mobile" | "desktop";
 }> = ({ teamSlug, filters, setFilters, variant = "mobile" }) => {
@@ -151,8 +151,8 @@ const FilterContent: React.FC<{
 
 export const AnalysisNodeFilters: React.FC<{
   teamSlug: string;
-  filters: typeof DefaultAnalysisNodesQuery;
-  setFilters: React.Dispatch<React.SetStateAction<typeof DefaultAnalysisNodesQuery>>;
+  filters: AnalysisNodesQuery;
+  setFilters: React.Dispatch<React.SetStateAction<AnalysisNodesQuery>>;
   isAnySearched: boolean;
   handleClear: () => void;
   includeProject: boolean;

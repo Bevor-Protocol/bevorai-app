@@ -5,13 +5,11 @@ import AnalysisMetadata from "@/components/views/analysis/metadata";
 import { getQueryClient } from "@/lib/config/query";
 import { ChatProvider } from "@/providers/chat";
 import { AsyncComponent } from "@/types";
-import { AnalysisNodeSchema, FindingSchema } from "@/types/api/responses/security";
+import { DraftFindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { extractChatsQuery } from "@/utils/query-params";
+import { extractQueryParams } from "@/utils/query-params";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { redirect } from "next/navigation";
 import AnalysisClient from "./analysis-client";
-import { EditClient } from "./edit-mode";
 
 type ResolvedParams = {
   nodeId: string;
@@ -21,7 +19,7 @@ type ResolvedParams = {
 
 type Props = {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<{ mode?: string; findingId?: string; chatId?: string }>;
+  searchParams: Promise<{ findingId?: string; chatId?: string }>;
 };
 
 const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
@@ -29,44 +27,28 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const isEditMode = resolvedSearchParams.mode === "edit";
-  let analysis: AnalysisNodeSchema;
-  let initialFinding: FindingSchema | undefined;
+  let initialFinding: DraftFindingSchema | undefined;
 
-  if (isEditMode) {
-    // still need to prefetch the analysisDetailed for the AnalysisMetadata component.
-    [, analysis] = await Promise.all([
-      queryClient.fetchQuery({
-        queryKey: generateQueryKey.analysisDraft(resolvedParams.nodeId),
-        queryFn: () =>
-          analysisActions.getDraft(resolvedParams.teamSlug, resolvedParams.nodeId).then((r) => {
-            if (!r.ok) throw r;
-            return r.data;
-          }),
-      }),
-      queryClient.fetchQuery({
-        queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),
-        queryFn: async () =>
-          analysisActions
-            .getAnalysisDetailed(resolvedParams.teamSlug, resolvedParams.nodeId)
-            .then((r) => {
-              if (!r.ok) throw r;
-              return r.data;
-            }),
-      }),
-    ]);
-  } else {
-    analysis = await queryClient.fetchQuery({
-      queryKey: generateQueryKey.analysisDetailed(resolvedParams.nodeId),
-      queryFn: async () =>
+  const [analysis, findings] = await Promise.all([
+    queryClient.fetchQuery({
+      queryKey: generateQueryKey.analysis(resolvedParams.nodeId),
+      queryFn: () =>
+        analysisActions.getAnalysis(resolvedParams.teamSlug, resolvedParams.nodeId).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
+    }),
+    queryClient.fetchQuery({
+      queryKey: generateQueryKey.analysisFindings(resolvedParams.nodeId),
+      queryFn: () =>
         analysisActions
-          .getAnalysisDetailed(resolvedParams.teamSlug, resolvedParams.nodeId)
+          .getAnalysisFindings(resolvedParams.teamSlug, resolvedParams.nodeId)
           .then((r) => {
             if (!r.ok) throw r;
             return r.data;
           }),
-    });
-  }
+    }),
+  ]);
 
   const isOwner = analysis.is_owner;
   const codeVersionId = analysis.code_version_id;
@@ -82,18 +64,16 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   });
 
   if (resolvedSearchParams.findingId) {
-    initialFinding = analysis.findings.find(
-      (finding) => finding.id == resolvedSearchParams.findingId,
-    );
+    initialFinding = findings.find((finding) => finding.id == resolvedSearchParams.findingId);
   }
 
   let initialChatId = resolvedSearchParams.chatId ?? null;
 
   if (isOwner) {
-    const chatQuery = extractChatsQuery({
+    const chatQuery = extractQueryParams({
       project_slug: resolvedParams.projectSlug,
       code_version_id: codeVersionId,
-      analysis_node_id: resolvedParams.nodeId,
+      analysis_id: resolvedParams.nodeId,
       chat_type: "analysis",
     });
 
@@ -130,15 +110,6 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
     }
   }
 
-  if (isEditMode && !isOwner) {
-    // non-owners should not be allowed to edit, strip out the query param.
-    let url = `/team/${resolvedParams.teamSlug}/${resolvedParams.projectSlug}/analyses/${resolvedParams.nodeId}`;
-    if (resolvedSearchParams.findingId) {
-      url += `?findingId=${resolvedSearchParams.findingId}`;
-    }
-    redirect(url);
-  }
-
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <ChatProvider
@@ -149,29 +120,15 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
         analysisNodeId={resolvedParams.nodeId}
       >
         <Container subnav={<AnalysisSubnav />} contain>
-          <AnalysisMetadata
-            {...resolvedParams}
-            isEditMode={isEditMode}
-            allowEditMode={isOwner}
-            allowActions
+          <AnalysisMetadata {...resolvedParams} allowActions isOwner={isOwner} />
+          <AnalysisClient
+            codeVersionId={codeVersionId}
+            teamSlug={resolvedParams.teamSlug}
+            projectSlug={resolvedParams.projectSlug}
+            nodeId={resolvedParams.nodeId}
+            initialFinding={initialFinding}
             isOwner={isOwner}
           />
-          {isEditMode ? (
-            <EditClient
-              teamSlug={resolvedParams.teamSlug}
-              nodeId={resolvedParams.nodeId}
-              projectSlug={resolvedParams.projectSlug}
-            />
-          ) : (
-            <AnalysisClient
-              codeVersionId={codeVersionId}
-              teamSlug={resolvedParams.teamSlug}
-              projectSlug={resolvedParams.projectSlug}
-              nodeId={resolvedParams.nodeId}
-              initialFinding={initialFinding}
-              isOwner={isOwner}
-            />
-          )}
         </Container>
       </ChatProvider>
     </HydrationBoundary>

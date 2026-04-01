@@ -114,7 +114,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
         if (!analysisNodeId) throw new Error("analysisNodeId is required");
         return chatActions
           .initiateAnalysisChat(teamSlug, {
-            analysis_node_id: analysisNodeId,
+            analysis_id: analysisNodeId,
           })
           .then((r) => {
             if (!r.ok) throw r;

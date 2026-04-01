@@ -9,12 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DefaultProjectsQuery } from "@/utils/query-params";
+import type { QueryParamsRecord } from "@/utils/query-params";
 import React from "react";
 
 export const ProjectFilters: React.FC<{
-  filters: typeof DefaultProjectsQuery;
-  setFilters: React.Dispatch<React.SetStateAction<typeof DefaultProjectsQuery>>;
+  filters: QueryParamsRecord;
+  setFilters: React.Dispatch<React.SetStateAction<QueryParamsRecord>>;
   isAnySearched: boolean;
   handleClear: () => void;
 }> = ({ filters, handleClear, setFilters, isAnySearched }) => {

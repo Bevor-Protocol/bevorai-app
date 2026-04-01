@@ -37,7 +37,7 @@ const ChatElementMenu: React.FC<{
 
   const viewPath =
     chat.chat_type === "analysis"
-      ? `/team/${teamSlug}/${projectSlug}/analyses/${chat.analysis_node_id}`
+      ? `/team/${teamSlug}/${projectSlug}/analyses/${chat.analysis_id}`
       : `/team/${teamSlug}/${projectSlug}/codes/${chat.code_version_id}`;
 
   const viewLabel = chat.chat_type === "analysis" ? "View analysis" : "View code";
@@ -87,7 +87,7 @@ export const ChatElementBare: React.FC<
     return "blue";
   };
 
-  const mappingId = chat.analysis_node_id || chat.code_version_id;
+  const mappingId = chat.analysis_id || chat.code_version_id;
 
   return (
     <div
@@ -140,7 +140,7 @@ export const ChatElement: React.FC<ChatElementProps> = ({
   const chatPath =
     chat.chat_type === "code"
       ? `/team/${teamSlug}/${projectSlug}/codes/${chat.code_version_id}?chatId=${chat.id}`
-      : `/team/${teamSlug}/${projectSlug}/analyses/${chat.analysis_node_id}?chatId=${chat.id}`;
+      : `/team/${teamSlug}/${projectSlug}/analyses/${chat.analysis_id}?chatId=${chat.id}`;
 
   return (
     <Link

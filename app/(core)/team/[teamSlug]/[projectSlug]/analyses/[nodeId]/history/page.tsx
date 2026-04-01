@@ -3,7 +3,8 @@ import Container from "@/components/container";
 import { AnalysisNodesHistoryView } from "@/components/screens/nodes-history";
 import AnalysisSubnav from "@/components/subnav/analysis";
 import { AsyncComponent } from "@/types";
-import { DefaultAnalysisNodesQuery, extractAnalysisNodesQuery } from "@/utils/query-params";
+import type { AnalysesQueryParams } from "@/types/api/requests/security";
+import { extractQueryParams } from "@/utils/query-params";
 
 type ResolvedParams = {
   teamSlug: string;
@@ -13,7 +14,7 @@ type ResolvedParams = {
 
 interface PageProps {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<Partial<typeof DefaultAnalysisNodesQuery> & { user?: string }>;
+  searchParams: Promise<Partial<AnalysesQueryParams> & { user?: string }>;
 }
 
 const AnalysisNodesHistoryPage: AsyncComponent<PageProps> = async ({ params, searchParams }) => {
@@ -27,7 +28,7 @@ const AnalysisNodesHistoryPage: AsyncComponent<PageProps> = async ({ params, sea
       return r.data;
     });
 
-  const initialQuery = extractAnalysisNodesQuery({
+  const initialQuery = extractQueryParams({
     ...resolvedSearchParams,
     project_slug: resolvedParams.projectSlug,
     root_node_id: analysis.root_node_id,
@@ -42,7 +43,6 @@ const AnalysisNodesHistoryPage: AsyncComponent<PageProps> = async ({ params, sea
   }
 
   const defaultQuery = {
-    ...DefaultAnalysisNodesQuery,
     project_slug: resolvedParams.projectSlug,
     root_node_id: analysis.root_node_id,
   };

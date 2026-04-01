@@ -3,7 +3,8 @@ import { CodeVersionsView } from "@/components/screens/code-versions";
 import ProjectSubnav from "@/components/subnav/project";
 import { Button } from "@/components/ui/button";
 import { AsyncComponent } from "@/types";
-import { DefaultCodesQuery, extractCodesQuery } from "@/utils/query-params";
+import type { QueryParamsRecord } from "@/utils/query-params";
+import { extractQueryParams } from "@/utils/query-params";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -14,19 +15,19 @@ interface ResolvedParams {
 
 interface ProjectPageProps {
   params: Promise<ResolvedParams>;
-  searchParams: Promise<Partial<typeof DefaultCodesQuery>>;
+  searchParams: Promise<QueryParamsRecord>;
 }
 
 const ProjectVersionsPage: AsyncComponent<ProjectPageProps> = async ({ params, searchParams }) => {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  const initialQuery = extractCodesQuery({
+  const initialQuery = extractQueryParams({
     ...resolvedSearchParams,
     project_slug: resolvedParams.projectSlug,
   });
 
-  const defaultQuery = { ...DefaultCodesQuery, project_slug: resolvedParams.projectSlug };
+  const defaultQuery = { project_slug: resolvedParams.projectSlug };
 
   return (
     <Container subnav={<ProjectSubnav />}>

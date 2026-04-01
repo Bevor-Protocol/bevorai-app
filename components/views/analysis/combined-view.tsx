@@ -1,12 +1,12 @@
 "use client";
 
-import { codeActions } from "@/actions/bevor";
-import { Shield } from "lucide-react";
 import { useCode } from "@/providers/code";
-import { AnalysisNodeSchema, FindingSchema } from "@/types/api/responses/security";
-import { GraphSnapshotNode } from "@/types/api/responses/graph";
-import { generateQueryKey } from "@/utils/constants";
-import { useQueries } from "@tanstack/react-query";
+import {
+  AnalysisNodeSchema,
+  DraftFindingSchema,
+  FindingSchema,
+} from "@/types/api/responses/security";
+import { Shield } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 import CodeWithAnnotations, { FindingWithNode } from "./code-with-annotations";
 import FileTreeFindings from "./file-tree-findings";
@@ -17,7 +17,7 @@ interface CombinedViewProps {
   nodeId: string;
   codeVersionId: string;
   version: AnalysisNodeSchema;
-  validatedFindingNames?: Set<string>;
+  findings: DraftFindingSchema[];
   onAddFindingToContext?: (finding: FindingSchema) => void;
   onAddToValidated?: (finding: FindingSchema) => void;
 }
@@ -27,54 +27,24 @@ const CombinedView: React.FC<CombinedViewProps> = ({
   projectSlug,
   nodeId,
   codeVersionId,
-  version,
-  validatedFindingNames,
+  findings,
   onAddFindingToContext,
   onAddToValidated,
 }) => {
-  const { fileId, handleFileChange } = useCode();
+  const { fileId, handleFileChange, nodesQuery } = useCode();
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
   const [expandedFindingIds, setExpandedFindingIds] = useState<Set<string>>(new Set());
 
-  // Batch-fetch nodes for all unique scope source_node_ids
-  const uniqueSourceNodeIds = useMemo(
-    () => Array.from(new Set(version.scopes.map((s) => s.source_node_id))),
-    [version.scopes],
-  );
-
-  const nodeQueryResults = useQueries({
-    queries: uniqueSourceNodeIds.map((nid) => ({
-      queryKey: generateQueryKey.codeNode(nid),
-      queryFn: () =>
-        codeActions.getNode(teamSlug, codeVersionId, nid).then((r) => {
-          if (!r.ok) throw r;
-          return r.data;
-        }),
-      staleTime: Infinity,
-    })),
-  });
-
-  const nodesLoading = nodeQueryResults.some((q) => q.isLoading);
-
-  // Build map: source_node_id -> GraphSnapshotNode
-  const nodeMap = useMemo(() => {
-    const map = new Map<string, GraphSnapshotNode>();
-    uniqueSourceNodeIds.forEach((nid, idx) => {
-      const data = nodeQueryResults[idx]?.data;
-      if (data) map.set(nid, data);
-    });
-    return map;
-  }, [uniqueSourceNodeIds, nodeQueryResults]);
-
   // Build list of findings with their associated nodes (for current file)
   const allFindingsWithNodes = useMemo((): FindingWithNode[] => {
+    if (!nodesQuery.data) return [];
     const result: FindingWithNode[] = [];
-    for (const finding of version.findings) {
-      const node = nodeMap.get(finding.source_node_id);
+    for (const finding of findings) {
+      const node = nodesQuery.data.find((n) => n.id == finding.node_id);
       if (node) result.push({ finding, node });
     }
     return result;
-  }, [version.findings, nodeMap]);
+  }, [findings, nodesQuery.data]);
 
   // Filter findings for the currently selected file
   const findingsForCurrentFile = useMemo(
@@ -84,7 +54,7 @@ const CombinedView: React.FC<CombinedViewProps> = ({
 
   const handleFindingClick = useCallback(
     (finding: FindingSchema) => {
-      const node = nodeMap.get(finding.source_node_id);
+      const node = nodesQuery.data?.find((n) => n.id == finding.node_id);
       if (!node) return;
 
       setSelectedFindingId(finding.id);
@@ -95,7 +65,7 @@ const CombinedView: React.FC<CombinedViewProps> = ({
         handleFileChange(node.file_id);
       }
     },
-    [nodeMap, fileId, handleFileChange],
+    [nodesQuery.data, fileId, handleFileChange],
   );
 
   const handleToggleFinding = useCallback((findingId: string) => {
@@ -108,7 +78,7 @@ const CombinedView: React.FC<CombinedViewProps> = ({
     setSelectedFindingId(findingId);
   }, []);
 
-  if (version.findings.length === 0) {
+  if (findings.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-center py-12">
         <div>
@@ -124,12 +94,9 @@ const CombinedView: React.FC<CombinedViewProps> = ({
     <div className="flex h-full min-h-0 w-full">
       {/* Left panel: file tree with findings */}
       <FileTreeFindings
-        version={version}
-        nodeMap={nodeMap}
         selectedFindingId={selectedFindingId}
         onFindingClick={handleFindingClick}
-        validatedFindingNames={validatedFindingNames}
-        nodesLoading={nodesLoading}
+        findings={findings}
       />
 
       {/* Middle panel: full code view with inline annotation cards */}
@@ -143,7 +110,6 @@ const CombinedView: React.FC<CombinedViewProps> = ({
           selectedFindingId={selectedFindingId}
           expandedFindingIds={expandedFindingIds}
           onToggleFinding={handleToggleFinding}
-          validatedFindingNames={validatedFindingNames}
           onAddFindingToContext={onAddFindingToContext}
           onAddToValidated={onAddToValidated}
         />

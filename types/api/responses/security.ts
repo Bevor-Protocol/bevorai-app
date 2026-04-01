@@ -8,9 +8,18 @@ import { CodeMappingSchema, GraphSnapshotNode } from "@/types/api/responses/grap
 
 export type AnalysisNodeStatus = "waiting" | "processing" | "success" | "failed" | "partial";
 
+export type FindingOperation = "add" | "update" | "delete";
+
 export type AnalysisTrigger = "manual_run" | "chat" | "manual_edit" | "fork" | "merge";
 
 export type FindingDraftState = "add" | "update" | "delete";
+
+export enum FindingStatusEnum {
+  UNRESOLVED = "unresolved",
+  INVALIDATED = "invalidated",
+  VALIDATED = "validated",
+  REMEDIATED = "remediated",
+}
 
 export enum FindingLevelEnum {
   CRITICAL = "critical",
@@ -52,11 +61,23 @@ export interface FindingLocationSchema {
 
 export interface FindingSchema extends AnalysisFinding {
   id: string;
-  source_node_id: string;
+  team_id: string;
+  team_slug: string;
+  project_id: string;
+  project_slug: string;
+  analysis_id: string;
+  code_version_id: string;
+  node_id: string;
+  user_id: string;
+  status: FindingStatusEnum;
   feedback?: string;
-  validated_at?: string;
-  invalidated_at?: string;
   locations: FindingLocationSchema[];
+}
+
+export interface DraftFindingSchema extends FindingSchema {
+  is_draft: boolean;
+  operation?: FindingOperation;
+  base_finding_id?: string;
 }
 
 export interface ScopeSchema extends GraphSnapshotNode {
@@ -84,8 +105,6 @@ export interface AnalysisNodeSchema {
   merged_from_node_id?: string;
   parent_node_id?: string;
   children: string[];
-  scopes: ScopeSchema[];
-  findings: FindingSchema[];
 }
 
 export interface AnalysisNodeIndex extends AnalysisNodeSchema {
@@ -100,37 +119,6 @@ export interface AnalysisEdgeSchema {
 export interface AnalysisDagSchema {
   nodes: AnalysisNodeSchema[];
   edges: AnalysisEdgeSchema[];
-}
-
-export interface DraftedFindingSchema extends FindingSchema {
-  is_draft: boolean;
-  draft_type: FindingDraftState | null;
-  base_finding_id?: string;
-}
-
-export interface DraftSchema {
-  id: string;
-  created_at: string;
-  user: UserSchema;
-  team_id: string;
-  team_slug: string;
-  project_id: string;
-  project_slug: string;
-  is_owner: boolean;
-  trigger: AnalysisTrigger;
-  status: AnalysisNodeStatus;
-  n_findings: number;
-  n_scopes: number;
-  code_version_id: string;
-  is_leaf: boolean;
-  is_public: boolean;
-  root_node_id: string;
-  merged_from_node_id?: string;
-  parent_node_id?: string;
-  children: string[];
-  scopes: ScopeSchema[];
-  findings: DraftedFindingSchema[];
-  staged: DraftedFindingSchema[];
 }
 
 /** Security service: full chat includes code mapping + optional analysis node */

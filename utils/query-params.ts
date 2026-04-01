@@ -1,84 +1,35 @@
-function extractQuery<T extends Record<string, string>>(defaults: T, params: Partial<T> = {}): T {
-  const result = { ...defaults };
+/**
+ * Normalized URL / search params: only keys with non-empty values are kept.
+ * Omitted keys are left to API defaults.
+ */
+export type QueryParamsRecord = Record<string, string | undefined>;
 
-  for (const key in params) {
-    if (key in defaults && params[key] !== undefined) {
-      result[key] = params[key]!;
-    }
+/** Same as {@link QueryParamsRecord}; kept for analysis list UI naming. */
+export type AnalysisNodesQuery = QueryParamsRecord;
+
+type ParamValue = string | number | boolean | string[] | null | undefined;
+
+const normalize = (value: ParamValue): string | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "boolean") return value ? "true" : undefined;
+  if (Array.isArray(value)) {
+    const first = value[0];
+    if (first === undefined || first === "") return undefined;
+    return first;
   }
-
-  return result;
-}
-
-export const DefaultCodesQuery = {
-  page: "0",
-  page_size: "20",
-  order: "desc",
-  order_by: "created_at",
-  project_slug: "",
-  user_id: "",
-  method: "",
-  network: "",
-  identifier: "",
+  if (typeof value === "string") return value === "" ? undefined : value;
+  return String(value);
 };
 
-export const DefaultProjectsQuery = {
-  page: "0",
-  page_size: "6",
-  order: "desc",
-  order_by: "created_at",
-  name: "",
-  tag: "",
-};
-
-export const DefaultAnalysisNodesQuery = {
-  page: "0",
-  page_size: "20",
-  order: "desc",
-  user_id: "",
-  project_id: "",
-  project_slug: "",
-  code_version_id: "",
-  trigger: "",
-  is_leaf: "",
-  is_root: "",
-  root_node_id: "",
-};
-
-export const DefaultChatsQuery = {
-  page: "0",
-  page_size: "12",
-  order: "desc",
-  order_by: "created_at",
-  project_id: "",
-  project_slug: "",
-  code_version_id: "",
-  analysis_node_id: "",
-  chat_type: "",
-};
-
-export const extractCodesQuery = (
-  params?: Partial<typeof DefaultCodesQuery>,
-): typeof DefaultCodesQuery => {
-  return extractQuery(DefaultCodesQuery, params);
-};
-
-export const extractProjectsQuery = (
-  params?: Partial<typeof DefaultProjectsQuery>,
-): typeof DefaultProjectsQuery => {
-  return extractQuery(DefaultProjectsQuery, params);
-};
-
-export const extractAnalysisNodesQuery = (
-  params?: Partial<typeof DefaultAnalysisNodesQuery>,
-): typeof DefaultAnalysisNodesQuery => {
-  return extractQuery(DefaultAnalysisNodesQuery, params);
-};
-
-export const extractChatsQuery = (
-  params?: Partial<typeof DefaultChatsQuery>,
-): typeof DefaultChatsQuery => {
-  return extractQuery(DefaultChatsQuery, params);
+/** Pick non-empty search/URL param entries for API and client filter state. */
+export const extractQueryParams = (params?: Record<string, ParamValue>): QueryParamsRecord => {
+  if (!params) return {};
+  const out: QueryParamsRecord = {};
+  for (const [key, raw] of Object.entries(params)) {
+    const v = normalize(raw);
+    if (v !== undefined) out[key] = v;
+  }
+  return out;
 };
 
 /*

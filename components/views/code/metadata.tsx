@@ -23,7 +23,7 @@ import { getStatusIndicator } from "@/components/versions/element";
 import { CodeMappingSchema, SourceTypeEnum } from "@/types/api/responses/graph";
 import { generateQueryKey } from "@/utils/constants";
 import { explorerUrl, formatDateShort, truncateId, truncateVersion } from "@/utils/helpers";
-import { extractAnalysisNodesQuery } from "@/utils/query-params";
+import { extractQueryParams } from "@/utils/query-params";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { GitCommit, Network, Shield } from "lucide-react";
 import Link from "next/link";
@@ -87,12 +87,12 @@ const CodeMetadata: React.FC<{
       }),
   });
 
-  const analysisQuery = extractAnalysisNodesQuery({
+  const analysisQuery = extractQueryParams({
     project_slug: projectSlug,
     code_version_id: version.id,
   });
 
-  const parentAnalysisQuery = extractAnalysisNodesQuery({
+  const parentAnalysisQuery = extractQueryParams({
     project_slug: projectSlug,
     code_version_id: version.parent_id,
   });

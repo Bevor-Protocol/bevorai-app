@@ -9,13 +9,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { DefaultChatsQuery } from "@/utils/query-params";
+import type { QueryParamsRecord } from "@/utils/query-params";
 import { X } from "lucide-react";
 import React from "react";
 
 export const ChatFilters: React.FC<{
-  filters: typeof DefaultChatsQuery;
-  setFilters: React.Dispatch<React.SetStateAction<typeof DefaultChatsQuery>>;
+  filters: QueryParamsRecord;
+  setFilters: React.Dispatch<React.SetStateAction<QueryParamsRecord>>;
   isAnySearched: boolean;
   handleClear: () => void;
 }> = ({ filters, handleClear, setFilters, isAnySearched }) => {

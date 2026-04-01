@@ -348,7 +348,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   const { data: analysis } = useQuery({
     queryKey: generateQueryKey.analysisDetailed(analysisNodeId ?? ""),
     queryFn: async () =>
-      analysisActions.getAnalysisDetailed(teamSlug, analysisNodeId!).then((r) => {
+      analysisActions.getAnalysis(teamSlug, analysisNodeId!).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
