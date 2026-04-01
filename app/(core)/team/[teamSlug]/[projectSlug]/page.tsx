@@ -1,8 +1,9 @@
-import { projectActions, validatedFindingActions } from "@/actions/bevor";
+import { analysisActions, projectActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import ProjectSubnav from "@/components/subnav/project";
 import { getQueryClient } from "@/lib/config/query";
 import { AsyncComponent } from "@/types";
+import { FindingStatusEnum } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import ProjectClient, {
@@ -31,10 +32,12 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
   queryClient.prefetchQuery({
     queryKey: generateQueryKey.validatedFindings(projectSlug),
     queryFn: async () =>
-      validatedFindingActions.getValidatedFindings(teamSlug, projectSlug).then((r) => {
-        if (!r.ok) return [];
-        return r.data;
-      }),
+      analysisActions
+        .getFindings(teamSlug, { project_slug: projectSlug, status: FindingStatusEnum.VALIDATED })
+        .then((r) => {
+          if (!r.ok) return [];
+          return r.data;
+        }),
   });
 
   return (

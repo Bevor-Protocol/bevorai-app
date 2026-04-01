@@ -24,7 +24,6 @@ interface CodeWithAnnotationsProps {
   expandedFindingIds: Set<string>;
   onToggleFinding: (findingId: string) => void;
   onAddFindingToContext?: (finding: FindingSchema) => void;
-  onAddToValidated?: (finding: FindingSchema) => void;
 }
 
 /** Build a Uint32Array of byte offsets where each line starts. */
@@ -75,7 +74,6 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
   expandedFindingIds,
   onToggleFinding,
   onAddFindingToContext,
-  onAddToValidated,
 }) => {
   const { fileId, fileQuery, fileContentQuery } = useCode();
   const [lines, setLines] = useState<string[]>([]);
@@ -231,7 +229,7 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
            */
           <div className="min-h-full bg-background">
             <pre
-              className="!m-0 !p-0 shiki github-dark shiki-container"
+              className="m-0 p-0 shiki github-dark shiki-container"
               style={{
                 backgroundColor: "transparent",
                 color: preStyle.color,
@@ -253,7 +251,6 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
 
                   return (
                     <React.Fragment key={lineNum}>
-                      {/* Code line – display:block makes it stack vertically */}
                       <span
                         className="line"
                         data-line={lineNum}
@@ -262,7 +259,6 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
                         dangerouslySetInnerHTML={{ __html: lineInner }}
                       />
                       {lineFindings.length > 0 && (
-                        /* Reset font so annotation cards use normal UI font */
                         <span
                           style={{
                             display: "block",
@@ -283,7 +279,6 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
                               isExpanded={expandedFindingIds.has(finding.id)}
                               onToggle={() => onToggleFinding(finding.id)}
                               onAddFindingToContext={onAddFindingToContext}
-                              onAddToValidated={onAddToValidated}
                             />
                           ))}
                         </span>

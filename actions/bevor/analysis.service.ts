@@ -174,7 +174,7 @@ export const updateFinding = apiRequest<
 >(async (teamSlug, analysisId, findingId, body) => {
   const toInvalidate = [generateQueryKey.analysis(analysisId)];
   return securityApi
-    .post(`/findings/${findingId}`, body, {
+    .patch(`/findings/${findingId}`, body, {
       headers: { "bevor-team-slug": teamSlug },
     })
     .then((response) => withRequestId(response, { toInvalidate }));

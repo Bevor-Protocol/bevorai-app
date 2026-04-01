@@ -6,7 +6,6 @@ import {
   codeActions,
   githubActions,
   projectActions,
-  validatedFindingActions,
 } from "@/actions/bevor";
 import ActivityList from "@/components/activity";
 import { AnalysisVersionCompactElement } from "@/components/analysis/element";
@@ -49,11 +48,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { CodeVersionCompactElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { useFormReducer } from "@/hooks/useFormReducer";
-import { ProjectDetailedSchema, ValidatedFindingSchema } from "@/types/api/responses/business";
+import { ProjectDetailedSchema } from "@/types/api/responses/business";
+import { FindingSchema, FindingStatusEnum } from "@/types/api/responses/security";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  QueryKey,
+  useMutation,
+  UseMutationResult,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import {
   Calendar,
   CheckCheck,
@@ -455,13 +462,22 @@ const severityBadgeClass: Record<string, string> = {
 };
 
 const ValidatedFindingRow: React.FC<{
-  finding: ValidatedFindingSchema;
+  finding: FindingSchema;
   teamSlug: string;
   projectSlug: string;
-  onRemediate: (id: string, isRemediated: boolean) => void;
-  onRemove: (id: string) => void;
-  isPending: boolean;
-}> = ({ finding, teamSlug, projectSlug, onRemediate, onRemove, isPending }) => (
+  updateMutation: UseMutationResult<
+    {
+      toInvalidate: QueryKey[];
+    },
+    Error,
+    {
+      findingId: string;
+      analysisId: string;
+      status: FindingStatusEnum;
+    },
+    unknown
+  >;
+}> = ({ finding, teamSlug, projectSlug, updateMutation }) => (
   <div className="flex items-start gap-3 py-2.5 px-3 rounded-md border border-border bg-card hover:bg-accent/30 transition-colors group">
     <ShieldCheck className="size-4 mt-0.5 shrink-0 text-muted-foreground" />
     <div className="flex-1 min-w-0">
@@ -484,13 +500,19 @@ const ValidatedFindingRow: React.FC<{
       </div>
     </div>
     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-      {finding.is_remediated ? (
+      {finding.status === FindingStatusEnum.REMEDIATED ? (
         <Button
           variant="ghost"
           size="sm"
           title="Mark as unresolved"
-          disabled={isPending}
-          onClick={() => onRemediate(finding.id, false)}
+          disabled={updateMutation.isPending}
+          onClick={() =>
+            updateMutation.mutate({
+              findingId: finding.id,
+              analysisId: finding.analysis_id,
+              status: FindingStatusEnum.UNRESOLVED,
+            })
+          }
         >
           <RotateCcw className="size-3" />
         </Button>
@@ -499,8 +521,14 @@ const ValidatedFindingRow: React.FC<{
           variant="ghost"
           size="sm"
           title="Mark as remediated"
-          disabled={isPending}
-          onClick={() => onRemediate(finding.id, true)}
+          disabled={updateMutation.isPending}
+          onClick={() =>
+            updateMutation.mutate({
+              findingId: finding.id,
+              analysisId: finding.analysis_id,
+              status: FindingStatusEnum.REMEDIATED,
+            })
+          }
         >
           <CheckCheck className="size-3" />
         </Button>
@@ -509,8 +537,14 @@ const ValidatedFindingRow: React.FC<{
         variant="ghost"
         size="sm"
         title="Remove from validated list"
-        disabled={isPending}
-        onClick={() => onRemove(finding.id)}
+        disabled={updateMutation.isPending}
+        onClick={() =>
+          updateMutation.mutate({
+            findingId: finding.id,
+            analysisId: finding.analysis_id,
+            status: FindingStatusEnum.INVALIDATED,
+          })
+        }
       >
         <X className="size-3" />
       </Button>
@@ -527,17 +561,29 @@ export const ValidatedFindings: React.FC<{ teamSlug: string; projectSlug: string
 
   const { data: findings = [], isLoading } = useQuery({
     queryKey: generateQueryKey.validatedFindings(projectSlug),
-    queryFn: () =>
-      validatedFindingActions.getValidatedFindings(teamSlug, projectSlug).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
+    queryFn: async () =>
+      analysisActions
+        .getFindings(teamSlug, { project_slug: projectSlug, status: FindingStatusEnum.VALIDATED })
+        .then((r) => {
+          if (!r.ok) return [];
+          return r.data;
+        }),
   });
 
-  const remediateMutation = useMutation({
-    mutationFn: ({ id, isRemediated }: { id: string; isRemediated: boolean }) =>
-      validatedFindingActions
-        .updateValidatedFinding(teamSlug, projectSlug, id, { is_remediated: isRemediated })
+  const updateMutation = useMutation({
+    mutationFn: ({
+      findingId,
+      analysisId,
+      status,
+    }: {
+      findingId: string;
+      analysisId: string;
+      status: FindingStatusEnum;
+    }) =>
+      analysisActions
+        .updateFinding(teamSlug, analysisId, findingId, {
+          status,
+        })
         .then((r) => {
           if (!r.ok) throw r;
           return r.data;
@@ -550,26 +596,10 @@ export const ValidatedFindings: React.FC<{ teamSlug: string; projectSlug: string
     },
   });
 
-  const removeMutation = useMutation({
-    mutationFn: (id: string) =>
-      validatedFindingActions.removeValidatedFinding(teamSlug, projectSlug, id).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-    onSuccess: ({ toInvalidate }) => {
-      toInvalidate.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
-    },
-    onError: () => {
-      toast.error("Failed to remove finding");
-    },
-  });
-
-  const isPending = remediateMutation.isPending || removeMutation.isPending;
-
   const active = findings
-    .filter((f) => !f.is_remediated)
+    .filter((f) => f.status !== FindingStatusEnum.REMEDIATED)
     .sort((a, b) => severityOrder.indexOf(a.level) - severityOrder.indexOf(b.level));
-  const remediated = findings.filter((f) => f.is_remediated);
+  const remediated = findings.filter((f) => f.status === FindingStatusEnum.REMEDIATED);
 
   return (
     <div>
@@ -586,7 +616,8 @@ export const ValidatedFindings: React.FC<{ teamSlug: string; projectSlug: string
 
       {!isLoading && findings.length === 0 && (
         <p className="text-xs text-muted-foreground py-2">
-          No validated findings yet. Click "Validate" on any finding in an analysis to add it here.
+          No validated findings yet. Click &ldquo;Validate&ldquo; on any finding in an analysis to
+          add it here.
         </p>
       )}
 
@@ -597,9 +628,7 @@ export const ValidatedFindings: React.FC<{ teamSlug: string; projectSlug: string
             finding={finding}
             teamSlug={teamSlug}
             projectSlug={projectSlug}
-            onRemediate={(id, isRemediated) => remediateMutation.mutate({ id, isRemediated })}
-            onRemove={(id) => removeMutation.mutate(id)}
-            isPending={isPending}
+            updateMutation={updateMutation}
           />
         ))}
       </div>
@@ -626,11 +655,7 @@ export const ValidatedFindings: React.FC<{ teamSlug: string; projectSlug: string
                     finding={finding}
                     teamSlug={teamSlug}
                     projectSlug={projectSlug}
-                    onRemediate={(id, isRemediated) =>
-                      remediateMutation.mutate({ id, isRemediated })
-                    }
-                    onRemove={(id) => removeMutation.mutate(id)}
-                    isPending={isPending}
+                    updateMutation={updateMutation}
                   />
                 </div>
               ))}

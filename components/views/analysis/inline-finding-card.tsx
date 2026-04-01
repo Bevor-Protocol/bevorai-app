@@ -1,5 +1,6 @@
 "use client";
 
+import { analysisActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +22,7 @@ import {
   ThumbsUp,
   X,
 } from "lucide-react";
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, JSX, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import AnalysisCodeSnippet from "./snippet";
@@ -36,7 +37,6 @@ interface InlineFindingCardProps {
   onToggle: () => void;
   validatedFindingNames?: Set<string>;
   onAddFindingToContext?: (finding: FindingSchema) => void;
-  onAddToValidated?: (finding: FindingSchema) => void;
 }
 
 // ── Severity helpers ─────────────────────────────────────────────────────────
@@ -71,6 +71,34 @@ const SEVERITY_CONFIG: Record<
   },
 };
 
+const getFindingStatusText = (status: FindingStatusEnum): JSX.Element => {
+  if (status === FindingStatusEnum.VALIDATED) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] bg-green-500/10 text-green-400 border border-green-500/20">
+        <Check className="size-2.5" />
+        validated
+      </span>
+    );
+  }
+  if (status === FindingStatusEnum.INVALIDATED) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] bg-red-500/10 text-red-400 border border-red-500/20">
+        <X className="size-2.5" />
+        invalidated
+      </span>
+    );
+  }
+  if (status === FindingStatusEnum.UNRESOLVED) {
+    return (
+      <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] bg-zinc-800/60 text-zinc-500 border border-zinc-700/40">
+        not acknowledged
+      </span>
+    );
+  }
+
+  return <></>;
+};
+
 const getSeverityConfig = (level: string): { [key: string]: string } =>
   SEVERITY_CONFIG[level.toLowerCase()] ?? {
     border: "border-l-zinc-500",
@@ -83,41 +111,22 @@ const getSeverityConfig = (level: string): { [key: string]: string } =>
 
 const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
   (
-    {
-      finding,
-      teamSlug,
-      nodeId,
-      codeVersionId,
-      isExpanded,
-      onToggle,
-      validatedFindingNames,
-      onAddFindingToContext,
-      onAddToValidated,
-    },
+    { finding, teamSlug, nodeId, codeVersionId, isExpanded, onToggle, onAddFindingToContext },
     ref,
   ) => {
     const { selectedChatId } = useChat();
     const [selectedNodeId, setSelectedNodeId] = useState<string>(finding.node_id);
     const [tab, setTab] = useState("description");
-    const [feedbackText, setFeedbackText] = useState<string>(finding.feedback ?? "");
-    const [pendingVerification, setPendingVerification] = useState<boolean | null>(
-      finding.status === FindingStatusEnum.VALIDATED,
-    );
+    const [feedback, setFeedback] = useState(finding.feedback);
+
     const queryClient = useQueryClient();
 
-    useEffect(() => {
-      setFeedbackText(finding.feedback ?? "");
-      setPendingVerification(finding.status === FindingStatusEnum.VALIDATED);
-    }, [finding.id, finding.feedback, finding.status]);
-
-    const submitFeedback = useMutation({
+    const updateMutation = useMutation({
       mutationFn: ({ findingId, data }: { findingId: string; data: FindingUpdateBody }) =>
-        import("@/actions/bevor").then(({ analysisActions }) =>
-          analysisActions.updateFinding(teamSlug, nodeId, findingId, data).then((r) => {
-            if (!r.ok) throw r;
-            return r.data;
-          }),
-        ),
+        analysisActions.updateFinding(teamSlug, nodeId, findingId, data).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: generateQueryKey.analysisDetailed(nodeId) });
         toast.success("Feedback submitted");
@@ -125,22 +134,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
       onError: () => toast.error("Failed to submit feedback"),
     });
 
-    const handleSubmitFeedback = (findingId: string, isVerified: boolean): void => {
-      setPendingVerification(isVerified);
-      submitFeedback.mutate({
-        findingId,
-        data: {
-          feedback: feedbackText || undefined,
-          status: isVerified ? FindingStatusEnum.VALIDATED : FindingStatusEnum.INVALIDATED,
-        },
-      });
-    };
-
     const sevConfig = getSeverityConfig(finding.level);
-    const isValidated = finding.status == FindingStatusEnum.VALIDATED;
-    const isInvalidated = finding.status == FindingStatusEnum.INVALIDATED;
-    const isNotAcknowledged = !isValidated && !isInvalidated;
-    const isInValidatedList = validatedFindingNames?.has(`${finding.name}::${finding.level}`);
 
     const hasLocations = finding.locations?.length > 0;
     const locationOptions = [
@@ -186,23 +180,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
               <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono bg-zinc-800/80 text-zinc-400 border border-zinc-700/60">
                 {typeLabel}
               </span>
-              {isValidated && (
-                <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] bg-green-500/10 text-green-400 border border-green-500/20">
-                  <Check className="size-2.5" />
-                  validated
-                </span>
-              )}
-              {isInvalidated && (
-                <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] bg-red-500/10 text-red-400 border border-red-500/20">
-                  <X className="size-2.5" />
-                  invalidated
-                </span>
-              )}
-              {isNotAcknowledged && (
-                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] bg-zinc-800/60 text-zinc-500 border border-zinc-700/40">
-                  not acknowledged
-                </span>
-              )}
+              {getFindingStatusText(finding.status)}
             </div>
           </div>
 
@@ -211,22 +189,28 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
             className="flex items-center gap-1.5 px-3 pt-2.5 pb-2 shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
-            {isInValidatedList ? (
+            {finding.status == FindingStatusEnum.VALIDATED ? (
               <span className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] bg-green-500/10 text-green-400 border border-green-500/20 cursor-default">
                 <ShieldCheck className="size-3" />
                 Validated
               </span>
-            ) : onAddToValidated ? (
+            ) : (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onAddToValidated(finding)}
+                onClick={() =>
+                  updateMutation.mutate({
+                    findingId: finding.id,
+                    data: { status: FindingStatusEnum.VALIDATED },
+                  })
+                }
                 className="h-6 text-[11px] px-2 gap-1 text-zinc-400 hover:text-foreground border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/60"
               >
                 <ShieldPlus className="size-3" />
                 Validate
               </Button>
-            ) : null}
+            )}
+
             {onAddFindingToContext && selectedChatId && (
               <Button
                 variant="ghost"
@@ -239,8 +223,6 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
               </Button>
             )}
           </div>
-
-          {/* Expand chevron */}
           <button
             className="flex items-start px-2.5 pt-3 text-zinc-500 hover:text-zinc-300 transition-colors"
             onClick={(e) => {
@@ -252,7 +234,6 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
           </button>
         </div>
 
-        {/* ── Expanded body ────────────────────────────────────────────────── */}
         {isExpanded && (
           <div className="border-t border-border">
             {/* Locations */}
@@ -279,7 +260,6 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
               </div>
             )}
 
-            {/* Code snippet */}
             <div className="border-b border-border bg-background">
               <AnalysisCodeSnippet
                 teamSlug={teamSlug}
@@ -288,7 +268,6 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
               />
             </div>
 
-            {/* Description / Recommendation / Feedback tabs */}
             <div className="flex flex-col">
               <div className="flex items-center justify-between px-3 py-2 border-b border-border">
                 <Subnav className="w-fit px-0">
@@ -356,8 +335,8 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                 {tab === "feedback" && (
                   <div className="space-y-3">
                     <Textarea
-                      value={feedbackText}
-                      onChange={(e) => setFeedbackText(e.target.value)}
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
                       placeholder="Enter your feedback..."
                       rows={4}
                       className="text-[13px] bg-background border-border resize-none"
@@ -366,27 +345,43 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        onClick={() => handleSubmitFeedback(finding.id, true)}
-                        disabled={submitFeedback.isPending}
+                        onClick={() =>
+                          updateMutation.mutate({
+                            findingId: finding.id,
+                            data: { feedback, status: FindingStatusEnum.VALIDATED },
+                          })
+                        }
+                        disabled={updateMutation.isPending}
                         className="text-zinc-500 hover:text-green-400"
                       >
                         <ThumbsUp
-                          className={cn("size-4", pendingVerification === true && "text-green-400")}
+                          className={cn(
+                            "size-4",
+                            finding.status === FindingStatusEnum.VALIDATED && "text-green-400",
+                          )}
                         />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        onClick={() => handleSubmitFeedback(finding.id, false)}
-                        disabled={submitFeedback.isPending}
+                        onClick={() =>
+                          updateMutation.mutate({
+                            findingId: finding.id,
+                            data: { feedback, status: FindingStatusEnum.INVALIDATED },
+                          })
+                        }
+                        disabled={updateMutation.isPending}
                         className="text-zinc-500 hover:text-red-400"
                       >
                         <ThumbsDown
-                          className={cn("size-4", pendingVerification === false && "text-red-400")}
+                          className={cn(
+                            "size-4",
+                            finding.status === FindingStatusEnum.INVALIDATED && "text-red-400",
+                          )}
                         />
                       </Button>
                     </div>
-                    {finding.feedback && !feedbackText && (
+                    {finding.feedback && !feedback && (
                       <p className="text-[11px] text-zinc-600 italic">
                         Current: {finding.feedback}
                       </p>

@@ -1,15 +1,14 @@
 "use client";
 
-import { analysisActions, validatedFindingActions } from "@/actions/bevor";
+import { analysisActions } from "@/actions/bevor";
 import CombinedView from "@/components/views/analysis/combined-view";
 import CollapsibleChatPanel from "@/components/views/chat/analysis-panel";
 import { useChat } from "@/providers/chat";
 import { CodeProvider } from "@/providers/code";
 import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import React, { useMemo } from "react";
-import { toast } from "sonner";
 
 interface AnalysisClientProps {
   teamSlug: string;
@@ -28,7 +27,6 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
   isOwner,
 }) => {
   const { addFinding, removeFinding, attributes } = useChat();
-  const queryClient = useQueryClient();
 
   const { data: version } = useSuspenseQuery({
     queryKey: generateQueryKey.analysis(nodeId),
@@ -63,27 +61,6 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
     removeFinding(findingId);
   };
 
-  const addToValidatedMutation = useMutation({
-    mutationFn: (finding: FindingSchema) =>
-      validatedFindingActions
-        .addValidatedFinding(teamSlug, projectSlug, {
-          finding_id: finding.id,
-          analysis_id: nodeId,
-        })
-        .then((r) => {
-          if (!r.ok) throw r;
-          return r.data;
-        }),
-    onSuccess: ({ toInvalidate }) => {
-      toInvalidate.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
-      toast.success("Finding added to validated list");
-    },
-    onError: (error: any) => {
-      const message = error?.error?.message ?? "Failed to add finding";
-      toast.error(message);
-    },
-  });
-
   return (
     <CodeProvider codeId={codeVersionId} initialFileId={null} teamSlug={teamSlug}>
       <div className="flex flex-1 min-h-0 gap-4">
@@ -96,7 +73,6 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
             version={version}
             findings={findings}
             onAddFindingToContext={addFindingToContext}
-            onAddToValidated={(finding) => addToValidatedMutation.mutate(finding)}
           />
         </div>
         {isOwner && (

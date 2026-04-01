@@ -19,7 +19,6 @@ interface CombinedViewProps {
   version: AnalysisNodeSchema;
   findings: DraftFindingSchema[];
   onAddFindingToContext?: (finding: FindingSchema) => void;
-  onAddToValidated?: (finding: FindingSchema) => void;
 }
 
 const CombinedView: React.FC<CombinedViewProps> = ({
@@ -29,7 +28,6 @@ const CombinedView: React.FC<CombinedViewProps> = ({
   codeVersionId,
   findings,
   onAddFindingToContext,
-  onAddToValidated,
 }) => {
   const { fileId, handleFileChange, nodesQuery } = useCode();
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
@@ -92,14 +90,11 @@ const CombinedView: React.FC<CombinedViewProps> = ({
 
   return (
     <div className="flex h-full min-h-0 w-full">
-      {/* Left panel: file tree with findings */}
       <FileTreeFindings
         selectedFindingId={selectedFindingId}
         onFindingClick={handleFindingClick}
         findings={findings}
       />
-
-      {/* Middle panel: full code view with inline annotation cards */}
       <div className="flex-1 min-w-0 h-full">
         <CodeWithAnnotations
           teamSlug={teamSlug}
@@ -111,7 +106,6 @@ const CombinedView: React.FC<CombinedViewProps> = ({
           expandedFindingIds={expandedFindingIds}
           onToggleFinding={handleToggleFinding}
           onAddFindingToContext={onAddFindingToContext}
-          onAddToValidated={onAddToValidated}
         />
       </div>
     </div>
