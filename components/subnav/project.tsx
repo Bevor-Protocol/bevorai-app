@@ -35,6 +35,11 @@ const ProjectSubnav: React.FC = () => {
       href: `/team/${teamSlug}/${projectSlug}`,
     },
     {
+      label: "Board",
+      href: `/team/${teamSlug}/${projectSlug}/kanban`,
+      activePrefix: `/team/${teamSlug}/${projectSlug}/kanban`,
+    },
+    {
       label: "Analysis",
       href: analysisHref,
       activePrefix: `/team/${teamSlug}/${projectSlug}/analyses`,
