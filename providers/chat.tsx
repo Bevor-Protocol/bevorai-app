@@ -61,6 +61,10 @@ export const useChat = (): ChatContextValue => {
   return context;
 };
 
+export const useOptionalChat = (): ChatContextValue | undefined => {
+  return useContext(ChatContext);
+};
+
 interface ChatProviderProps {
   children: React.ReactNode;
   teamSlug: string;

@@ -2,13 +2,12 @@
 
 import { analysisActions } from "@/actions/bevor";
 import CombinedView from "@/components/views/analysis/combined-view";
-import CollapsibleChatPanel from "@/components/views/chat/analysis-panel";
 import { useChat } from "@/providers/chat";
 import { CodeProvider } from "@/providers/code";
 import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import React, { useMemo } from "react";
+import React from "react";
 
 interface AnalysisClientProps {
   teamSlug: string;
@@ -24,9 +23,8 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
   codeVersionId,
   projectSlug,
   nodeId,
-  isOwner,
 }) => {
-  const { addFinding, removeFinding, attributes } = useChat();
+  const { addFinding } = useChat();
 
   const { data: version } = useSuspenseQuery({
     queryKey: generateQueryKey.analysis(nodeId),
@@ -46,24 +44,9 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
       }),
   });
 
-  const findingContext = useMemo(() => {
-    const findingAttributeIds = new Set(
-      attributes.filter((attr) => attr.type === "finding").map((attr) => attr.id),
-    );
-    return findings.filter((finding) => findingAttributeIds.has(finding.id));
-  }, [attributes, findings]);
-
-  const addFindingToContext = (finding: FindingSchema): void => {
-    addFinding(finding);
-  };
-
-  const removeFindingFromContext = (findingId: string): void => {
-    removeFinding(findingId);
-  };
-
   return (
     <CodeProvider codeId={codeVersionId} initialFileId={null} teamSlug={teamSlug}>
-      <div className="flex flex-1 min-h-0 gap-4">
+      <div className="flex flex-1 min-h-0">
         <div className="min-h-0 min-w-0 flex-1">
           <CombinedView
             codeVersionId={codeVersionId}
@@ -72,18 +55,9 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
             nodeId={nodeId}
             version={version}
             findings={findings}
-            onAddFindingToContext={addFindingToContext}
+            onAddFindingToContext={addFinding}
           />
         </div>
-        {isOwner && (
-          <CollapsibleChatPanel
-            teamSlug={teamSlug}
-            projectSlug={projectSlug}
-            nodeId={nodeId}
-            findingContext={findingContext}
-            onRemoveFindingFromContext={removeFindingFromContext}
-          />
-        )}
       </div>
     </CodeProvider>
   );
