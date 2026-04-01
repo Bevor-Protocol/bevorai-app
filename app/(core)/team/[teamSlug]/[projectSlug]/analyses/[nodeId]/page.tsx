@@ -1,6 +1,6 @@
 import { analysisActions, codeActions } from "@/actions/bevor";
 import Container from "@/components/container";
-import AnalysisSubnav from "@/components/subnav/analysis";
+import ProjectSubnav from "@/components/subnav/project";
 import AnalysisMetadata from "@/components/views/analysis/metadata";
 import { getQueryClient } from "@/lib/config/query";
 import { AsyncComponent } from "@/types";
@@ -67,7 +67,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Container subnav={<AnalysisSubnav />} contain>
+      <Container subnav={<ProjectSubnav />} contain>
         <AnalysisMetadata {...resolvedParams} allowActions isOwner={isOwner} />
         <AnalysisClient
           codeVersionId={codeVersionId}

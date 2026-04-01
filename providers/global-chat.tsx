@@ -46,6 +46,12 @@ function useRouteKind(
     !nodeId &&
     !urlCodeId &&
     pathname === `/team/${teamSlug}/${projectSlug}`;
+  const isKanbanRoute =
+    !!teamSlug &&
+    !!projectSlug &&
+    !nodeId &&
+    !urlCodeId &&
+    pathname === `/team/${teamSlug}/${projectSlug}/kanban`;
   const isTeamRoute =
     !!teamSlug &&
     !projectSlug &&
@@ -58,6 +64,7 @@ function useRouteKind(
     isAnalysisRoute,
     isDirectCodeRoute,
     isProjectRoute,
+    isKanbanRoute,
     isTeamRoute,
   };
 }
@@ -74,11 +81,11 @@ export const GlobalChatWrapper: React.FC<{ children: React.ReactNode }> = ({ chi
   const nodeId = (params.nodeId as string) || null;
   const urlCodeId = (params.codeId as string) || null;
 
-  const { isAnalysisCodeSubroute, isAnalysisRoute, isDirectCodeRoute, isProjectRoute, isTeamRoute } =
+  const { isAnalysisCodeSubroute, isAnalysisRoute, isDirectCodeRoute, isProjectRoute, isKanbanRoute, isTeamRoute } =
     useRouteKind(teamSlug, projectSlug, nodeId, urlCodeId, pathname);
 
-  const needsSelector = isProjectRoute || isTeamRoute;
-  const chatType: ChatType = isAnalysisRoute || isProjectRoute || isTeamRoute ? "analysis" : "code";
+  const needsSelector = isProjectRoute || isKanbanRoute || isTeamRoute;
+  const chatType: ChatType = isAnalysisRoute || isProjectRoute || isKanbanRoute || isTeamRoute ? "analysis" : "code";
 
   const isEnabled = !!(
     teamSlug &&
@@ -86,6 +93,7 @@ export const GlobalChatWrapper: React.FC<{ children: React.ReactNode }> = ({ chi
       isAnalysisCodeSubroute ||
       isDirectCodeRoute ||
       isProjectRoute ||
+      isKanbanRoute ||
       isTeamRoute)
   );
 

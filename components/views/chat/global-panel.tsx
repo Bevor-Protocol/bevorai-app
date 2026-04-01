@@ -42,10 +42,13 @@ const GlobalChatPanel: React.FC = () => {
   const isProjectRoute =
     !!teamSlug && !!projectSlug && !nodeId && !urlCodeId &&
     pathname === `/team/${teamSlug}/${projectSlug}`;
+  const isKanbanRoute =
+    !!teamSlug && !!projectSlug && !nodeId && !urlCodeId &&
+    pathname === `/team/${teamSlug}/${projectSlug}/kanban`;
   const isTeamRoute =
     !!teamSlug && !projectSlug && !nodeId && !urlCodeId &&
     pathname === `/team/${teamSlug}`;
-  const isSelectorRoute = isProjectRoute || isTeamRoute;
+  const isSelectorRoute = isProjectRoute || isKanbanRoute || isTeamRoute;
 
   const isEnabled = !!(context && teamSlug && (nodeId || urlCodeId || isSelectorRoute));
 
