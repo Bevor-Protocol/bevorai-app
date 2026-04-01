@@ -56,8 +56,6 @@ const AnalysisHolder: React.FC<{
       }),
   });
 
-  const 
-
   const nodeQuery = useQuery({
     queryKey: generateQueryKey.codeNode(selectedNodeId ?? ""),
     queryFn: () =>
