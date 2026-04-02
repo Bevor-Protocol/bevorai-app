@@ -6,7 +6,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { useSSE } from "@/providers/sse";
-import { ProjectDetailedSchema } from "@/types/api/responses/business";
+import type { ProjectDetailedSchema } from "@/types/api/responses/business";
 import {
   CreateCodeFromPublicGithubFormValues,
   createCodeFromPublicGithubSchema,
@@ -18,10 +18,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const RepoUrlStep: React.FC<{
-  project: ProjectDetailedSchema;
+  ensureProject: () => Promise<ProjectDetailedSchema>;
   parentId?: string;
   onSuccess?: (id: string) => void;
-}> = ({ project, parentId, onSuccess }) => {
+}> = ({ ensureProject, parentId, onSuccess }) => {
   const queryClient = useQueryClient();
   const { registerCallback } = useSSE();
   const sseToastId = useRef<string | number | undefined>(undefined);
@@ -33,7 +33,7 @@ const RepoUrlStep: React.FC<{
 
   const initialState: CreateCodeFromPublicGithubFormValues = {
     url: "",
-    parent_id: parentId,
+    parent_code_version_id: parentId,
   };
   const { formState, setField, updateFormState } =
     useFormReducer<CreateCodeFromPublicGithubFormValues>(initialState);
@@ -87,11 +87,12 @@ const RepoUrlStep: React.FC<{
   }, []);
 
   const mutation = useMutation({
-    mutationFn: async (data: CreateCodeFromPublicGithubFormValues) =>
-      codeActions.contractUploadPublicRepo(project.team.slug, project.id, data).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
+    mutationFn: async (data: CreateCodeFromPublicGithubFormValues) => {
+      const project = await ensureProject();
+      const r = await codeActions.contractUploadPublicRepo(project.team.slug, project.id, data);
+      if (!r.ok) throw r;
+      return { ...r.data, project };
+    },
     onMutate: () => {
       updateFormState({ type: "SET_ERRORS", errors: {} });
       toastId.current = toast.loading("Uploading code...");
@@ -153,11 +154,11 @@ const RepoUrlStep: React.FC<{
       updateFormState({ type: "SET_ERRORS", errors: fieldErrors });
       return;
     }
-
     mutation.mutate(parsed.data);
   };
 
-  if (processingStatus === "success" && createdCodeId) {
+  if (processingStatus === "success" && createdCodeId && mutation.data?.project) {
+    const proj = mutation.data.project;
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">
@@ -169,7 +170,7 @@ const RepoUrlStep: React.FC<{
             Your contract has been uploaded and is ready for analysis.
           </p>
           <Button asChild className="mt-4">
-            <Link href={`/team/${project.team.slug}/${project.slug}/codes/${createdCodeId}`}>
+            <Link href={`/team/${proj.team.slug}/${proj.slug}/codes/${createdCodeId}`}>
               View Version
             </Link>
           </Button>
@@ -178,7 +179,8 @@ const RepoUrlStep: React.FC<{
     );
   }
 
-  if (processingStatus === "failed" && createdCodeId) {
+  if (processingStatus === "failed" && createdCodeId && mutation.data?.project) {
+    const proj = mutation.data.project;
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">
@@ -192,7 +194,7 @@ const RepoUrlStep: React.FC<{
           </p>
           <div className="flex gap-4 justify-center mt-6">
             <Button asChild variant="outline">
-              <Link href={`/team/${project.team.slug}/${project.slug}/codes/${createdCodeId}`}>
+              <Link href={`/team/${proj.team.slug}/${proj.slug}/codes/${createdCodeId}`}>
                 View Version
               </Link>
             </Button>
@@ -212,7 +214,8 @@ const RepoUrlStep: React.FC<{
     );
   }
 
-  if (processingStatus && createdCodeId) {
+  if (processingStatus && createdCodeId && mutation.data?.project) {
+    const proj = mutation.data.project;
     const statusText =
       processingStatus === "waiting"
         ? "Waiting to process..."
@@ -234,7 +237,7 @@ const RepoUrlStep: React.FC<{
           </p>
           <div className="flex gap-4 justify-center mt-6">
             <Button asChild variant="outline">
-              <Link href={`/team/${project.team.slug}/${project.slug}/codes/${createdCodeId}`}>
+              <Link href={`/team/${proj.team.slug}/${proj.slug}/codes/${createdCodeId}`}>
                 View Version
               </Link>
             </Button>

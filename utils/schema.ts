@@ -21,14 +21,6 @@ export const projectFormSchema = z
     tags: z.string().optional(), // api response is an array. but easier to work with a string in a form.
     github_repo_id: z.number().optional(),
   })
-  .refine((data) => data.name || data.github_repo_id, {
-    message: "Name is required when github_repo_id is not provided",
-    path: ["name"],
-  })
-  .refine((data) => !data.name || data.name.length > 0, {
-    message: "Name cannot be empty",
-    path: ["name"],
-  })
   .refine((data) => !data.github_repo_id || (!data.name && !data.description), {
     message: "Name and description cannot be provided when github_repo_id is provided",
     path: ["github_repo_id"],
@@ -50,48 +42,57 @@ export const createAnalysisSchema = z
 
 export type createAnalysisFormValues = z.infer<typeof createAnalysisSchema>;
 
+export const baseCodeUploadSchema = z.object({
+  parent_code_version_id: z.string().optional(),
+  is_private: z.boolean().optional(),
+  parent_analysis_id: z.string().optional(),
+  analyze: z.boolean().optional(),
+});
+
+export type BaseCodeUploadValues = z.infer<typeof baseCodeUploadSchema>;
+
 export const uploadCodeFileSchema = z.object({
+  ...baseCodeUploadSchema.shape,
   file: z.instanceof(File, { message: "File is required" }),
-  parent_id: z.string().optional(),
 });
 
 export type UploadCodeFileFormValues = z.infer<typeof uploadCodeFileSchema>;
 
 export const pasteCodeFileSchema = z.object({
+  ...baseCodeUploadSchema.shape,
   content: z.string().min(1, "Please enter contract code"),
-  parent_id: z.string().optional(),
 });
 
 export type PasteCodeFileFormValues = z.infer<typeof pasteCodeFileSchema>;
 
 export const scanCodeAddressSchema = z.object({
+  ...baseCodeUploadSchema.shape,
   address: z
     .string()
     .min(1, "Please enter a contract address")
     .regex(/^0x[a-fA-F0-9]{40}$/, "Please enter a valid address"),
-  parent_id: z.string().optional(),
 });
 
 export type ScanCodeAddressFormValues = z.infer<typeof scanCodeAddressSchema>;
 
 export const uploadCodeFolderSchema = z.object({
+  ...baseCodeUploadSchema.shape,
   zip: z.instanceof(Blob, { message: "Zip file is required" }),
-  parent_id: z.string().optional(),
 });
 
 export type UploadCodeFolderFormValues = z.infer<typeof uploadCodeFolderSchema>;
 
 export const createCodeFromGithubSchema = z.object({
+  ...baseCodeUploadSchema.shape,
   branch: z.string().optional(),
   commit: z.string().optional(),
-  parent_id: z.string().optional(),
 });
 
 export type CreateCodeFromGithubFormValues = z.infer<typeof createCodeFromGithubSchema>;
 
 export const createCodeFromPublicGithubSchema = z.object({
+  ...baseCodeUploadSchema.shape,
   url: z.string(),
-  parent_id: z.string().optional(),
 });
 
 export type CreateCodeFromPublicGithubFormValues = z.infer<typeof createCodeFromPublicGithubSchema>;

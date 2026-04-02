@@ -1,15 +1,17 @@
 "use client";
-import RepoUrlStep from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/(steps)/repo";
+
 import { Button } from "@/components/ui/button";
+import ContractAddressStep from "@/components/views/upload/explorer";
+import FileStep from "@/components/views/upload/file";
+import FolderStep from "@/components/views/upload/folder";
+import MethodSelection from "@/components/views/upload/method";
+import { PasteCodeStep } from "@/components/views/upload/paste";
+import RepoUrlStep from "@/components/views/upload/public_repo";
 import { useSSE } from "@/providers/sse";
 import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { MoveLeft } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
-import ContractAdressStep from "./(steps)/address";
-import FileStep from "./(steps)/file";
-import FolderStep from "./(steps)/folder";
-import MethodSelection from "./(steps)/method";
 
 const steps = ["Code Method", "Code Submission", "Submission"];
 
@@ -17,6 +19,8 @@ const Steps: React.FC<{
   project: ProjectDetailedSchema;
   parentId?: string;
 }> = ({ project, parentId }) => {
+  const ensureProject = React.useCallback(async () => project, [project]);
+
   const [currentStep, setCurrentStep] = React.useState(1);
   const [method, setMethod] = React.useState<string | null>(null);
   const sseToastId = React.useRef<string | number | undefined>(undefined);
@@ -90,16 +94,23 @@ const Steps: React.FC<{
         />
       )}
       {currentStep === 2 && method === "scan" && (
-        <ContractAdressStep project={project} parentId={parentId} onSuccess={handleSuccess} />
+        <ContractAddressStep
+          ensureProject={ensureProject}
+          parentId={parentId}
+          onSuccess={handleSuccess}
+        />
       )}
       {currentStep === 2 && method === "file" && (
-        <FileStep project={project} parentId={parentId} onSuccess={handleSuccess} />
+        <FileStep ensureProject={ensureProject} parentId={parentId} onSuccess={handleSuccess} />
+      )}
+      {currentStep === 2 && method === "paste" && (
+        <PasteCodeStep ensureProject={ensureProject} parentId={parentId} onSuccess={handleSuccess} />
       )}
       {currentStep === 2 && method === "folder" && (
-        <FolderStep project={project} parentId={parentId} />
+        <FolderStep ensureProject={ensureProject} parentId={parentId} onSuccess={handleSuccess} />
       )}
       {currentStep === 2 && method === "repo" && (
-        <RepoUrlStep project={project} parentId={parentId} />
+        <RepoUrlStep ensureProject={ensureProject} parentId={parentId} onSuccess={handleSuccess} />
       )}
     </div>
   );

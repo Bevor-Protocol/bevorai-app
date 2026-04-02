@@ -1,25 +1,21 @@
 "use client";
 
-import ContractAddressStep from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/(steps)/address";
-import FileStep from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/(steps)/file";
-import FolderStep from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/(steps)/folder";
-import MethodSelection from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/(steps)/method";
-import RepoUrlStep from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/new/(steps)/repo";
+import { projectActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
+import ContractAddressStep from "@/components/views/upload/explorer";
+import FileStep from "@/components/views/upload/file";
+import FolderStep from "@/components/views/upload/folder";
+import MethodSelection from "@/components/views/upload/method";
+import { PasteCodeStep } from "@/components/views/upload/paste";
+import RepoUrlStep from "@/components/views/upload/public_repo";
 import { cn } from "@/lib/utils";
-import { ProjectDetailedSchema } from "@/types/api/responses/business";
-import { CheckCircle, Circle, Loader2, MoveLeft, XCircle } from "lucide-react";
+import type { ProjectDetailedSchema } from "@/types/api/responses/business";
+import { useQueryClient } from "@tanstack/react-query";
+import { Loader2, MoveLeft, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 
-type Phase = "select" | "creating-project" | "upload" | "processing";
-
-type Step = { id: string; label: string; status: "idle" | "active" | "done" | "error" };
-
-const STEPS: Step[] = [
-  { id: "processing", label: "Processing code", status: "idle" },
-  { id: "analysis", label: "Creating analysis", status: "idle" },
-];
+type Phase = "select" | "upload";
 
 const AnalyzeClient: React.FC<{
   teamSlug: string;
@@ -27,138 +23,65 @@ const AnalyzeClient: React.FC<{
   onBack?: () => void;
 }> = ({ teamSlug, initialMethod, onBack }) => {
   const router = useRouter();
-  const [phase, setPhase] = useState<Phase>(initialMethod ? "creating-project" : "select");
+  const queryClient = useQueryClient();
+  const [phase, setPhase] = useState<Phase>(initialMethod ? "upload" : "select");
   const [method, setMethod] = useState<string | null>(initialMethod ?? null);
-  const [project, setProject] = useState<ProjectDetailedSchema | null>(null);
-  const [steps, setSteps] = useState<Step[]>(STEPS);
   const [error, setError] = useState<string | null>(null);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const projectRef = useRef<ProjectDetailedSchema | null>(null);
   const pendingMethodRef = useRef<string | null>(null);
-  const didInitRef = useRef(false);
 
-  // Auto-start project creation when initialMethod is provided
-  useEffect(() => {
-    if (!initialMethod || didInitRef.current) return;
-    didInitRef.current = true;
-    startProjectCreation(initialMethod);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const ensureProject = useCallback(async (): Promise<ProjectDetailedSchema> => {
+    if (projectRef.current) return projectRef.current;
+    const res = await projectActions.createProject(teamSlug, {});
+    if (!res.ok) {
+      throw new Error(
+        typeof res.error === "object" && res.error != null && "message" in res.error
+          ? String((res.error as { message?: string }).message)
+          : "Failed to create project",
+      );
+    }
+    res.data.toInvalidate.forEach((queryKey) => {
+      queryClient.invalidateQueries({ queryKey });
+    });
+    projectRef.current = res.data.project;
+    return res.data.project;
+  }, [teamSlug, queryClient]);
 
-  // Used by MethodSelection when no initialMethod is present
-  const handleSetMethod = (m: string) => {
+  const handleSetMethod = (m: string): void => {
     pendingMethodRef.current = m;
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = (): void => {
     const m = pendingMethodRef.current;
-    if (m) startProjectCreation(m);
-  };
-
-  const startProjectCreation = async (m: string) => {
-    setMethod(m);
-    setPhase("creating-project");
-    setError(null);
-
-    try {
-      const res = await fetch("/api/analyze/project", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamSlug }),
-      });
-      if (!res.ok) throw new Error("Failed to create project");
-      const proj = await res.json();
-      setProject(proj as ProjectDetailedSchema);
+    if (m) {
+      setMethod(m);
       setPhase("upload");
-    } catch (err: any) {
-      setError(err.message ?? "Failed to create project");
-      setPhase("select");
     }
   };
 
-  const handleUploadSuccess = async (codeVersionId: string) => {
-    if (!project) return;
-    setPhase("processing");
-    setSteps(STEPS.map((s) => ({ ...s, status: "idle" })));
-    setError(null);
-
+  const captureEnsureProject = useCallback(async (): Promise<ProjectDetailedSchema> => {
     try {
-      const res = await fetch("/api/analyze/complete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId: project.id,
-          projectSlug: project.slug,
-          codeVersionId,
-          teamSlug,
-        }),
-      });
-      if (!res.body) throw new Error("No response stream");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const raw = line.slice(6).trim();
-          if (!raw) continue;
-
-          let event: any;
-          try {
-            event = JSON.parse(raw);
-          } catch {
-            continue;
-          }
-
-          if (event.type === "step") {
-            setSteps((prev) =>
-              prev.map((s) => {
-                if (s.id === event.step) return { ...s, status: "active" };
-                if (s.status === "active") return { ...s, status: "done" };
-                return s;
-              }),
-            );
-          } else if (event.type === "done") {
-            setSteps((prev) => prev.map((s) => ({ ...s, status: "done" })));
-            router.push(
-              `/team/${event.teamSlug}/${event.projectSlug}/analyses/${event.analysisId}`,
-            );
-            return;
-          } else if (event.type === "error") {
-            setError(event.message ?? "Something went wrong");
-            setSteps((prev) =>
-              prev.map((s) => (s.status === "active" ? { ...s, status: "error" } : s)),
-            );
-          }
-        }
-      }
-    } catch (err: any) {
-      setError(err.message ?? "Network error");
+      return await ensureProject();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create project");
+      throw err;
     }
-  };
+  }, [ensureProject]);
 
-  const reset = () => {
+  const reset = (): void => {
     setPhase("select");
     setMethod(null);
-    setProject(null);
-    setSteps(STEPS.map((s) => ({ ...s, status: "idle" })));
     setError(null);
+    projectRef.current = null;
     pendingMethodRef.current = null;
   };
 
-  // ── Method selection ──────────────────────────────────────────────────────────
   if (phase === "select") {
     return (
       <>
         {error && (
-          <p className="text-sm text-destructive mb-4 flex items-center gap-2">
+          <p className={cn("text-sm text-destructive mb-4 flex items-center gap-2")}>
             <XCircle className="size-4 shrink-0" />
             {error}
           </p>
@@ -173,100 +96,67 @@ const AnalyzeClient: React.FC<{
     );
   }
 
-  // ── Creating project spinner ──────────────────────────────────────────────────
-  if (phase === "creating-project") {
+  if (phase === "upload" && method) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="size-8 animate-spin mx-auto text-primary" />
-          <p className="text-sm text-muted-foreground">Setting up project...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Upload step ───────────────────────────────────────────────────────────────
-  if (phase === "upload" && project) {
-    return (
-      <div className="w-full h-full flex flex-col">
+      <div className="relative w-full h-full min-h-0 flex flex-col">
+        {isFinishing && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/85 rounded-lg">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Creating analysis…</p>
+          </div>
+        )}
+        {error && (
+          <p className="text-sm text-destructive mb-4 flex items-center gap-2 shrink-0">
+            <XCircle className="size-4 shrink-0" />
+            {error}
+          </p>
+        )}
         <Button
           variant="ghost"
           className="mb-4 shrink-0 self-start"
           onClick={() => (onBack ? onBack() : reset())}
+          disabled={isFinishing}
         >
           <MoveLeft />
           Back to selection
         </Button>
         <div className="flex-1 min-h-0 overflow-hidden">
           {method === "file" && (
-            <FileStep project={project} onSuccess={handleUploadSuccess} />
+            <FileStep
+              ensureProject={captureEnsureProject}
+              onSuccess={() => console.log("uploaded!")}
+            />
+          )}
+          {method === "paste" && (
+            <PasteCodeStep
+              ensureProject={captureEnsureProject}
+              onSuccess={() => console.log("uploaded!")}
+            />
           )}
           {method === "folder" && (
-            <FolderStep project={project} onSuccess={handleUploadSuccess} />
+            <FolderStep
+              ensureProject={captureEnsureProject}
+              onSuccess={() => console.log("uploaded!")}
+            />
           )}
           {method === "scan" && (
-            <ContractAddressStep project={project} onSuccess={handleUploadSuccess} />
+            <ContractAddressStep
+              ensureProject={captureEnsureProject}
+              onSuccess={() => console.log("uploaded!")}
+            />
           )}
           {method === "repo" && (
-            <RepoUrlStep project={project} onSuccess={handleUploadSuccess} />
+            <RepoUrlStep
+              ensureProject={captureEnsureProject}
+              onSuccess={() => console.log("uploaded!")}
+            />
           )}
         </div>
       </div>
     );
   }
 
-  // ── Processing view ───────────────────────────────────────────────────────────
-  return (
-    <div className="h-full flex items-center justify-center">
-    <div className="max-w-sm w-full space-y-8">
-      <div className="text-center space-y-2">
-        <h2 className="text-xl font-semibold">Running Analysis</h2>
-        <p className="text-sm text-muted-foreground">
-          Sit tight — this usually takes under a minute.
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        {steps.map((step) => (
-          <div key={step.id} className="flex items-center gap-3">
-            {step.status === "idle" && (
-              <Circle className="size-5 text-muted-foreground/40 shrink-0" />
-            )}
-            {step.status === "active" && (
-              <Loader2 className="size-5 animate-spin text-primary shrink-0" />
-            )}
-            {step.status === "done" && (
-              <CheckCircle className="size-5 text-green-500 shrink-0" />
-            )}
-            {step.status === "error" && (
-              <XCircle className="size-5 text-destructive shrink-0" />
-            )}
-            <span
-              className={cn(
-                "text-sm",
-                step.status === "idle" && "text-muted-foreground/50",
-                step.status === "active" && "text-foreground font-medium",
-                step.status === "done" && "text-muted-foreground line-through",
-                step.status === "error" && "text-destructive",
-              )}
-            >
-              {step.label}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-          <Button variant="outline" size="sm" className="mt-3 w-full" onClick={reset}>
-            Try again
-          </Button>
-        </div>
-      )}
-    </div>
-    </div>
-  );
+  return null;
 };
 
 export default AnalyzeClient;

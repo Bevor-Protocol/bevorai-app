@@ -1,8 +1,10 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
-import { GridPattern } from "@/components/ui/grid-pattern";
 import { cn } from "@/lib/utils";
 import {
   Code,
+  FileEdit,
   Folder,
   GitBranch,
   GitCommitHorizontal,
@@ -27,9 +29,16 @@ const versionMethods: VersionProps[] = [
   {
     Icon: Upload,
     iconColor: "text-blue-400",
-    title: "Upload / Write File",
-    description: "Upload your .sol file(s) for analysis, or manually write/paste it",
+    title: "Upload file",
+    description: "Upload a single .sol, .js, or .ts file from disk",
     method: "file",
+  },
+  {
+    Icon: FileEdit,
+    iconColor: "text-emerald-400",
+    title: "Write / paste",
+    description: "Type or paste Solidity (or supported) code in the editor",
+    method: "paste",
   },
   {
     Icon: Folder,
@@ -126,14 +135,6 @@ const MethodSelection: React.FC<{
             href={method.route ? method.route(teamSlug) : undefined}
             onClick={method.route ? undefined : (): void => handleSelection(method)}
           >
-            <div className="-mt-2 -ml-20 pointer-events-none absolute top-0 left-1/2 size-full mask-[radial-gradient(farthest-side_at_top,white,transparent)]">
-              <GridPattern
-                className="absolute inset-0 size-full stroke-foreground/20 group-hover:stroke-foreground/50 transition-colors"
-                height={40}
-                width={40}
-                x={5}
-              />
-            </div>
             <method.Icon className={cn("size-6", method.iconColor)} />
             <h3 className="mt-10 text-sm md:text-base">{method.title}</h3>
             <p className="z-20 mt-2 font-light text-muted-foreground text-xs">

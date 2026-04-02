@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
-import { ProjectDetailedSchema } from "@/types/api/responses/business";
+import type { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { ScanCodeAddressFormValues, scanCodeAddressSchema } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, Globe, XCircle } from "lucide-react";
@@ -14,15 +14,15 @@ import React, { useRef } from "react";
 import { toast } from "sonner";
 
 const ContractAddressStep: React.FC<{
-  project: ProjectDetailedSchema;
+  ensureProject: () => Promise<ProjectDetailedSchema>;
   parentId?: string;
   onSuccess?: (id: string) => void;
-}> = ({ project, parentId, onSuccess }) => {
+}> = ({ ensureProject, parentId, onSuccess }) => {
   const queryClient = useQueryClient();
 
   const initialState: ScanCodeAddressFormValues = {
     address: "",
-    parent_id: parentId,
+    parent_code_version_id: parentId,
   };
   const { formState, setField, updateFormState } =
     useFormReducer<ScanCodeAddressFormValues>(initialState);
@@ -30,11 +30,12 @@ const ContractAddressStep: React.FC<{
   const toastId = useRef<string | number>(undefined);
 
   const mutation = useMutation({
-    mutationFn: async (data: ScanCodeAddressFormValues) =>
-      codeActions.contractUploadScan(project.team.slug, project.id, data).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
+    mutationFn: async (data: ScanCodeAddressFormValues) => {
+      const project = await ensureProject();
+      const r = await codeActions.contractUploadScan(project.team.slug, project.id, data);
+      if (!r.ok) throw r;
+      return { ...r.data, project };
+    },
     onMutate: () => {
       updateFormState({ type: "SET_ERRORS", errors: {} });
       toastId.current = toast.loading("Uploading and parsing code...");
@@ -97,7 +98,9 @@ const ContractAddressStep: React.FC<{
             Your contract has been uploaded and is ready for analysis.
           </p>
           <Button asChild className="mt-4">
-            <Link href={`/team/${project.team.slug}/${project.slug}/codes/${mutation.data.id}`}>
+            <Link
+              href={`/team/${mutation.data.project.team.slug}/${mutation.data.project.slug}/codes/${mutation.data.id}`}
+            >
               View Version
             </Link>
           </Button>

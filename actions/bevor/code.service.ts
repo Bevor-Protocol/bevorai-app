@@ -1,9 +1,10 @@
 "use server";
 
+import { apiRequest, withRequestId } from "@/actions/base";
 import { graphApi } from "@/lib/api";
-import { ApiResponse } from "@/types/api";
 import {
   CodeMappingSchema,
+  CreateCodeResponse,
   GraphSnapshotFile,
   GraphSnapshotNode,
   RelationSchema,
@@ -22,450 +23,249 @@ import {
 } from "@/utils/schema";
 import { QueryKey } from "@tanstack/react-query";
 
-export const contractUploadFolder = async (
-  teamSlug: string,
-  projectId: string,
-  data: UploadCodeFolderFormValues,
-): ApiResponse<{
-  id: string;
-  status: "waiting" | "processing" | "success" | "failed";
-  toInvalidate: QueryKey[];
-}> => {
+export const contractUploadFolder = apiRequest<
+  [teamSlug: string, projectId: string, data: UploadCodeFolderFormValues],
+  CreateCodeResponse & {
+    toInvalidate: QueryKey[];
+  }
+>(async (teamSlug, projectId, data) => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
   const formData = new FormData();
   formData.append("project_id", projectId);
   formData.append("zip", data.zip, "folder.zip");
-  if (data.parent_id) {
-    formData.append("parent_id", data.parent_id);
-    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  formData.append("analyze", "true");
+  if (data.parent_code_version_id) {
+    formData.append("parent_id", data.parent_code_version_id);
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_code_version_id));
   }
 
   return graphApi
     .post("/versions/folder", formData, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: { ...response.data, toInvalidate },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) =>
+      withRequestId(response, {
+        ...response.data,
+        toInvalidate,
+      }),
+    );
+});
 
-export const contractUploadFile = async (
-  teamSlug: string,
-  projectId: string,
-  data: UploadCodeFileFormValues,
-): ApiResponse<{
-  id: string;
-  status: "waiting" | "processing" | "success" | "failed";
-  toInvalidate: QueryKey[];
-}> => {
+export const contractUploadFile = apiRequest<
+  [teamSlug: string, projectId: string, data: UploadCodeFileFormValues],
+  CreateCodeResponse & {
+    toInvalidate: QueryKey[];
+  }
+>(async (teamSlug, projectId, data) => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
 
   const formData = new FormData();
   formData.append("files", data.file);
   formData.append("project_id", projectId);
-  if (data.parent_id) {
-    formData.append("parent_id", data.parent_id);
-    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  formData.append("analyze", "true");
+  if (data.parent_code_version_id) {
+    formData.append("parent_id", data.parent_code_version_id);
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_code_version_id));
   }
 
   return graphApi
     .post("/versions/file", formData, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: { ...response.data, toInvalidate },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) =>
+      withRequestId(response, {
+        ...response.data,
+        toInvalidate,
+      }),
+    );
+});
 
-export const contractUploadPaste = async (
-  teamSlug: string,
-  projectId: string,
-  data: PasteCodeFileFormValues,
-): ApiResponse<{
-  id: string;
-  status: "waiting" | "processing" | "success" | "failed";
-  toInvalidate: QueryKey[];
-}> => {
+export const contractUploadPaste = apiRequest<
+  [teamSlug: string, projectId: string, data: PasteCodeFileFormValues],
+  CreateCodeResponse & {
+    toInvalidate: QueryKey[];
+  }
+>(async (teamSlug, projectId, data) => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
-  if (data.parent_id) {
-    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  if (data.parent_code_version_id) {
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_code_version_id));
   }
   return graphApi
     .post(
       "/versions/paste",
-      { project_id: projectId, ...data },
+      { project_id: projectId, analyze: true, ...data },
       { headers: { "bevor-team-slug": teamSlug } },
     )
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: { ...response.data, toInvalidate },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) =>
+      withRequestId(response, {
+        ...response.data,
+        toInvalidate,
+      }),
+    );
+});
 
-export const contractUploadScan = async (
-  teamSlug: string,
-  projectId: string,
-  data: ScanCodeAddressFormValues,
-): ApiResponse<{
-  id: string;
-  status: "waiting" | "processing" | "success" | "failed";
-  toInvalidate: QueryKey[];
-}> => {
+export const contractUploadScan = apiRequest<
+  [teamSlug: string, projectId: string, data: ScanCodeAddressFormValues],
+  CreateCodeResponse & {
+    toInvalidate: QueryKey[];
+  }
+>(async (teamSlug, projectId, data) => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
-  if (data.parent_id) {
-    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  if (data.parent_code_version_id) {
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_code_version_id));
   }
   return graphApi
     .post(
       "/versions/scan",
-      { address: data.address, project_id: projectId, parent_id: data.parent_id },
+      { project_id: projectId, analyze: true, ...data },
       { headers: { "bevor-team-slug": teamSlug } },
     )
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: { ...response.data, toInvalidate },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) =>
+      withRequestId(response, {
+        ...response.data,
+        toInvalidate,
+      }),
+    );
+});
 
-export const contractUploadPublicRepo = async (
-  teamSlug: string,
-  projectId: string,
-  data: CreateCodeFromPublicGithubFormValues,
-): ApiResponse<{
-  id: string;
-  status: "waiting" | "processing" | "success" | "failed";
-  toInvalidate: QueryKey[];
-}> => {
+export const contractUploadPublicRepo = apiRequest<
+  [teamSlug: string, projectId: string, data: CreateCodeFromPublicGithubFormValues],
+  CreateCodeResponse & {
+    toInvalidate: QueryKey[];
+  }
+>(async (teamSlug, projectId, data) => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
-  if (data.parent_id) {
-    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  if (data.parent_code_version_id) {
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_code_version_id));
   }
   return graphApi
     .post(
       "/versions/repo",
-      { url: data.url, project_id: projectId, parent_id: data.parent_id },
+      { project_id: projectId, analyze: true, ...data },
       { headers: { "bevor-team-slug": teamSlug } },
     )
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: { ...response.data, toInvalidate },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) =>
+      withRequestId(response, {
+        ...response.data,
+        toInvalidate,
+      }),
+    );
+});
 
-export const createCodeConnectedGithub = async (
-  teamSlug: string,
-  projectId: string,
-  data: CreateCodeFromGithubFormValues,
-): ApiResponse<{
-  id: string;
-  status: "waiting" | "processing" | "success" | "failed";
-  toInvalidate: QueryKey[];
-}> => {
+export const createCodeConnectedGithub = apiRequest<
+  [teamSlug: string, projectId: string, data: CreateCodeFromGithubFormValues],
+  CreateCodeResponse & {
+    toInvalidate: QueryKey[];
+  }
+>(async (teamSlug, projectId, data) => {
   const toInvalidate: QueryKey[] = [[QUERY_KEYS.ANALYSES], [QUERY_KEYS.CODES, teamSlug]];
-  if (data.parent_id) {
-    toInvalidate.push(generateQueryKey.codeRelations(data.parent_id));
+  if (data.parent_code_version_id) {
+    toInvalidate.push(generateQueryKey.codeRelations(data.parent_code_version_id));
   }
   return graphApi
     .post(
       "/versions/connected-repo",
       {
         project_id: projectId,
-        branch: data.branch,
-        commit_sha: data.commit,
-        parent_id: data.parent_id,
+        analyze: true,
+        ...data,
       },
       { headers: { "bevor-team-slug": teamSlug } },
     )
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: { ...response.data, toInvalidate },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) =>
+      withRequestId(response, {
+        ...response.data,
+        toInvalidate,
+      }),
+    );
+});
 
-export const getCodeVersion = async (
-  teamSlug: string,
-  codeId: string,
-): ApiResponse<CodeMappingSchema> => {
-  return graphApi
-    .get(`/versions/${codeId}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+export const getCodeVersion = apiRequest<[teamSlug: string, codeId: string], CodeMappingSchema>(
+  async (teamSlug, codeId) =>
+    graphApi
+      .get(`/versions/${codeId}`, { headers: { "bevor-team-slug": teamSlug } })
+      .then((response) => withRequestId(response, response.data)),
+);
 
-export const getCodeVersionSimilar = async (
-  teamSlug: string,
-  codeId: string,
-): ApiResponse<{ score: number; version: CodeMappingSchema }[]> => {
+export const getCodeVersionSimilar = apiRequest<
+  [teamSlug: string, codeId: string],
+  { score: number; version: CodeMappingSchema }[]
+>(async (teamSlug, codeId) => {
   const searchParams = new URLSearchParams({ limit: "5", threshold: "0.5" });
   return graphApi
     .get(`/versions/${codeId}/similarity?${searchParams.toString()}`, {
       headers: { "bevor-team-slug": teamSlug },
     })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data.results,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data.results));
+});
 
-export const getFiles = async (
-  teamSlug: string,
-  codeId: string,
-): ApiResponse<GraphSnapshotFile[]> => {
-  return graphApi
-    .get(`/versions/${codeId}/files`, {
-      headers: { "bevor-team-slug": teamSlug },
-    })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data.results,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+export const getFiles = apiRequest<[teamSlug: string, codeId: string], GraphSnapshotFile[]>(
+  async (teamSlug, codeId) =>
+    graphApi
+      .get(`/versions/${codeId}/files`, {
+        headers: { "bevor-team-slug": teamSlug },
+      })
+      .then((response) => withRequestId(response, response.data.results)),
+);
 
-export const getFile = async (
-  teamSlug: string,
-  codeId: string,
-  fileId: string,
-): ApiResponse<GraphSnapshotFile> => {
-  return graphApi
+export const getFile = apiRequest<
+  [teamSlug: string, codeId: string, fileId: string],
+  GraphSnapshotFile
+>(async (teamSlug, codeId, fileId) =>
+  graphApi
     .get(`/versions/${codeId}/files/${fileId}`, {
       headers: { "bevor-team-slug": teamSlug },
     })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data)),
+);
 
-export const getFileContent = async (
-  teamSlug: string,
-  codeId: string,
-  fileId: string,
-): ApiResponse<string> => {
-  return graphApi
+export const getFileContent = apiRequest<
+  [teamSlug: string, codeId: string, fileId: string],
+  string
+>(async (teamSlug, codeId, fileId) =>
+  graphApi
     .get(`/versions/${codeId}/files/${fileId}/content`, {
       headers: { "bevor-team-slug": teamSlug },
     })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data.content,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data.content)),
+);
 
-export const getTree = async (teamSlug: string, codeId: string): ApiResponse<TreeFile[]> => {
-  return graphApi
-    .get(`/versions/${codeId}/tree`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data.results,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+export const getTree = apiRequest<[teamSlug: string, codeId: string], TreeFile[]>(
+  async (teamSlug, codeId) =>
+    graphApi
+      .get(`/versions/${codeId}/tree`, { headers: { "bevor-team-slug": teamSlug } })
+      .then((response) => withRequestId(response, response.data.results)),
+);
 
-export const getNode = async (
-  teamSlug: string,
-  codeId: string,
-  nodeId: string,
-): ApiResponse<GraphSnapshotNode> => {
-  return graphApi
+export const getNode = apiRequest<
+  [teamSlug: string, codeId: string, nodeId: string],
+  GraphSnapshotNode
+>(async (teamSlug, codeId, nodeId) =>
+  graphApi
     .get(`/versions/${codeId}/nodes/${nodeId}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data)),
+);
 
-export const getNodeContent = async (
-  teamSlug: string,
-  codeId: string,
-  nodeId: string,
-): ApiResponse<string> => {
-  return graphApi
+export const getNodeContent = apiRequest<
+  [teamSlug: string, codeId: string, nodeId: string],
+  string
+>(async (teamSlug, codeId, nodeId) =>
+  graphApi
     .get(`/versions/${codeId}/nodes/${nodeId}/content`, {
       headers: { "bevor-team-slug": teamSlug },
     })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data.content,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data.content)),
+);
 
-export const getNodes = async (
-  teamSlug: string,
-  codeId: string,
-  data?: {
-    name?: string;
-    file_id?: string;
-    node_type?: string;
-  },
-): ApiResponse<GraphSnapshotNode[]> => {
+export const getNodes = apiRequest<
+  [
+    teamSlug: string,
+    codeId: string,
+    data?: {
+      name?: string;
+      file_id?: string;
+      node_type?: string;
+    },
+  ],
+  GraphSnapshotNode[]
+>(async (teamSlug, codeId, data) => {
   const searchParams = new URLSearchParams(data);
   let url = `/versions/${codeId}/nodes`;
   if (searchParams) {
@@ -474,112 +274,48 @@ export const getNodes = async (
 
   return graphApi
     .get(url, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data.results,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data.results));
+});
 
-export const getRelations = async (
-  teamSlug: string,
-  codeId: string,
-): ApiResponse<RelationSchema> => {
-  return graphApi
-    .get(`/versions/${codeId}/relations`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+export const getRelations = apiRequest<[teamSlug: string, codeId: string], RelationSchema>(
+  async (teamSlug, codeId) =>
+    graphApi
+      .get(`/versions/${codeId}/relations`, { headers: { "bevor-team-slug": teamSlug } })
+      .then((response) => withRequestId(response, response.data)),
+);
 
-export const getVersions = async (
-  teamSlug: string,
-  filters: {
-    [key: string]: string;
-  },
-): ApiResponse<Pagination<CodeMappingSchema>> => {
+export const getVersions = apiRequest<
+  [teamSlug: string, filters: { [key: string]: string }],
+  Pagination<CodeMappingSchema>
+>(async (teamSlug, filters) => {
   const searchParams = buildSearchParams(filters);
 
   return graphApi
     .get(`/versions?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: response.data,
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, response.data));
+});
 
-export const retryEmbedding = async (
-  teamSlug: string,
-  codeId: string,
-): ApiResponse<{
-  id: string;
-  status: "waiting" | "processing" | "success" | "failed";
-  toInvalidate: QueryKey[];
-}> => {
+export const retryEmbedding = apiRequest<
+  [teamSlug: string, codeId: string],
+  CreateCodeResponse & {
+    toInvalidate: QueryKey[];
+  }
+>(async (teamSlug, codeId) => {
   const toInvalidate = [[QUERY_KEYS.CODES, teamSlug]];
   return graphApi
     .post(`/versions/${codeId}/retry`, {}, { headers: { "bevor-team-slug": teamSlug } })
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: { ...response.data, toInvalidate },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) =>
+      withRequestId(response, {
+        ...response.data,
+        toInvalidate,
+      }),
+    );
+});
 
-export const updateCodeVersionParent = async (
-  teamSlug: string,
-  codeId: string,
-  parentId: string,
-): ApiResponse<{
-  toInvalidate: QueryKey[];
-}> => {
+export const updateCodeVersionParent = apiRequest<
+  [teamSlug: string, codeId: string, parentId: string],
+  { toInvalidate: QueryKey[] }
+>(async (teamSlug, codeId, parentId) => {
   const toInvalidate = [generateQueryKey.codeRelations(codeId)];
   return graphApi
     .patch(
@@ -587,20 +323,5 @@ export const updateCodeVersionParent = async (
       { parent_id: parentId },
       { headers: { "bevor-team-slug": teamSlug } },
     )
-    .then((response) => {
-      const requestId = response.headers["bevor-request-id"] ?? "";
-      return {
-        ok: true as const,
-        data: { toInvalidate },
-        requestId,
-      };
-    })
-    .catch((error: any) => {
-      const requestId = error.response?.headers?.["bevor-request-id"] ?? "";
-      return {
-        ok: false as const,
-        error: error.response?.data ?? { message: error.message },
-        requestId,
-      };
-    });
-};
+    .then((response) => withRequestId(response, { toInvalidate }));
+});

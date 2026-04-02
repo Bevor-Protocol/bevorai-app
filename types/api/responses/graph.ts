@@ -80,9 +80,10 @@ export interface CodeVersionMappingIndex extends CodeMappingSchema {
   n: number;
 }
 
-export interface CreateCodeMappingResponse {
+export interface CreateCodeResponse {
   id: string;
   status: CodeVersionStatus;
+  analysis_id?: string;
 }
 
 export interface RelationSchema {

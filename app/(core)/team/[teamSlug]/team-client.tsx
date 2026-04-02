@@ -1,14 +1,14 @@
 "use client";
 
 import { activityActions, analysisActions, projectActions } from "@/actions/bevor";
+import AnalyzeClient from "@/app/(core)/team/[teamSlug]/analyze/client";
 import ActivityList from "@/components/activity";
 import { AnalysisVersionElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
 import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
-import AnalyzeClient from "@/app/(core)/team/[teamSlug]/analyze/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { TeamDetailedSchema } from "@/types/api/responses/business";
 import { generateQueryKey } from "@/utils/constants";
 import { useQuery } from "@tanstack/react-query";
-import { Code, Folder, GitBranch, GitCommitHorizontal, Globe, Plus, Upload } from "lucide-react";
+import {
+  Code,
+  FileEdit,
+  Folder,
+  GitBranch,
+  GitCommitHorizontal,
+  Globe,
+  Plus,
+  Upload,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
@@ -32,7 +41,7 @@ export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState<string | null>(null);
 
-  const openUpload = (m: string) => {
+  const openUpload = (m: string): void => {
     setMethod(m);
     setOpen(true);
   };
@@ -52,7 +61,11 @@ export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }
           </DropdownMenuLabel>
           <DropdownMenuItem className="cursor-pointer" onClick={() => openUpload("file")}>
             <Upload className="size-4 text-blue-400" />
-            Upload / Write File
+            Upload file
+          </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => openUpload("paste")}>
+            <FileEdit className="size-4 text-emerald-400" />
+            Write / paste
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" onClick={() => openUpload("folder")}>
             <Folder className="size-4 text-yellow-400" />
@@ -95,6 +108,9 @@ export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }
           className="max-w-6xl w-full h-[85vh] flex flex-col overflow-hidden p-6 gap-0"
           showCloseButton={true}
         >
+          <DialogHeader className="sr-only">
+            <DialogTitle>New code version</DialogTitle>
+          </DialogHeader>
           {method && (
             <AnalyzeClient
               teamSlug={teamSlug}

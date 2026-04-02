@@ -45,7 +45,7 @@ import {
 import { InfoIcon, XCircle } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import AnalysisStatusDisplay from "./status";
+import AnalysisStatusDisplay, { type AnalysisWithScopesAndFindings } from "./status";
 
 interface AnalysisScopeSelectorProps {
   teamSlug: string;
@@ -182,8 +182,6 @@ const CodeTreeViewer: React.FC<{
       end: node.src_end_pos,
     });
   };
-
-  console.log(nodesForCurrentFile);
 
   return (
     <CodeHolder ref={containerRef} className="pr-2">
@@ -488,7 +486,7 @@ const NewVersionClient: React.FC<AnalysisScopeSelectorProps> = ({
   if (analysis) {
     return (
       <AnalysisStatusDisplay
-        analysis={analysis}
+        analysis={analysis as AnalysisWithScopesAndFindings}
         teamSlug={teamSlug}
         projectSlug={projectSlug}
         toastRefId={toastRefId.current}

@@ -3,6 +3,7 @@
 import { businessApi, graphApi } from "@/lib/api";
 import { ApiResponse } from "@/types/api";
 import { TokenIssueResponse } from "@/types/api/responses/business";
+import { BaseCodeUploadValues } from "@/utils/schema";
 
 export const validateToken = async (): ApiResponse<{ user_id: string }> => {
   return businessApi
@@ -125,13 +126,18 @@ export const issueSSEToken = async (claims: {
 
 export const getSigningToken = async (
   teamSlug: string,
-  data: {
-    parent_id?: string;
-    project_id: string;
-  },
+  projectId: string,
+  data: BaseCodeUploadValues,
 ): ApiResponse<string> => {
   return graphApi
-    .post("/versions/signing-key", data, { headers: { "bevor-team-slug": teamSlug } })
+    .post(
+      "/versions/signing-key",
+      {
+        project_id: projectId,
+        ...data,
+      },
+      { headers: { "bevor-team-slug": teamSlug } },
+    )
     .then((response) => {
       const requestId = response.headers["bevor-request-id"] ?? "";
       return {
