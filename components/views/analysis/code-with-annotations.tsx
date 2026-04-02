@@ -75,7 +75,7 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
   onToggleFinding,
   onAddFindingToContext,
 }) => {
-  const { fileId, fileQuery, fileContentQuery } = useCode();
+  const { fileId, fileQuery, fileContentQuery, positions } = useCode();
   const [lines, setLines] = useState<string[]>([]);
   const [preStyle, setPreStyle] = useState<React.CSSProperties>({});
   const [lineStarts, setLineStarts] = useState<number[]>([0]);
@@ -165,6 +165,18 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
     }, 80);
     return (): void => clearTimeout(timer);
   }, [selectedFindingId, lines]);
+
+  // Scroll to node position (from NodeSearch)
+  useEffect(() => {
+    if (!positions || lines.length === 0 || lineStarts.length === 0 || !scrollContainerRef.current)
+      return;
+    const timer = setTimeout(() => {
+      const lineNum = byteToLine(lineStarts, positions.start);
+      const el = scrollContainerRef.current?.querySelector(`[data-line="${lineNum}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+    return (): void => clearTimeout(timer);
+  }, [positions, lines, lineStarts]);
 
   const setFindingRef = useCallback(
     (findingId: string): ((el: HTMLDivElement | null) => void) =>

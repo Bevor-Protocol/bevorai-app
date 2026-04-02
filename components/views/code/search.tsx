@@ -8,10 +8,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDebouncedState } from "@/hooks/useDebouncedState";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
+import { GraphSnapshotNode } from "@/types/api/responses/graph";
+import { FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
-import React, { useCallback, useState } from "react";
+import { Search, Shield } from "lucide-react";
+import React, { useCallback, useMemo, useState } from "react";
 
 const getNodeType = (nodeType: string): React.ReactElement => {
   switch (nodeType) {
@@ -51,11 +53,20 @@ const getNodeType = (nodeType: string): React.ReactElement => {
   }
 };
 
+const SEVERITY_COLOR: Record<string, string> = {
+  critical: "bg-red-500",
+  high: "bg-orange-500",
+  medium: "bg-yellow-500",
+  low: "bg-blue-500",
+};
+
 const NodeSearch: React.FC<{
   teamSlug: string;
   codeId: string;
   className?: string;
-}> = ({ teamSlug, codeId, className }) => {
+  findings?: { finding: FindingSchema; node: GraphSnapshotNode }[];
+  onFindingSelect?: (finding: FindingSchema) => void;
+}> = ({ teamSlug, codeId, className, findings, onFindingSelect }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const { debouncedState, isWaiting } = useDebouncedState(search, {
@@ -91,6 +102,12 @@ const NodeSearch: React.FC<{
 
   const isPending = isWaiting || isLoading || isFetching;
 
+  const filteredFindings = useMemo(() => {
+    if (!findings || !search) return [];
+    const q = search.toLowerCase();
+    return findings.filter(({ finding }) => finding.name.toLowerCase().includes(q));
+  }, [findings, search]);
+
   const handleSelection = useCallback(
     ({ sourceId, start, end }: { sourceId: string; start: number; end: number }): void => {
       setOpen(false);
@@ -119,38 +136,80 @@ const NodeSearch: React.FC<{
           onValueChange={(e) => setSearch(e)}
         />
 
-        <ScrollArea className="max-h-[300px]">
-          {isPending && !!search && <CommandEmpty>Searching...</CommandEmpty>}
-          {!search && <CommandEmpty>Search for nodes...</CommandEmpty>}
-          {!!search && !results?.length && !isPending && (
-            <CommandEmpty>No nodes found</CommandEmpty>
+        <ScrollArea className="max-h-[400px]">
+          {!search && <CommandEmpty>Search for nodes or vulnerabilities…</CommandEmpty>}
+          {!!search && isPending && !filteredFindings.length && (
+            <CommandEmpty>Searching…</CommandEmpty>
           )}
-          {!!search &&
-            !isPending &&
-            results?.map((result) => (
-              <div
-                key={result.id}
-                className="group flex hover:bg-accent hover:text-accent-foreground cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 w-full max-w-[calc(100%-2rem)] sm:max-w-lg"
-                onClick={() =>
-                  handleSelection({
-                    sourceId: result.id,
-                    start: result.src_start_pos,
-                    end: result.src_end_pos,
-                  })
-                }
-              >
-                <div className="w-full flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    {getNodeType(result.node_type)}
-                    <p className="text-ellipsis max-w-1/2 overflow-hidden">{result.name}</p>
-                    <span className="text-muted-foreground text-xs ml-auto">
-                      {result.path.split("/").slice(-1)}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground text-xs">{result.signature}</p>
+          {!!search && !isPending && !results?.length && !filteredFindings.length && (
+            <CommandEmpty>No results found</CommandEmpty>
+          )}
+
+          {filteredFindings.length > 0 && (
+            <div className="px-2 py-1.5">
+              <p className="px-1 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                Vulnerabilities
+              </p>
+              {filteredFindings.map(({ finding, node }) => (
+                <div
+                  key={finding.id}
+                  className="group flex hover:bg-accent hover:text-accent-foreground cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none w-full min-w-0 overflow-hidden"
+                  onClick={() => {
+                    handleSelection({
+                      sourceId: node.file_id,
+                      start: node.src_start_pos,
+                      end: node.src_end_pos,
+                    });
+                    onFindingSelect?.(finding);
+                  }}
+                >
+                  <Shield className="size-3.5 shrink-0 text-muted-foreground" />
+                  <span className="flex-1 min-w-0 truncate">{finding.name}</span>
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full shrink-0",
+                      SEVERITY_COLOR[finding.level] ?? "bg-zinc-500",
+                    )}
+                  />
+                  <span className="text-muted-foreground text-xs shrink-0 truncate max-w-[8rem]">
+                    {node.path.split("/").slice(-1)}
+                  </span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+
+          {!!search && !isPending && !!results?.length && (
+            <div className="px-2 py-1.5">
+              <p className="px-1 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                Nodes
+              </p>
+              {results.map((result) => (
+                <div
+                  key={result.id}
+                  className="group flex hover:bg-accent hover:text-accent-foreground cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none w-full min-w-0 overflow-hidden"
+                  onClick={() =>
+                    handleSelection({
+                      sourceId: result.file_id,
+                      start: result.src_start_pos,
+                      end: result.src_end_pos,
+                    })
+                  }
+                >
+                  <div className="min-w-0 flex-1 flex flex-col gap-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {getNodeType(result.node_type)}
+                      <p className="truncate flex-1 min-w-0">{result.name}</p>
+                      <span className="text-muted-foreground text-xs shrink-0 truncate max-w-[8rem]">
+                        {result.path.split("/").slice(-1)}
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground text-xs truncate">{result.signature}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </ScrollArea>
       </CommandDialog>
     </>

@@ -120,3 +120,10 @@ export const findingUpdateBody = z.object({
 });
 
 export type FindingUpdateBody = z.infer<typeof findingUpdateBody>;
+
+export const findingFeedbackBodySchema = z.object({
+  feedback: z.string().optional(),
+  is_verified: z.boolean(),
+});
+
+export type FindingFeedbackBody = z.infer<typeof findingFeedbackBodySchema>;
