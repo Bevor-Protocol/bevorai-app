@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
-import { InviteSchema, UserDetailedSchema } from "@/types/api/responses/business";
+import { InviteSchema } from "@/types/api/responses/business";
 import { generateQueryKey } from "@/utils/constants";
 import { trimAddress } from "@/utils/helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -52,9 +52,18 @@ const InviteItem: React.FC<{
   );
 };
 
-const NotificationsDropdown: React.FC<{ invites: InviteSchema[] }> = ({ invites }) => {
+const NotificationsDropdown: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedInvite, setSelectedInvite] = useState<InviteSchema | null>(null);
+
+  const { data: invites = [] } = useQuery({
+    queryKey: generateQueryKey.userInvites(),
+    queryFn: async () =>
+      userActions.invites().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
 
   const acceptInviteMutation = useMutation({
     mutationFn: async (inviteId: string) =>
@@ -221,9 +230,16 @@ const NotificationsDropdown: React.FC<{ invites: InviteSchema[] }> = ({ invites 
   );
 };
 
-const UserDropdown: React.FC<{
-  user: UserDetailedSchema | null | undefined;
-}> = ({ user }) => {
+const UserDropdown: React.FC = () => {
+  const { data: user } = useQuery({
+    queryKey: generateQueryKey.currentUser(),
+    queryFn: () =>
+      userActions.get().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
   const logoutMutation = useMutation({
     mutationFn: async () =>
       authActions.logout().then((r) => {
@@ -276,24 +292,6 @@ const UserDropdown: React.FC<{
 };
 
 const AppNav: React.FC = () => {
-  const { data: user } = useQuery({
-    queryKey: generateQueryKey.currentUser(),
-    queryFn: () =>
-      userActions.get().then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-  });
-
-  const { data: invites = [] } = useQuery({
-    queryKey: generateQueryKey.userInvites(),
-    queryFn: async () =>
-      userActions.invites().then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
-      }),
-  });
-
   return (
     <nav className="w-full bg-background flex items-center justify-between px-6 h-header">
       <div className="flex items-center gap-6">
@@ -312,8 +310,8 @@ const AppNav: React.FC = () => {
         <ContainerBreadcrumb />
       </div>
       <div className="flex items-center gap-4">
-        <NotificationsDropdown invites={invites} />
-        <UserDropdown user={user} />
+        <NotificationsDropdown />
+        <UserDropdown />
       </div>
     </nav>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { githubActions, projectActions } from "@/actions/bevor";
+import { codeActions, githubActions, projectActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { GithubUserInstallationsSchema } from "@/types/api/responses/github";
 import { generateQueryKey } from "@/utils/constants";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,20 +25,24 @@ import {
   Star,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface GitHubIntegrationClientProps {
   installations: GithubUserInstallationsSchema;
   defaultInstallationId: number | null;
   teamSlug?: string;
+  /** When set, called instead of default navigation. */
+  onProjectCreated?: (project: ProjectDetailedSchema, analysisId: string) => void;
 }
 
 export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = ({
   installations,
   defaultInstallationId,
   teamSlug,
+  onProjectCreated,
 }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -89,40 +94,72 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
     },
   });
 
-  const createProjectMutation = useMutation({
-    mutationFn: async (repo_id: number) => {
+  const importToastId = useRef<string | number | undefined>(undefined);
+
+  const importRepoMutation = useMutation({
+    mutationFn: async (id: number) => {
       if (!teamSlug) throw new Error("Team slug is required");
-      return projectActions
-        .createProject(teamSlug, {
-          github_repo_id: repo_id,
+      const created = await projectActions
+        .createProject(teamSlug, { github_repo_id: id })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        });
+      const codeRes = await codeActions
+        .createCodeConnectedGithub(created.project.team.slug, created.project.id, {
+          analyze: true,
         })
         .then((r) => {
           if (!r.ok) throw r;
           return r.data;
         });
+      const analysisId = codeRes.analysis_id;
+      if (!analysisId) {
+        throw new Error("Code import did not return an analysis id.");
+      }
+      return {
+        project: created.project,
+        analysisId,
+        code: codeRes,
+        projectToInvalidate: created.toInvalidate,
+      };
     },
-    onSuccess: ({ project, toInvalidate }) => {
-      toInvalidate.forEach((queryKey) => {
+    onMutate: () => {
+      importToastId.current = toast.loading("Creating project and importing code...");
+    },
+    onSuccess: ({ project, analysisId, code, projectToInvalidate }) => {
+      projectToInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
-      toast.success("Project created successfully");
-      if (teamSlug) {
-        router.push(`/team/${teamSlug}/${project.slug}`);
+      code.toInvalidate.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+      });
+      toast.success("Repository imported successfully", {
+        id: importToastId.current,
+      });
+      importToastId.current = undefined;
+      if (onProjectCreated) {
+        onProjectCreated(project, analysisId);
+      } else if (teamSlug) {
+        router.push(`/team/${teamSlug}/${project.slug}/analyses/${analysisId}`);
       }
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to create project. Please try again.");
+      toast.error(error.message || "Failed to import repository. Please try again.", {
+        id: importToastId.current,
+      });
+      importToastId.current = undefined;
     },
   });
 
   if (!installations?.is_authenticated) {
     return (
-      <div className="p-4 border border-yellow-500/20 bg-yellow-500/10 rounded-lg">
+      <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="size-5 text-yellow-600 shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 size-5 shrink-0 text-yellow-600" />
           <div className="flex-1">
-            <p className="text-sm font-medium mb-1">GitHub OAuth Required</p>
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="mb-1 text-sm font-medium">GitHub OAuth Required</p>
+            <p className="mb-3 text-xs text-muted-foreground">
               You need to connect your GitHub OAuth account to view and manage GitHub App
               installations.
             </p>
@@ -149,10 +186,22 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
     );
   }
 
+  const manageHref = teamSlug
+    ? `/user/github/manage?teamSlug=${encodeURIComponent(teamSlug)}`
+    : "/user/github/manage";
+
   const installationsList = installations?.installation_info?.installations || [];
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" className="gap-2" asChild>
+          <Link href={manageHref}>
+            <ExternalLink className="size-4" />
+            Manage connection
+          </Link>
+        </Button>
+      </div>
       {installationsList.length === 0 ? (
         <div className="p-4 border rounded-lg text-center">
           <p className="text-sm text-muted-foreground mb-3">No GitHub App installations found.</p>
@@ -228,78 +277,55 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
                 </div>
               ) : repositories?.repository_info?.repositories &&
                 repositories.repository_info.repositories.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {repositories.repository_info.repositories.map((repo) => (
-                    <div key={repo.id} className="block p-4 border rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <Github className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm">{repo.full_name}</p>
-                            {repo.private && (
-                              <Lock className="size-3 text-muted-foreground shrink-0" />
-                            )}
-                            {repo.archived && (
-                              <span className="text-xs text-muted-foreground shrink-0">
-                                Archived
-                              </span>
-                            )}
-                          </div>
-                          {repo.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                              {repo.description}
-                            </p>
+                    <div
+                      key={repo.id}
+                      className="flex items-center gap-2 rounded-md border border-border/60 px-2.5 py-1.5"
+                    >
+                      <Github className="size-3.5 shrink-0 text-muted-foreground" />
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <p className="truncate text-sm font-medium leading-tight">
+                            {repo.full_name}
+                          </p>
+                          {repo.private && (
+                            <Lock className="size-3 shrink-0 text-muted-foreground" aria-hidden />
                           )}
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                            {repo.language && (
-                              <div className="flex items-center gap-1">
-                                <div className="size-2 rounded-full" />
-                                <span>{repo.language}</span>
-                              </div>
-                            )}
-                            {repo.stargazers_count !== null &&
-                              repo.stargazers_count !== undefined && (
-                                <div className="flex items-center gap-1">
-                                  <Star className="size-3" />
-                                  <span>{repo.stargazers_count}</span>
-                                </div>
-                              )}
-                            {repo.forks_count !== null && repo.forks_count !== undefined && (
-                              <div className="flex items-center gap-1">
-                                <GitFork className="size-3" />
-                                <span>{repo.forks_count}</span>
-                              </div>
-                            )}
-                            {repo.created_at && (
-                              <span>
-                                Created{" "}
-                                {new Date(repo.created_at).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                  year:
-                                    new Date(repo.created_at).getFullYear() !==
-                                    new Date().getFullYear()
-                                      ? "numeric"
-                                      : undefined,
-                                })}
-                              </span>
-                            )}
-                            {repo.updated_at && (
-                              <span>
-                                Updated{" "}
-                                {new Date(repo.updated_at).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                  year:
-                                    new Date(repo.updated_at).getFullYear() !==
-                                    new Date().getFullYear()
-                                      ? "numeric"
-                                      : undefined,
-                                })}
-                              </span>
-                            )}
-                          </div>
+                          {repo.archived && (
+                            <span className="shrink-0 text-[10px] text-muted-foreground">
+                              Archived
+                            </span>
+                          )}
                         </div>
+                        {repo.description && (
+                          <p className="line-clamp-1 text-[11px] leading-snug text-muted-foreground">
+                            {repo.description}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0 text-[11px] text-muted-foreground">
+                          {repo.language && (
+                            <span className="inline-flex items-center gap-1">
+                              <span className="size-1.5 rounded-full bg-muted-foreground/60" />
+                              {repo.language}
+                            </span>
+                          )}
+                          {repo.stargazers_count !== null &&
+                            repo.stargazers_count !== undefined && (
+                              <span className="inline-flex items-center gap-0.5">
+                                <Star className="size-3" />
+                                {repo.stargazers_count}
+                              </span>
+                            )}
+                          {repo.forks_count !== null && repo.forks_count !== undefined && (
+                            <span className="inline-flex items-center gap-0.5">
+                              <GitFork className="size-3" />
+                              {repo.forks_count}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-0.5">
                         {teamSlug && !repo.disabled && (
                           <Button
                             size="sm"
@@ -307,29 +333,33 @@ export const GitHubIntegrationClient: React.FC<GitHubIntegrationClientProps> = (
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              createProjectMutation.mutate(repo.id);
+                              importRepoMutation.mutate(repo.id);
                             }}
-                            disabled={createProjectMutation.isPending}
-                            className="shrink-0"
+                            disabled={importRepoMutation.isPending}
+                            className="h-7 gap-1 px-2 text-xs"
                           >
-                            {createProjectMutation.isPending &&
-                            createProjectMutation.variables === repo.id ? (
+                            {importRepoMutation.isPending &&
+                            importRepoMutation.variables === repo.id ? (
                               <>
                                 <Loader2 className="size-3 animate-spin" />
-                                Creating...
+                                <span className="hidden min-[380px]:inline">Creating…</span>
                               </>
                             ) : (
                               <>
                                 <Plus className="size-3" />
-                                Create Project
+                                Create
                               </>
                             )}
                           </Button>
                         )}
-                        <Button asChild variant="ghost">
-                          <a href={repo.html_url} target="_blank">
-                            <ExternalLink />
-                            View
+                        <Button asChild variant="ghost" size="icon" className="size-7 shrink-0">
+                          <a
+                            href={repo.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`View ${repo.full_name} on GitHub`}
+                          >
+                            <ExternalLink className="size-3.5" />
                           </a>
                         </Button>
                       </div>

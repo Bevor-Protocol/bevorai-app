@@ -1,7 +1,7 @@
+import { TeamAnalyzePageClient } from "@/app/(core)/team/[teamSlug]/team-client";
 import Container from "@/components/container";
 import TeamSubnav from "@/components/subnav/team";
 import { AsyncComponent } from "@/types";
-import AnalyzeClient from "./client";
 
 const AnalyzePage: AsyncComponent<{
   params: Promise<{ teamSlug: string }>;
@@ -11,7 +11,7 @@ const AnalyzePage: AsyncComponent<{
   const { method } = await searchParams;
   return (
     <Container subnav={<TeamSubnav />}>
-      <AnalyzeClient teamSlug={teamSlug} initialMethod={method} />
+      <TeamAnalyzePageClient teamSlug={teamSlug} initialMethod={method} />
     </Container>
   );
 };

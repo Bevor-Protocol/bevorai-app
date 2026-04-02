@@ -2,6 +2,7 @@
 
 import { authActions, tokenActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
+import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
 import { isApiError } from "@/types/api";
@@ -33,11 +34,12 @@ type FolderUploadVariables = {
 };
 
 const startFolderCodeUpload = async (
-  ensureProject: () => Promise<ProjectDetailedSchema>,
+  ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>,
+  tags: string[],
   data: UploadCodeFolderFormValues,
   mutate: (vars: FolderUploadVariables) => void,
 ): Promise<void> => {
-  const project = await ensureProject();
+  const project = await ensureProject(tags);
   mutate({ project, data });
 };
 
@@ -52,7 +54,7 @@ const isValidFile = (file: File): boolean => {
 };
 
 const FolderStep: React.FC<{
-  ensureProject: () => Promise<ProjectDetailedSchema>;
+  ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>;
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ ensureProject, parentId, onSuccess }) => {
@@ -244,126 +246,128 @@ const FolderStep: React.FC<{
       return;
     }
 
-    void startFolderCodeUpload(ensureProject, parsed.data, mutation.mutate).catch(() => {});
+    void startFolderCodeUpload(ensureProject, ["folder"], parsed.data, mutation.mutate).catch(
+      () => {},
+    );
   };
 
-  if (mutation.isSuccess) {
-    const { status, analysis_id: analysisId } = mutation.data;
-    if (analysisId && (status === "waiting" || status === "processing" || status === "success")) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Opening analysis…</p>
-        </div>
-      );
-    }
-  }
-
-  if (mutation.isError) {
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-            <XCircle className="size-8 text-destructive" />
-          </div>
-          <h2 className="text-2xl font-bold ">Upload Failed</h2>
-          <p className="text-muted-foreground">There was an error processing your contract.</p>
-          <div className="flex gap-4 justify-center mt-6">
-            <Button variant="outline" onClick={() => mutation.reset()}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const folderUploadData = mutation.data;
+  const showOpeningAnalysis =
+    mutation.isSuccess &&
+    !!folderUploadData?.analysis_id &&
+    (folderUploadData.status === "waiting" ||
+      folderUploadData.status === "processing" ||
+      folderUploadData.status === "success");
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 overflow-hidden">
-      <header className="space-y-1.5">
+    <>
+      <DialogHeader>
         <div className="flex items-center gap-3">
-          <Folder className="size-6 shrink-0 text-yellow-400" aria-hidden />
-          <h2 className="text-2xl font-bold tracking-tight">Upload folder</h2>
+          <Folder className="size-5 shrink-0 text-yellow-400" aria-hidden />
+          <DialogTitle>Upload folder</DialogTitle>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <DialogDescription>
           Select a folder containing .sol, .js, or .ts files. Hidden paths like{" "}
           <span className="font-mono text-xs">.git</span> are skipped.
-        </p>
-      </header>
-
-      {formState.values.zip.size === 0 ? (
-        <label className="block w-full cursor-pointer">
-          <div
-            className={cn(
-              "relative flex min-h-[min(40vh,320px)] flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-colors",
-              isDragOver
-                ? "border-purple-400 bg-purple-500/10"
-                : "border-neutral-700 hover:border-neutral-600 hover:bg-muted/20",
-            )}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <div className="flex size-14 items-center justify-center rounded-full bg-neutral-800">
-              <Upload className="size-7 text-muted-foreground" aria-hidden />
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+        {showOpeningAnalysis ? (
+          <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Opening analysis…</p>
+          </div>
+        ) : mutation.isError ? (
+          <div className="mx-auto max-w-2xl space-y-8">
+            <div className="space-y-4 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
+                <XCircle className="size-8 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold">Upload Failed</h2>
+              <p className="text-muted-foreground">There was an error processing your contract.</p>
+              <div className="mt-6 flex justify-center gap-4">
+                <Button variant="outline" onClick={() => mutation.reset()}>
+                  Try Again
+                </Button>
+              </div>
             </div>
-            <div className="max-w-md space-y-1 text-center">
-              <p className="text-base font-medium">Choose a folder to upload</p>
+          </div>
+        ) : formState.values.zip.size === 0 ? (
+          <label className="block w-full cursor-pointer">
+            <div
+              className={cn(
+                "relative flex min-h-[min(40vh,320px)] flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-colors",
+                isDragOver
+                  ? "border-purple-400 bg-purple-500/10"
+                  : "border-neutral-700 hover:border-neutral-600 hover:bg-muted/20",
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <div className="flex size-14 items-center justify-center rounded-full bg-neutral-800">
+                <Upload className="size-7 text-muted-foreground" aria-hidden />
+              </div>
+              <div className="max-w-md space-y-1 text-center">
+                <p className="text-base font-medium">Choose a folder to upload</p>
+                <p className="text-sm text-muted-foreground">
+                  Click this area or drag files from a folder. Your browser will ask you to pick a
+                  directory.
+                </p>
+              </div>
+              <input
+                type="file"
+                {...{ webkitdirectory: "" }}
+                accept=".sol,.js,.ts"
+                onChange={handleFileInput}
+                className="absolute inset-0 cursor-pointer opacity-0"
+                id="folder-upload"
+              />
+            </div>
+          </label>
+        ) : (
+          <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-muted/15 p-5 sm:p-6">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-foreground">Ready to upload</p>
               <p className="text-sm text-muted-foreground">
-                Click this area or drag files from a folder. Your browser will ask you to pick a
-                directory.
+                <span className="font-semibold tabular-nums text-foreground">
+                  {stagedFileCount}
+                </span>{" "}
+                file{stagedFileCount !== 1 ? "s" : ""} will be zipped and sent for indexing.
               </p>
             </div>
-            <input
-              type="file"
-              {...{ webkitdirectory: "" }}
-              accept=".sol,.js,.ts"
-              onChange={handleFileInput}
-              className="absolute inset-0 cursor-pointer opacity-0"
-              id="folder-upload"
-            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={clearAllFiles}
+                disabled={mutation.isPending}
+              >
+                <X className="size-3.5" />
+                Remove all
+              </Button>
+              <Button
+                type="button"
+                className="w-full min-w-40 sm:w-auto"
+                disabled={mutation.isPending}
+                onClick={handleSubmit}
+              >
+                <span>Submit</span>
+                <ArrowRight className="size-4" />
+              </Button>
+            </div>
           </div>
-        </label>
-      ) : (
-        <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-muted/15 p-5 sm:p-6">
-          <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium text-foreground">Ready to upload</p>
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold tabular-nums text-foreground">{stagedFileCount}</span>{" "}
-              file{stagedFileCount !== 1 ? "s" : ""} will be zipped and sent for indexing.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={clearAllFiles}
-              disabled={mutation.isPending}
-            >
-              <X className="size-3.5" />
-              Remove all
-            </Button>
-            <Button
-              type="button"
-              className="w-full min-w-40 sm:w-auto"
-              disabled={mutation.isPending}
-              onClick={handleSubmit}
-            >
-              <span>Submit</span>
-              <ArrowRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+        )}
 
-      {formState.errors.zip && (
-        <div className="flex items-start gap-2 text-sm text-destructive">
-          <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <span>{formState.errors.zip}</span>
-        </div>
-      )}
-    </div>
+        {!showOpeningAnalysis && !mutation.isError && formState.errors.zip && (
+          <div className="flex shrink-0 items-start gap-2 text-sm text-destructive">
+            <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>{formState.errors.zip}</span>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

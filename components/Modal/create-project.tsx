@@ -66,15 +66,13 @@ const CreateProjectModal: React.FC<{
     createProjectMutation.mutate(parsed.data);
   };
 
-  console.log(createProjectMutation.error);
-
   return (
     <>
       <DialogHeader>
         <DialogTitle>Create New Project</DialogTitle>
         <DialogDescription>
-          Create a project to organize your smart contracts and analyses. All members of the team
-          will have access to this project
+          Create a project to organize your code and analyses. All members of the team will have
+          access to this project
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">

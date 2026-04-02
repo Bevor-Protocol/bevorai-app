@@ -2,6 +2,7 @@
 
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
+import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
 import type { ProjectDetailedSchema } from "@/types/api/responses/business";
@@ -27,11 +28,12 @@ type PasteUploadVariables = {
 };
 
 const startPasteCodeUpload = async (
-  ensureProject: () => Promise<ProjectDetailedSchema>,
+  ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>,
+  tags: string[],
   data: PasteCodeFileFormValues,
   mutate: (vars: PasteUploadVariables) => void,
 ): Promise<void> => {
-  const project = await ensureProject();
+  const project = await ensureProject(tags);
   mutate({ project, data });
 };
 
@@ -104,7 +106,7 @@ const PasteCodePanel: React.FC<{
 
 /** Full-screen write/paste step (editor + submit). Pair with {@link FileStep} for upload-only. */
 export const PasteCodeStep: React.FC<{
-  ensureProject: () => Promise<ProjectDetailedSchema>;
+  ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>;
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ ensureProject, parentId, onSuccess }) => {
@@ -177,87 +179,92 @@ export const PasteCodeStep: React.FC<{
       return;
     }
 
-    void startPasteCodeUpload(ensureProject, parsed.data, pasteMutation.mutate).catch(() => {});
+    void startPasteCodeUpload(
+      ensureProject,
+      ["manual-file"],
+      parsed.data,
+      pasteMutation.mutate,
+    ).catch(() => {});
   }, [ensureProject, formState.values, pasteMutation, updatePasteFormState]);
 
-  if (pasteMutation.isSuccess) {
-    const { status, analysis_id: analysisId } = pasteMutation.data;
-    if (analysisId && (status === "waiting" || status === "processing" || status === "success")) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Opening analysis…</p>
-        </div>
-      );
-    }
-  }
-
-  if (pasteMutation.isError) {
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-            <XCircle className="size-8 text-destructive" />
-          </div>
-          <h2 className="text-2xl font-bold ">Upload Failed</h2>
-          <p className="text-muted-foreground">
-            There was an error processing your contract. Please try again.
-          </p>
-          <div className="flex gap-4 justify-center mt-6">
-            <Button variant="outline" onClick={() => pasteMutation.reset()}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const pasteData = pasteMutation.data;
+  const showOpeningAnalysis =
+    pasteMutation.isSuccess &&
+    !!pasteData?.analysis_id &&
+    (pasteData.status === "waiting" ||
+      pasteData.status === "processing" ||
+      pasteData.status === "success");
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 overflow-hidden">
-      <header className="space-y-1.5">
+    <>
+      <DialogHeader>
         <div className="flex items-center gap-3">
-          <FileEdit className="size-6 shrink-0 text-emerald-400" aria-hidden />
-          <h2 className="text-2xl font-bold tracking-tight">Write code</h2>
+          <FileEdit className="size-5 shrink-0 text-emerald-400" aria-hidden />
+          <DialogTitle>Write code</DialogTitle>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <DialogDescription>
           Paste or type code in the editor. Submit uploads the current buffer for parsing and
           analysis. Only solidity currently supported.
-        </p>
-      </header>
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+        {showOpeningAnalysis ? (
+          <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Opening analysis…</p>
+          </div>
+        ) : pasteMutation.isError ? (
+          <div className="mx-auto max-w-2xl space-y-8">
+            <div className="space-y-4 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
+                <XCircle className="size-8 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold">Upload Failed</h2>
+              <p className="text-muted-foreground">
+                There was an error processing your contract. Please try again.
+              </p>
+              <div className="mt-6 flex justify-center gap-4">
+                <Button variant="outline" onClick={() => pasteMutation.reset()}>
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-muted/15 p-1 sm:p-2">
+              <PasteCodePanel
+                key={pastePanelKey}
+                content={formState.values.content}
+                onContentChange={(v) => setPasteField("content", v)}
+                error={formState.errors.code}
+                className="min-h-0"
+              />
+            </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-muted/15 p-1 sm:p-2">
-          <PasteCodePanel
-            key={pastePanelKey}
-            content={formState.values.content}
-            onContentChange={(v) => setPasteField("content", v)}
-            error={formState.errors.code}
-            className="min-h-0"
-          />
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full sm:w-auto"
-            disabled={!formState.values.content.trim() || pasteMutation.isPending}
-            onClick={clearPasteContent}
-          >
-            <X className="size-3.5" />
-            Clear
-          </Button>
-          <Button
-            type="button"
-            className="w-full min-w-40 sm:w-auto"
-            disabled={!formState.values.content.trim() || pasteMutation.isPending}
-            onClick={submitPaste}
-          >
-            <span>Submit</span>
-            <ArrowRight className="size-4" />
-          </Button>
-        </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                disabled={!formState.values.content.trim() || pasteMutation.isPending}
+                onClick={clearPasteContent}
+              >
+                <X className="size-3.5" />
+                Clear
+              </Button>
+              <Button
+                type="button"
+                className="w-full min-w-40 sm:w-auto"
+                disabled={!formState.values.content.trim() || pasteMutation.isPending}
+                onClick={submitPaste}
+              >
+                <span>Submit</span>
+                <ArrowRight className="size-4" />
+              </Button>
+            </div>
+          </>
+        )}
       </div>
 
       <style>{`
@@ -270,8 +277,8 @@ export const PasteCodeStep: React.FC<{
         .cm-scroller { overflow: auto !important; }
         .cm-selectionBackground {background: white !important; }
       `}</style>
-    </div>
+    </>
   );
 };
 
-export default PasteCodePanel;
+export default PasteCodeStep;

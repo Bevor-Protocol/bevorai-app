@@ -2,6 +2,7 @@
 
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
+import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
@@ -21,16 +22,17 @@ type RepoUploadVariables = {
 };
 
 const startPublicRepoUpload = async (
-  ensureProject: () => Promise<ProjectDetailedSchema>,
+  ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>,
+  tags: string[],
   data: CreateCodeFromPublicGithubFormValues,
   mutate: (vars: RepoUploadVariables) => void,
 ): Promise<void> => {
-  const project = await ensureProject();
+  const project = await ensureProject(tags);
   mutate({ project, data });
 };
 
 const RepoUrlStep: React.FC<{
-  ensureProject: () => Promise<ProjectDetailedSchema>;
+  ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>;
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ ensureProject, parentId, onSuccess }) => {
@@ -90,7 +92,9 @@ const RepoUrlStep: React.FC<{
       return;
     }
 
-    void startPublicRepoUpload(ensureProject, parsed.data, mutation.mutate).catch(() => {});
+    void startPublicRepoUpload(ensureProject, ["public-repo"], parsed.data, mutation.mutate).catch(
+      () => {},
+    );
   }, [ensureProject, formState.values, mutation, updateFormState]);
 
   const handleSubmit = (e: React.FormEvent): void => {
@@ -98,83 +102,81 @@ const RepoUrlStep: React.FC<{
     submitRepo();
   };
 
-  if (mutation.isSuccess) {
-    const { status, analysis_id: analysisId } = mutation.data;
-    if (analysisId && (status === "waiting" || status === "processing" || status === "success")) {
-      return (
+  const repoData = mutation.data;
+  const showOpeningAnalysis =
+    mutation.isSuccess &&
+    !!repoData?.analysis_id &&
+    (repoData.status === "waiting" ||
+      repoData.status === "processing" ||
+      repoData.status === "success");
+
+  return (
+    <>
+      <DialogHeader>
+        <div className="flex items-center gap-3">
+          <GitCommitHorizontal className="size-5 shrink-0 text-foreground" aria-hidden />
+          <DialogTitle>Public GitHub repository</DialogTitle>
+        </div>
+        <DialogDescription>Enter a public GitHub Solidity repository URL.</DialogDescription>
+      </DialogHeader>
+      {showOpeningAnalysis ? (
         <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Opening analysis…</p>
         </div>
-      );
-    }
-  }
-
-  if (mutation.isError) {
-    return (
-      <div className="mx-auto max-w-2xl space-y-8">
-        <div className="space-y-4 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
-            <XCircle className="size-8 text-destructive" />
-          </div>
-          <h2 className="text-2xl font-bold">Upload Failed</h2>
-          <p className="text-muted-foreground">
-            There was an error processing your contract. Please try again.
-          </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <Button variant="outline" onClick={() => mutation.reset()}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto max-w-5xl space-y-8">
-      <div className="space-y-2 text-left">
-        <div className="flex flex-row items-center justify-start gap-4">
-          <GitCommitHorizontal className="size-6 text-foreground" />
-          <h2 className="text-2xl font-bold">Public Github Repository</h2>
-        </div>
-        <p className="text-muted-foreground">Enter a public github solidity repository</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="url" aria-required>
-              Github Repository
-            </FieldLabel>
-            <div className="flex flex-row flex-wrap gap-4">
-              <Input
-                id="url"
-                name="url"
-                type="text"
-                value={formState.values.url}
-                onChange={(e) => setField("url", e.target.value)}
-                placeholder="https://github.com/..."
-                className="max-w-full grow basis-1/2 font-mono"
-                disabled={mutation.isPending}
-                aria-invalid={!!formState.errors.url}
-              />
-              <Button
-                type="submit"
-                disabled={mutation.isPending || !formState.values.url.trim()}
-                className="min-w-40 grow"
-              >
-                <span>Submit</span>
-                <ArrowRight className="size-4" />
+      ) : mutation.isError ? (
+        <div className="mx-auto max-w-2xl space-y-8">
+          <div className="space-y-4 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
+              <XCircle className="size-8 text-destructive" />
+            </div>
+            <h2 className="text-2xl font-bold">Upload Failed</h2>
+            <p className="text-muted-foreground">
+              There was an error processing your contract. Please try again.
+            </p>
+            <div className="mt-6 flex justify-center gap-4">
+              <Button variant="outline" onClick={() => mutation.reset()}>
+                Try Again
               </Button>
             </div>
-            {formState.errors.url && (
-              <p className="text-sm text-destructive">{formState.errors.url}</p>
-            )}
-          </Field>
-        </FieldGroup>
-      </form>
-    </div>
+          </div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="url" aria-required>
+                Github Repository
+              </FieldLabel>
+              <div className="flex flex-row flex-wrap gap-4">
+                <Input
+                  id="url"
+                  name="url"
+                  type="text"
+                  value={formState.values.url}
+                  onChange={(e) => setField("url", e.target.value)}
+                  placeholder="https://github.com/..."
+                  className="max-w-full grow basis-1/2 font-mono"
+                  disabled={mutation.isPending}
+                  aria-invalid={!!formState.errors.url}
+                />
+                <Button
+                  type="submit"
+                  disabled={mutation.isPending || !formState.values.url.trim()}
+                  className="min-w-40 grow"
+                >
+                  <span>Submit</span>
+                  <ArrowRight className="size-4" />
+                </Button>
+              </div>
+              {formState.errors.url && (
+                <p className="text-sm text-destructive">{formState.errors.url}</p>
+              )}
+            </Field>
+          </FieldGroup>
+        </form>
+      )}
+    </>
   );
 };
 

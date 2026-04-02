@@ -65,18 +65,17 @@ const versionMethods: VersionProps[] = [
     Icon: Code,
     iconColor: "text-orange-400",
     title: "MCP / IDE Integration",
-    description: "Integrate directly with your IDE for seamless development. Requires an API key",
-    route: (teamSlug: string) => `/team/${teamSlug}/settings/api`,
-    badge: "get api key",
+    description:
+      "Create a project for MCP in your editor. You will need a team API key and this project ID.",
+    method: "mcp",
   },
   {
     Icon: GitBranch,
     iconColor: "text-foreground-400",
     title: "Github Connection",
     description:
-      "Automatically scan and analyze your Git repositories. These connections will be scoped to their own project.",
-    route: (teamSlug: string) => `/user/github/manage?teamSlug=${teamSlug}`,
-    badge: "create connection",
+      "Create a project from a GitHub repo you have installed the app on. Manage OAuth and installs from settings anytime.",
+    method: "github",
   },
 ];
 

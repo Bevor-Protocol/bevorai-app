@@ -2,6 +2,7 @@
 
 import { codeActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
+import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
@@ -18,11 +19,12 @@ type FileUploadVariables = {
 };
 
 const startFileCodeUpload = async (
-  ensureProject: () => Promise<ProjectDetailedSchema>,
+  ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>,
+  tags: string[],
   data: UploadCodeFileFormValues,
   mutate: (vars: FileUploadVariables) => void,
 ): Promise<void> => {
-  const project = await ensureProject();
+  const project = await ensureProject(tags);
   mutate({ project, data });
 };
 
@@ -33,7 +35,7 @@ const formatFileSize = (bytes: number): string => {
 };
 
 const FileStep: React.FC<{
-  ensureProject: () => Promise<ProjectDetailedSchema>;
+  ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>;
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ ensureProject, parentId, onSuccess }) => {
@@ -188,130 +190,130 @@ const FileStep: React.FC<{
       return;
     }
 
-    void startFileCodeUpload(ensureProject, parsed.data, uploadMutation.mutate).catch(() => {});
+    void startFileCodeUpload(ensureProject, ["file"], parsed.data, uploadMutation.mutate).catch(
+      () => {},
+    );
   };
 
-  if (uploadMutation.isSuccess) {
-    const { status, analysis_id: analysisId } = uploadMutation.data;
-    if (analysisId && (status === "waiting" || status === "processing" || status === "success")) {
-      return (
-        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Opening analysis…</p>
-        </div>
-      );
-    }
-  }
-
-  if (uploadMutation.isError) {
-    return (
-      <div className="mx-auto max-w-2xl space-y-8">
-        <div className="space-y-4 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
-            <XCircle className="size-8 text-destructive" />
-          </div>
-          <h2 className="text-2xl font-bold">Upload Failed</h2>
-          <p className="text-muted-foreground">
-            There was an error processing your contract. Please try again.
-          </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <Button variant="outline" onClick={() => uploadMutation.reset()}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const uploadData = uploadMutation.data;
+  const showOpeningAnalysis =
+    uploadMutation.isSuccess &&
+    !!uploadData?.analysis_id &&
+    (uploadData.status === "waiting" ||
+      uploadData.status === "processing" ||
+      uploadData.status === "success");
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 overflow-hidden">
-      <header className="space-y-1.5">
+    <>
+      <DialogHeader>
         <div className="flex items-center gap-3">
-          <Upload className="size-6 shrink-0 text-blue-400" aria-hidden />
-          <h2 className="text-2xl font-bold tracking-tight">Upload file</h2>
+          <Upload className="size-5 shrink-0 text-blue-400" aria-hidden />
+          <DialogTitle>Upload file</DialogTitle>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <DialogDescription>
           One contract file at a time (.sol). Drag and drop or choose from disk.
-        </p>
-      </header>
-
-      {!stagedFile ? (
-        <label className="block w-full cursor-pointer">
-          <div
-            className={cn(
-              "relative flex min-h-[min(40vh,320px)] flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-colors",
-              isDragOver
-                ? "border-purple-400 bg-purple-500/10"
-                : "border-neutral-700 hover:border-neutral-600 hover:bg-muted/20",
-            )}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <div className="flex size-14 items-center justify-center rounded-full bg-neutral-800">
-              <Upload className="size-7 text-muted-foreground" aria-hidden />
-            </div>
-            <div className="max-w-md space-y-1 text-center">
-              <p className="text-base font-medium">Choose a file</p>
-              <p className="text-sm text-muted-foreground">
-                Click this area or drop a single .sol file here.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+        {showOpeningAnalysis ? (
+          <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Opening analysis…</p>
+          </div>
+        ) : uploadMutation.isError ? (
+          <div className="mx-auto max-w-2xl space-y-8">
+            <div className="space-y-4 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
+                <XCircle className="size-8 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold">Upload Failed</h2>
+              <p className="text-muted-foreground">
+                There was an error processing your contract. Please try again.
               </p>
-            </div>
-            <Input
-              type="file"
-              accept=".sol"
-              onChange={handleFileInput}
-              className="absolute inset-0 cursor-pointer opacity-0"
-              id="file-upload"
-            />
-          </div>
-        </label>
-      ) : (
-        <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-muted/15 p-5 sm:p-6">
-          <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-background/80">
-              <FileIcon className="size-5 text-muted-foreground" aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-sm font-medium text-foreground">Ready to upload</p>
-              <p className="truncate font-mono text-sm text-foreground" title={stagedFile.name}>
-                {stagedFile.name}
-              </p>
-              <p className="text-xs text-muted-foreground">{formatFileSize(stagedFile.size)}</p>
+              <div className="mt-6 flex justify-center gap-4">
+                <Button variant="outline" onClick={() => uploadMutation.reset()}>
+                  Try Again
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={clearUploadContent}
-              disabled={uploadMutation.isPending}
+        ) : !stagedFile ? (
+          <label className="block w-full cursor-pointer">
+            <div
+              className={cn(
+                "relative flex min-h-[min(40vh,320px)] flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-colors",
+                isDragOver
+                  ? "border-purple-400 bg-purple-500/10"
+                  : "border-neutral-700 hover:border-neutral-600 hover:bg-muted/20",
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
-              <X className="size-3.5" />
-              Remove file
-            </Button>
-            <Button
-              type="button"
-              className="w-full min-w-40 sm:w-auto"
-              disabled={uploadMutation.isPending}
-              onClick={handleUploadSubmit}
-            >
-              <span>Submit</span>
-              <ArrowRight className="size-4" />
-            </Button>
+              <div className="flex size-14 items-center justify-center rounded-full bg-neutral-800">
+                <Upload className="size-7 text-muted-foreground" aria-hidden />
+              </div>
+              <div className="max-w-md space-y-1 text-center">
+                <p className="text-base font-medium">Choose a file</p>
+                <p className="text-sm text-muted-foreground">
+                  Click this area or drop a single .sol file here.
+                </p>
+              </div>
+              <Input
+                type="file"
+                accept=".sol"
+                onChange={handleFileInput}
+                className="absolute inset-0 cursor-pointer opacity-0"
+                id="file-upload"
+              />
+            </div>
+          </label>
+        ) : (
+          <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-muted/15 p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-background/80">
+                <FileIcon className="size-5 text-muted-foreground" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="text-sm font-medium text-foreground">Ready to upload</p>
+                <p className="truncate font-mono text-sm text-foreground" title={stagedFile.name}>
+                  {stagedFile.name}
+                </p>
+                <p className="text-xs text-muted-foreground">{formatFileSize(stagedFile.size)}</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={clearUploadContent}
+                disabled={uploadMutation.isPending}
+              >
+                <X className="size-3.5" />
+                Remove file
+              </Button>
+              <Button
+                type="button"
+                className="w-full min-w-40 sm:w-auto"
+                disabled={uploadMutation.isPending}
+                onClick={handleUploadSubmit}
+              >
+                <span>Submit</span>
+                <ArrowRight className="size-4" />
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {uploadFormState.errors.file && (
-        <div className="flex items-start gap-2 text-sm text-destructive">
-          <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <span>{uploadFormState.errors.file}</span>
-        </div>
-      )}
-    </div>
+        {!showOpeningAnalysis && !uploadMutation.isError && uploadFormState.errors.file && (
+          <div className="flex shrink-0 items-start gap-2 text-sm text-destructive">
+            <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>{uploadFormState.errors.file}</span>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
