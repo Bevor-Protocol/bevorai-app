@@ -1,7 +1,8 @@
 "use client";
 
 import { analysisActions, chatActions } from "@/actions/bevor";
-import { DraftSchema, FindingSchema } from "@/types/api/responses/security";
+import { useChatPanelPreferences } from "@/providers/localStore";
+import { DraftFindingSchema, FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
 import {
@@ -48,7 +49,7 @@ interface ChatContextValue {
   analysisNodeId: string | null;
   teamSlug: string;
   projectSlug: string;
-  draft?: DraftSchema;
+  findings?: DraftFindingSchema[];
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
@@ -86,31 +87,29 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   analysisNodeId = null,
 }) => {
   const queryClient = useQueryClient();
+  const { prefs: resolvedPanel, setPrefs: setPanelPrefs } = useChatPanelPreferences();
 
   const [selectedChatId, setSelectedChatId] = useState<string | null>(initialChatId);
   const [attributes, setAttributes] = useState<ChatAttribute[]>([]);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [isMaximized, setIsMaximized] = useState(false);
   const [showSettings, setShowSettings] = useState(!initialChatId);
 
   const draftQuery = useQuery({
-    queryKey: generateQueryKey.analysisDraft(analysisNodeId ?? ""),
+    queryKey: generateQueryKey.analysisFindings(analysisNodeId ?? ""),
     queryFn: () =>
-      analysisActions.getDraft(teamSlug, analysisNodeId!).then((r) => {
+      analysisActions.getAnalysisFindings(teamSlug, analysisNodeId!).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
     enabled: chatType === "analysis" && !!analysisNodeId,
-    refetchInterval: 5000,
   });
 
   const toggleExpanded = useCallback(() => {
-    setIsExpanded((prev) => !prev);
-  }, []);
+    setPanelPrefs({ ...resolvedPanel, isExpanded: !resolvedPanel.isExpanded });
+  }, [resolvedPanel, setPanelPrefs]);
 
   const toggleMaximized = useCallback(() => {
-    setIsMaximized((prev) => !prev);
-  }, []);
+    setPanelPrefs({ ...resolvedPanel, isMaximized: !resolvedPanel.isMaximized });
+  }, [resolvedPanel, setPanelPrefs]);
 
   const createChatMutation = useMutation({
     mutationFn: async () => {
@@ -139,7 +138,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
         queryClient.invalidateQueries({ queryKey });
       });
       setSelectedChatId(id);
-      setIsExpanded(true);
+      setPanelPrefs({
+        isExpanded: true,
+        isMaximized: resolvedPanel.isMaximized,
+      });
       setShowSettings(false);
     },
     onError: (err) => {
@@ -152,12 +154,15 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     const down = (e: KeyboardEvent): void => {
       if (e.key === "l" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setIsExpanded((prev) => !prev);
+        setPanelPrefs({
+          ...resolvedPanel,
+          isExpanded: !resolvedPanel.isExpanded,
+        });
       }
     };
     document.addEventListener("keydown", down);
     return (): void => document.removeEventListener("keydown", down);
-  }, []);
+  }, [resolvedPanel, setPanelPrefs]);
 
   const addAttribute = useCallback((attribute: ChatAttribute) => {
     setAttributes((prev) => {
@@ -198,9 +203,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   }, []);
 
   const value: ChatContextValue = {
-    isExpanded,
+    isExpanded: resolvedPanel.isExpanded,
     toggleExpanded,
-    isMaximized,
+    isMaximized: resolvedPanel.isMaximized,
     toggleMaximized,
     selectedChatId,
     setSelectedChatId,
@@ -219,7 +224,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     projectSlug,
     showSettings,
     setShowSettings,
-    draft: draftQuery.data,
+    findings: draftQuery.data,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

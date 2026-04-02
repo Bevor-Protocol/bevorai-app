@@ -5,17 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
 import type { ProjectDetailedSchema } from "@/types/api/responses/business";
-import type { CreateCodeResponse } from "@/types/api/responses/graph";
 import { PasteCodeFileFormValues, pasteCodeFileSchema } from "@/utils/schema";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { solidity } from "@replit/codemirror-lang-solidity";
-import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { githubDark } from "@uiw/codemirror-theme-github";
 import { basicSetup } from "codemirror";
-import { ArrowRight, CheckCircle, FileEdit, Loader2, X, XCircle } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { ArrowRight, FileEdit, Loader2, X, XCircle } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -86,13 +83,18 @@ const PasteCodePanel: React.FC<{
   }, []);
 
   return (
-    <div className={cn(className)}>
-      <div className="border border-border rounded-lg min-h-20 overflow-scroll">
-        <div ref={pasteEditorRef} role="region" aria-label="Solidity code editor" />
+    <div className={cn("flex min-h-0 flex-1 flex-col gap-3", className)}>
+      <div className="flex min-h-[min(40vh,280px)] flex-1 flex-col overflow-hidden rounded-md">
+        <div
+          ref={pasteEditorRef}
+          className="h-full min-h-[240px]"
+          role="region"
+          aria-label="Solidity code editor"
+        />
       </div>
       {error && (
-        <div className="flex items-center space-x-2 text-destructive text-sm mt-4">
-          <XCircle className="size-4" />
+        <div className="flex items-start gap-2 text-sm text-destructive">
+          <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>{error}</span>
         </div>
       )}
@@ -106,7 +108,6 @@ export const PasteCodeStep: React.FC<{
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ ensureProject, parentId, onSuccess }) => {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [pastePanelKey, setPastePanelKey] = useState(0);
   const pasteToastId = useRef<string | number>(undefined);
@@ -122,16 +123,11 @@ export const PasteCodeStep: React.FC<{
   } = useFormReducer<PasteCodeFileFormValues>(pasteInitialState);
 
   const pasteMutation = useMutation({
-    mutationFn: async ({
-      project,
-      data,
-    }: PasteUploadVariables): Promise<
-      CreateCodeResponse & { toInvalidate: QueryKey[]; project: ProjectDetailedSchema }
-    > => {
-      const r = await codeActions.contractUploadPaste(project.team.slug, project.id, data);
-      if (!r.ok) throw r;
-      return { ...r.data, project };
-    },
+    mutationFn: async ({ project, data }: PasteUploadVariables) =>
+      codeActions.contractUploadPaste(project.team.slug, project.id, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onMutate: () => {
       updatePasteFormState({ type: "SET_ERRORS", errors: {} });
       pasteToastId.current = toast.loading("Uploading and parsing code...");
@@ -143,26 +139,14 @@ export const PasteCodeStep: React.FC<{
         errors: { code: "Something went wrong" },
       });
     },
-    onSuccess: ({ id, status, toInvalidate, project, analysis_id }) => {
+    onSuccess: ({ analysis_id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
       toast.success("Successfully uploaded code", {
         id: pasteToastId.current,
       });
-
-      if (status === "waiting" || status === "processing" || status === "success") {
-        onSuccess?.(id);
-      }
-
-      if (analysis_id) {
-        const base = `/team/${project.team.slug}/${project.slug}/analyses/${analysis_id}`;
-        if (status === "waiting" || status === "processing") {
-          router.push(`${base}/processing`);
-        } else if (status === "success") {
-          router.push(base);
-        }
-      }
+      if (analysis_id) onSuccess?.(analysis_id);
     },
   });
 
@@ -208,30 +192,6 @@ export const PasteCodeStep: React.FC<{
     }
   }
 
-  if (
-    pasteMutation.isSuccess &&
-    pasteMutation.data.status === "success" &&
-    !pasteMutation.data.analysis_id
-  ) {
-    const { project: proj, id: codeId } = pasteMutation.data;
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-            <CheckCircle className="size-8 text-green-400" />
-          </div>
-          <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
-          <p className="text-muted-foreground">
-            Your contract has been uploaded and is ready for analysis.
-          </p>
-          <Button asChild className="mt-4">
-            <Link href={`/team/${proj.team.slug}/${proj.slug}/codes/${codeId}`}>View Version</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   if (pasteMutation.isError) {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
@@ -254,43 +214,51 @@ export const PasteCodeStep: React.FC<{
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 h-full flex flex-col overflow-hidden w-full">
-      <div className="flex flex-row justify-between items-end">
-        <div className="text-left space-y-2">
-          <div className="flex flex-row gap-4 justify-start items-center">
-            <FileEdit className="size-6 text-emerald-400" />
-            <h2 className="text-2xl font-bold ">Write contract</h2>
-          </div>
-          <p className="text-muted-foreground">Paste or type Solidity in the editor</p>
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 overflow-hidden">
+      <header className="space-y-1.5">
+        <div className="flex items-center gap-3">
+          <FileEdit className="size-6 shrink-0 text-emerald-400" aria-hidden />
+          <h2 className="text-2xl font-bold tracking-tight">Write code</h2>
         </div>
-        <Button
-          type="submit"
-          disabled={!formState.values.content.trim() || pasteMutation.isPending}
-          className="min-w-40"
-          onClick={submitPaste}
-        >
-          <span>Submit</span>
-          <ArrowRight className="size-4" />
-        </Button>
-      </div>
+        <p className="text-sm text-muted-foreground">
+          Paste or type code in the editor. Submit uploads the current buffer for parsing and
+          analysis. Only solidity currently supported.
+        </p>
+      </header>
 
-      <div className="flex flex-row justify-end items-center">
-        <Button
-          variant="outline"
-          disabled={!formState.values.content.trim()}
-          onClick={clearPasteContent}
-        >
-          <X className="size-3" />
-          Clear
-        </Button>
-      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-muted/15 p-1 sm:p-2">
+          <PasteCodePanel
+            key={pastePanelKey}
+            content={formState.values.content}
+            onContentChange={(v) => setPasteField("content", v)}
+            error={formState.errors.code}
+            className="min-h-0"
+          />
+        </div>
 
-      <PasteCodePanel
-        key={pastePanelKey}
-        content={formState.values.content}
-        onContentChange={(v) => setPasteField("content", v)}
-        error={formState.errors.code}
-      />
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
+            disabled={!formState.values.content.trim() || pasteMutation.isPending}
+            onClick={clearPasteContent}
+          >
+            <X className="size-3.5" />
+            Clear
+          </Button>
+          <Button
+            type="button"
+            className="w-full min-w-40 sm:w-auto"
+            disabled={!formState.values.content.trim() || pasteMutation.isPending}
+            onClick={submitPaste}
+          >
+            <span>Submit</span>
+            <ArrowRight className="size-4" />
+          </Button>
+        </div>
+      </div>
 
       <style>{`
         .cm-editor { background-color: black !important }

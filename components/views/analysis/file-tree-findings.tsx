@@ -432,12 +432,18 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
     });
   }, [selectedFindingId, findings, nodesQuery.data, treeQuery.data]);
 
-  if (treeQuery.isLoading || nodesQuery.isLoading) {
+  if (treeQuery.isLoading) {
     return (
       <div className="shrink-0 h-full flex flex-col border-r border-border" style={{ width: 264 }}>
         <div className="px-2 h-subheader flex items-center gap-2 border-b border-border shrink-0">
           <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Files</p>
-          <NodeSearch teamSlug={teamSlug} codeId={codeId} className="flex-1 h-8 text-xs" findings={allFindingsWithNodes} onFindingSelect={onFindingClick} />
+          <NodeSearch
+            teamSlug={teamSlug}
+            codeId={codeId}
+            className="flex-1 h-8 text-xs"
+            findings={allFindingsWithNodes}
+            onFindingSelect={onFindingClick}
+          />
         </div>
         <div className="p-3 space-y-1.5">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -453,10 +459,17 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
       className="shrink-0 h-full flex flex-col border-r border-border bg-background"
       style={{ width: 264 }}
     >
-      {/* Header */}
       <div className="px-2 h-subheader flex items-center gap-2 border-b border-border shrink-0">
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest shrink-0">Files</p>
-        <NodeSearch teamSlug={teamSlug} codeId={codeId} className="flex-1 h-8 text-xs" findings={allFindingsWithNodes} onFindingSelect={onFindingClick} />
+        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest shrink-0">
+          Files
+        </p>
+        <NodeSearch
+          teamSlug={teamSlug}
+          codeId={codeId}
+          className="flex-1 h-8 text-xs"
+          findings={allFindingsWithNodes}
+          onFindingSelect={onFindingClick}
+        />
       </div>
 
       <ScrollArea className="flex-1 min-h-0">

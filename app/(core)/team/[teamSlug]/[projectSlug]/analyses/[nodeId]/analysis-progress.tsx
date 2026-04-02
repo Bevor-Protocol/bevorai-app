@@ -5,8 +5,6 @@ import AnalysisStatusDisplay, {
   ChecklistGlyph,
   type AnalysisWithScopesAndFindings,
 } from "@/app/(core)/team/[teamSlug]/[projectSlug]/codes/[codeId]/analyses/new/status";
-import Container from "@/components/container";
-import ProjectSubnav from "@/components/subnav/project";
 import { useSSE } from "@/providers/sse";
 import type { CodeVersionStatus } from "@/types/api/responses/graph";
 import { generateQueryKey } from "@/utils/constants";
@@ -30,13 +28,13 @@ const codeStatusLine = (s: CodeVersionStatus): string => {
   }
 };
 
-interface ProcessingClientProps {
+export interface AnalysisProgressProps {
   teamSlug: string;
   projectSlug: string;
   analysisId: string;
 }
 
-const ProcessingClient: React.FC<ProcessingClientProps> = ({
+const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
   teamSlug,
   projectSlug,
   analysisId,
@@ -52,10 +50,6 @@ const ProcessingClient: React.FC<ProcessingClientProps> = ({
       return r.data;
     },
     enabled: !!teamSlug && !!analysisId,
-    refetchInterval: (query) => {
-      const st = query.state.data?.status;
-      return st === "waiting" || st === "processing" ? 4000 : false;
-    },
   });
 
   const { data: scopes } = useQuery({
@@ -88,10 +82,6 @@ const ProcessingClient: React.FC<ProcessingClientProps> = ({
       return r.data;
     },
     enabled: !!codeVersionId,
-    refetchInterval: (query) => {
-      const st = query.state.data?.status;
-      return st === "waiting" || st === "processing" ? 4000 : false;
-    },
   });
 
   const analysisForStatus = useMemo((): AnalysisWithScopesAndFindings | null => {
@@ -113,29 +103,33 @@ const ProcessingClient: React.FC<ProcessingClientProps> = ({
 
   useEffect(() => {
     if (!codeVersionId) return;
-    const off = registerCallback("code", "team", codeVersionId, (payload) => {
-      const next = payload.data.status as CodeVersionStatus;
-      setCodeStatus(next);
+    const off = registerCallback("code.status", codeVersionId, (payload) => {
+      if (payload.type !== "code.status") return;
+      setCodeStatus(payload.data.status);
       void queryClient.invalidateQueries({ queryKey: generateQueryKey.code(codeVersionId) });
     });
     return off;
   }, [codeVersionId, queryClient, registerCallback]);
 
   useEffect(() => {
-    const off = registerCallback("analysis", "team", analysisId, () => {
+    const offStatus = registerCallback("analysis.status", analysisId, () => {
       invalidateAnalysisBundle();
     });
-    return off;
+    const offScope = registerCallback("analysis.scope", analysisId, () => {
+      invalidateAnalysisBundle();
+    });
+    return (): void => {
+      offStatus();
+      offScope();
+    };
   }, [analysisId, invalidateAnalysisBundle, registerCallback]);
 
   if (!analysis || !code || !analysisForStatus) {
     return (
-      <Container subnav={<ProjectSubnav />}>
-        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        </div>
-      </Container>
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      </div>
     );
   }
 
@@ -145,50 +139,46 @@ const ProcessingClient: React.FC<ProcessingClientProps> = ({
   const codeBusy = status === "waiting" || status === "processing";
 
   return (
-    <Container subnav={<ProjectSubnav />}>
-      <div className="max-w-lg w-full mx-auto flex flex-col gap-10 py-8 pb-20 min-h-0">
-        <header>
-          <h1 className="text-lg font-medium tracking-tight text-foreground">Processing</h1>
-          <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">
-            Progress updates as your code is indexed, then as each scope is analyzed.
-          </p>
-        </header>
+    <div className="mx-auto flex min-h-0 w-full max-w-lg flex-col gap-10 pb-20 pt-2">
+      <header>
+        <h1 className="text-lg font-medium tracking-tight text-foreground">Processing</h1>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+          Progress updates as your code is indexed, then as each scope is analyzed.
+        </p>
+      </header>
 
-        <div className="flex flex-col gap-10">
-          <div className="flex gap-3.5">
-            <ChecklistGlyph done={codeDone} failed={codeFailed} busy={codeBusy} />
-            <div className="flex-1 min-w-0 pt-0.5">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-h-5">
-                <span className="text-[15px] font-medium leading-none tracking-[-0.01em]">
-                  Code
-                </span>
-                <span className="text-muted-foreground/50">·</span>
-                <Link
-                  href={`/team/${teamSlug}/${projectSlug}/codes/${codeVersionId}`}
-                  className="text-[13px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                >
-                  Open version
-                </Link>
-              </div>
-              <p className="text-[13px] text-muted-foreground mt-1.5 leading-snug">
-                {codeStatusLine(status)}
-              </p>
+      <div className="flex flex-col gap-10">
+        <div className="flex gap-3.5">
+          <ChecklistGlyph done={codeDone} failed={codeFailed} busy={codeBusy} />
+          <div className="min-w-0 flex-1 pt-0.5">
+            <div className="flex min-h-5 flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-[15px] font-medium leading-none tracking-[-0.01em]">Code</span>
+              <span className="text-muted-foreground/50">·</span>
+              <Link
+                href={`/team/${teamSlug}/${projectSlug}/codes/${codeVersionId}`}
+                className="text-[13px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Open version
+              </Link>
             </div>
-          </div>
-
-          <div>
-            <AnalysisStatusDisplay
-              analysis={analysisForStatus}
-              teamSlug={teamSlug}
-              projectSlug={projectSlug}
-              toastRefId={undefined}
-              checklist
-            />
+            <p className="mt-1.5 text-[13px] leading-snug text-muted-foreground">
+              {codeStatusLine(status)}
+            </p>
           </div>
         </div>
+
+        <div>
+          <AnalysisStatusDisplay
+            analysis={analysisForStatus}
+            teamSlug={teamSlug}
+            projectSlug={projectSlug}
+            toastRefId={undefined}
+            checklist
+          />
+        </div>
       </div>
-    </Container>
+    </div>
   );
 };
 
-export default ProcessingClient;
+export default AnalysisProgress;

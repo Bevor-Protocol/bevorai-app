@@ -8,7 +8,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDateShort } from "@/utils/helpers";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   Check,
@@ -68,7 +68,7 @@ const AnalysisMetadata: React.FC<{
 }> = ({ teamSlug, projectSlug, nodeId, allowActions = false, isOwner = false }) => {
   const { isCopied, copy } = useCopyToClipboard();
 
-  const { data: version } = useSuspenseQuery({
+  const { data: version, isPending } = useQuery({
     queryKey: generateQueryKey.analysis(nodeId),
     queryFn: async () =>
       analysisActions.getAnalysis(teamSlug, nodeId).then((r) => {
@@ -76,6 +76,14 @@ const AnalysisMetadata: React.FC<{
         return r.data;
       }),
   });
+
+  if (isPending || !version) {
+    return (
+      <div className="pt-3 pb-6" aria-busy="true" aria-label="Loading analysis details">
+        <div className="h-10 max-w-2xl animate-pulse rounded-md bg-muted/50" />
+      </div>
+    );
+  }
 
   return (
     <div className="pt-3 pb-6">
@@ -168,10 +176,7 @@ const AnalysisMetadata: React.FC<{
                     </p>
                     <Button size="sm" variant="outline" className="w-full mt-1" asChild>
                       <Link
-                        href={{
-                          pathname: `/team/${teamSlug}/${projectSlug}/analyses/new`,
-                          query: { parentVersionId: nodeId },
-                        }}
+                        href={`/team/${teamSlug}/${projectSlug}/analyses/new?parentVersionId=${encodeURIComponent(nodeId)}`}
                       >
                         Rerun Analysis
                       </Link>

@@ -5,17 +5,29 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
-import { useSSE } from "@/providers/sse";
 import type { ProjectDetailedSchema } from "@/types/api/responses/business";
 import {
   CreateCodeFromPublicGithubFormValues,
   createCodeFromPublicGithubSchema,
 } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, CheckCircle, GitCommitHorizontal, XCircle } from "lucide-react";
-import Link from "next/link";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowRight, GitCommitHorizontal, Loader2, XCircle } from "lucide-react";
+import React, { useCallback, useRef } from "react";
 import { toast } from "sonner";
+
+type RepoUploadVariables = {
+  project: ProjectDetailedSchema;
+  data: CreateCodeFromPublicGithubFormValues;
+};
+
+const startPublicRepoUpload = async (
+  ensureProject: () => Promise<ProjectDetailedSchema>,
+  data: CreateCodeFromPublicGithubFormValues,
+  mutate: (vars: RepoUploadVariables) => void,
+): Promise<void> => {
+  const project = await ensureProject();
+  mutate({ project, data });
+};
 
 const RepoUrlStep: React.FC<{
   ensureProject: () => Promise<ProjectDetailedSchema>;
@@ -23,13 +35,6 @@ const RepoUrlStep: React.FC<{
   onSuccess?: (id: string) => void;
 }> = ({ ensureProject, parentId, onSuccess }) => {
   const queryClient = useQueryClient();
-  const { registerCallback } = useSSE();
-  const sseToastId = useRef<string | number | undefined>(undefined);
-  const unregisterRef = useRef<() => void | undefined>(undefined);
-  const [processingStatus, setProcessingStatus] = useState<
-    "waiting" | "processing" | "success" | "failed" | null
-  >(null);
-  const [createdCodeId, setCreatedCodeId] = useState<string | null>(null);
 
   const initialState: CreateCodeFromPublicGithubFormValues = {
     url: "",
@@ -40,105 +45,35 @@ const RepoUrlStep: React.FC<{
 
   const toastId = useRef<string | number>(undefined);
 
-  const handleSuccess = useCallback(
-    (id: string) => {
-      setCreatedCodeId(id);
-      unregisterRef.current = registerCallback("code", "team", id, (payload) => {
-        if (payload.data.status === "waiting") {
-          setProcessingStatus("waiting");
-          toast.loading("Processing code version...", {
-            id: sseToastId.current,
-          });
-        } else if (payload.data.status === "processing") {
-          setProcessingStatus("processing");
-          toast.loading("Processing code...", {
-            id: sseToastId.current,
-          });
-        } else if (payload.data.status === "success") {
-          setProcessingStatus("success");
-          toast.success("Code version processed successfully", {
-            id: sseToastId.current,
-          });
-          sseToastId.current = undefined;
-        } else if (payload.data.status === "failed") {
-          setProcessingStatus("failed");
-          toast.error("Processing failed", {
-            id: sseToastId.current,
-          });
-          sseToastId.current = undefined;
-        } else {
-          toast.dismiss(sseToastId.current);
-          sseToastId.current = undefined;
-        }
-      });
-    },
-    [registerCallback],
-  );
-
-  useEffect(() => {
-    return (): void => {
-      if (sseToastId.current) {
-        toast.dismiss(sseToastId.current);
-      }
-      if (unregisterRef.current) {
-        unregisterRef.current();
-      }
-    };
-  }, []);
-
   const mutation = useMutation({
-    mutationFn: async (data: CreateCodeFromPublicGithubFormValues) => {
-      const project = await ensureProject();
-      const r = await codeActions.contractUploadPublicRepo(project.team.slug, project.id, data);
-      if (!r.ok) throw r;
-      return { ...r.data, project };
-    },
+    mutationFn: async ({ project, data }: RepoUploadVariables) =>
+      codeActions.contractUploadPublicRepo(project.team.slug, project.id, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onMutate: () => {
       updateFormState({ type: "SET_ERRORS", errors: {} });
       toastId.current = toast.loading("Uploading code...");
     },
     onError: () => {
       toast.dismiss(toastId.current);
-      setProcessingStatus(null);
-      setCreatedCodeId(null);
       updateFormState({
         type: "SET_ERRORS",
         errors: { url: "Something went wrong" },
       });
     },
-    onSuccess: ({ id, status, toInvalidate }) => {
+    onSuccess: ({ analysis_id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
-      setProcessingStatus("waiting");
-      sseToastId.current = toast.loading("Code version created. Processing in background...", {
+      toast.success("Successfully uploaded code", {
         id: toastId.current,
       });
-
-      onSuccess?.(id);
-      handleSuccess(id);
-      if (status === "waiting") {
-        setProcessingStatus("waiting");
-        toast.loading("Processing code version...", {
-          id: sseToastId.current,
-        });
-      } else if (status === "processing") {
-        setProcessingStatus("processing");
-        toast.loading("Processing code...", {
-          id: sseToastId.current,
-        });
-      } else if (status === "success") {
-        setProcessingStatus("success");
-        toast.success("Code version processed successfully", {
-          id: sseToastId.current,
-        });
-        sseToastId.current = undefined;
-      }
+      if (analysis_id) onSuccess?.(analysis_id);
     },
   });
 
-  const handleSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
+  const submitRepo = useCallback(() => {
     updateFormState({ type: "SET_ERRORS", errors: {} });
 
     const parsed = createCodeFromPublicGithubSchema.safeParse(formState.values);
@@ -154,111 +89,39 @@ const RepoUrlStep: React.FC<{
       updateFormState({ type: "SET_ERRORS", errors: fieldErrors });
       return;
     }
-    mutation.mutate(parsed.data);
+
+    void startPublicRepoUpload(ensureProject, parsed.data, mutation.mutate).catch(() => {});
+  }, [ensureProject, formState.values, mutation, updateFormState]);
+
+  const handleSubmit = (e: React.FormEvent): void => {
+    e.preventDefault();
+    submitRepo();
   };
 
-  if (processingStatus === "success" && createdCodeId && mutation.data?.project) {
-    const proj = mutation.data.project;
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-            <CheckCircle className="size-8 text-green-400" />
-          </div>
-          <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
-          <p className="text-muted-foreground">
-            Your contract has been uploaded and is ready for analysis.
-          </p>
-          <Button asChild className="mt-4">
-            <Link href={`/team/${proj.team.slug}/${proj.slug}/codes/${createdCodeId}`}>
-              View Version
-            </Link>
-          </Button>
+  if (mutation.isSuccess) {
+    const { status, analysis_id: analysisId } = mutation.data;
+    if (analysisId && (status === "waiting" || status === "processing" || status === "success")) {
+      return (
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Opening analysis…</p>
         </div>
-      </div>
-    );
-  }
-
-  if (processingStatus === "failed" && createdCodeId && mutation.data?.project) {
-    const proj = mutation.data.project;
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-            <XCircle className="size-8 text-destructive" />
-          </div>
-          <h2 className="text-2xl font-bold">Processing Failed</h2>
-          <p className="text-muted-foreground">
-            The code version was created but processing failed. You can still view it or try
-            creating another version.
-          </p>
-          <div className="flex gap-4 justify-center mt-6">
-            <Button asChild variant="outline">
-              <Link href={`/team/${proj.team.slug}/${proj.slug}/codes/${createdCodeId}`}>
-                View Version
-              </Link>
-            </Button>
-            <Button
-              onClick={() => {
-                mutation.reset();
-                setProcessingStatus(null);
-                setCreatedCodeId(null);
-                updateFormState({ type: "RESET", initialValues: initialState });
-              }}
-            >
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (processingStatus && createdCodeId && mutation.data?.project) {
-    const proj = mutation.data.project;
-    const statusText =
-      processingStatus === "waiting"
-        ? "Waiting to process..."
-        : processingStatus === "processing"
-          ? "Processing code..."
-          : "Processing...";
-
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto">
-            <div className="size-8 rounded-full bg-blue-400 animate-pulse" />
-          </div>
-          <h2 className="text-2xl font-bold">Processing Code Version</h2>
-          <p className="text-muted-foreground">{statusText}</p>
-          <p className="text-sm text-muted-foreground">
-            This may take a few moments. You can view the version now, but it may not be fully
-            processed yet.
-          </p>
-          <div className="flex gap-4 justify-center mt-6">
-            <Button asChild variant="outline">
-              <Link href={`/team/${proj.team.slug}/${proj.slug}/codes/${createdCodeId}`}>
-                View Version
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+      );
+    }
   }
 
   if (mutation.isError) {
     return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
+      <div className="mx-auto max-w-2xl space-y-8">
+        <div className="space-y-4 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
             <XCircle className="size-8 text-destructive" />
           </div>
-          <h2 className="text-2xl font-bold ">Upload Failed</h2>
+          <h2 className="text-2xl font-bold">Upload Failed</h2>
           <p className="text-muted-foreground">
             There was an error processing your contract. Please try again.
           </p>
-          <div className="flex gap-4 justify-center mt-6">
+          <div className="mt-6 flex justify-center gap-4">
             <Button variant="outline" onClick={() => mutation.reset()}>
               Try Again
             </Button>
@@ -269,11 +132,11 @@ const RepoUrlStep: React.FC<{
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      <div className="text-left space-y-2">
-        <div className="flex flex-row gap-4 justify-start items-center">
+    <div className="mx-auto max-w-5xl space-y-8">
+      <div className="space-y-2 text-left">
+        <div className="flex flex-row items-center justify-start gap-4">
           <GitCommitHorizontal className="size-6 text-foreground" />
-          <h2 className="text-2xl font-bold ">Public Github Repository</h2>
+          <h2 className="text-2xl font-bold">Public Github Repository</h2>
         </div>
         <p className="text-muted-foreground">Enter a public github solidity repository</p>
       </div>
@@ -284,7 +147,7 @@ const RepoUrlStep: React.FC<{
             <FieldLabel htmlFor="url" aria-required>
               Github Repository
             </FieldLabel>
-            <div className="flex flex-row gap-4 flex-wrap">
+            <div className="flex flex-row flex-wrap gap-4">
               <Input
                 id="url"
                 name="url"
@@ -292,7 +155,7 @@ const RepoUrlStep: React.FC<{
                 value={formState.values.url}
                 onChange={(e) => setField("url", e.target.value)}
                 placeholder="https://github.com/..."
-                className="font-mono grow basis-1/2"
+                className="max-w-full grow basis-1/2 font-mono"
                 disabled={mutation.isPending}
                 aria-invalid={!!formState.errors.url}
               />

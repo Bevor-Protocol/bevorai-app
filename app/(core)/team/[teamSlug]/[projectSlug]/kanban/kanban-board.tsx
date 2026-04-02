@@ -3,8 +3,9 @@
 import { analysisActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
-import { FindingSchema, FindingStatusEnum } from "@/types/api/responses/security";
+import { FindingStatusEnum, KanbanFindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -24,10 +25,10 @@ import { toast } from "sonner";
 const severityOrder = ["critical", "high", "medium", "low"];
 
 const severityBadgeClass: Record<string, string> = {
-  critical: "border-0 bg-red-500/10 text-red-600 dark:text-red-400",
-  high: "border-0 bg-orange-500/10 text-orange-600 dark:text-orange-400",
-  medium: "border-0 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
-  low: "border-0 bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  critical: "border-0 bg-red-500/10 text-red-400",
+  high: "border-0 bg-orange-500/10 text-orange-400",
+  medium: "border-0 bg-yellow-500/10 text-yellow-400",
+  low: "border-0 bg-blue-500/10 text-blue-400",
 };
 
 const formatFindingType = (type: string): string =>
@@ -94,7 +95,7 @@ const readPayload = (e: DragEvent): KanbanDragPayload | null => {
 };
 
 const KanbanCard: FC<{
-  finding: FindingSchema;
+  finding: KanbanFindingSchema;
   teamSlug: string;
   projectSlug: string;
   canDrag: boolean;
@@ -137,8 +138,8 @@ const KanbanCard: FC<{
       }}
       onDragEnd={onCardDragEnd}
       className={cn(
-        "rounded-lg bg-background/90 p-3 shadow-sm transition-[opacity,box-shadow,background-color]",
-        draggable && "cursor-grab hover:bg-muted/70 active:cursor-grabbing",
+        "rounded-lg border border-border/35 bg-transparent p-3 transition-[opacity,border-color]",
+        draggable && "cursor-grab hover:border-border/55 active:cursor-grabbing",
         !canDrag && "cursor-default",
         isDragging && "opacity-50",
         isUpdating && "opacity-70",
@@ -182,9 +183,15 @@ const KanbanCard: FC<{
             </Badge>
             <span className="text-xs text-muted-foreground">{formatFindingType(finding.type)}</span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Analysis <span className="font-mono">{finding.analysis_id.slice(0, 8)}</span>
-          </p>
+          <div className="flex justify-between">
+            <p className="text-xs text-muted-foreground">
+              Analysis <span className="font-mono">{finding.analysis_id.slice(0, 8)}</span>
+            </p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Icon size="sm" seed={finding.user.id} />
+              <span>{finding.user.username}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -196,7 +203,7 @@ const KanbanColumn: FC<{
   title: string;
   description: string;
   icon: ComponentType<{ className?: string }>;
-  findings: FindingSchema[];
+  findings: KanbanFindingSchema[];
   teamSlug: string;
   projectSlug: string;
   currentUserId: string;
@@ -229,8 +236,8 @@ const KanbanColumn: FC<{
   <div
     data-kanban-column={status}
     className={cn(
-      "flex min-h-[min(70vh,640px)] min-w-[272px] flex-1 flex-col rounded-xl bg-muted/25 transition-[box-shadow,background-color]",
-      isDropTarget && "bg-primary/6 ring-1 ring-inset ring-primary/25",
+      "flex min-h-[min(70vh,640px)] min-w-[272px] flex-1 flex-col rounded-xl transition-[background-color]",
+      isDropTarget && "bg-primary/8",
     )}
     onDragOver={(e) => {
       e.preventDefault();
@@ -279,13 +286,13 @@ const KanbanColumn: FC<{
 );
 
 const KanbanBoard: FC<{
-  findings: FindingSchema[];
+  findings: KanbanFindingSchema[];
   teamSlug: string;
   projectSlug: string;
   currentUserId: string;
 }> = ({ findings: initialFindings, teamSlug, projectSlug, currentUserId }) => {
   const queryClient = useQueryClient();
-  const [items, setItems] = useState<FindingSchema[]>(initialFindings);
+  const [items, setItems] = useState<KanbanFindingSchema[]>(initialFindings);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetStatus, setDropTargetStatus] = useState<FindingStatusEnum | null>(null);
 
@@ -308,7 +315,7 @@ const KanbanBoard: FC<{
         return r.data;
       }),
     onMutate: async ({ findingId, status }) => {
-      let previous: FindingSchema[] = [];
+      let previous: KanbanFindingSchema[] = [];
       setItems((prev) => {
         previous = prev;
         return prev.map((f) => (f.id === findingId ? { ...f, status } : f));
@@ -337,7 +344,7 @@ const KanbanBoard: FC<{
         .sort((a, b) => severityOrder.indexOf(a.level) - severityOrder.indexOf(b.level));
       return acc;
     },
-    {} as Record<FindingStatusEnum, FindingSchema[]>,
+    {} as Record<FindingStatusEnum, KanbanFindingSchema[]>,
   );
 
   const handleColumnDrop = (targetStatus: FindingStatusEnum, e: DragEvent): void => {

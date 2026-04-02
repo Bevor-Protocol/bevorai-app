@@ -38,6 +38,7 @@ import React, { useState } from "react";
 
 export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
   const router = useRouter();
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState<string | null>(null);
 
@@ -48,7 +49,7 @@ export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={optionsOpen} onOpenChange={() => setOptionsOpen(!optionsOpen)}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm">
             <Plus className="size-4" />
@@ -105,7 +106,7 @@ export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }
         }}
       >
         <DialogContent
-          className="max-w-6xl w-full h-[85vh] flex flex-col overflow-hidden p-6 gap-0"
+          className="max-w-6xl max-h-[85vh] w-full flex flex-col overflow-scroll p-6 gap-0"
           showCloseButton={true}
         >
           <DialogHeader className="sr-only">
@@ -115,7 +116,10 @@ export const CreateProjectButton: React.FC<{ teamSlug: string }> = ({ teamSlug }
             <AnalyzeClient
               teamSlug={teamSlug}
               initialMethod={method}
-              onBack={() => setOpen(false)}
+              onBack={() => {
+                setOpen(false);
+                setOptionsOpen(true);
+              }}
             />
           )}
         </DialogContent>

@@ -3,12 +3,19 @@
 import { authActions, tokenActions } from "@/actions/bevor";
 import { ActivitySchema, InviteSchema } from "@/types/api/responses/business";
 import { ChatIndex } from "@/types/api/responses/chat";
+import {
+  isPubSubMessageType,
+  type FindingEventData,
+  type PubSubMessage,
+  type PubSubMessageType,
+} from "@/types/api/events";
 import { ChatFullSchema, CodeMappingSchema } from "@/types/api/responses/graph";
 import {
   AnalysisNodeIndex,
   AnalysisNodeSchema,
   FindingLevelEnum,
   FindingSchema,
+  FindingStatusEnum,
   ScopeSchema,
 } from "@/types/api/responses/security";
 import { Pagination } from "@/types/api/responses/shared";
@@ -17,40 +24,18 @@ import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type EventType = "activity" | "code" | "invite" | "analysis" | "scope" | "chat";
-
-const ALL_EVENT_TYPES: EventType[] = ["activity", "code", "invite", "analysis", "scope", "chat"];
-
-type ClaimType = "user" | "team" | "project" | "analysis" | "code" | "chat";
-
 export type SSEClaims = {
   team_slug?: string | null;
-  project_slug?: string | null;
-  code_version_id?: string | null;
-  analysis_id?: string | null;
-  chat_id?: string | null;
-};
-
-// after the event.data is parsed.
-export type SSEPayload = {
-  id: string;
-  claim: ClaimType;
-  data: any;
 };
 
 type Subscription = {
   id: string;
-  eventType: EventType;
-  claim: ClaimType;
-  onMessage: (payload: SSEPayload) => void;
+  eventType: PubSubMessageType;
+  onMessage: (payload: PubSubMessage) => void;
 };
 
 type SSEContextValue = {
-  subscribe: (
-    eventType: EventType,
-    claim: ClaimType,
-    onMessage: (payload: SSEPayload) => void,
-  ) => string;
+  subscribe: (eventType: PubSubMessageType, onMessage: (payload: PubSubMessage) => void) => string;
   unsubscribe: (subscriptionId: string) => void;
   disconnect: () => void;
   updateClaims: (claims: SSEClaims) => void;
@@ -58,10 +43,9 @@ type SSEContextValue = {
   setClaims: (claims: SSEClaims) => void;
   getClaims: () => SSEClaims;
   registerCallback: (
-    eventType: EventType,
-    claim: ClaimType,
-    id: string,
-    callback: (payload: SSEPayload) => void,
+    eventType: PubSubMessageType,
+    entityId: string,
+    callback: (payload: PubSubMessage) => void,
   ) => () => void;
   isConnected: boolean;
   isConnecting: boolean;
@@ -70,33 +54,59 @@ type SSEContextValue = {
 
 const SSEContext = React.createContext<SSEContextValue | undefined>(undefined);
 
-const deriveClaimsFromPath = (params: {
-  teamSlug?: string | string[];
-  projectSlug?: string | string[];
-  codeId?: string | string[];
-  nodeId?: string | string[];
-  chatId?: string | string[];
-}): SSEClaims => {
+const deriveClaimsFromPath = (params: { teamSlug?: string | string[] }): SSEClaims => {
   const claims: SSEClaims = {};
-
   if (params.teamSlug && typeof params.teamSlug === "string") {
     claims.team_slug = params.teamSlug;
   }
-  if (params.projectSlug && typeof params.projectSlug === "string") {
-    claims.project_slug = params.projectSlug;
-  }
-  if (params.codeId && typeof params.codeId === "string") {
-    claims.code_version_id = params.codeId;
-  }
-  if (params.nodeId && typeof params.nodeId === "string") {
-    claims.analysis_id = params.nodeId;
-  }
-  if (params.chatId && typeof params.chatId === "string") {
-    claims.chat_id = params.chatId;
-  }
-
   return claims;
 };
+
+function parsePubSubMessage(eventType: string, rawData: string): PubSubMessage | null {
+  if (!isPubSubMessageType(eventType)) return null;
+  if (eventType === "shutdown") {
+    return { type: "shutdown", data: null };
+  }
+  let body: { data: unknown };
+  try {
+    body = JSON.parse(rawData);
+  } catch {
+    return null;
+  }
+  return { type: eventType, data: body.data } as PubSubMessage;
+}
+
+function callbackKeysForMessage(msg: PubSubMessage): string[] {
+  if (msg.type === "shutdown") return [];
+  if (msg.type === "analysis.scope") {
+    return [`analysis.scope:${msg.data.analysis_id}`, `analysis.scope:${msg.data.id}`];
+  }
+  if (msg.data && typeof msg.data === "object" && "id" in msg.data) {
+    return [`${msg.type}:${(msg.data as { id: string }).id}`];
+  }
+  return [];
+}
+
+const findingEventToSchema = (f: FindingEventData, node: AnalysisNodeSchema): FindingSchema => ({
+  type: f.type,
+  level: f.level,
+  name: f.name,
+  explanation: f.explanation,
+  recommendation: f.recommendation,
+  reference: f.reference,
+  id: f.id,
+  team_id: node.team_id,
+  team_slug: node.team_slug,
+  project_id: node.project_id,
+  project_slug: node.project_slug,
+  analysis_id: node.id,
+  code_version_id: node.code_version_id,
+  node_id: f.source_node_id,
+  user_id: node.user.id,
+  status: FindingStatusEnum.UNRESOLVED,
+  locations: f.locations.map((loc) => ({ source_node_id: loc })),
+  source_node_id: f.source_node_id,
+});
 
 export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const params = useParams();
@@ -105,13 +115,23 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const subscriptionsRef = useRef<Map<string, Subscription>>(new Map());
-  const callbacksRef = useRef<Map<string, (payload: SSEPayload) => void>>(new Map());
+  const callbacksRef = useRef<Map<string, (payload: PubSubMessage) => void>>(new Map());
   const [claims, setClaimsState] = useState<SSEClaims>({});
+  const claimsRef = useRef<SSEClaims>({});
+  const queryClientRef = useRef(queryClient);
   const previousPathClaimsRef = useRef<string>("");
   const connectedClaimsRef = useRef<string>("");
   const isConnectedRef = useRef<boolean>(false);
   const isConnectingRef = useRef<boolean>(false);
   const errorRef = useRef<Event | Error | null>(null);
+
+  useEffect(() => {
+    claimsRef.current = claims;
+  }, [claims]);
+
+  useEffect(() => {
+    queryClientRef.current = queryClient;
+  }, [queryClient]);
 
   useEffect(() => {
     authActions.getBaseUrl().then((url) => setBaseUrl(url + "/business/events/handler"));
@@ -138,7 +158,7 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const cleanedClaims: Record<string, string> = {};
         Object.entries(claimsToUse).forEach(([key, value]) => {
-          if (value !== null && value !== undefined) {
+          if (value !== null && value !== undefined && value !== "") {
             cleanedClaims[key] = value;
           }
         });
@@ -162,35 +182,47 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
 
         const routeToSubscribers = (event: MessageEvent): void => {
-          let parsed: SSEPayload;
-          try {
-            parsed = JSON.parse(event.data);
-          } catch {
+          if (!event.type) return;
+
+          const msg = parsePubSubMessage(event.type, event.data as string);
+          if (!msg) return;
+
+          if (msg.type === "shutdown") {
+            disconnect();
+            void connect(claimsRef.current);
             return;
           }
-
-          if (!event.type) {
-            return;
-          }
-
-          const eventType = event.type as EventType;
 
           subscriptionsRef.current.forEach((sub) => {
-            if (sub.eventType === eventType && sub.claim === parsed.claim) {
-              sub.onMessage(parsed);
+            if (sub.eventType === msg.type) {
+              sub.onMessage(msg);
             }
           });
 
-          const callbackKey = `${eventType}:${parsed.claim}:${parsed.id}`;
-          const callback = callbacksRef.current.get(callbackKey);
-          if (callback) {
-            callback(parsed);
+          for (const key of callbackKeysForMessage(msg)) {
+            const callback = callbacksRef.current.get(key);
+            if (callback) {
+              callback(msg);
+            }
           }
+
+          applyGlobalCacheHandlers(queryClientRef.current, msg);
         };
 
         eventSource.onmessage = routeToSubscribers;
 
-        ALL_EVENT_TYPES.forEach((eventType) => {
+        (
+          [
+            "chat.title",
+            "team.invite",
+            "code.status",
+            "analysis.new",
+            "analysis.status",
+            "analysis.scope",
+            "activity.new",
+            "shutdown",
+          ] as const
+        ).forEach((eventType) => {
           eventSource.addEventListener(eventType, routeToSubscribers);
         });
       } catch (err) {
@@ -218,13 +250,12 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     if (!baseUrl) return;
-    if (Object.keys(claims).length === 0) return;
 
     const claimsKey = JSON.stringify(claims);
 
     if (claimsKey !== connectedClaimsRef.current) {
       connectedClaimsRef.current = claimsKey;
-      connect(claims);
+      void connect(claims);
     }
   }, [baseUrl, claims, connect]);
 
@@ -245,12 +276,11 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [disconnect]);
 
   const subscribe = useCallback(
-    (eventType: EventType, claim: ClaimType, onMessage: (payload: SSEPayload) => void): string => {
+    (eventType: PubSubMessageType, onMessage: (payload: PubSubMessage) => void): string => {
       const subscriptionId = `sub-${Date.now()}-${Math.random()}`;
       const subscription: Subscription = {
         id: subscriptionId,
         eventType,
-        claim,
         onMessage,
       };
       subscriptionsRef.current.set(subscriptionId, subscription);
@@ -281,12 +311,11 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const registerCallback = useCallback(
     (
-      eventType: EventType,
-      claim: ClaimType,
-      id: string,
-      callback: (payload: SSEPayload) => void,
+      eventType: PubSubMessageType,
+      entityId: string,
+      callback: (payload: PubSubMessage) => void,
     ): (() => void) => {
-      const key = `${eventType}:${claim}:${id}`;
+      const key = `${eventType}:${entityId}`;
       callbacksRef.current.set(key, callback);
 
       return () => {
@@ -295,46 +324,6 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     },
     [],
   );
-
-  useEffect(() => {
-    if (!queryClient) return;
-    // Default subscriptions, to be applied globally and automatically update react-query cache.
-    // the claim is very important as well. notice most are user/team level, but one is analysis-level.
-    // that's because we don't care about this event unless we're specifically on that view.
-
-    const analysisSubId = subscribe("analysis", "team", (payload) => {
-      handleAnalysisStatusUpdate(queryClient, payload);
-    });
-
-    const scopeSubId = subscribe("scope", "team", (payload) => {
-      handleScopeStatusUpdate(queryClient, payload);
-    });
-
-    const codeSubId = subscribe("code", "team", (payload) => {
-      handleCodeStatusUpdate(queryClient, payload);
-    });
-
-    const chatSubId = subscribe("chat", "team", (payload) => {
-      handleChatUpdate(queryClient, payload);
-    });
-
-    const inviteSubId = subscribe("invite", "user", (payload) => {
-      handleInviteUpdate(queryClient, payload);
-    });
-
-    const activitySubId = subscribe("activity", "team", (payload) => {
-      handleActivityUpdate(queryClient, payload);
-    });
-
-    return (): void => {
-      unsubscribe(analysisSubId);
-      unsubscribe(scopeSubId);
-      unsubscribe(inviteSubId);
-      unsubscribe(activitySubId);
-      unsubscribe(codeSubId);
-      unsubscribe(chatSubId);
-    };
-  }, [queryClient, subscribe, unsubscribe, getClaimsState]);
 
   const value = useMemo(
     (): SSEContextValue => ({
@@ -380,75 +369,83 @@ export const useSSE = (): SSEContextValue => {
   return context;
 };
 
-/*
-Below are global handlers for SSE events. Within the provider, we can subscribe to these
-immediately, for specific events + claims. This means that globally, these will be applied.
+function applyGlobalCacheHandlers(queryClient: QueryClient, msg: PubSubMessage): void {
+  switch (msg.type) {
+    case "analysis.status":
+      handleAnalysisStatusUpdate(queryClient, msg);
+      break;
+    case "analysis.scope":
+      handleScopeStatusUpdate(queryClient, msg);
+      break;
+    case "analysis.new":
+      handleAnalysisNewUpdate(queryClient, msg);
+      break;
+    case "code.status":
+      handleCodeStatusUpdate(queryClient, msg);
+      break;
+    case "chat.title":
+      handleChatUpdate(queryClient, msg);
+      break;
+    case "team.invite":
+      handleInviteUpdate(queryClient, msg);
+      break;
+    case "activity.new":
+      handleActivityUpdate(queryClient, msg);
+      break;
+    default:
+      break;
+  }
+}
 
-If we need more specific callback function on event, we can registerCallback() (and unregister() in a useEffect)
-in the component where it's needed.
+const handleAnalysisStatusUpdate = (queryClient: QueryClient, payload: PubSubMessage): void => {
+  if (payload.type !== "analysis.status") return;
+  const { id, status, team } = payload.data;
 
-NOTE: it's important that whatever these invalidate, are on the client. Via useSuspenseQuery() is fine if we still
-want to fetch them on the server initially.
-*/
-
-const handleAnalysisStatusUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
-  console.log("analysis update payload", payload);
-
-  const analysisQuery = generateQueryKey.analysis(payload.id);
-  const analysisDetailedQuery = generateQueryKey.analysisDetailed(payload.id);
+  const analysisQuery = generateQueryKey.analysis(id);
+  const analysisDetailedQuery = generateQueryKey.analysisDetailed(id);
 
   queryClient.setQueryData<AnalysisNodeSchema>(analysisDetailedQuery, (oldData) => {
     if (!oldData) return oldData;
-    const newData = {
-      ...oldData,
-      status: payload.data.status,
-    };
-    return newData;
+    return { ...oldData, status };
   });
 
   queryClient.setQueryData<AnalysisNodeSchema>(analysisQuery, (oldData) => {
     if (!oldData) return oldData;
-    return {
-      ...oldData,
-      status: payload.data.status,
-    };
+    return { ...oldData, status };
   });
 
   const allActiveListQueries = queryClient.getQueriesData<Pagination<AnalysisNodeIndex>>({
-    queryKey: [QUERY_KEYS.ANALYSES, payload.data.team_slug],
+    queryKey: [QUERY_KEYS.ANALYSES, team.slug],
     stale: false,
   });
 
   allActiveListQueries.forEach(([queryKey, data]) => {
     if (!data) return;
-    const itemExists = data.results.some((item) => item.id === payload.id);
+    const itemExists = data.results.some((item) => item.id === id);
     if (itemExists) {
       queryClient.setQueryData<Pagination<AnalysisNodeIndex>>(queryKey, (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          results: oldData.results.map((item) =>
-            item.id === payload.id ? { ...item, status: payload.data.status } : item,
-          ),
+          results: oldData.results.map((item) => (item.id === id ? { ...item, status } : item)),
         };
       });
     }
   });
 };
 
-const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
-  console.log("analysis scope update payload", payload);
+const handleAnalysisNewUpdate = (queryClient: QueryClient, payload: PubSubMessage): void => {
+  if (payload.type !== "analysis.new") return;
+  void queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ANALYSES] });
+};
 
-  const analysisQuery = generateQueryKey.analysis(payload.data.analysis_id);
-  const analysisDetailedQuery = generateQueryKey.analysisDetailed(payload.data.analysis_id);
-  let findings: FindingSchema[] = [];
-  if (typeof payload.data.findings === "string") {
-    try {
-      findings = JSON.parse(payload.data.findings);
-    } catch {
-      findings = [];
-    }
-  }
+const handleScopeStatusUpdate = (queryClient: QueryClient, payload: PubSubMessage): void => {
+  if (payload.type !== "analysis.scope") return;
+  const { id: scopeNodeId, analysis_id, team, status, findings: rawFindings } = payload.data;
+  const findings = rawFindings ?? [];
+
+  const analysisQuery = generateQueryKey.analysis(analysis_id);
+  const analysisDetailedQuery = generateQueryKey.analysisDetailed(analysis_id);
 
   queryClient.setQueryData<AnalysisNodeSchema>(analysisQuery, (oldData) => {
     if (!oldData) return oldData;
@@ -462,17 +459,12 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
     if (!oldData) return oldData;
 
     const updatedScopes = oldData.scopes.map((scope) =>
-      scope.id === payload.id
-        ? {
-            ...scope,
-            status: payload.data.status,
-          }
-        : scope,
+      scope.id === scopeNodeId ? { ...scope, status } : scope,
     );
 
-    const updatedFindings = oldData.findings.concat(findings);
+    const newFindingRows = findings.map((f) => findingEventToSchema(f, oldData));
+    const updatedFindings = oldData.findings.concat(newFindingRows);
 
-    // this emulates sorting on the backend. We can remove this if we want.
     const scoreMap: Record<FindingLevelEnum, number> = {
       [FindingLevelEnum.CRITICAL]: 6,
       [FindingLevelEnum.HIGH]: 4,
@@ -504,22 +496,21 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
   });
 
   const allActiveListQueries = queryClient.getQueriesData<Pagination<AnalysisNodeIndex>>({
-    queryKey: [QUERY_KEYS.ANALYSES, payload.data.team_slug],
+    queryKey: [QUERY_KEYS.ANALYSES, team.slug],
     stale: false,
   });
 
+  const delta = findings.length;
   allActiveListQueries.forEach(([queryKey, data]) => {
     if (!data) return;
-    const itemExists = data.results.some((item) => item.id === payload.id);
+    const itemExists = data.results.some((item) => item.id === analysis_id);
     if (itemExists) {
       queryClient.setQueryData<Pagination<AnalysisNodeIndex>>(queryKey, (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
           results: oldData.results.map((item) =>
-            item.id === payload.id
-              ? { ...item, n_findings: item.n_findings + payload.data.n_findings }
-              : item,
+            item.id === analysis_id ? { ...item, n_findings: item.n_findings + delta } : item,
           ),
         };
       });
@@ -527,50 +518,81 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload):
   });
 };
 
-const handleInviteUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
-  console.log("invite payload", payload);
-  const inviteQuery = generateQueryKey.userInvites();
-  queryClient.setQueryData<InviteSchema[]>(inviteQuery, (oldData) => {
-    if (!oldData) return [payload.data];
-    return [...oldData, payload.data];
+const handleCodeStatusUpdate = (queryClient: QueryClient, payload: PubSubMessage): void => {
+  if (payload.type !== "code.status") return;
+  const { id, status, team } = payload.data;
+
+  const codeQuery = generateQueryKey.code(id);
+
+  queryClient.setQueryData<CodeMappingSchema>(codeQuery, (oldData) => {
+    if (!oldData) return oldData;
+    return { ...oldData, status };
+  });
+
+  queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CODES, id], refetchType: "all" });
+
+  const allActiveListQueries = queryClient.getQueriesData<Pagination<CodeMappingSchema>>({
+    queryKey: [QUERY_KEYS.CODES, team.slug],
+    stale: false,
+  });
+
+  allActiveListQueries.forEach(([queryKey, data]) => {
+    if (!data) return;
+    const itemExists = data.results.some((item) => item.id === id);
+    if (itemExists) {
+      queryClient.setQueryData<Pagination<CodeMappingSchema>>(queryKey, (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          results: oldData.results.map((item) => (item.id === id ? { ...item, status } : item)),
+        };
+      });
+    }
   });
 };
 
-const handleChatUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
-  console.log("chat payload", payload);
-  const chatQuery = generateQueryKey.chat(payload.id);
+const handleInviteUpdate = (queryClient: QueryClient, payload: PubSubMessage): void => {
+  if (payload.type !== "team.invite") return;
+  const inviteQuery = generateQueryKey.userInvites();
+  queryClient.setQueryData<InviteSchema[]>(inviteQuery, (oldData) => {
+    const row = payload.data as InviteSchema;
+    if (!oldData) return [row];
+    return [...oldData, row];
+  });
+};
+
+const handleChatUpdate = (queryClient: QueryClient, payload: PubSubMessage): void => {
+  if (payload.type !== "chat.title") return;
+  const { id, title, team } = payload.data;
+
+  const chatQuery = generateQueryKey.chat(id);
   queryClient.setQueryData<ChatFullSchema>(chatQuery, (oldData) => {
     if (!oldData) return oldData;
-    return {
-      ...oldData,
-      title: payload.data.title,
-    };
+    return { ...oldData, title };
   });
 
   const allChatsQueries = queryClient.getQueriesData<Pagination<ChatIndex>>({
-    queryKey: [QUERY_KEYS.CHATS, payload.data.team_slug],
+    queryKey: [QUERY_KEYS.CHATS, team.slug],
     stale: false,
   });
 
   allChatsQueries.forEach(([queryKey, data]) => {
     if (!data) return;
-    const itemExists = data.results.some((item) => item.id === payload.id);
+    const itemExists = data.results.some((item) => item.id === id);
     if (itemExists) {
       queryClient.setQueryData<Pagination<ChatIndex>>(queryKey, (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          results: oldData.results.map((item) =>
-            item.id === payload.id ? { ...item, title: payload.data.title } : item,
-          ),
+          results: oldData.results.map((item) => (item.id === id ? { ...item, title } : item)),
         };
       });
     }
   });
 };
 
-const handleActivityUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
-  console.log("activity payload", payload);
+const handleActivityUpdate = (queryClient: QueryClient, payload: PubSubMessage): void => {
+  if (payload.type !== "activity.new") return;
   if (payload.data.team_slug) {
     const teamQuery = generateQueryKey.teamActivities(payload.data.team_slug);
     queryClient.setQueryData<ActivitySchema[]>(teamQuery, (oldData) => {
@@ -585,40 +607,4 @@ const handleActivityUpdate = (queryClient: QueryClient, payload: SSEPayload): vo
       return [...oldData, payload.data];
     });
   }
-};
-
-const handleCodeStatusUpdate = (queryClient: QueryClient, payload: SSEPayload): void => {
-  console.log("code update payload", payload);
-  const codeQuery = generateQueryKey.code(payload.id);
-
-  queryClient.setQueryData<CodeMappingSchema>(codeQuery, (oldData) => {
-    if (!oldData) return oldData;
-    return {
-      ...oldData,
-      status: payload.data.status,
-    };
-  });
-
-  queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CODES, payload.id], refetchType: "all" });
-
-  const allActiveListQueries = queryClient.getQueriesData<Pagination<CodeMappingSchema>>({
-    queryKey: [QUERY_KEYS.CODES, payload.data.team_slug],
-    stale: false,
-  });
-
-  allActiveListQueries.forEach(([queryKey, data]) => {
-    if (!data) return;
-    const itemExists = data.results.some((item) => item.id === payload.id);
-    if (itemExists) {
-      queryClient.setQueryData<Pagination<CodeMappingSchema>>(queryKey, (oldData) => {
-        if (!oldData) return oldData;
-        return {
-          ...oldData,
-          results: oldData.results.map((item) =>
-            item.id === payload.id ? { ...item, status: payload.data.status } : item,
-          ),
-        };
-      });
-    }
-  });
 };

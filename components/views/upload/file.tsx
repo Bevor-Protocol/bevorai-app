@@ -6,24 +6,31 @@ import { Input } from "@/components/ui/input";
 import { useFormReducer } from "@/hooks/useFormReducer";
 import { cn } from "@/lib/utils";
 import type { ProjectDetailedSchema } from "@/types/api/responses/business";
-import type { CreateCodeResponse } from "@/types/api/responses/graph";
 import { UploadCodeFileFormValues, uploadCodeFileSchema } from "@/utils/schema";
-import { EditorState } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
-import { solidity } from "@replit/codemirror-lang-solidity";
-import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
-import { githubDark } from "@uiw/codemirror-theme-github";
-import { basicSetup } from "codemirror";
-import { ArrowRight, CheckCircle, Upload, X, XCircle } from "lucide-react";
-import Link from "next/link";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowRight, FileIcon, Loader2, Upload, X, XCircle } from "lucide-react";
+import React, { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { PASTE_TEMPLATE_CODE } from "./paste";
 
-interface SourceFile {
-  file: File;
-  content: string;
-}
+type FileUploadVariables = {
+  project: ProjectDetailedSchema;
+  data: UploadCodeFileFormValues;
+};
+
+const startFileCodeUpload = async (
+  ensureProject: () => Promise<ProjectDetailedSchema>,
+  data: UploadCodeFileFormValues,
+  mutate: (vars: FileUploadVariables) => void,
+): Promise<void> => {
+  const project = await ensureProject();
+  mutate({ project, data });
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const FileStep: React.FC<{
   ensureProject: () => Promise<ProjectDetailedSchema>;
@@ -42,23 +49,17 @@ const FileStep: React.FC<{
     updateFormState: updateUploadFormState,
   } = useFormReducer<UploadCodeFileFormValues>(uploadInitialState);
 
-  const uploadedFileRef = useRef<SourceFile | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const uploadEditorRef = useRef<HTMLDivElement>(null);
-  const uploadViewRef = useRef<EditorView | null>(null);
   const uploadToastId = useRef<string | number>(undefined);
 
+  const stagedFile = uploadFormState.values.file;
+
   const uploadMutation = useMutation({
-    mutationFn: async (
-      data: UploadCodeFileFormValues,
-    ): Promise<
-      CreateCodeResponse & { toInvalidate: QueryKey[]; project: ProjectDetailedSchema }
-    > => {
-      const project = await ensureProject();
-      const r = await codeActions.contractUploadFile(project.team.slug, project.id, data);
-      if (!r.ok) throw r;
-      return { ...r.data, project };
-    },
+    mutationFn: async ({ project, data }: FileUploadVariables) =>
+      codeActions.contractUploadFile(project.team.slug, project.id, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onMutate: () => {
       updateUploadFormState({ type: "SET_ERRORS", errors: {} });
       uploadToastId.current = toast.loading("Uploading and parsing code...");
@@ -70,7 +71,7 @@ const FileStep: React.FC<{
         errors: { file: "Something went wrong" },
       });
     },
-    onSuccess: ({ id, status, toInvalidate }) => {
+    onSuccess: ({ analysis_id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
@@ -78,50 +79,12 @@ const FileStep: React.FC<{
         id: uploadToastId.current,
       });
 
-      if (status === "processing" || status === "success") {
-        onSuccess?.(id);
-      }
+      if (analysis_id) onSuccess?.(analysis_id);
     },
   });
 
-  useEffect(() => {
-    if (!uploadEditorRef.current) return;
-    if (!uploadedFileRef.current) return;
-    if (uploadViewRef.current) {
-      uploadViewRef.current.destroy();
-    }
-
-    const code = uploadedFileRef.current.content || PASTE_TEMPLATE_CODE;
-    const state = EditorState.create({
-      doc: code,
-      extensions: [
-        basicSetup,
-        solidity,
-        githubDark,
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged) {
-            const newContent = update.state.doc.toString();
-            if (uploadedFileRef.current) {
-              uploadedFileRef.current.content = newContent;
-            }
-          }
-        }),
-      ],
-    });
-
-    const view = new EditorView({ state, parent: uploadEditorRef.current });
-    uploadViewRef.current = view;
-
-    return (): void => {
-      if (uploadViewRef.current) {
-        uploadViewRef.current.destroy();
-        uploadViewRef.current = null;
-      }
-    };
-  }, [uploadFormState.values.file]);
-
   const handleFileUpload = useCallback(
-    async (file: File): Promise<void> => {
+    (file: File): void => {
       if (!file.name.endsWith(".sol") && !file.name.endsWith(".js") && !file.name.endsWith(".ts")) {
         updateUploadFormState({
           type: "SET_ERRORS",
@@ -130,25 +93,13 @@ const FileStep: React.FC<{
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (e): void => {
-        const content = e.target?.result as string;
-        uploadedFileRef.current = { file, content };
-        setUploadField("file", file);
-        updateUploadFormState({ type: "SET_ERRORS", errors: {} });
-      };
-      reader.onerror = (): void =>
-        updateUploadFormState({
-          type: "SET_ERRORS",
-          errors: { file: "Failed to read file" },
-        });
-      reader.readAsText(file);
+      setUploadField("file", file);
+      updateUploadFormState({ type: "SET_ERRORS", errors: {} });
     },
     [setUploadField, updateUploadFormState],
   );
 
   const clearUploadContent = useCallback((): void => {
-    uploadedFileRef.current = null;
     setUploadField("file", undefined as unknown as File);
     updateUploadFormState({ type: "SET_ERRORS", errors: {} });
   }, [setUploadField, updateUploadFormState]);
@@ -164,7 +115,7 @@ const FileStep: React.FC<{
   }, []);
 
   const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
+    (e: React.DragEvent): void => {
       e.preventDefault();
       setIsDragOver(false);
       updateUploadFormState({ type: "SET_ERRORS", errors: {} });
@@ -189,14 +140,14 @@ const FileStep: React.FC<{
           });
           return;
         }
-        await handleFileUpload(files[0]);
+        handleFileUpload(files[0]);
       }
     },
     [handleFileUpload, updateUploadFormState],
   );
 
   const handleFileInput = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
       const files = e.target.files;
       if (files && files.length > 0) {
         if (files.length > 1) {
@@ -206,17 +157,16 @@ const FileStep: React.FC<{
           });
           return;
         }
-        await handleFileUpload(files[0]);
+        handleFileUpload(files[0]);
       }
     },
     [handleFileUpload, updateUploadFormState],
   );
 
-  const handleUploadSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
+  const handleUploadSubmit = (): void => {
     updateUploadFormState({ type: "SET_ERRORS", errors: {} });
 
-    if (!uploadFormState.values.file || !uploadedFileRef.current) {
+    if (!stagedFile) {
       updateUploadFormState({
         type: "SET_ERRORS",
         errors: { file: "Please upload a file" },
@@ -238,41 +188,33 @@ const FileStep: React.FC<{
       return;
     }
 
-    uploadMutation.mutate(parsed.data);
+    void startFileCodeUpload(ensureProject, parsed.data, uploadMutation.mutate).catch(() => {});
   };
 
-  if (uploadMutation.isSuccess && uploadMutation.data.status === "success") {
-    const { project: proj, id: codeId } = uploadMutation.data;
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-            <CheckCircle className="size-8 text-green-400" />
-          </div>
-          <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
-          <p className="text-muted-foreground">
-            Your contract has been uploaded and is ready for analysis.
-          </p>
-          <Button asChild className="mt-4">
-            <Link href={`/team/${proj.team.slug}/${proj.slug}/codes/${codeId}`}>View Version</Link>
-          </Button>
+  if (uploadMutation.isSuccess) {
+    const { status, analysis_id: analysisId } = uploadMutation.data;
+    if (analysisId && (status === "waiting" || status === "processing" || status === "success")) {
+      return (
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Opening analysis…</p>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   if (uploadMutation.isError) {
     return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
+      <div className="mx-auto max-w-2xl space-y-8">
+        <div className="space-y-4 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
             <XCircle className="size-8 text-destructive" />
           </div>
-          <h2 className="text-2xl font-bold ">Upload Failed</h2>
+          <h2 className="text-2xl font-bold">Upload Failed</h2>
           <p className="text-muted-foreground">
             There was an error processing your contract. Please try again.
           </p>
-          <div className="flex gap-4 justify-center mt-6">
+          <div className="mt-6 flex justify-center gap-4">
             <Button variant="outline" onClick={() => uploadMutation.reset()}>
               Try Again
             </Button>
@@ -283,90 +225,92 @@ const FileStep: React.FC<{
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 h-full flex flex-col overflow-hidden w-full">
-      <div className="flex flex-row justify-between items-end">
-        <div className="text-left space-y-2">
-          <div className="flex flex-row gap-4 justify-start items-center">
-            <Upload className="size-6 text-blue-400" />
-            <h2 className="text-2xl font-bold ">Upload file</h2>
-          </div>
-          <p className="text-muted-foreground">Upload a .sol, .js, or .ts contract file</p>
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 overflow-hidden">
+      <header className="space-y-1.5">
+        <div className="flex items-center gap-3">
+          <Upload className="size-6 shrink-0 text-blue-400" aria-hidden />
+          <h2 className="text-2xl font-bold tracking-tight">Upload file</h2>
         </div>
-        <Button
-          type="submit"
-          disabled={!uploadedFileRef.current || uploadMutation.isPending}
-          className="min-w-40"
-          onClick={handleUploadSubmit}
-        >
-          <span>Submit</span>
-          <ArrowRight className="size-4" />
-        </Button>
-      </div>
+        <p className="text-sm text-muted-foreground">
+          One contract file at a time (.sol). Drag and drop or choose from disk.
+        </p>
+      </header>
 
-      <div className="flex flex-row justify-end items-center mb-4">
-        <Button variant="outline" disabled={!uploadedFileRef.current} onClick={clearUploadContent}>
-          <X className="size-3" />
-          Clear
-        </Button>
-      </div>
-
-      {!uploadedFileRef.current && (
-        <label className="w-full block mb-4">
+      {!stagedFile ? (
+        <label className="block w-full cursor-pointer">
           <div
             className={cn(
-              "border-2 border-dashed rounded-lg p-8 transition-colors relative",
+              "relative flex min-h-[min(40vh,320px)] flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-colors",
               isDragOver
                 ? "border-purple-400 bg-purple-500/10"
-                : "border-neutral-700 hover:border-neutral-600",
+                : "border-neutral-700 hover:border-neutral-600 hover:bg-muted/20",
             )}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <div className="flex flex-col items-center justify-center h-full space-y-4">
-              <div className="size-12 rounded-full bg-neutral-800 flex items-center justify-center">
-                <Upload className="size-6 text-muted-foreground" />
-              </div>
-              <div className="text-center">
-                <h3 className="text-lg font-medium  mb-2">Upload files here</h3>
-                <p className="text-muted-foreground mb-4">
-                  Click here or drag and drop to upload .sol, .js, or .ts files
-                </p>
-              </div>
+            <div className="flex size-14 items-center justify-center rounded-full bg-neutral-800">
+              <Upload className="size-7 text-muted-foreground" aria-hidden />
+            </div>
+            <div className="max-w-md space-y-1 text-center">
+              <p className="text-base font-medium">Choose a file</p>
+              <p className="text-sm text-muted-foreground">
+                Click this area or drop a single .sol file here.
+              </p>
             </div>
             <Input
               type="file"
-              accept=".sol,.js,.ts"
+              accept=".sol"
               onChange={handleFileInput}
-              className="absolute inset-0 appearance-none cursor-pointer opacity-0"
+              className="absolute inset-0 cursor-pointer opacity-0"
               id="file-upload"
             />
           </div>
         </label>
-      )}
-      {uploadedFileRef.current && (
-        <div className="border border-border rounded-lg min-h-20 overflow-scroll">
-          <div ref={uploadEditorRef} role="region" aria-label="Solidity code editor" />
+      ) : (
+        <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-muted/15 p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-background/80">
+              <FileIcon className="size-5 text-muted-foreground" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-sm font-medium text-foreground">Ready to upload</p>
+              <p className="truncate font-mono text-sm text-foreground" title={stagedFile.name}>
+                {stagedFile.name}
+              </p>
+              <p className="text-xs text-muted-foreground">{formatFileSize(stagedFile.size)}</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={clearUploadContent}
+              disabled={uploadMutation.isPending}
+            >
+              <X className="size-3.5" />
+              Remove file
+            </Button>
+            <Button
+              type="button"
+              className="w-full min-w-40 sm:w-auto"
+              disabled={uploadMutation.isPending}
+              onClick={handleUploadSubmit}
+            >
+              <span>Submit</span>
+              <ArrowRight className="size-4" />
+            </Button>
+          </div>
         </div>
       )}
 
       {uploadFormState.errors.file && (
-        <div className="flex items-center space-x-2 text-destructive text-sm mt-4">
-          <XCircle className="size-4" />
+        <div className="flex items-start gap-2 text-sm text-destructive">
+          <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>{uploadFormState.errors.file}</span>
         </div>
       )}
-
-      <style>{`
-        .cm-editor { background-color: black !important }
-        .cm-activeLine,.cm-activeLineGutter { background-color: transparent !important; }
-        .cm-gutters {background-color: black !important;}
-        .cm-gutter {background-color: black !important;}
-        .cm-gutterElement {color: #8b949e !important;}
-        .cm-editor { height: 100% !important; }
-        .cm-scroller { overflow: auto !important; }
-        .cm-selectionBackground {background: white !important; }
-      `}</style>
     </div>
   );
 };

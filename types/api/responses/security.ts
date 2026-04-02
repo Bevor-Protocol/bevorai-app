@@ -83,6 +83,10 @@ export interface DraftFindingSchema extends FindingSchema {
   base_finding_id?: string;
 }
 
+export interface KanbanFindingSchema extends FindingSchema {
+  user: UserSchema;
+}
+
 export interface DraftedFindingSchema extends FindingSchema {
   is_draft: boolean;
   draft_type: FindingDraftState;
@@ -116,14 +120,6 @@ export interface AnalysisNodeSchema {
   children: string[];
   findings: FindingSchema[];
   scopes: ScopeSchema[];
-}
-
-export interface DraftSchema {
-  scopes: ScopeSchema[];
-  findings: DraftedFindingSchema[];
-  staged: DraftedFindingSchema[];
-  n_scopes: number;
-  n_findings: number;
 }
 
 export interface AnalysisNodeIndex extends AnalysisNodeSchema {

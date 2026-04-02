@@ -49,21 +49,11 @@ export const ChecklistGlyph: React.FC<{
   }
   if (busy) {
     return (
-      <Loader2
-        className={cn(icon, "animate-spin text-green-400")}
-        strokeWidth={1.75}
-        aria-hidden
-      />
+      <Loader2 className={cn(icon, "animate-spin text-green-400")} strokeWidth={1.75} aria-hidden />
     );
   }
   if (done) {
-    return (
-      <CheckCircle2
-        className={cn(icon, "text-green-400")}
-        strokeWidth={1.5}
-        aria-hidden
-      />
-    );
+    return <CheckCircle2 className={cn(icon, "text-green-400")} strokeWidth={1.5} aria-hidden />;
   }
   return <Circle className={cn(icon, "text-muted-foreground/35")} strokeWidth={1.35} aria-hidden />;
 };
@@ -80,8 +70,7 @@ const AnalysisStatusDisplay: React.FC<{
 
   const getNFindingsPerScope = (nodeId: string): number => {
     return analysis.findings.filter((f) => {
-      const sid =
-        f.source_node_id ?? f.locations[0]?.source_node_id;
+      const sid = f.source_node_id ?? f.locations[0]?.source_node_id;
       return sid === nodeId;
     }).length;
   };
@@ -89,7 +78,8 @@ const AnalysisStatusDisplay: React.FC<{
   useEffect(() => {
     if (!toastRefId) return;
 
-    const unregister = registerCallback("analysis", "team", analysis.id, (payload) => {
+    const unregister = registerCallback("analysis.status", analysis.id, (payload) => {
+      if (payload.type !== "analysis.status") return;
       const newStatus: AnalysisNodeSchema["status"] = payload.data.status;
 
       if (newStatus === "success") {
@@ -120,11 +110,9 @@ const AnalysisStatusDisplay: React.FC<{
     return unregister;
   }, [analysis.id, toastRefId, teamSlug, projectSlug, router, registerCallback]);
 
-  const analysisDone =
-    analysis.status === "success" || analysis.status === "partial";
+  const analysisDone = analysis.status === "success" || analysis.status === "partial";
   const analysisFailed = analysis.status === "failed";
-  const analysisBusy =
-    analysis.status === "waiting" || analysis.status === "processing";
+  const analysisBusy = analysis.status === "waiting" || analysis.status === "processing";
 
   if (checklist) {
     return (
@@ -132,11 +120,7 @@ const AnalysisStatusDisplay: React.FC<{
         <ScrollArea className="max-h-[min(65vh,560px)]">
           <div className="flex flex-col gap-8 pr-2 pb-2">
             <div className="flex gap-3.5">
-              <ChecklistGlyph
-                done={analysisDone}
-                failed={analysisFailed}
-                busy={analysisBusy}
-              />
+              <ChecklistGlyph done={analysisDone} failed={analysisFailed} busy={analysisBusy} />
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-h-5">
                   <span className="text-[15px] font-medium leading-none tracking-[-0.01em]">

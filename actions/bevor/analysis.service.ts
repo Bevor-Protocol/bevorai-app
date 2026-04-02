@@ -8,8 +8,8 @@ import {
   AnalysisNodeIndex,
   AnalysisNodeSchema,
   DraftFindingSchema,
-  DraftSchema,
   FindingSchema,
+  KanbanFindingSchema,
   ScopeSchema,
 } from "@/types/api/responses/security";
 import { Pagination } from "@/types/api/responses/shared";
@@ -218,15 +218,6 @@ export const updateStagedFinding = apiRequest<
     .then((response) => withRequestId(response, { toInvalidate }));
 });
 
-export const getDraft = apiRequest<[teamSlug: string, analysisId: string], DraftSchema>(
-  async (teamSlug, analysisId) =>
-    securityApi
-      .get(`/drafts/${analysisId}`, {
-        headers: { "bevor-team-slug": teamSlug },
-      })
-      .then((response) => withRequestId(response, response.data)),
-);
-
 export const submitFindingFeedback = apiRequest<
   [teamSlug: string, analysisId: string, findingId: string, data: FindingFeedbackBody],
   FindingSchema
@@ -238,10 +229,10 @@ export const submitFindingFeedback = apiRequest<
     .then((response) => withRequestId(response, response.data)),
 );
 
-export const getKanban = apiRequest<[teamSlug: string, projectId: string], FindingSchema[]>(
+export const getKanban = apiRequest<[teamSlug: string, projectId: string], KanbanFindingSchema[]>(
   async (teamSlug, projectId) =>
     securityApi
-      .get<{ results: FindingSchema[] }>(`/projects/${projectId}/kanban`, {
+      .get<{ results: KanbanFindingSchema[] }>(`/projects/${projectId}/kanban`, {
         headers: { "bevor-team-slug": teamSlug },
       })
       .then((response) => withRequestId(response, response.data.results)),

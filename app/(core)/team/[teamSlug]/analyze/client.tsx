@@ -11,7 +11,7 @@ import RepoUrlStep from "@/components/views/upload/public_repo";
 import { cn } from "@/lib/utils";
 import type { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, MoveLeft, XCircle } from "lucide-react";
+import { MoveLeft, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useRef, useState } from "react";
 
@@ -22,12 +22,11 @@ const AnalyzeClient: React.FC<{
   initialMethod?: string;
   onBack?: () => void;
 }> = ({ teamSlug, initialMethod, onBack }) => {
-  const router = useRouter();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>(initialMethod ? "upload" : "select");
   const [method, setMethod] = useState<string | null>(initialMethod ?? null);
   const [error, setError] = useState<string | null>(null);
-  const [isFinishing, setIsFinishing] = useState(false);
   const projectRef = useRef<ProjectDetailedSchema | null>(null);
   const pendingMethodRef = useRef<string | null>(null);
 
@@ -77,6 +76,11 @@ const AnalyzeClient: React.FC<{
     pendingMethodRef.current = null;
   };
 
+  const onSuccess = (analysisId: string): void => {
+    if (!projectRef.current) return;
+    router.push(`/team/${teamSlug}/${projectRef.current.slug}/analyses/${analysisId}`);
+  };
+
   if (phase === "select") {
     return (
       <>
@@ -99,12 +103,6 @@ const AnalyzeClient: React.FC<{
   if (phase === "upload" && method) {
     return (
       <div className="relative w-full h-full min-h-0 flex flex-col">
-        {isFinishing && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/85 rounded-lg">
-            <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Creating analysis…</p>
-          </div>
-        )}
         {error && (
           <p className="text-sm text-destructive mb-4 flex items-center gap-2 shrink-0">
             <XCircle className="size-4 shrink-0" />
@@ -115,41 +113,25 @@ const AnalyzeClient: React.FC<{
           variant="ghost"
           className="mb-4 shrink-0 self-start"
           onClick={() => (onBack ? onBack() : reset())}
-          disabled={isFinishing}
         >
           <MoveLeft />
           Back to selection
         </Button>
         <div className="flex-1 min-h-0 overflow-hidden">
           {method === "file" && (
-            <FileStep
-              ensureProject={captureEnsureProject}
-              onSuccess={() => console.log("uploaded!")}
-            />
+            <FileStep ensureProject={captureEnsureProject} onSuccess={onSuccess} />
           )}
           {method === "paste" && (
-            <PasteCodeStep
-              ensureProject={captureEnsureProject}
-              onSuccess={() => console.log("uploaded!")}
-            />
+            <PasteCodeStep ensureProject={captureEnsureProject} onSuccess={onSuccess} />
           )}
           {method === "folder" && (
-            <FolderStep
-              ensureProject={captureEnsureProject}
-              onSuccess={() => console.log("uploaded!")}
-            />
+            <FolderStep ensureProject={captureEnsureProject} onSuccess={onSuccess} />
           )}
           {method === "scan" && (
-            <ContractAddressStep
-              ensureProject={captureEnsureProject}
-              onSuccess={() => console.log("uploaded!")}
-            />
+            <ContractAddressStep ensureProject={captureEnsureProject} onSuccess={onSuccess} />
           )}
           {method === "repo" && (
-            <RepoUrlStep
-              ensureProject={captureEnsureProject}
-              onSuccess={() => console.log("uploaded!")}
-            />
+            <RepoUrlStep ensureProject={captureEnsureProject} onSuccess={onSuccess} />
           )}
         </div>
       </div>

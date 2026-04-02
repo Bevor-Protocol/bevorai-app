@@ -156,10 +156,6 @@ export interface UserTokenAuthenticateBody {
 
 export interface SseClaimsBody {
   team_slug?: string;
-  project_slug?: string;
-  code_version_id?: string;
-  analysis_id?: string;
-  chat_id?: string;
 }
 
 export interface SseTokenResponse {

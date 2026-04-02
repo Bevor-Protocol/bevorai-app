@@ -8,10 +8,23 @@ import { useFormReducer } from "@/hooks/useFormReducer";
 import type { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { ScanCodeAddressFormValues, scanCodeAddressSchema } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, CheckCircle, Globe, XCircle } from "lucide-react";
-import Link from "next/link";
-import React, { useRef } from "react";
+import { ArrowRight, Globe, Loader2, XCircle } from "lucide-react";
+import React, { useCallback, useRef } from "react";
 import { toast } from "sonner";
+
+type ScanUploadVariables = {
+  project: ProjectDetailedSchema;
+  data: ScanCodeAddressFormValues;
+};
+
+const startScanCodeUpload = async (
+  ensureProject: () => Promise<ProjectDetailedSchema>,
+  data: ScanCodeAddressFormValues,
+  mutate: (vars: ScanUploadVariables) => void,
+): Promise<void> => {
+  const project = await ensureProject();
+  mutate({ project, data });
+};
 
 const ContractAddressStep: React.FC<{
   ensureProject: () => Promise<ProjectDetailedSchema>;
@@ -30,12 +43,11 @@ const ContractAddressStep: React.FC<{
   const toastId = useRef<string | number>(undefined);
 
   const mutation = useMutation({
-    mutationFn: async (data: ScanCodeAddressFormValues) => {
-      const project = await ensureProject();
-      const r = await codeActions.contractUploadScan(project.team.slug, project.id, data);
-      if (!r.ok) throw r;
-      return { ...r.data, project };
-    },
+    mutationFn: async ({ project, data }: ScanUploadVariables) =>
+      codeActions.contractUploadScan(project.team.slug, project.id, data).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
     onMutate: () => {
       updateFormState({ type: "SET_ERRORS", errors: {} });
       toastId.current = toast.loading("Uploading and parsing code...");
@@ -47,22 +59,18 @@ const ContractAddressStep: React.FC<{
         errors: { address: "Something went wrong" },
       });
     },
-    onSuccess: ({ id, status, toInvalidate }) => {
+    onSuccess: ({ analysis_id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
       toast.success("Successfully uploaded code", {
         id: toastId.current,
       });
-
-      if (status === "processing" || status === "success") {
-        onSuccess?.(id);
-      }
+      if (analysis_id) onSuccess?.(analysis_id);
     },
   });
 
-  const handleSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
+  const submitScan = useCallback(() => {
     updateFormState({ type: "SET_ERRORS", errors: {} });
 
     const parsed = scanCodeAddressSchema.safeParse(formState.values);
@@ -80,47 +88,42 @@ const ContractAddressStep: React.FC<{
     }
 
     const encodedAddress = encodeURIComponent(parsed.data.address);
-    mutation.mutate({
-      ...parsed.data,
-      address: encodedAddress,
-    });
+    void startScanCodeUpload(
+      ensureProject,
+      { ...parsed.data, address: encodedAddress },
+      mutation.mutate,
+    ).catch(() => {});
+  }, [ensureProject, formState.values, mutation, updateFormState]);
+
+  const handleSubmit = (e: React.FormEvent): void => {
+    e.preventDefault();
+    submitScan();
   };
 
-  if (mutation.isSuccess && mutation.data.status === "success") {
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-            <CheckCircle className="size-8 text-green-400" />
-          </div>
-          <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
-          <p className="text-muted-foreground">
-            Your contract has been uploaded and is ready for analysis.
-          </p>
-          <Button asChild className="mt-4">
-            <Link
-              href={`/team/${mutation.data.project.team.slug}/${mutation.data.project.slug}/codes/${mutation.data.id}`}
-            >
-              View Version
-            </Link>
-          </Button>
+  if (mutation.isSuccess) {
+    const { status, analysis_id: analysisId } = mutation.data;
+    if (analysisId && (status === "waiting" || status === "processing" || status === "success")) {
+      return (
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Opening analysis…</p>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   if (mutation.isError) {
     return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
+      <div className="mx-auto max-w-2xl space-y-8">
+        <div className="space-y-4 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
             <XCircle className="size-8 text-destructive" />
           </div>
-          <h2 className="text-2xl font-bold ">Upload Failed</h2>
+          <h2 className="text-2xl font-bold">Upload Failed</h2>
           <p className="text-muted-foreground">
             There was an error processing your contract. Please try again.
           </p>
-          <div className="flex gap-4 justify-center mt-6">
+          <div className="mt-6 flex justify-center gap-4">
             <Button variant="outline" onClick={() => mutation.reset()}>
               Try Again
             </Button>
@@ -131,46 +134,50 @@ const ContractAddressStep: React.FC<{
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      <div className="text-left space-y-2">
-        <div className="flex flex-row gap-4 justify-start items-center">
-          <Globe className="size-6 text-purple-400" />
-          <h2 className="text-2xl font-bold ">Explorer Scan</h2>
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 overflow-hidden">
+      <header className="space-y-1.5">
+        <div className="flex items-center gap-3">
+          <Globe className="size-6 shrink-0 text-purple-400" aria-hidden />
+          <h2 className="text-2xl font-bold tracking-tight">Explorer scan</h2>
         </div>
-        <p className="text-muted-foreground">
-          Enter a deployed, verified contract address to analyze
+        <p className="text-sm text-muted-foreground">
+          Enter a deployed, verified contract address. We fetch verified source and index it for
+          analysis.
         </p>
-      </div>
+      </header>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="address" aria-required>
-              Contract Address
+              Contract address
             </FieldLabel>
-            <div className="flex flex-row gap-4 flex-wrap">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <Input
                 id="address"
                 name="address"
                 type="text"
                 value={formState.values.address}
                 onChange={(e) => setField("address", e.target.value)}
-                placeholder="0x1234..."
-                className="font-mono grow basis-1/2"
+                placeholder="0x..."
+                className="min-w-0 font-mono sm:flex-1"
                 disabled={mutation.isPending}
                 aria-invalid={!!formState.errors.address}
               />
               <Button
                 type="submit"
                 disabled={mutation.isPending || !formState.values.address.trim()}
-                className="min-w-40 grow"
+                className="w-full min-w-40 shrink-0 sm:w-auto"
               >
                 <span>Submit</span>
                 <ArrowRight className="size-4" />
               </Button>
             </div>
             {formState.errors.address && (
-              <p className="text-sm text-destructive">{formState.errors.address}</p>
+              <div className="mt-3 flex items-start gap-2 text-sm text-destructive">
+                <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                <span>{formState.errors.address}</span>
+              </div>
             )}
           </Field>
         </FieldGroup>

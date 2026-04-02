@@ -59,7 +59,8 @@ const GithubRepoStep: React.FC<{
   const handleSuccess = React.useCallback(
     (id: string) => {
       setCreatedCodeId(id);
-      unregisterRef.current = registerCallback("code", "team", id, (payload) => {
+      unregisterRef.current = registerCallback("code.status", id, (payload) => {
+        if (payload.type !== "code.status") return;
         if (payload.data.status === "waiting") {
           setProcessingStatus("waiting");
           toast.loading("Processing code version...", {

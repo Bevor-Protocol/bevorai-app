@@ -12,9 +12,7 @@ import { handleMutationError } from "@/utils/helpers";
 import { UploadCodeFolderFormValues, uploadCodeFolderSchema } from "@/utils/schema";
 import { QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
 import { zipSync } from "fflate";
-import { ArrowRight, CheckCircle, Folder, Loader2, Upload, X, XCircle } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { ArrowRight, Folder, Loader2, Upload, X, XCircle } from "lucide-react";
 import React, { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -58,7 +56,6 @@ const FolderStep: React.FC<{
   parentId?: string;
   onSuccess?: (id: string) => void;
 }> = ({ ensureProject, parentId, onSuccess }) => {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const initialState: UploadCodeFolderFormValues = {
@@ -73,12 +70,7 @@ const FolderStep: React.FC<{
   const toastId = useRef<string | number>(undefined);
 
   const mutation = useMutation({
-    mutationFn: async ({
-      project,
-      data,
-    }: FolderUploadVariables): Promise<
-      CreateCodeResponse & { toInvalidate: QueryKey[]; project: ProjectDetailedSchema }
-    > => {
+    mutationFn: async ({ project, data }: FolderUploadVariables) => {
       const [apiBaseUrl, signingToken] = await Promise.all([
         authActions.getBaseUrl(),
         tokenActions
@@ -134,7 +126,6 @@ const FolderStep: React.FC<{
       return {
         ...(responseData as CreateCodeResponse),
         toInvalidate,
-        project,
       };
     },
     onMutate: () => {
@@ -152,7 +143,7 @@ const FolderStep: React.FC<{
         errors: { zip: "Something went wrong" },
       });
     },
-    onSuccess: ({ id, status, toInvalidate, project, analysis_id }) => {
+    onSuccess: ({ analysis_id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
@@ -160,18 +151,7 @@ const FolderStep: React.FC<{
         id: toastId.current,
       });
 
-      if (status === "waiting" || status === "processing" || status === "success") {
-        onSuccess?.(id);
-      }
-
-      if (analysis_id) {
-        const base = `/team/${project.team.slug}/${project.slug}/analyses/${analysis_id}`;
-        if (status === "waiting" || status === "processing") {
-          router.push(`${base}/processing`);
-        } else if (status === "success") {
-          router.push(base);
-        }
-      }
+      if (analysis_id) onSuccess?.(analysis_id);
     },
   });
 
@@ -279,26 +259,6 @@ const FolderStep: React.FC<{
     }
   }
 
-  if (mutation.isSuccess && mutation.data.status === "success" && !mutation.data.analysis_id) {
-    const { project: proj, id: codeId } = mutation.data;
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-            <CheckCircle className="size-8 text-green-400" />
-          </div>
-          <h2 className="text-2xl font-bold ">Version Created Successfully!</h2>
-          <p className="text-muted-foreground">
-            Your contract has been uploaded and is ready for analysis.
-          </p>
-          <Button asChild className="mt-4">
-            <Link href={`/team/${proj.team.slug}/${proj.slug}/codes/${codeId}`}>View Version</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   if (mutation.isError) {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
@@ -319,81 +279,90 @@ const FolderStep: React.FC<{
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 h-full flex flex-col overflow-hidden w-full">
-      <div className="flex flex-row justify-between items-end">
-        <div className="text-left space-y-2">
-          <div className="flex flex-row gap-4 justify-start items-center">
-            <Folder className="size-6 text-yellow-400" />
-            <h2 className="text-2xl font-bold ">Upload Folder</h2>
-          </div>
-          <p className="text-muted-foreground">Upload an entire folder of solidity files</p>
+    <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 overflow-hidden">
+      <header className="space-y-1.5">
+        <div className="flex items-center gap-3">
+          <Folder className="size-6 shrink-0 text-yellow-400" aria-hidden />
+          <h2 className="text-2xl font-bold tracking-tight">Upload folder</h2>
         </div>
-        <Button
-          type="button"
-          disabled={formState.values.zip.size === 0 || mutation.isPending}
-          className="min-w-40"
-          onClick={handleSubmit}
-        >
-          <span>Submit</span>
-          <ArrowRight className="size-4" />
-        </Button>
-      </div>
+        <p className="text-sm text-muted-foreground">
+          Select a folder containing .sol, .js, or .ts files. Hidden paths like{" "}
+          <span className="font-mono text-xs">.git</span> are skipped.
+        </p>
+      </header>
 
-      <div className="flex flex-col flex-1 min-h-0">
-        {formState.values.zip.size === 0 ? (
-          <label className="w-full block mb-4">
-            <div
-              className={cn(
-                "border-2 border-dashed rounded-lg p-8 transition-colors relative",
-                isDragOver
-                  ? "border-purple-400 bg-purple-500/10"
-                  : "border-neutral-700 hover:border-neutral-600",
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <div className="size-12 rounded-full bg-neutral-800 flex items-center justify-center">
-                  <Upload className="size-6 text-muted-foreground" />
-                </div>
-                <div className="text-center">
-                  <h3 className="text-lg font-medium  mb-2">Upload folder here</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Click here or drag and drop to upload a folder with .sol files
-                  </p>
-                </div>
-              </div>
-              <input
-                type="file"
-                {...{ webkitdirectory: "" }}
-                accept=".sol,.js,.ts"
-                onChange={handleFileInput}
-                className="absolute inset-0 appearance-none cursor-pointer opacity-0"
-                id="folder-upload"
-              />
+      {formState.values.zip.size === 0 ? (
+        <label className="block w-full cursor-pointer">
+          <div
+            className={cn(
+              "relative flex min-h-[min(40vh,320px)] flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-colors",
+              isDragOver
+                ? "border-purple-400 bg-purple-500/10"
+                : "border-neutral-700 hover:border-neutral-600 hover:bg-muted/20",
+            )}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <div className="flex size-14 items-center justify-center rounded-full bg-neutral-800">
+              <Upload className="size-7 text-muted-foreground" aria-hidden />
             </div>
-          </label>
-        ) : (
-          <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
+            <div className="max-w-md space-y-1 text-center">
+              <p className="text-base font-medium">Choose a folder to upload</p>
+              <p className="text-sm text-muted-foreground">
+                Click this area or drag files from a folder. Your browser will ask you to pick a
+                directory.
+              </p>
+            </div>
+            <input
+              type="file"
+              {...{ webkitdirectory: "" }}
+              accept=".sol,.js,.ts"
+              onChange={handleFileInput}
+              className="absolute inset-0 cursor-pointer opacity-0"
+              id="folder-upload"
+            />
+          </div>
+        </label>
+      ) : (
+        <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-muted/15 p-5 sm:p-6">
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-foreground">Ready to upload</p>
             <p className="text-sm text-muted-foreground">
-              <span className="text-foreground font-medium">{stagedFileCount}</span> file
-              {stagedFileCount !== 1 ? "s" : ""} ready to upload
+              <span className="font-semibold tabular-nums text-foreground">{stagedFileCount}</span>{" "}
+              file{stagedFileCount !== 1 ? "s" : ""} will be zipped and sent for indexing.
             </p>
-            <Button variant="outline" onClick={clearAllFiles}>
-              <X className="size-3" />
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={clearAllFiles}
+              disabled={mutation.isPending}
+            >
+              <X className="size-3.5" />
               Remove all
             </Button>
+            <Button
+              type="button"
+              className="w-full min-w-40 sm:w-auto"
+              disabled={mutation.isPending}
+              onClick={handleSubmit}
+            >
+              <span>Submit</span>
+              <ArrowRight className="size-4" />
+            </Button>
           </div>
-        )}
+        </div>
+      )}
 
-        {formState.errors.zip && (
-          <div className="flex items-center space-x-2 text-destructive text-sm mt-4">
-            <XCircle className="size-4" />
-            <span>{formState.errors.zip}</span>
-          </div>
-        )}
-      </div>
+      {formState.errors.zip && (
+        <div className="flex items-start gap-2 text-sm text-destructive">
+          <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>{formState.errors.zip}</span>
+        </div>
+      )}
     </div>
   );
 };

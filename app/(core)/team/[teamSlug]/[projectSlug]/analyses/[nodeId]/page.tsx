@@ -4,10 +4,10 @@ import ProjectSubnav from "@/components/subnav/project";
 import AnalysisMetadata from "@/components/views/analysis/metadata";
 import { getQueryClient } from "@/lib/config/query";
 import { AsyncComponent } from "@/types";
-import { DraftFindingSchema } from "@/types/api/responses/security";
+import type { DraftFindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import AnalysisClient from "./analysis-client";
+import AnalysisWorkspaceClient from "./analysis-workspace-client";
 
 type ResolvedParams = {
   nodeId: string;
@@ -51,15 +51,35 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   const isOwner = analysis.is_owner;
   const codeVersionId = analysis.code_version_id;
 
-  // Prefetch code files so CodeProvider has them immediately
-  await queryClient.prefetchQuery({
-    queryKey: generateQueryKey.codeFiles(codeVersionId),
-    queryFn: () =>
-      codeActions.getFiles(resolvedParams.teamSlug, codeVersionId).then((r) => {
-        if (!r.ok) throw r;
-        return r.data;
+  if (analysis.status === "waiting" || analysis.status === "processing") {
+    await Promise.all([
+      queryClient.fetchQuery({
+        queryKey: generateQueryKey.code(codeVersionId),
+        queryFn: () =>
+          codeActions.getCodeVersion(resolvedParams.teamSlug, codeVersionId).then((r) => {
+            if (!r.ok) throw r;
+            return r.data;
+          }),
       }),
-  });
+      queryClient.fetchQuery({
+        queryKey: generateQueryKey.analysisScopes(resolvedParams.nodeId),
+        queryFn: () =>
+          analysisActions.getScopes(resolvedParams.teamSlug, resolvedParams.nodeId).then((r) => {
+            if (!r.ok) throw r;
+            return r.data;
+          }),
+      }),
+    ]);
+  } else {
+    await queryClient.prefetchQuery({
+      queryKey: generateQueryKey.codeFiles(codeVersionId),
+      queryFn: () =>
+        codeActions.getFiles(resolvedParams.teamSlug, codeVersionId).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
+    });
+  }
 
   if (resolvedSearchParams.findingId) {
     initialFinding = findings.find((finding) => finding.id == resolvedSearchParams.findingId);
@@ -69,7 +89,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Container subnav={<ProjectSubnav />} contain>
         <AnalysisMetadata {...resolvedParams} allowActions isOwner={isOwner} />
-        <AnalysisClient
+        <AnalysisWorkspaceClient
           codeVersionId={codeVersionId}
           teamSlug={resolvedParams.teamSlug}
           projectSlug={resolvedParams.projectSlug}

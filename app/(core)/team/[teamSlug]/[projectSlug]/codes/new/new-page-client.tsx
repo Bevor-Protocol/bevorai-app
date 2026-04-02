@@ -30,7 +30,8 @@ const Steps: React.FC<{
 
   const handleSuccess = React.useCallback(
     (id: string) => {
-      unregisterRef.current = registerCallback("code", "team", id, (payload) => {
+      unregisterRef.current = registerCallback("code.status", id, (payload) => {
+        if (payload.type !== "code.status") return;
         if (payload.data.status === "processing") {
           sseToastId.current = toast.loading("Processing code...");
         } else if (payload.data.status === "success") {
