@@ -73,8 +73,7 @@ export interface FindingSchema extends AnalysisFinding {
   feedback?: string;
   locations: FindingLocationSchema[];
   source_node_id: string;
-  validated_at?: string;
-  invalidated_at?: string;
+  affected_scopes: string[];
 }
 
 export interface DraftFindingSchema extends FindingSchema {
@@ -118,8 +117,6 @@ export interface AnalysisNodeSchema {
   merged_from_node_id?: string;
   parent_node_id?: string;
   children: string[];
-  findings: FindingSchema[];
-  scopes: ScopeSchema[];
 }
 
 export interface AnalysisNodeIndex extends AnalysisNodeSchema {

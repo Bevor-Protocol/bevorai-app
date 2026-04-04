@@ -1,12 +1,14 @@
 "use client";
 
+import { codeActions } from "@/actions/bevor";
 import { useCode } from "@/providers/code";
 import {
   AnalysisNodeSchema,
   DraftFindingSchema,
   FindingSchema,
 } from "@/types/api/responses/security";
-import { Shield } from "lucide-react";
+import { generateQueryKey } from "@/utils/constants";
+import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useMemo, useState } from "react";
 import CodeWithAnnotations, { FindingWithNode } from "./code-with-annotations";
 import FileTreeFindings from "./file-tree-findings";
@@ -18,6 +20,7 @@ interface CombinedViewProps {
   codeVersionId: string;
   version: AnalysisNodeSchema;
   findings: DraftFindingSchema[];
+  isOwner: boolean;
   onAddFindingToContext?: (finding: FindingSchema) => void;
 }
 
@@ -27,24 +30,34 @@ const CombinedView: React.FC<CombinedViewProps> = ({
   nodeId,
   codeVersionId,
   findings,
+  isOwner,
   onAddFindingToContext,
 }) => {
-  const { fileId, handleFileChange, nodesQuery } = useCode();
+  const { fileId, handleFileChange } = useCode();
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
   const [expandedFindingIds, setExpandedFindingIds] = useState<Set<string>>(new Set());
 
-  // Build list of findings with their associated nodes (for current file)
+  const allVersionNodesQuery = useQuery({
+    queryKey: generateQueryKey.codeNodes(codeVersionId),
+    queryFn: () =>
+      codeActions.getNodes(teamSlug, codeVersionId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    enabled: !!codeVersionId && (findings.length > 0 || isOwner),
+    staleTime: Infinity,
+  });
+
   const allFindingsWithNodes = useMemo((): FindingWithNode[] => {
-    if (!nodesQuery.data) return [];
+    if (!allVersionNodesQuery.data) return [];
     const result: FindingWithNode[] = [];
     for (const finding of findings) {
-      const node = nodesQuery.data.find((n) => n.id == finding.node_id);
+      const node = allVersionNodesQuery.data.find((n) => n.id == finding.node_id);
       if (node) result.push({ finding, node });
     }
     return result;
-  }, [findings, nodesQuery.data]);
+  }, [findings, allVersionNodesQuery.data]);
 
-  // Filter findings for the currently selected file
   const findingsForCurrentFile = useMemo(
     () => allFindingsWithNodes.filter((fw) => fw.node.file_id === fileId),
     [allFindingsWithNodes, fileId],
@@ -52,62 +65,71 @@ const CombinedView: React.FC<CombinedViewProps> = ({
 
   const handleFindingClick = useCallback(
     (finding: FindingSchema) => {
-      const node = nodesQuery.data?.find((n) => n.id == finding.node_id);
-      if (!node) return;
+      const fwn = allFindingsWithNodes.find((x) => x.finding.id === finding.id);
+      if (!fwn) return;
+      const { node } = fwn;
 
       setSelectedFindingId(finding.id);
       setExpandedFindingIds((prev) => new Set([...prev, finding.id]));
 
-      // Switch file if this finding is in a different file
       if (fileId !== node.file_id) {
         handleFileChange(node.file_id);
       }
     },
-    [nodesQuery.data, fileId, handleFileChange],
+    [allFindingsWithNodes, fileId, handleFileChange],
   );
 
-  const handleToggleFinding = useCallback((findingId: string) => {
-    setExpandedFindingIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(findingId)) next.delete(findingId);
-      else next.add(findingId);
-      return next;
-    });
-    setSelectedFindingId(findingId);
-  }, []);
+  const handleToggleFinding = useCallback(
+    (findingId: string) => {
+      let willExpand = false;
+      setExpandedFindingIds((prev) => {
+        willExpand = !prev.has(findingId);
+        const next = new Set(prev);
+        if (willExpand) next.add(findingId);
+        else next.delete(findingId);
+        return next;
+      });
+      setSelectedFindingId(findingId);
+      if (willExpand) {
+        const fwn = allFindingsWithNodes.find((x) => x.finding.id === findingId);
+        if (fwn && fileId !== fwn.node.file_id) handleFileChange(fwn.node.file_id);
+      }
+    },
+    [allFindingsWithNodes, fileId, handleFileChange],
+  );
 
-  if (findings.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-center py-12">
-        <div>
-          <Shield className="size-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">No Findings</h3>
-          <p className="text-muted-foreground">This analysis version has no security findings.</p>
-        </div>
-      </div>
-    );
-  }
+  const selectFindingFromCode = useCallback(
+    (findingId: string) => {
+      setSelectedFindingId(findingId);
+      setExpandedFindingIds((prev) => new Set(prev).add(findingId));
+      const fwn = allFindingsWithNodes.find((x) => x.finding.id === findingId);
+      if (fwn && fileId !== fwn.node.file_id) handleFileChange(fwn.node.file_id);
+    },
+    [allFindingsWithNodes, fileId, handleFileChange],
+  );
 
   return (
     <div className="flex h-full min-h-0 w-full">
       <FileTreeFindings
         teamSlug={teamSlug}
+        projectSlug={projectSlug}
+        nodeId={nodeId}
         codeId={codeVersionId}
+        isOwner={isOwner}
+        allFindingsWithNodes={allFindingsWithNodes}
+        codeVersionNodes={allVersionNodesQuery.data ?? []}
+        findingsGraphLoading={allVersionNodesQuery.isLoading}
         selectedFindingId={selectedFindingId}
+        expandedFindingIds={expandedFindingIds}
         onFindingClick={handleFindingClick}
-        findings={findings}
+        onToggleFinding={handleToggleFinding}
+        onAddFindingToContext={onAddFindingToContext}
       />
       <div className="flex-1 min-w-0 h-full">
         <CodeWithAnnotations
-          teamSlug={teamSlug}
-          projectSlug={projectSlug}
-          nodeId={nodeId}
-          codeVersionId={codeVersionId}
           findingsWithNodes={findingsForCurrentFile}
           selectedFindingId={selectedFindingId}
-          expandedFindingIds={expandedFindingIds}
-          onToggleFinding={handleToggleFinding}
-          onAddFindingToContext={onAddFindingToContext}
+          onSelectFinding={selectFindingFromCode}
         />
       </div>
     </div>

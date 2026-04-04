@@ -106,6 +106,7 @@ const findingEventToSchema = (f: FindingEventData, node: AnalysisNodeSchema): Fi
   status: FindingStatusEnum.UNRESOLVED,
   locations: f.locations.map((loc) => ({ source_node_id: loc })),
   source_node_id: f.source_node_id,
+  affected_scopes: f.affected_scopes ?? [],
 });
 
 export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

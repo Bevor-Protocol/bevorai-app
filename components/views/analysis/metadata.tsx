@@ -3,12 +3,12 @@
 import { analysisActions } from "@/actions/bevor";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { AnalysisNodeSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { formatDateShort } from "@/utils/helpers";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   Check,
@@ -22,6 +22,8 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import AnalysisVersionMenu from "./menu";
 
 const getStatusIndicator = (status: AnalysisNodeSchema["status"]): React.ReactNode => {
@@ -66,7 +68,9 @@ const AnalysisMetadata: React.FC<{
   allowActions?: boolean;
   isOwner?: boolean;
 }> = ({ teamSlug, projectSlug, nodeId, allowActions = false, isOwner = false }) => {
+  const router = useRouter();
   const { isCopied, copy } = useCopyToClipboard();
+  const queryClient = useQueryClient();
 
   const { data: version, isPending } = useQuery({
     queryKey: generateQueryKey.analysis(nodeId),
@@ -77,6 +81,30 @@ const AnalysisMetadata: React.FC<{
       }),
   });
 
+  const { data: findings } = useQuery({
+    queryKey: generateQueryKey.analysisFindings(nodeId),
+    queryFn: () =>
+      analysisActions.getAnalysisFindings(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  const commitDraftMutation = useMutation({
+    mutationFn: () =>
+      analysisActions.commitDraft(teamSlug, nodeId).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+    onSuccess: ({ id }) => {
+      void queryClient.invalidateQueries({ queryKey: generateQueryKey.analysisFindings(nodeId) });
+      void queryClient.invalidateQueries({ queryKey: generateQueryKey.analysis(nodeId) });
+      toast.success("Changes committed");
+      router.push(`/team/${teamSlug}/${projectSlug}/analyses/${id}`);
+    },
+    onError: () => toast.error("Failed to commit changes"),
+  });
+
   if (isPending || !version) {
     return (
       <div className="pt-3 pb-6" aria-busy="true" aria-label="Loading analysis details">
@@ -84,6 +112,10 @@ const AnalysisMetadata: React.FC<{
       </div>
     );
   }
+
+  const rerunHref = `/team/${teamSlug}/${projectSlug}/analyses/new?parentVersionId=${encodeURIComponent(nodeId)}`;
+  const canRerun = version.status === "partial";
+  const hasDraftFindings = (findings ?? []).some((f) => f.is_draft);
 
   return (
     <div className="pt-3 pb-6">
@@ -155,36 +187,71 @@ const AnalysisMetadata: React.FC<{
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {allowActions && isOwner && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <RefreshCw className="size-4" />
-                  Rerun
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-72 text-sm">
-                <div className="flex gap-2.5">
-                  <Info className="size-4 text-yellow-400 shrink-0 mt-0.5" />
-                  <div className="space-y-2">
-                    <p className="font-medium text-foreground">
-                      Only rerun if something seems broken.
-                    </p>
-                    <p className="text-muted-foreground text-[13px] leading-relaxed">
-                      For incremental changes or follow-up questions, the{" "}
-                      <span className="text-foreground font-medium">chat feature</span> is faster
-                      and more precise. A full rerun re-analyzes the entire codebase from scratch.
-                    </p>
-                    <Button size="sm" variant="outline" className="w-full mt-1" asChild>
-                      <Link
-                        href={`/team/${teamSlug}/${projectSlug}/analyses/new?parentVersionId=${encodeURIComponent(nodeId)}`}
-                      >
-                        Rerun Analysis
-                      </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-muted-foreground"
+                      aria-label="About rerun"
+                    >
+                      <Info className="size-3.5" />
                     </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    align="start"
+                    className="max-w-xs text-[13px] leading-snug"
+                  >
+                    {canRerun ? (
+                      <p>
+                        <span className="font-medium text-foreground">Partial analysis.</span> Rerun
+                        starts a new full analysis of the codebase. Use it when incomplete or failed
+                        scopes leave results you do not trust. For smaller follow-ups,{" "}
+                        <span className="font-medium text-foreground">chat</span> is usually faster.
+                      </p>
+                    ) : (
+                      <p>
+                        <span className="font-medium text-foreground">
+                          Rerun is only enabled when there was an issue during processing.
+                        </span>{" "}
+                        When some scopes do not finish successfully, status shows Partial and you
+                        can rerun. A rerun re-analyzes the failed segments of the codebase only; use{" "}
+                        <span className="font-medium text-foreground">chat</span> for incremental
+                        questions.
+                      </p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+                {canRerun ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={rerunHref}>
+                      <RefreshCw className="size-4" />
+                      Rerun
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button type="button" variant="outline" size="sm" disabled>
+                    <RefreshCw className="size-4" />
+                    Rerun
+                  </Button>
+                )}
+              </div>
+              {hasDraftFindings ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="default"
+                  disabled={commitDraftMutation.isPending}
+                  onClick={() => commitDraftMutation.mutate()}
+                >
+                  Commit changes
+                </Button>
+              ) : null}
+            </div>
           )}
 
           {allowActions ? (

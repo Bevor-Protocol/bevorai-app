@@ -254,6 +254,17 @@ export const getNodeContent = apiRequest<
     .then((response) => withRequestId(response, response.data.content)),
 );
 
+export const getScopesForNode = apiRequest<
+  [teamSlug: string, codeId: string, nodeId: string],
+  string[]
+>(async (teamSlug, codeId, nodeId) =>
+  graphApi
+    .get(`/versions/${codeId}/nodes/${nodeId}/scopes-for-node`, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then((response) => withRequestId(response, response.data.results)),
+);
+
 export const getNodes = apiRequest<
   [
     teamSlug: string,

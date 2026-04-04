@@ -157,7 +157,7 @@ export const mergeAnalysis = apiRequest<
 export const commitDraft = apiRequest<[teamSlug: string, analysisId: string], { id: string }>(
   async (teamSlug, analysisId) =>
     securityApi
-      .post(`/drafts/${analysisId}/commit`, {}, { headers: { "bevor-team-slug": teamSlug } })
+      .post(`/analyses/${analysisId}/commit`, {}, { headers: { "bevor-team-slug": teamSlug } })
       .then((response) => withRequestId(response, { id: response.data.id })),
 );
 

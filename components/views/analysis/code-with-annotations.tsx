@@ -1,32 +1,25 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
 import { GraphSnapshotNode } from "@/types/api/responses/graph";
-import { FindingSchema } from "@/types/api/responses/security";
-import { FileText } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DraftFindingSchema, FindingLevelEnum } from "@/types/api/responses/security";
+import { FileText, ShieldAlert } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { codeToHtml } from "shiki";
-import InlineFindingCard from "./inline-finding-card";
 
 export interface FindingWithNode {
-  finding: FindingSchema;
+  finding: DraftFindingSchema;
   node: GraphSnapshotNode;
 }
 
 interface CodeWithAnnotationsProps {
-  teamSlug: string;
-  projectSlug: string;
-  nodeId: string;
-  codeVersionId: string;
   findingsWithNodes: FindingWithNode[];
   selectedFindingId: string | null;
-  expandedFindingIds: Set<string>;
-  onToggleFinding: (findingId: string) => void;
-  onAddFindingToContext?: (finding: FindingSchema) => void;
+  onSelectFinding: (findingId: string) => void;
 }
 
-/** Build a Uint32Array of byte offsets where each line starts. */
 function buildLineStartMap(content: string): number[] {
   const encoder = new TextEncoder();
   const bytes = encoder.encode(content);
@@ -37,7 +30,6 @@ function buildLineStartMap(content: string): number[] {
   return lineStarts;
 }
 
-/** Return 1-indexed line number for a given byte position. */
 function byteToLine(lineStarts: number[], bytePos: number): number {
   let lo = 0;
   let hi = lineStarts.length - 1;
@@ -49,7 +41,6 @@ function byteToLine(lineStarts: number[], bytePos: number): number {
   return lo + 1;
 }
 
-/** Extract individual line innerHTML strings from a shiki HTML output. */
 function extractLines(html: string): { lines: string[]; preStyle: React.CSSProperties } {
   const div = document.createElement("div");
   div.innerHTML = html;
@@ -64,27 +55,46 @@ function extractLines(html: string): { lines: string[]; preStyle: React.CSSPrope
   return { lines, preStyle };
 }
 
+const LEVEL_RANK: Record<string, number> = {
+  [FindingLevelEnum.CRITICAL]: 0,
+  [FindingLevelEnum.HIGH]: 1,
+  [FindingLevelEnum.MEDIUM]: 2,
+  [FindingLevelEnum.LOW]: 3,
+};
+
+function worstSeverityLevel(findings: FindingWithNode[]): string {
+  let bestRank = 999;
+  let level = FindingLevelEnum.LOW;
+  for (const { finding } of findings) {
+    const r = LEVEL_RANK[finding.level] ?? 99;
+    if (r < bestRank) {
+      bestRank = r;
+      level = finding.level;
+    }
+  }
+  return level.toLowerCase();
+}
+
+const MARKER_STYLES: Record<string, string> = {
+  critical: "border-red-500/45 bg-red-950/35 text-red-200/95",
+  high: "border-orange-500/40 bg-orange-950/30 text-orange-200/90",
+  medium: "border-amber-500/35 bg-amber-950/25 text-amber-100/90",
+  low: "border-blue-500/40 bg-blue-950/30 text-blue-200/90",
+};
+
 const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
-  teamSlug,
-  projectSlug,
-  nodeId,
-  codeVersionId,
   findingsWithNodes,
   selectedFindingId,
-  expandedFindingIds,
-  onToggleFinding,
-  onAddFindingToContext,
+  onSelectFinding,
 }) => {
   const { fileId, fileQuery, fileContentQuery, positions } = useCode();
   const [lines, setLines] = useState<string[]>([]);
   const [preStyle, setPreStyle] = useState<React.CSSProperties>({});
   const [lineStarts, setLineStarts] = useState<number[]>([0]);
   const [isHighlighting, setIsHighlighting] = useState(false);
-  const findingRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastContentRef = useRef<string | null>(null);
 
-  // Highlight code and parse lines
   useEffect(() => {
     const content = fileContentQuery.data;
     if (!content) {
@@ -139,34 +149,38 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
     run();
   }, [fileContentQuery.data]);
 
-  // Map finding end-line -> findings to insert annotation after that line
-  const findingsByEndLine = useMemo(() => {
+  const findingsByStartLine = useMemo(() => {
     if (!fileId || lineStarts.length === 0) return new Map<number, FindingWithNode[]>();
     const map = new Map<number, FindingWithNode[]>();
     for (const fw of findingsWithNodes) {
       if (fw.node.file_id !== fileId) continue;
-      const endLine = byteToLine(lineStarts, fw.node.src_end_pos);
-      const arr = map.get(endLine) ?? [];
+      const startLine = byteToLine(lineStarts, fw.node.src_start_pos);
+      const arr = map.get(startLine) ?? [];
       arr.push(fw);
-      map.set(endLine, arr);
+      map.set(startLine, arr);
     }
     return map;
   }, [findingsWithNodes, fileId, lineStarts]);
 
-  // Scroll to selected finding's card
+  const selectedStartLine = useMemo(() => {
+    if (!selectedFindingId || !fileId || lineStarts.length === 0) return null;
+    const fw = findingsWithNodes.find((x) => x.finding.id === selectedFindingId);
+    if (!fw || fw.node.file_id !== fileId) return null;
+    return byteToLine(lineStarts, fw.node.src_start_pos);
+  }, [selectedFindingId, findingsWithNodes, fileId, lineStarts]);
+
   useEffect(() => {
-    if (!selectedFindingId || lines.length === 0) return;
-    // Small delay to ensure the card is rendered
+    if (!selectedFindingId || lines.length === 0 || lineStarts.length === 0 || !fileId) return;
+    const fw = findingsWithNodes.find((x) => x.finding.id === selectedFindingId);
+    if (!fw || fw.node.file_id !== fileId) return;
+    const lineNum = byteToLine(lineStarts, fw.node.src_start_pos);
     const timer = setTimeout(() => {
-      const el = findingRefs.current.get(selectedFindingId);
-      if (el && scrollContainerRef.current) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
+      const el = scrollContainerRef.current?.querySelector(`[data-line="${lineNum}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 80);
     return (): void => clearTimeout(timer);
-  }, [selectedFindingId, lines]);
+  }, [selectedFindingId, lines, lineStarts, findingsWithNodes, fileId]);
 
-  // Scroll to node position (from NodeSearch)
   useEffect(() => {
     if (!positions || lines.length === 0 || lineStarts.length === 0 || !scrollContainerRef.current)
       return;
@@ -178,22 +192,12 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
     return (): void => clearTimeout(timer);
   }, [positions, lines, lineStarts]);
 
-  const setFindingRef = useCallback(
-    (findingId: string): ((el: HTMLDivElement | null) => void) =>
-      (el: HTMLDivElement | null): void => {
-        if (el) findingRefs.current.set(findingId, el);
-        else findingRefs.current.delete(findingId);
-      },
-    [],
-  );
-
   const filePath = fileQuery.data?.path;
   const fileName = filePath?.split("/").pop();
   const isLoading = fileContentQuery.isLoading || isHighlighting;
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* File path header */}
       <div className="h-subheader shrink-0">
         <div className="flex items-center gap-2 border border-border rounded-t-lg pl-3 pr-1.5 bg-background size-full">
           <FileText className="size-3.5 text-zinc-500 shrink-0" />
@@ -208,7 +212,6 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
         </div>
       </div>
 
-      {/* Scrollable code content */}
       <div
         ref={scrollContainerRef}
         className="flex-1 min-h-0 overflow-auto border border-t-0 border-border rounded-b-lg"
@@ -226,80 +229,68 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
         ) : lines.length === 0 ? (
           <div className="p-4 text-sm text-muted-foreground">No content</div>
         ) : (
-          /*
-           * Code + inline annotations.
-           *
-           * We render an outer div (font reset for annotation cards) that contains:
-           *   1. A single pre>code.language-sol for all lines – needed so CSS
-           *      counters (line numbers via ::before) work correctly.
-           *   2. Annotation cards injected as block spans after their target line.
-           *
-           * Each .line span gets display:block so lines stack vertically
-           * (they'd be inline inside <pre> otherwise, running together).
-           *
-           * The shiki-container class provides token dim/highlight effects.
-           */
-          <div className="min-h-full bg-background">
-            <pre
-              className="m-0 p-0 shiki github-dark shiki-container"
-              style={{
-                backgroundColor: "transparent",
-                color: preStyle.color,
-                fontFamily: "inherit",
-              }}
-            >
-              <code
-                className="language-sol"
-                style={{
-                  fontFamily:
-                    "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace",
-                  fontSize: "0.8125rem",
-                  lineHeight: "1.6",
-                }}
-              >
-                {lines.map((lineInner, idx) => {
-                  const lineNum = idx + 1;
-                  const lineFindings = findingsByEndLine.get(lineNum) ?? [];
+          <div className="min-h-full min-w-0 max-w-full bg-background language-sol">
+            {lines.map((lineInner, idx) => {
+              const lineNum = idx + 1;
+              const lineFindings = findingsByStartLine.get(lineNum) ?? [];
+              const hasMarker = lineFindings.length > 0;
+              const sev = hasMarker ? worstSeverityLevel(lineFindings) : "";
+              const markerStyle = MARKER_STYLES[sev] ?? MARKER_STYLES.low;
+              const isSelectedLine = selectedStartLine === lineNum;
+              const primaryId = lineFindings[0]?.finding.id;
 
-                  return (
-                    <React.Fragment key={lineNum}>
+              return (
+                <div
+                  key={lineNum}
+                  className={cn("flex min-w-0 items-stretch", isSelectedLine && "bg-blue-500/8")}
+                >
+                  <div className="min-w-0 flex-1 overflow-x-auto">
+                    <div
+                      className="m-0 shiki github-dark shiki-container p-0"
+                      style={{
+                        backgroundColor: "transparent",
+                        color: preStyle.color,
+                      }}
+                    >
                       <span
-                        className="line"
+                        className={cn(
+                          "line block whitespace-pre font-mono text-[0.8125rem] leading-[1.6]",
+                          isSelectedLine && "ring-1 ring-inset ring-blue-500/25 rounded-sm",
+                        )}
                         data-line={lineNum}
-                        style={{ display: "block" }}
+                        style={{
+                          fontFamily:
+                            "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace",
+                        }}
                         // eslint-disable-next-line react/no-danger
                         dangerouslySetInnerHTML={{ __html: lineInner }}
                       />
-                      {lineFindings.length > 0 && (
-                        <span
-                          style={{
-                            display: "block",
-                            fontFamily: "var(--font-sans, ui-sans-serif, system-ui, sans-serif)",
-                            fontSize: "1rem",
-                            lineHeight: "1.5",
-                          }}
-                        >
-                          {lineFindings.map(({ finding }) => (
-                            <InlineFindingCard
-                              key={finding.id}
-                              ref={setFindingRef(finding.id)}
-                              finding={finding}
-                              teamSlug={teamSlug}
-                              projectSlug={projectSlug}
-                              nodeId={nodeId}
-                              codeVersionId={codeVersionId}
-                              isExpanded={expandedFindingIds.has(finding.id)}
-                              onToggle={() => onToggleFinding(finding.id)}
-                              onAddFindingToContext={onAddFindingToContext}
-                            />
-                          ))}
-                        </span>
+                    </div>
+                  </div>
+                  {hasMarker && primaryId && (
+                    <button
+                      type="button"
+                      title={
+                        lineFindings.length === 1
+                          ? "Open finding"
+                          : `${lineFindings.length} findings — open first`
+                      }
+                      onClick={() => onSelectFinding(primaryId)}
+                      className={cn(
+                        "shrink-0 self-stretch flex items-center gap-1 px-2 border-l border-zinc-800/90",
+                        "text-[10px] font-medium uppercase tracking-wide transition-colors hover:brightness-110",
+                        markerStyle,
                       )}
-                    </React.Fragment>
-                  );
-                })}
-              </code>
-            </pre>
+                    >
+                      <ShieldAlert className="size-3.5 shrink-0 opacity-90" aria-hidden />
+                      <span className="hidden sm:inline">
+                        {lineFindings.length === 1 ? "Finding" : `${lineFindings.length}`}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

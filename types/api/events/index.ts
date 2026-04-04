@@ -51,6 +51,8 @@ export interface FindingEventData {
   recommendation: string;
   reference: string;
   locations: string[];
+  /** Node ids of entry-point scopes affected by this finding */
+  affected_scopes?: string[];
 }
 
 export interface AnalysisScopeStatusEventData {

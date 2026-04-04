@@ -23,6 +23,7 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
   codeVersionId,
   projectSlug,
   nodeId,
+  isOwner,
 }) => {
   const { addFinding } = useChat();
 
@@ -55,6 +56,7 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
             nodeId={nodeId}
             version={version}
             findings={findings}
+            isOwner={isOwner}
             onAddFindingToContext={addFinding}
           />
         </div>

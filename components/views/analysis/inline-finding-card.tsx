@@ -6,40 +6,51 @@ import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
-import { FindingSchema, FindingStatusEnum } from "@/types/api/responses/security";
+import { DraftFindingSchema, FindingStatusEnum } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
 import { FindingUpdateBody } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Check,
   ChevronDown,
   ChevronUp,
   MessageSquare,
+  Pencil,
   ShieldCheck,
   ShieldPlus,
   ThumbsDown,
   ThumbsUp,
+  Trash2,
+  Undo2,
   X,
 } from "lucide-react";
 import { forwardRef, JSX, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import AnalysisCodeSnippet from "./snippet";
+import { FindingFormDialog } from "./finding-form-dialog";
 
 interface InlineFindingCardProps {
-  finding: FindingSchema;
+  finding: DraftFindingSchema;
   teamSlug: string;
   projectSlug: string;
   nodeId: string;
   codeVersionId: string;
+  isOwner: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   validatedFindingNames?: Set<string>;
-  onAddFindingToContext?: (finding: FindingSchema) => void;
+  onAddFindingToContext?: (finding: DraftFindingSchema) => void;
 }
-
-// ── Severity helpers ─────────────────────────────────────────────────────────
 
 const SEVERITY_CONFIG: Record<
   string,
@@ -107,19 +118,34 @@ const getSeverityConfig = (level: string): { [key: string]: string } =>
     label: level.toUpperCase(),
   };
 
-// ── Component ────────────────────────────────────────────────────────────────
-
 const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
   (
-    { finding, teamSlug, nodeId, codeVersionId, isExpanded, onToggle, onAddFindingToContext },
+    {
+      finding,
+      teamSlug,
+      nodeId,
+      codeVersionId,
+      isOwner,
+      isExpanded,
+      onToggle,
+      onAddFindingToContext,
+    },
     ref,
   ) => {
+    void codeVersionId;
     const { selectedChatId } = useChat();
     const [selectedNodeId, setSelectedNodeId] = useState<string>(finding.node_id);
     const [tab, setTab] = useState("description");
     const [feedback, setFeedback] = useState(finding.feedback);
+    const [editOpen, setEditOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleteMode, setDeleteMode] = useState<"remove" | "revert">("remove");
 
     const queryClient = useQueryClient();
+
+    const invalidateAnalysisFindings = (): void => {
+      void queryClient.invalidateQueries({ queryKey: generateQueryKey.analysisFindings(nodeId) });
+    };
 
     const updateMutation = useMutation({
       mutationFn: ({ findingId, data }: { findingId: string; data: FindingUpdateBody }) =>
@@ -129,12 +155,36 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
         }),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: generateQueryKey.analysisDetailed(nodeId) });
+        invalidateAnalysisFindings();
         toast.success("Feedback submitted");
       },
       onError: () => toast.error("Failed to submit feedback"),
     });
 
+    const stagedDeleteMutation = useMutation({
+      mutationFn: ({ findingId }: { findingId: string; mode: "remove" | "revert" }) =>
+        analysisActions.deleteStagedFinding(teamSlug, nodeId, findingId).then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
+      onSuccess: (_, { mode }) => {
+        invalidateAnalysisFindings();
+        toast.success(mode === "revert" ? "Change reverted" : "Finding removed");
+        setDeleteOpen(false);
+      },
+      onError: (_, { mode }) =>
+        toast.error(mode === "revert" ? "Failed to revert" : "Failed to remove finding"),
+    });
+
+    const pendingDelete = finding.operation === "delete";
+    const canEditContent = isOwner && !pendingDelete;
+    const canRevertDraft = isOwner && finding.is_draft;
+    const canRemoveCommitted = isOwner && !finding.is_draft;
+
     const sevConfig = getSeverityConfig(finding.level);
+
+    const affectedScopes = finding.affected_scopes ?? [];
+    const hasAffectedScopes = affectedScopes.length > 0;
 
     const hasLocations = finding.locations?.length > 0;
     const locationOptions = [
@@ -145,254 +195,373 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
     const typeLabel = finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
     return (
-      <div
-        ref={ref}
-        className={cn(
-          "border-l-[3px] my-1 mx-2 rounded-sm overflow-hidden",
-          "bg-zinc-950 border border-border border-l-[3px]",
-          sevConfig.border,
-        )}
-      >
-        {/* ── Collapsed header ─────────────────────────────────────────────── */}
-        <div className="flex items-start gap-0 cursor-pointer select-none" onClick={onToggle}>
-          {/* Left meta column */}
-          <div className="flex-1 min-w-0 px-3 pt-2.5 pb-2">
-            {/* Row 1: severity badge + finding name */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span
-                className={cn(
-                  "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] tracking-wider border shrink-0",
-                  sevConfig.badge,
-                )}
-              >
-                {sevConfig.label}
-              </span>
-              <span
-                className="text-[13px] font-semibold text-foreground truncate min-w-0 leading-snug"
-                title={finding.name}
-              >
-                {finding.name}
-              </span>
-            </div>
-
-            {/* Row 2: type chip + status chip */}
-            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-              <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono bg-zinc-800/80 text-zinc-400 border border-zinc-700/60">
-                {typeLabel}
-              </span>
-              {getFindingStatusText(finding.status)}
-            </div>
-          </div>
-
-          {/* Right actions column */}
-          <div
-            className="flex items-center gap-1.5 px-3 pt-2.5 pb-2 shrink-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {finding.status == FindingStatusEnum.VALIDATED ? (
-              <span className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] bg-green-500/10 text-green-400 border border-green-500/20 cursor-default">
-                <ShieldCheck className="size-3" />
-                Validated
-              </span>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  updateMutation.mutate({
-                    findingId: finding.id,
-                    data: { status: FindingStatusEnum.VALIDATED },
-                  })
-                }
-                className="h-6 text-[11px] px-2 gap-1 text-zinc-400 hover:text-foreground border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/60"
-              >
-                <ShieldPlus className="size-3" />
-                Validate
-              </Button>
-            )}
-
-            {onAddFindingToContext && selectedChatId && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onAddFindingToContext(finding)}
-                className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
-                title="Add to chat context"
-              >
-                <MessageSquare className="size-3.5" />
-              </Button>
-            )}
-          </div>
-          <button
-            className="flex items-start px-2.5 pt-3 text-zinc-500 hover:text-zinc-300 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggle();
-            }}
-          >
-            {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-          </button>
-        </div>
-
-        {isExpanded && (
-          <div className="border-t border-border">
-            {/* Locations */}
-            {hasLocations && (
-              <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-border">
-                <span className="text-[11px] text-zinc-500 uppercase tracking-wide">Locations</span>
-                {locationOptions.map((location, index) => (
-                  <button
-                    key={`${location.source_node_id}-${location.field_name ?? "node"}-${index}`}
-                    type="button"
-                    onClick={() => setSelectedNodeId(location.source_node_id)}
-                    className={cn(
-                      "inline-flex items-center rounded px-2 py-0.5 text-[11px] font-mono transition-colors border",
-                      selectedNodeId === location.source_node_id
-                        ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
-                        : "border-zinc-700/60 bg-zinc-800/40 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-300",
-                    )}
-                  >
-                    {location.field_name
-                      ? `${location.field_name} · ${truncateId(location.source_node_id)}`
-                      : truncateId(location.source_node_id)}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="border-b border-border bg-background">
-              <AnalysisCodeSnippet
-                teamSlug={teamSlug}
-                codeId={codeVersionId}
-                nodeId={selectedNodeId}
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-                <Subnav className="w-fit px-0">
-                  <SubnavButton
-                    isActive={tab === "description"}
-                    shouldHighlight
-                    onClick={() => setTab("description")}
-                  >
-                    Description
-                  </SubnavButton>
-                  <SubnavButton
-                    isActive={tab === "recommendation"}
-                    shouldHighlight
-                    onClick={() => setTab("recommendation")}
-                  >
-                    Recommendation
-                  </SubnavButton>
-                  <SubnavButton
-                    isActive={tab === "feedback"}
-                    shouldHighlight
-                    onClick={() => setTab("feedback")}
-                  >
-                    Feedback
-                  </SubnavButton>
-                </Subnav>
-                <span className="text-[10px] font-mono text-zinc-600 border border-zinc-700/40 rounded px-1.5 py-0.5">
-                  {truncateId(finding.id)}
+      <>
+        <div
+          ref={ref}
+          className={cn(
+            "border-l-[3px] my-1 mx-2 rounded-sm overflow-hidden min-w-0 max-w-full",
+            "bg-zinc-950 border border-border border-l-[3px]",
+            sevConfig.border,
+            pendingDelete && "opacity-60",
+          )}
+        >
+          <div className="flex items-start gap-0 cursor-pointer select-none" onClick={onToggle}>
+            <div className="flex-1 min-w-0 px-3 pt-2.5 pb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] tracking-wider border shrink-0",
+                    sevConfig.badge,
+                  )}
+                >
+                  {sevConfig.label}
+                </span>
+                <span
+                  className="text-[13px] font-semibold text-foreground truncate min-w-0 leading-snug"
+                  title={finding.name}
+                >
+                  {finding.name}
                 </span>
               </div>
 
-              <div className="px-3 py-3">
-                {tab === "description" && (
-                  <div className="space-y-3">
-                    {finding.explanation && (
-                      <ReactMarkdown className="markdown text-[13px] leading-relaxed">
-                        {finding.explanation}
-                      </ReactMarkdown>
-                    )}
-                    {finding.reference && (
-                      <div className="space-y-1.5 pt-2 border-t border-border">
-                        <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
-                          Reference
-                        </p>
-                        <ReactMarkdown className="markdown text-[13px] leading-relaxed">
-                          {finding.reference}
-                        </ReactMarkdown>
-                      </div>
-                    )}
-                    {!finding.explanation && !finding.reference && (
-                      <p className="text-[13px] text-zinc-500">No description available.</p>
-                    )}
-                  </div>
-                )}
-                {tab === "recommendation" && (
-                  <div>
-                    {finding.recommendation ? (
-                      <ReactMarkdown className="markdown text-[13px] leading-relaxed">
-                        {finding.recommendation}
-                      </ReactMarkdown>
-                    ) : (
-                      <p className="text-[13px] text-zinc-500">No recommendation available.</p>
-                    )}
-                  </div>
-                )}
-                {tab === "feedback" && (
-                  <div className="space-y-3">
-                    <Textarea
-                      value={feedback}
-                      onChange={(e) => setFeedback(e.target.value)}
-                      placeholder="Enter your feedback..."
-                      rows={4}
-                      className="text-[13px] bg-background border-border resize-none"
-                    />
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() =>
-                          updateMutation.mutate({
-                            findingId: finding.id,
-                            data: { feedback, status: FindingStatusEnum.VALIDATED },
-                          })
-                        }
-                        disabled={updateMutation.isPending}
-                        className="text-zinc-500 hover:text-green-400"
-                      >
-                        <ThumbsUp
-                          className={cn(
-                            "size-4",
-                            finding.status === FindingStatusEnum.VALIDATED && "text-green-400",
-                          )}
-                        />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() =>
-                          updateMutation.mutate({
-                            findingId: finding.id,
-                            data: { feedback, status: FindingStatusEnum.INVALIDATED },
-                          })
-                        }
-                        disabled={updateMutation.isPending}
-                        className="text-zinc-500 hover:text-red-400"
-                      >
-                        <ThumbsDown
-                          className={cn(
-                            "size-4",
-                            finding.status === FindingStatusEnum.INVALIDATED && "text-red-400",
-                          )}
-                        />
-                      </Button>
-                    </div>
-                    {finding.feedback && !feedback && (
-                      <p className="text-[11px] text-zinc-600 italic">
-                        Current: {finding.feedback}
-                      </p>
-                    )}
-                  </div>
-                )}
+              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono bg-zinc-800/80 text-zinc-400 border border-zinc-700/60">
+                  {typeLabel}
+                </span>
+                {getFindingStatusText(finding.status)}
+                {finding.is_draft ? (
+                  <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/25">
+                    Draft
+                  </span>
+                ) : null}
+                {finding.operation === "delete" ? (
+                  <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] bg-red-500/10 text-red-400 border border-red-500/25">
+                    Pending removal
+                  </span>
+                ) : null}
+                {finding.operation && finding.operation !== "delete" ? (
+                  <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25">
+                    Staged {finding.operation}
+                  </span>
+                ) : null}
               </div>
             </div>
+
+            <div
+              className="flex items-center gap-1.5 px-3 pt-2.5 pb-2 shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {canEditContent ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditOpen(true)}
+                  className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
+                  title="Edit finding"
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+              ) : null}
+              {canRevertDraft ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteMode("revert");
+                    setDeleteOpen(true);
+                  }}
+                  className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
+                  title="Revert staged change"
+                >
+                  <Undo2 className="size-3.5" />
+                </Button>
+              ) : null}
+              {canRemoveCommitted ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteMode("remove");
+                    setDeleteOpen(true);
+                  }}
+                  className="h-6 w-6 p-0 text-zinc-500 hover:text-red-400"
+                  title="Remove finding"
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              ) : null}
+              {finding.status == FindingStatusEnum.VALIDATED ? (
+                <span className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] bg-green-500/10 text-green-400 border border-green-500/20 cursor-default">
+                  <ShieldCheck className="size-3" />
+                  Validated
+                </span>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    updateMutation.mutate({
+                      findingId: finding.id,
+                      data: { status: FindingStatusEnum.VALIDATED },
+                    })
+                  }
+                  className="h-6 text-[11px] px-2 gap-1 text-zinc-400 hover:text-foreground border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/60"
+                >
+                  <ShieldPlus className="size-3" />
+                  Validate
+                </Button>
+              )}
+
+              {onAddFindingToContext && selectedChatId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onAddFindingToContext(finding)}
+                  className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
+                  title="Add to chat context"
+                >
+                  <MessageSquare className="size-3.5" />
+                </Button>
+              )}
+            </div>
+            <button
+              className="flex items-start px-2.5 pt-3 text-zinc-500 hover:text-zinc-300 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+            >
+              {isExpanded ? (
+                <ChevronUp className="size-3.5" />
+              ) : (
+                <ChevronDown className="size-3.5" />
+              )}
+            </button>
           </div>
-        )}
-      </div>
+
+          {isExpanded && (
+            <div className="min-w-0 max-w-full border-t border-border">
+              {hasAffectedScopes && (
+                <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-border">
+                  <span
+                    className="text-[11px] text-zinc-500 uppercase tracking-wide shrink-0"
+                    title="Analysis scopes (entry points) affected by this finding"
+                  >
+                    Affected scopes
+                  </span>
+                  {affectedScopes.map((scopeNodeId, scopeIndex) => (
+                    <button
+                      key={`${scopeNodeId}-${scopeIndex}`}
+                      type="button"
+                      onClick={() => setSelectedNodeId(scopeNodeId)}
+                      className={cn(
+                        "inline-flex items-center rounded px-2 py-0.5 text-[11px] font-mono transition-colors border",
+                        selectedNodeId === scopeNodeId
+                          ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
+                          : "border-zinc-700/60 bg-zinc-800/40 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-300",
+                      )}
+                      title={scopeNodeId}
+                    >
+                      {truncateId(scopeNodeId)}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {hasLocations && (
+                <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-border">
+                  <span className="text-[11px] text-zinc-500 uppercase tracking-wide">
+                    Locations
+                  </span>
+                  {locationOptions.map((location, index) => (
+                    <button
+                      key={`${location.source_node_id}-${location.field_name ?? "node"}-${index}`}
+                      type="button"
+                      onClick={() => setSelectedNodeId(location.source_node_id)}
+                      className={cn(
+                        "inline-flex items-center rounded px-2 py-0.5 text-[11px] font-mono transition-colors border",
+                        selectedNodeId === location.source_node_id
+                          ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
+                          : "border-zinc-700/60 bg-zinc-800/40 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-300",
+                      )}
+                    >
+                      {location.field_name
+                        ? `${location.field_name} · ${truncateId(location.source_node_id)}`
+                        : truncateId(location.source_node_id)}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex min-w-0 max-w-full flex-col">
+                <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-2 border-b border-border">
+                  <Subnav className="w-fit px-0">
+                    <SubnavButton
+                      isActive={tab === "description"}
+                      shouldHighlight
+                      onClick={() => setTab("description")}
+                    >
+                      Description
+                    </SubnavButton>
+                    <SubnavButton
+                      isActive={tab === "recommendation"}
+                      shouldHighlight
+                      onClick={() => setTab("recommendation")}
+                    >
+                      Recommendation
+                    </SubnavButton>
+                    <SubnavButton
+                      isActive={tab === "feedback"}
+                      shouldHighlight
+                      onClick={() => setTab("feedback")}
+                    >
+                      Feedback
+                    </SubnavButton>
+                  </Subnav>
+                  <span className="text-[10px] font-mono text-zinc-600 border border-zinc-700/40 rounded px-1.5 py-0.5">
+                    {truncateId(finding.id)}
+                  </span>
+                </div>
+
+                <div className="min-w-0 max-w-full px-3 py-3">
+                  {tab === "description" && (
+                    <div className="min-w-0 max-w-full space-y-3">
+                      {finding.explanation && (
+                        <ReactMarkdown className="markdown text-sm">
+                          {finding.explanation}
+                        </ReactMarkdown>
+                      )}
+                      {finding.reference && (
+                        <div className="min-w-0 max-w-full space-y-1.5 border-t border-border pt-2">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                            Reference
+                          </p>
+                          <ReactMarkdown className="markdown text-sm">
+                            {finding.reference}
+                          </ReactMarkdown>
+                        </div>
+                      )}
+                      {!finding.explanation && !finding.reference && (
+                        <p className="text-[13px] text-zinc-500">No description available.</p>
+                      )}
+                    </div>
+                  )}
+                  {tab === "recommendation" && (
+                    <div className="min-w-0 max-w-full">
+                      {finding.recommendation ? (
+                        <ReactMarkdown className="markdown text-sm">
+                          {finding.recommendation}
+                        </ReactMarkdown>
+                      ) : (
+                        <p className="text-[13px] text-zinc-500">No recommendation available.</p>
+                      )}
+                    </div>
+                  )}
+                  {tab === "feedback" && (
+                    <div className="space-y-3">
+                      <Textarea
+                        value={feedback ?? ""}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="Enter your feedback..."
+                        rows={4}
+                        className="text-[13px] bg-background border-border resize-none"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() =>
+                            updateMutation.mutate({
+                              findingId: finding.id,
+                              data: { feedback, status: FindingStatusEnum.VALIDATED },
+                            })
+                          }
+                          disabled={updateMutation.isPending}
+                          className="text-zinc-500 hover:text-green-400"
+                        >
+                          <ThumbsUp
+                            className={cn(
+                              "size-4",
+                              finding.status === FindingStatusEnum.VALIDATED && "text-green-400",
+                            )}
+                          />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() =>
+                            updateMutation.mutate({
+                              findingId: finding.id,
+                              data: { feedback, status: FindingStatusEnum.INVALIDATED },
+                            })
+                          }
+                          disabled={updateMutation.isPending}
+                          className="text-zinc-500 hover:text-red-400"
+                        >
+                          <ThumbsDown
+                            className={cn(
+                              "size-4",
+                              finding.status === FindingStatusEnum.INVALIDATED && "text-red-400",
+                            )}
+                          />
+                        </Button>
+                      </div>
+                      {finding.feedback && !feedback && (
+                        <p className="text-[11px] text-zinc-600 italic">
+                          Current: {finding.feedback}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <FindingFormDialog
+          mode="edit"
+          teamSlug={teamSlug}
+          nodeId={nodeId}
+          finding={finding}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {deleteMode === "revert" ? "Revert this change?" : "Remove this finding?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteMode === "revert"
+                  ? finding.operation === "delete"
+                    ? "The finding will stay on this analysis; only the pending removal is dropped."
+                    : finding.operation === "update"
+                      ? "Your staged edits will be discarded and the previous version will show again."
+                      : "This removes the staged finding you added."
+                  : "This will stage removal on this analysis. The findings list refreshes so you see the updated draft state."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={stagedDeleteMutation.isPending}>
+                Cancel
+              </AlertDialogCancel>
+              <Button
+                variant={deleteMode === "revert" ? "default" : "destructive"}
+                size="sm"
+                disabled={stagedDeleteMutation.isPending}
+                onClick={() =>
+                  stagedDeleteMutation.mutate({ findingId: finding.id, mode: deleteMode })
+                }
+              >
+                {deleteMode === "revert" ? "Revert" : "Remove"}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
   },
 );

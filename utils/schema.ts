@@ -109,7 +109,8 @@ export const analysisFindingBodySchema = z.object({
 export type AnalysisFindingBody = z.infer<typeof analysisFindingBodySchema>;
 
 export const addAnalysisFindingBodySchema = analysisFindingBodySchema.extend({
-  scope_id: z.string().min(1, "Scope ID must be a valid identifier"),
+  location_id: z.string().min(1, "Node ID must be a valid identifier"),
+  scope_ids: z.array(z.string()).min(1, "at least 1 scope must be used"),
 });
 
 export type AddAnalysisFindingBody = z.infer<typeof addAnalysisFindingBodySchema>;
