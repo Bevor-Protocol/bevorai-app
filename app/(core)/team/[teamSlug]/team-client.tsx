@@ -420,7 +420,7 @@ export const AnalysesPreview: React.FC<{
   const { data: analyses, isLoading } = useQuery({
     queryKey: generateQueryKey.analyses(teamSlug, { page_size: "3" }),
     queryFn: async () =>
-      analysisActions.getAnalyses(teamSlug, { page_size: "3" }).then((r) => {
+      analysisActions.getAnalyses(teamSlug, { page_size: 3 }).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),

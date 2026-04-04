@@ -34,13 +34,15 @@ const startPublicRepoUpload = async (
 const RepoUrlStep: React.FC<{
   ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>;
   parentId?: string;
+  parentAnalysisId?: string;
   onSuccess?: (id: string) => void;
-}> = ({ ensureProject, parentId, onSuccess }) => {
+}> = ({ ensureProject, parentId, parentAnalysisId, onSuccess }) => {
   const queryClient = useQueryClient();
 
   const initialState: CreateCodeFromPublicGithubFormValues = {
     url: "",
     parent_code_version_id: parentId,
+    parent_analysis_id: parentAnalysisId,
   };
   const { formState, setField, updateFormState } =
     useFormReducer<CreateCodeFromPublicGithubFormValues>(initialState);

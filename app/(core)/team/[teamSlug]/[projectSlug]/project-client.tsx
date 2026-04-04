@@ -48,6 +48,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CodeVersionCompactElement } from "@/components/versions/element";
 import { VersionEmpty } from "@/components/versions/empty";
 import { useFormReducer } from "@/hooks/useFormReducer";
+import { AnalysesQueryParams } from "@/types/api/requests/security";
 import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { FindingSchema, FindingStatusEnum } from "@/types/api/responses/security";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
@@ -369,10 +370,16 @@ export const ProjectActivities: React.FC<{ teamSlug: string; projectSlug: string
 export const AnalysesPreview: React.FC<{
   teamSlug: string;
   projectSlug: string;
-}> = ({ teamSlug, projectSlug }) => {
-  const query = { page_size: "3", project_slug: projectSlug };
+  userId: string;
+}> = ({ teamSlug, projectSlug, userId }) => {
+  const query: AnalysesQueryParams = {
+    page_size: 3,
+    project_slug: projectSlug,
+    is_leaf: true,
+    user_id: userId,
+  };
   const { data: analyses, isLoading } = useQuery({
-    queryKey: generateQueryKey.analyses(teamSlug, query),
+    queryKey: generateQueryKey.analyses(teamSlug, query as { [key: string]: any }),
     queryFn: async () =>
       analysisActions.getAnalyses(teamSlug, query).then((r) => {
         if (!r.ok) throw r;
@@ -385,7 +392,7 @@ export const AnalysesPreview: React.FC<{
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold">Recent Analyses</h3>
+        <h3 className="text-sm font-semibold">My Current Analyses</h3>
         <div className="flex items-center gap-2">
           {mostRecentId && (
             <Button variant="default" size="sm" className="h-7 text-xs" asChild>

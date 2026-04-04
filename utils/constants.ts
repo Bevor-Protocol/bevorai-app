@@ -161,6 +161,11 @@ export const generateQueryKey = {
   analysisDraft: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "draft"],
   analysisScopes: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "scopes"],
   analysisFindings: (nodeId: string): QueryKey => [QUERY_KEYS.ANALYSES, nodeId, "findings"],
+  analysisRemediationCandidates: (nodeId: string): QueryKey => [
+    QUERY_KEYS.ANALYSES,
+    nodeId,
+    "remediation-candidates",
+  ],
 
   subscription: (teamSlug: string): QueryKey => [QUERY_KEYS.SUBSCRIPTIONS, teamSlug],
   addons: (teamSlug: string): QueryKey => [QUERY_KEYS.ADD_ONS, teamSlug],

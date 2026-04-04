@@ -180,6 +180,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
     const canEditContent = isOwner && !pendingDelete;
     const canRevertDraft = isOwner && finding.is_draft;
     const canRemoveCommitted = isOwner && !finding.is_draft;
+    const canUpdateFeedbackOrStatus = !pendingDelete;
 
     const sevConfig = getSeverityConfig(finding.level);
 
@@ -192,7 +193,10 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
       ...finding.locations,
     ];
 
-    const typeLabel = finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    const typeLabel =
+      finding.type == null || finding.type === ""
+        ? ""
+        : finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
     return (
       <>
@@ -225,9 +229,11 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
               </div>
 
               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono bg-zinc-800/80 text-zinc-400 border border-zinc-700/60">
-                  {typeLabel}
-                </span>
+                {typeLabel ? (
+                  <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono bg-zinc-800/80 text-zinc-400 border border-zinc-700/60">
+                    {typeLabel}
+                  </span>
+                ) : null}
                 {getFindingStatusText(finding.status)}
                 {finding.is_draft ? (
                   <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/25">
@@ -299,13 +305,14 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={!canUpdateFeedbackOrStatus}
                   onClick={() =>
                     updateMutation.mutate({
                       findingId: finding.id,
                       data: { status: FindingStatusEnum.VALIDATED },
                     })
                   }
-                  className="h-6 text-[11px] px-2 gap-1 text-zinc-400 hover:text-foreground border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/60"
+                  className="h-6 text-[11px] px-2 gap-1 text-zinc-400 hover:text-foreground border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/60 disabled:opacity-60"
                 >
                   <ShieldPlus className="size-3" />
                   Validate
@@ -459,13 +466,21 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                   )}
                   {tab === "feedback" && (
                     <div className="space-y-3">
-                      <Textarea
-                        value={feedback ?? ""}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        placeholder="Enter your feedback..."
-                        rows={4}
-                        className="text-[13px] bg-background border-border resize-none"
-                      />
+                      {canUpdateFeedbackOrStatus ? (
+                        <Textarea
+                          value={feedback ?? ""}
+                          onChange={(e) => setFeedback(e.target.value)}
+                          placeholder="Enter your feedback…"
+                          rows={4}
+                          className="text-[13px] bg-background border-border resize-none"
+                        />
+                      ) : finding.feedback?.trim() ? (
+                        <p className="text-[13px] text-zinc-300 whitespace-pre-wrap">
+                          {finding.feedback}
+                        </p>
+                      ) : (
+                        <p className="text-[13px] text-zinc-500">No feedback.</p>
+                      )}
                       <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
@@ -476,8 +491,8 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                               data: { feedback, status: FindingStatusEnum.VALIDATED },
                             })
                           }
-                          disabled={updateMutation.isPending}
-                          className="text-zinc-500 hover:text-green-400"
+                          disabled={!canUpdateFeedbackOrStatus || updateMutation.isPending}
+                          className="text-zinc-500 hover:text-green-400 disabled:opacity-50"
                         >
                           <ThumbsUp
                             className={cn(
@@ -495,8 +510,8 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                               data: { feedback, status: FindingStatusEnum.INVALIDATED },
                             })
                           }
-                          disabled={updateMutation.isPending}
-                          className="text-zinc-500 hover:text-red-400"
+                          disabled={!canUpdateFeedbackOrStatus || updateMutation.isPending}
+                          className="text-zinc-500 hover:text-red-400 disabled:opacity-50"
                         >
                           <ThumbsDown
                             className={cn(
@@ -506,7 +521,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                           />
                         </Button>
                       </div>
-                      {finding.feedback && !feedback && (
+                      {finding.feedback && !feedback && canUpdateFeedbackOrStatus && (
                         <p className="text-[11px] text-zinc-600 italic">
                           Current: {finding.feedback}
                         </p>

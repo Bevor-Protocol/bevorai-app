@@ -1,4 +1,4 @@
-import { analysisActions, projectActions } from "@/actions/bevor";
+import { analysisActions, projectActions, userActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import ProjectSubnav from "@/components/subnav/project";
 import { getQueryClient } from "@/lib/config/query";
@@ -22,7 +22,7 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
 
   queryClient.fetchQuery({
     queryKey: generateQueryKey.project(projectSlug),
-    queryFn: async () =>
+    queryFn: () =>
       projectActions.getProject(teamSlug, projectSlug).then((r) => {
         if (!r.ok) throw r;
         return r.data;
@@ -31,13 +31,22 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
 
   queryClient.prefetchQuery({
     queryKey: generateQueryKey.validatedFindings(projectSlug),
-    queryFn: async () =>
+    queryFn: () =>
       analysisActions
         .getFindings(teamSlug, { project_slug: projectSlug, status: FindingStatusEnum.VALIDATED })
         .then((r) => {
           if (!r.ok) return [];
           return r.data;
         }),
+  });
+
+  const user = await queryClient.fetchQuery({
+    queryKey: generateQueryKey.currentUser(),
+    queryFn: () =>
+      userActions.get().then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
   });
 
   return (
@@ -48,7 +57,7 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
           <div className="py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
             <div className="min-w-0 space-y-8">
               <ValidatedFindings teamSlug={teamSlug} projectSlug={projectSlug} />
-              <AnalysesPreview teamSlug={teamSlug} projectSlug={projectSlug} />
+              <AnalysesPreview teamSlug={teamSlug} projectSlug={projectSlug} userId={user.id} />
             </div>
             <div className="min-w-0">
               <ProjectActivities teamSlug={teamSlug} projectSlug={projectSlug} />

@@ -56,13 +56,15 @@ const isValidFile = (file: File): boolean => {
 const FolderStep: React.FC<{
   ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>;
   parentId?: string;
+  parentAnalysisId?: string;
   onSuccess?: (id: string) => void;
-}> = ({ ensureProject, parentId, onSuccess }) => {
+}> = ({ ensureProject, parentId, parentAnalysisId, onSuccess }) => {
   const queryClient = useQueryClient();
 
   const initialState: UploadCodeFolderFormValues = {
     zip: new Blob(),
     parent_code_version_id: parentId,
+    parent_analysis_id: parentAnalysisId,
   };
   const { formState, setField, updateFormState } =
     useFormReducer<UploadCodeFolderFormValues>(initialState);
@@ -78,6 +80,7 @@ const FolderStep: React.FC<{
         tokenActions
           .getSigningToken(project.team.slug, project.id, {
             parent_code_version_id: data.parent_code_version_id,
+            parent_analysis_id: data.parent_analysis_id,
             analyze: true,
           })
           .then((r) => {

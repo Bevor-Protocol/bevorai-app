@@ -39,6 +39,9 @@ export const contractUploadFolder = apiRequest<
     formData.append("parent_id", data.parent_code_version_id);
     toInvalidate.push(generateQueryKey.codeRelations(data.parent_code_version_id));
   }
+  if (data.parent_analysis_id) {
+    formData.append("parent_analysis_id", data.parent_analysis_id);
+  }
 
   return graphApi
     .post("/versions/folder", formData, { headers: { "bevor-team-slug": teamSlug } })
@@ -65,6 +68,9 @@ export const contractUploadFile = apiRequest<
   if (data.parent_code_version_id) {
     formData.append("parent_id", data.parent_code_version_id);
     toInvalidate.push(generateQueryKey.codeRelations(data.parent_code_version_id));
+  }
+  if (data.parent_analysis_id) {
+    formData.append("parent_analysis_id", data.parent_analysis_id);
   }
 
   return graphApi

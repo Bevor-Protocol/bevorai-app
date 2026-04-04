@@ -396,13 +396,8 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
   }
 
   return (
-    <div
-      className={cn(
-        "shrink-0 h-full min-h-0 flex flex-col border-r border-border bg-background",
-        SIDEBAR_WIDTH_CLASS,
-      )}
-    >
-      <div className="px-2 h-subheader flex items-center gap-2 border-b border-border shrink-0">
+    <div className={cn("shrink-0 h-full min-h-0 flex flex-col bg-background", SIDEBAR_WIDTH_CLASS)}>
+      <div className="px-2 h-subheader flex items-center gap-2 shrink-0">
         <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest shrink-0">
           Files
         </p>

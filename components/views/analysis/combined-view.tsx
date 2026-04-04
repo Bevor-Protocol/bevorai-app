@@ -125,13 +125,11 @@ const CombinedView: React.FC<CombinedViewProps> = ({
         onToggleFinding={handleToggleFinding}
         onAddFindingToContext={onAddFindingToContext}
       />
-      <div className="flex-1 min-w-0 h-full">
-        <CodeWithAnnotations
-          findingsWithNodes={findingsForCurrentFile}
-          selectedFindingId={selectedFindingId}
-          onSelectFinding={selectFindingFromCode}
-        />
-      </div>
+      <CodeWithAnnotations
+        findingsWithNodes={findingsForCurrentFile}
+        selectedFindingId={selectedFindingId}
+        onSelectFinding={selectFindingFromCode}
+      />
     </div>
   );
 };

@@ -29,25 +29,20 @@ const KanbanPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
 
   const currentUserId = userRes.ok ? userRes.data.id : "";
 
-  const kanbanRes = await analysisActions.getKanban(teamSlug, project.id);
-  const findings = kanbanRes.ok ? kanbanRes.data : [];
-
+  const kanbanRes = await analysisActions.getKanban(teamSlug, project.id).then((r) => {
+    if (!r.ok) throw r;
+    return r.data;
+  });
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Container subnav={<ProjectSubnav />}>
-        <div className="mx-auto max-w-[1600px] py-8">
-          {!kanbanRes.ok ? (
-            <p className="text-sm text-destructive">
-              Could not load findings board. Try again later.
-            </p>
-          ) : (
-            <KanbanBoard
-              findings={findings}
-              teamSlug={teamSlug}
-              projectSlug={projectSlug}
-              currentUserId={currentUserId}
-            />
-          )}
+        <div className="max-w-7xl mx-auto py-8">
+          <KanbanBoard
+            findings={kanbanRes}
+            teamSlug={teamSlug}
+            projectSlug={projectSlug}
+            currentUserId={currentUserId}
+          />
         </div>
       </Container>
     </HydrationBoundary>

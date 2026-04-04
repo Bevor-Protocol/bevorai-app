@@ -37,13 +37,15 @@ const formatFileSize = (bytes: number): string => {
 const FileStep: React.FC<{
   ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>;
   parentId?: string;
+  parentAnalysisId?: string;
   onSuccess?: (id: string) => void;
-}> = ({ ensureProject, parentId, onSuccess }) => {
+}> = ({ ensureProject, parentId, parentAnalysisId, onSuccess }) => {
   const queryClient = useQueryClient();
 
   const uploadInitialState: UploadCodeFileFormValues = {
     file: undefined as unknown as File,
     parent_code_version_id: parentId,
+    parent_analysis_id: parentAnalysisId,
   };
   const {
     formState: uploadFormState,

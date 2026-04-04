@@ -197,7 +197,7 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
   const isLoading = fileContentQuery.isLoading || isHighlighting;
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 flex-1">
       <div className="h-subheader shrink-0">
         <div className="flex items-center gap-2 border border-border rounded-t-lg pl-3 pr-1.5 bg-background size-full">
           <FileText className="size-3.5 text-zinc-500 shrink-0" />

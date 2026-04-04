@@ -14,7 +14,6 @@ import {
 } from "@/types/api/responses/security";
 import { Pagination } from "@/types/api/responses/shared";
 import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
-import type { QueryParamsRecord } from "@/utils/query-params";
 import { buildSearchParams } from "@/utils/query-params";
 import {
   AddAnalysisFindingBody,
@@ -92,6 +91,21 @@ export const getScopes = apiRequest<[teamSlug: string, analysisId: string], Scop
       .then((response) => withRequestId(response, response.data.results)),
 );
 
+export const getRemediationCandidates = apiRequest<
+  [teamSlug: string, analysisId: string],
+  FindingSchema[]
+>(async (teamSlug, analysisId) =>
+  securityApi
+    .get(`/analyses/${analysisId}/remediation-candidates`, {
+      headers: { "bevor-team-slug": teamSlug },
+    })
+    .then((response) => withRequestId(response, response.data.results))
+    .catch((err) => {
+      console.log(err);
+      throw err;
+    }),
+);
+
 export const toggleVisibility = apiRequest<
   [teamSlug: string, analysisId: string],
   { toInvalidate: QueryKey[] }
@@ -103,10 +117,10 @@ export const toggleVisibility = apiRequest<
 });
 
 export const getAnalyses = apiRequest<
-  [teamSlug: string, query: AnalysesQueryParams | QueryParamsRecord],
+  [teamSlug: string, query: AnalysesQueryParams],
   Pagination<AnalysisNodeIndex>
 >(async (teamSlug, query) => {
-  const searchParams = buildSearchParams(query as unknown as { [key: string]: string });
+  const searchParams = buildSearchParams(query as { [key: string]: string });
   return securityApi
     .get(`/analyses?${searchParams}`, {
       headers: { "bevor-team-slug": teamSlug },

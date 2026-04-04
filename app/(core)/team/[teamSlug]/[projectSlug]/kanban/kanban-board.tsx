@@ -4,6 +4,13 @@ import { analysisActions } from "@/actions/bevor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { FindingStatusEnum, KanbanFindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
@@ -13,13 +20,14 @@ import {
   Ban,
   CheckCheck,
   CircleDot,
+  Filter,
   GripVertical,
   Lock,
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, DragEvent, FC } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const severityOrder = ["critical", "high", "medium", "low"];
@@ -35,6 +43,8 @@ const formatFindingType = (type: string): string =>
   type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
 const DRAG_MIME = "application/x-bevor-kanban-finding";
+
+const ALL_CREATORS = "__all__";
 
 type KanbanDragPayload = {
   findingId: string;
@@ -119,11 +129,7 @@ const KanbanCard: FC<{
   return (
     <div
       draggable={draggable}
-      title={
-        canDrag
-          ? undefined
-          : "Only the teammate this finding belongs to can move it between columns."
-      }
+      title={canDrag ? undefined : "Sign in to move findings between columns."}
       onDragStart={(e) => {
         onCardDragStart(finding.id);
         const payload: KanbanDragPayload = {
@@ -138,58 +144,68 @@ const KanbanCard: FC<{
       }}
       onDragEnd={onCardDragEnd}
       className={cn(
-        "rounded-lg border border-border/35 bg-transparent p-3 transition-[opacity,border-color]",
-        draggable && "cursor-grab hover:border-border/55 active:cursor-grabbing",
+        "group rounded-md border border-border/50 bg-muted/20 px-2.5 py-2 shadow-sm transition-[opacity,box-shadow,border-color]",
+        draggable && "cursor-grab hover:border-border hover:bg-muted/35 active:cursor-grabbing",
         !canDrag && "cursor-default",
-        isDragging && "opacity-50",
-        isUpdating && "opacity-70",
+        isDragging && "opacity-45",
+        isUpdating && "opacity-65",
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1.5">
         {canDrag ? (
-          <GripVertical className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <GripVertical
+            className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/70 opacity-0 transition-opacity group-hover:opacity-100"
+            aria-hidden
+          />
         ) : (
-          <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" aria-hidden />
+          <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/45" aria-hidden />
         )}
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-start gap-1">
-            <p className="min-w-0 flex-1 text-sm font-medium leading-snug text-foreground line-clamp-2">
+            <p className="min-w-0 flex-1 text-[13px] font-medium leading-snug tracking-tight text-foreground/95 line-clamp-2">
               {finding.name}
             </p>
             <Button
               variant="ghost"
               size="icon-sm"
-              className="shrink-0 text-muted-foreground hover:text-foreground"
+              className="-mr-1 size-7 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
               asChild
             >
               <Link
                 href={analysisHref}
                 draggable={false}
                 onClick={(ev) => ev.stopPropagation()}
-                title="Open analysis"
+                title="Open in analysis"
                 aria-label="Open finding in analysis"
               >
-                <ArrowUpRight className="size-4" />
+                <ArrowUpRight className="size-3.5" />
               </Link>
             </Button>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1 gap-y-1">
             <Badge
               variant="secondary"
               size="sm"
-              className={severityBadgeClass[finding.level] ?? ""}
+              className={cn(
+                "h-5 px-1.5 text-[10px] font-medium",
+                severityBadgeClass[finding.level] ?? "",
+              )}
             >
               {finding.level}
             </Badge>
-            <span className="text-xs text-muted-foreground">{formatFindingType(finding.type)}</span>
+            <span className="text-[11px] text-muted-foreground/90">
+              {formatFindingType(finding.type)}
+            </span>
           </div>
-          <div className="flex justify-between">
-            <p className="text-xs text-muted-foreground">
-              Analysis <span className="font-mono">{finding.analysis_id.slice(0, 8)}</span>
+          <div className="flex items-center justify-between gap-2 border-t border-border/30 pt-1.5">
+            <p className="truncate text-[11px] text-muted-foreground">
+              <span className="font-mono text-muted-foreground/80">
+                {finding.analysis_id.slice(0, 8)}
+              </span>
             </p>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Icon size="sm" seed={finding.user.id} />
-              <span>{finding.user.username}</span>
+            <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Icon size="xs" seed={finding.user.id} className="shrink-0" />
+              <span className="truncate">{finding.user.username}</span>
             </div>
           </div>
         </div>
@@ -219,7 +235,7 @@ const KanbanColumn: FC<{
   status,
   title,
   description,
-  icon: Icon,
+  icon: ColumnIcon,
   findings,
   teamSlug,
   projectSlug,
@@ -236,8 +252,8 @@ const KanbanColumn: FC<{
   <div
     data-kanban-column={status}
     className={cn(
-      "flex min-h-[min(70vh,640px)] min-w-[272px] flex-1 flex-col rounded-xl transition-[background-color]",
-      isDropTarget && "bg-primary/8",
+      "flex min-h-[min(72vh,680px)] min-w-[260px] flex-1 flex-col rounded-lg border border-border/40 bg-muted/10 transition-[box-shadow,background-color]",
+      isDropTarget && "bg-muted/25 ring-1 ring-inset ring-primary/20",
     )}
     onDragOver={(e) => {
       e.preventDefault();
@@ -251,20 +267,18 @@ const KanbanColumn: FC<{
     }}
     onDrop={(e) => onColumnDrop(status, e)}
   >
-    <div className="px-3 pb-2 pt-3">
-      <div className="flex items-center gap-2">
-        <Icon className="size-4 shrink-0 text-muted-foreground" />
-        <h2 className="text-sm font-semibold">{title}</h2>
-        <Badge variant="secondary" size="sm" className="ml-auto tabular-nums">
-          {findings.length}
-        </Badge>
+    <div className="sticky top-0 z-1 border-b border-border/35 bg-muted/10 px-3 py-2.5 backdrop-blur-sm">
+      <div className="flex min-h-5 items-center gap-1.5">
+        <ColumnIcon className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+        <h2 className="text-[13px] font-medium tracking-tight text-foreground/90">{title}</h2>
+        <span className="text-[13px] tabular-nums text-muted-foreground">{findings.length}</span>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground/80">{description}</p>
     </div>
-    <div className="flex flex-col gap-2 overflow-y-auto p-2">
+    <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain px-2 py-2">
       {findings.length === 0 ? (
-        <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-          No findings — drop here to change status
+        <p className="px-1 py-8 text-center text-[12px] text-muted-foreground/70">
+          Drop cards here to change status
         </p>
       ) : (
         findings.map((finding) => (
@@ -273,7 +287,7 @@ const KanbanColumn: FC<{
             finding={finding}
             teamSlug={teamSlug}
             projectSlug={projectSlug}
-            canDrag={!!currentUserId && finding.user_id === currentUserId}
+            canDrag={!!currentUserId}
             isDragging={draggingId === finding.id}
             isUpdating={updatingFindingId === finding.id}
             onCardDragStart={onCardDragStart}
@@ -295,10 +309,22 @@ const KanbanBoard: FC<{
   const [items, setItems] = useState<KanbanFindingSchema[]>(initialFindings);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetStatus, setDropTargetStatus] = useState<FindingStatusEnum | null>(null);
+  const [creatorFilter, setCreatorFilter] = useState<string>("");
 
   useEffect(() => {
     setItems(initialFindings);
   }, [initialFindings]);
+
+  const creators = useMemo((): KanbanFindingSchema["user"][] => {
+    const byId = new Map<string, KanbanFindingSchema["user"]>();
+    for (const f of items) byId.set(f.user.id, f.user);
+    return Array.from(byId.values()).sort((a, b) => a.username.localeCompare(b.username));
+  }, [items]);
+
+  const filteredItems = useMemo(
+    () => (creatorFilter ? items.filter((f) => f.user_id === creatorFilter) : items),
+    [items, creatorFilter],
+  );
 
   const updateMutation = useMutation({
     mutationFn: ({
@@ -337,14 +363,18 @@ const KanbanBoard: FC<{
     },
   });
 
-  const byStatus = KANBAN_COLUMNS.reduce(
-    (acc, col) => {
-      acc[col.status] = items
-        .filter((f) => f.status === col.status)
-        .sort((a, b) => severityOrder.indexOf(a.level) - severityOrder.indexOf(b.level));
-      return acc;
-    },
-    {} as Record<FindingStatusEnum, KanbanFindingSchema[]>,
+  const byStatus = useMemo(
+    () =>
+      KANBAN_COLUMNS.reduce(
+        (acc, col) => {
+          acc[col.status] = filteredItems
+            .filter((f) => f.status === col.status)
+            .sort((a, b) => severityOrder.indexOf(a.level) - severityOrder.indexOf(b.level));
+          return acc;
+        },
+        {} as Record<FindingStatusEnum, KanbanFindingSchema[]>,
+      ),
+    [filteredItems],
   );
 
   const handleColumnDrop = (targetStatus: FindingStatusEnum, e: DragEvent): void => {
@@ -359,7 +389,7 @@ const KanbanBoard: FC<{
     if (!currentUserId) return;
 
     const droppedFinding = items.find((f) => f.id === payload.findingId);
-    if (!droppedFinding || droppedFinding.user_id !== currentUserId) return;
+    if (!droppedFinding) return;
 
     updateMutation.mutate({
       findingId: payload.findingId,
@@ -369,15 +399,57 @@ const KanbanBoard: FC<{
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Findings board</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Drag your cards between columns to update status (assigned teammate only). The corner
-          control opens the analysis with that finding selected.
-        </p>
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight text-foreground/95">Board</h1>
+          <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-muted-foreground">
+            Drag cards between columns to update status. Open a finding from the link control.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+          <label htmlFor="kanban-creator-filter" className="sr-only">
+            Filter by creator
+          </label>
+          <Select
+            value={creatorFilter || ALL_CREATORS}
+            onValueChange={(v) => setCreatorFilter(v === ALL_CREATORS ? "" : v)}
+          >
+            <SelectTrigger
+              id="kanban-creator-filter"
+              className="h-8 w-[min(16rem,100vw-6rem)] text-xs"
+            >
+              {creatorFilter ? (
+                <SelectValue placeholder="Creator">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Icon size="xs" seed={creatorFilter} className="shrink-0" />
+                    <span className="truncate">
+                      {creators.find((u) => u.id === creatorFilter)?.username ?? "Creator"}
+                    </span>
+                  </span>
+                </SelectValue>
+              ) : (
+                <SelectValue placeholder="All creators" />
+              )}
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value={ALL_CREATORS} className="text-xs">
+                All creators
+              </SelectItem>
+              {creators.map((u) => (
+                <SelectItem key={u.id} value={u.id} className="text-xs">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Icon size="xs" seed={u.id} className="shrink-0" />
+                    <span className="truncate">{u.username}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
-      <div className="-mx-1 flex flex-col gap-4 overflow-x-auto px-1 pb-2 lg:flex-row lg:items-stretch">
+      <div className="-mx-0.5 flex flex-col gap-3 overflow-x-auto px-0.5 pb-3 lg:flex-row lg:items-stretch lg:gap-3">
         {KANBAN_COLUMNS.map((col) => (
           <KanbanColumn
             key={col.status}

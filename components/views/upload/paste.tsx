@@ -108,8 +108,9 @@ const PasteCodePanel: React.FC<{
 export const PasteCodeStep: React.FC<{
   ensureProject: (tags: string[]) => Promise<ProjectDetailedSchema>;
   parentId?: string;
+  parentAnalysisId?: string;
   onSuccess?: (id: string) => void;
-}> = ({ ensureProject, parentId, onSuccess }) => {
+}> = ({ ensureProject, parentId, parentAnalysisId, onSuccess }) => {
   const queryClient = useQueryClient();
   const [pastePanelKey, setPastePanelKey] = useState(0);
   const pasteToastId = useRef<string | number>(undefined);
@@ -117,6 +118,7 @@ export const PasteCodeStep: React.FC<{
   const pasteInitialState: PasteCodeFileFormValues = {
     content: PASTE_TEMPLATE_CODE,
     parent_code_version_id: parentId,
+    parent_analysis_id: parentAnalysisId,
   };
   const {
     formState,
