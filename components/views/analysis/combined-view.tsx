@@ -109,7 +109,7 @@ const CombinedView: React.FC<CombinedViewProps> = ({
   );
 
   return (
-    <div className="flex h-full min-h-0 w-full">
+    <div className="flex h-full min-h-0 w-full gap-2">
       <FileTreeFindings
         teamSlug={teamSlug}
         projectSlug={projectSlug}

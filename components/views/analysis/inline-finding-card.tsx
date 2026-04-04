@@ -193,13 +193,13 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
         <div
           ref={ref}
           className={cn(
-            "border-l-[3px] my-1 mx-2 rounded-sm overflow-hidden min-w-0 max-w-full",
+            "border-l-[3px] my-1 rounded-sm overflow-hidden min-w-0 max-w-full",
             "bg-zinc-950 border border-border border-l-[3px]",
             sevConfig.border,
             pendingDelete && "opacity-60",
           )}
         >
-          <div className="flex items-start gap-0 cursor-pointer select-none" onClick={onToggle}>
+          <div className="flex items-start cursor-pointer select-none" onClick={onToggle}>
             <div className="flex-1 min-w-0 px-3 pt-2.5 pb-2">
               <div className="flex items-center gap-2 min-w-0">
                 <span

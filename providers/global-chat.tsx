@@ -131,14 +131,13 @@ export const GlobalChatWrapper: React.FC<{ children: React.ReactNode }> = ({ chi
     enabled: isTeamRoute && !!teamSlug,
   });
 
-  const projects = (projectsQuery.data?.results ?? []) as ProjectDetailedSchema[];
-
   // Auto-select first project on team route
   useEffect(() => {
+    const projects = projectsQuery.data?.results ?? [];
     if (isTeamRoute && projects.length > 0 && !selectedProjectSlug) {
       setSelectedProjectSlug(projects[0].slug);
     }
-  }, [isTeamRoute, projects, selectedProjectSlug]);
+  }, [isTeamRoute, projectsQuery.data?.results, selectedProjectSlug]);
 
   // Reset on route change
   useEffect(() => {
@@ -220,7 +219,7 @@ export const GlobalChatWrapper: React.FC<{ children: React.ReactNode }> = ({ chi
     return (
       <ChatSelectorContext.Provider
         value={{
-          projects,
+          projects: projectsQuery.data?.results ?? [],
           selectedProjectSlug,
           setSelectedProjectSlug: (slug) => {
             setSelectedProjectSlug(slug);

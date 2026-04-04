@@ -372,10 +372,8 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
 
   if (treeQuery.isLoading) {
     return (
-      <div
-        className={cn("shrink-0 h-full flex flex-col border-r border-border", SIDEBAR_WIDTH_CLASS)}
-      >
-        <div className="px-2 h-subheader flex items-center gap-2 border-b border-border shrink-0">
+      <div className={cn("shrink-0 h-full flex flex-col", SIDEBAR_WIDTH_CLASS)}>
+        <div className="h-subheader flex items-center gap-2 border-b border-border shrink-0">
           <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Files</p>
           <NodeSearch
             teamSlug={teamSlug}
@@ -396,7 +394,7 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
 
   return (
     <div className={cn("shrink-0 h-full min-h-0 flex flex-col bg-background", SIDEBAR_WIDTH_CLASS)}>
-      <div className="px-2 h-subheader flex items-center gap-2 shrink-0">
+      <div className="h-subheader flex items-center gap-2 shrink-0">
         <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest shrink-0">
           Files
         </p>
@@ -467,11 +465,9 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
             </div>
             <div className="p-2 space-y-3 pb-4">
               {findingsGraphLoading ? (
-                <p className="text-[12px] text-zinc-500 px-1 py-2">Loading finding locations…</p>
+                <p className="text-[12px] text-zinc-500 py-2">Loading finding locations…</p>
               ) : sortedAllFindings.length === 0 ? (
-                <p className="text-[12px] text-zinc-500 px-1 py-2">
-                  No findings with graph locations.
-                </p>
+                <p className="text-[12px] text-zinc-500 py-2">No findings with graph locations.</p>
               ) : (
                 sortedAllFindings.map(({ finding, node }) => {
                   const filePath = treeQuery.data?.find((f) => f.id === node.file_id)?.path;
@@ -483,7 +479,7 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
                     >
                       {filePath && (
                         <p
-                          className="text-[10px] text-zinc-500 font-mono truncate px-0.5"
+                          className="text-[10px] text-zinc-500 font-mono truncate"
                           title={filePath}
                         >
                           {filePath}
