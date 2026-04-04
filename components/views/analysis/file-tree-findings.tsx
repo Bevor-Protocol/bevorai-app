@@ -6,14 +6,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useCode } from "@/providers/code";
 import { GraphSnapshotNode } from "@/types/api/responses/graph";
-import { FindingSchema } from "@/types/api/responses/security";
+import { FindingLevelEnum, FindingSchema } from "@/types/api/responses/security";
 import { ChevronDown, ChevronRight, FileCode, Folder, FolderOpen, Plus } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import NodeSearch from "../code/search";
 import { FindingWithNode } from "./code-with-annotations";
 import { FindingFormDialog } from "./finding-form-dialog";
 import InlineFindingCard from "./inline-finding-card";
-import { levelOrder } from "./scopes";
 
 const SIDEBAR_WIDTH_CLASS =
   "shrink-0 grow-0 w-[min(40rem,calc(100vw-1rem))] min-w-[18rem] sm:min-w-[22rem] md:min-w-[26rem]";
@@ -208,7 +207,7 @@ const FileRow: React.FC<{
   const hasFindings = leaf.findings.length > 0;
   const indent = depth * 16;
 
-  const counts = levelOrder
+  const counts = Object.values(FindingLevelEnum)
     .map((level) => ({
       level,
       count: leaf.findings.filter((fw) => fw.finding.level === level).length,
@@ -221,8 +220,8 @@ const FileRow: React.FC<{
         className={cn(
           "group flex items-center gap-1 h-7 cursor-pointer select-none transition-colors",
           isCurrentFile
-            ? "bg-white/[0.05] border-l-2 border-blue-500"
-            : "hover:bg-white/[0.03] border-l-2 border-transparent",
+            ? "bg-white/5 border-l-2 border-blue-500"
+            : "hover:bg-white/3 border-l-2 border-transparent",
         )}
         style={{ paddingLeft: `${6 + indent}px` }}
         onClick={() => onFileClick(leaf.fileId)}
@@ -347,8 +346,8 @@ const FileTreeFindings: React.FC<FileTreeFindingsProps> = ({
   }, [selectedFindingId, allFindingsWithNodes, treeQuery.data]);
 
   const sortedAllFindings = useMemo(() => {
-    const orderIdx = (level: string): number => {
-      const i = levelOrder.indexOf(level as (typeof levelOrder)[number]);
+    const orderIdx = (level: FindingLevelEnum): number => {
+      const i = Object.values(FindingLevelEnum).indexOf(level);
       return i === -1 ? 999 : i;
     };
     const copy = [...allFindingsWithNodes];

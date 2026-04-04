@@ -45,7 +45,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [showStagedChanges, setShowStagedChanges] = useState(false);
   const contentEditableRef = useRef<HTMLDivElement>(null);
   const atPositionRef = useRef<{ node: Text; offset: number } | null>(null);
-  const { attributes: chatProviderAttributes, removeFinding, chatType, draft } = useChat();
+  const { attributes: chatProviderAttributes, removeFinding, chatType, findings } = useChat();
 
   const { data: chatAttributes } = useQuery({
     queryKey: generateQueryKey.codeNodes(codeId),
@@ -650,7 +650,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const stagedFindings = draft?.staged ?? [];
+  const stagedFindings = findings?.filter((finding) => finding.is_draft) ?? [];
   const hasStagedChanges = chatType === "analysis" && stagedFindings.length > 0;
 
   const getDraftTypeIcon = (draftType?: string): React.ReactElement | null => {

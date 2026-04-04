@@ -30,13 +30,20 @@ export const useChatSelectorContext = (): ChatSelectorContextValue | null =>
 
 // ─── Route helpers ─────────────────────────────────────────────────────────────
 
-function useRouteKind(
+const useRouteKind = (
   teamSlug: string | null,
   projectSlug: string | null,
   nodeId: string | null,
   urlCodeId: string | null,
   pathname: string,
-) {
+): {
+  isAnalysisCodeSubroute: boolean;
+  isAnalysisRoute: boolean;
+  isDirectCodeRoute: boolean;
+  isProjectRoute: boolean;
+  isKanbanRoute: boolean;
+  isTeamRoute: boolean;
+} => {
   const isAnalysisCodeSubroute = !!nodeId && pathname.endsWith("/code");
   const isAnalysisRoute = !!nodeId && !isAnalysisCodeSubroute;
   const isDirectCodeRoute = !!urlCodeId && !nodeId;
@@ -53,11 +60,7 @@ function useRouteKind(
     !urlCodeId &&
     pathname === `/team/${teamSlug}/${projectSlug}/kanban`;
   const isTeamRoute =
-    !!teamSlug &&
-    !projectSlug &&
-    !nodeId &&
-    !urlCodeId &&
-    pathname === `/team/${teamSlug}`;
+    !!teamSlug && !projectSlug && !nodeId && !urlCodeId && pathname === `/team/${teamSlug}`;
 
   return {
     isAnalysisCodeSubroute,
@@ -67,7 +70,7 @@ function useRouteKind(
     isKanbanRoute,
     isTeamRoute,
   };
-}
+};
 
 // ─── Provider ──────────────────────────────────────────────────────────────────
 
@@ -81,11 +84,18 @@ export const GlobalChatWrapper: React.FC<{ children: React.ReactNode }> = ({ chi
   const nodeId = (params.nodeId as string) || null;
   const urlCodeId = (params.codeId as string) || null;
 
-  const { isAnalysisCodeSubroute, isAnalysisRoute, isDirectCodeRoute, isProjectRoute, isKanbanRoute, isTeamRoute } =
-    useRouteKind(teamSlug, projectSlug, nodeId, urlCodeId, pathname);
+  const {
+    isAnalysisCodeSubroute,
+    isAnalysisRoute,
+    isDirectCodeRoute,
+    isProjectRoute,
+    isKanbanRoute,
+    isTeamRoute,
+  } = useRouteKind(teamSlug, projectSlug, nodeId, urlCodeId, pathname);
 
   const needsSelector = isProjectRoute || isKanbanRoute || isTeamRoute;
-  const chatType: ChatType = isAnalysisRoute || isProjectRoute || isKanbanRoute || isTeamRoute ? "analysis" : "code";
+  const chatType: ChatType =
+    isAnalysisRoute || isProjectRoute || isKanbanRoute || isTeamRoute ? "analysis" : "code";
 
   const isEnabled = !!(
     teamSlug &&
@@ -148,7 +158,7 @@ export const GlobalChatWrapper: React.FC<{ children: React.ReactNode }> = ({ chi
     }),
     queryFn: () =>
       analysisActions
-        .getAnalyses(teamSlug!, { project_slug: effectiveProjectSlug!, page_size: "20" })
+        .getAnalyses(teamSlug!, { project_slug: effectiveProjectSlug!, page_size: 20 })
         .then((r) => {
           if (!r.ok) throw r;
           return r.data;
@@ -170,11 +180,7 @@ export const GlobalChatWrapper: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [needsSelector]);
 
   // ── Resolve final ChatProvider values ──
-  const resolvedAnalysisNodeId = needsSelector
-    ? selectedNodeId
-    : isAnalysisRoute
-      ? nodeId
-      : null;
+  const resolvedAnalysisNodeId = needsSelector ? selectedNodeId : isAnalysisRoute ? nodeId : null;
 
   const resolvedProjectSlug = (isTeamRoute ? selectedProjectSlug : projectSlug) ?? "";
 

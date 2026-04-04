@@ -1,20 +1,19 @@
 "use client";
 
 import { authActions, tokenActions } from "@/actions/bevor";
-import { ActivitySchema, InviteSchema } from "@/types/api/responses/business";
-import { ChatIndex } from "@/types/api/responses/chat";
 import {
   isPubSubMessageType,
   type FindingEventData,
   type PubSubMessage,
   type PubSubMessageType,
 } from "@/types/api/events";
+import { ActivitySchema, InviteSchema } from "@/types/api/responses/business";
+import { ChatIndex } from "@/types/api/responses/chat";
 import { ChatFullSchema, CodeMappingSchema } from "@/types/api/responses/graph";
 import {
   AnalysisNodeIndex,
   AnalysisNodeSchema,
-  FindingLevelEnum,
-  FindingSchema,
+  DraftFindingSchema,
   FindingStatusEnum,
   ScopeSchema,
 } from "@/types/api/responses/security";
@@ -87,7 +86,10 @@ function callbackKeysForMessage(msg: PubSubMessage): string[] {
   return [];
 }
 
-const findingEventToSchema = (f: FindingEventData, node: AnalysisNodeSchema): FindingSchema => ({
+const findingEventToSchema = (
+  f: FindingEventData,
+  node: AnalysisNodeSchema,
+): DraftFindingSchema => ({
   type: f.type,
   level: f.level,
   name: f.name,
@@ -104,9 +106,8 @@ const findingEventToSchema = (f: FindingEventData, node: AnalysisNodeSchema): Fi
   node_id: f.source_node_id,
   user_id: node.user.id,
   status: FindingStatusEnum.UNRESOLVED,
-  locations: f.locations.map((loc) => ({ source_node_id: loc })),
-  source_node_id: f.source_node_id,
   affected_scopes: f.affected_scopes ?? [],
+  is_draft: false,
 });
 
 export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -442,11 +443,13 @@ const handleAnalysisNewUpdate = (queryClient: QueryClient, payload: PubSubMessag
 
 const handleScopeStatusUpdate = (queryClient: QueryClient, payload: PubSubMessage): void => {
   if (payload.type !== "analysis.scope") return;
-  const { id: scopeNodeId, analysis_id, team, status, findings: rawFindings } = payload.data;
-  const findings = rawFindings ?? [];
+  const { id: scopeNodeId, analysis_id, team, status, findings } = payload.data;
 
   const analysisQuery = generateQueryKey.analysis(analysis_id);
-  const analysisDetailedQuery = generateQueryKey.analysisDetailed(analysis_id);
+  const scopeQuery = generateQueryKey.analysisScopes(analysis_id);
+  const findingsQuery = generateQueryKey.analysisFindings(analysis_id);
+
+  const analysis = queryClient.getQueryData<AnalysisNodeSchema>(analysisQuery);
 
   queryClient.setQueryData<AnalysisNodeSchema>(analysisQuery, (oldData) => {
     if (!oldData) return oldData;
@@ -456,45 +459,26 @@ const handleScopeStatusUpdate = (queryClient: QueryClient, payload: PubSubMessag
     };
   });
 
-  queryClient.setQueryData<AnalysisNodeSchema>(analysisDetailedQuery, (oldData) => {
+  queryClient.setQueryData<ScopeSchema[]>(scopeQuery, (oldData) => {
     if (!oldData) return oldData;
-
-    const updatedScopes = oldData.scopes.map((scope) =>
-      scope.id === scopeNodeId ? { ...scope, status } : scope,
-    );
-
-    const newFindingRows = findings.map((f) => findingEventToSchema(f, oldData));
-    const updatedFindings = oldData.findings.concat(newFindingRows);
-
-    const scoreMap: Record<FindingLevelEnum, number> = {
-      [FindingLevelEnum.CRITICAL]: 6,
-      [FindingLevelEnum.HIGH]: 4,
-      [FindingLevelEnum.MEDIUM]: 2,
-      [FindingLevelEnum.LOW]: 1,
-    };
-
-    const scopeScoreMap = new Map<string, number>();
-    for (const finding of updatedFindings) {
-      const score = scoreMap[finding.level] || 0;
-      const currentScore = scopeScoreMap.get(finding.source_node_id) || 0;
-      scopeScoreMap.set(finding.source_node_id, currentScore + score);
+    const newData = [...oldData];
+    for (const d of newData) {
+      if (d.id == scopeNodeId) {
+        d.status = status;
+      }
     }
-
-    const scopesWithScore: [ScopeSchema, number][] = updatedScopes.map((scope) => [
-      scope,
-      scopeScoreMap.get(scope.source_node_id) || 0,
-    ]);
-
-    scopesWithScore.sort((a, b) => b[1] - a[1]);
-    const sortedScopes = scopesWithScore.map((s) => s[0]);
-
-    return {
-      ...oldData,
-      n_findings: oldData.n_findings + findings.length,
-      scopes: sortedScopes,
-      findings: updatedFindings,
-    };
+    return newData;
   });
+
+  if (analysis) {
+    queryClient.setQueryData<DraftFindingSchema[]>(findingsQuery, (oldData) => {
+      const newFindings = findings.map((finding) => findingEventToSchema(finding, analysis));
+      if (!oldData) {
+        return newFindings;
+      }
+      return [...oldData, ...newFindings];
+    });
+  }
 
   const allActiveListQueries = queryClient.getQueriesData<Pagination<AnalysisNodeIndex>>({
     queryKey: [QUERY_KEYS.ANALYSES, team.slug],

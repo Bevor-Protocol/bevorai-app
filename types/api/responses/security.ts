@@ -67,12 +67,10 @@ export interface FindingSchema extends AnalysisFinding {
   project_slug: string;
   analysis_id: string;
   code_version_id: string;
-  node_id: string;
   user_id: string;
   status: FindingStatusEnum;
   feedback?: string;
-  locations: FindingLocationSchema[];
-  source_node_id: string;
+  node_id: string;
   affected_scopes: string[];
 }
 
@@ -84,12 +82,6 @@ export interface DraftFindingSchema extends FindingSchema {
 
 export interface KanbanFindingSchema extends FindingSchema {
   user: UserSchema;
-}
-
-export interface DraftedFindingSchema extends FindingSchema {
-  is_draft: boolean;
-  draft_type: FindingDraftState;
-  base_finding_id?: string;
 }
 
 export interface ScopeSchema extends GraphSnapshotNode {

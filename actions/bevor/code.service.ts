@@ -2,6 +2,7 @@
 
 import { apiRequest, withRequestId } from "@/actions/base";
 import { graphApi } from "@/lib/api";
+import { CodesQueryParams } from "@/types/api/requests/graph";
 import {
   CodeMappingSchema,
   CreateCodeResponse,
@@ -302,10 +303,10 @@ export const getRelations = apiRequest<[teamSlug: string, codeId: string], Relat
 );
 
 export const getVersions = apiRequest<
-  [teamSlug: string, filters: { [key: string]: string }],
+  [teamSlug: string, filters: CodesQueryParams],
   Pagination<CodeMappingSchema>
 >(async (teamSlug, filters) => {
-  const searchParams = buildSearchParams(filters);
+  const searchParams = buildSearchParams(filters as { [key: string]: any });
 
   return graphApi
     .get(`/versions?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })

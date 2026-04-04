@@ -87,11 +87,7 @@ const SourcesPage: AsyncComponent<Props> = async ({ params, searchParams }) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <CodeProvider
-        initialFileId={initialSourceId}
-        initialPosition={position}
-        {...resolvedParams}
-      >
+      <CodeProvider initialFileId={initialSourceId} initialPosition={position} {...resolvedParams}>
         <Container subnav={<CodeVersionSubnav />} contain>
           <CodeMetadata userId={user.id} {...resolvedParams} allowActions />
           <div className="flex flex-1 min-h-0">

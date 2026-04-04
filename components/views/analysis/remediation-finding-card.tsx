@@ -65,11 +65,6 @@ export const RemediationFindingCard: FC<{
   const typeLabel = formatType(finding.type);
   const affectedScopes = finding.affected_scopes ?? [];
   const hasAffectedScopes = affectedScopes.length > 0;
-  const hasLocations = finding.locations?.length > 0;
-  const locationOptions = [
-    { source_node_id: finding.node_id, field_name: "entrypoint" as const },
-    ...finding.locations,
-  ];
 
   const remediateMutation = useMutation({
     mutationFn: () =>
@@ -179,22 +174,6 @@ export const RemediationFindingCard: FC<{
                   title={scopeNodeId}
                 >
                   {truncateId(scopeNodeId)}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {hasLocations && (
-            <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
-              <span className="text-[11px] uppercase tracking-wide text-zinc-500">Locations</span>
-              {locationOptions.map((location, index) => (
-                <span
-                  key={`${location.source_node_id}-${location.field_name ?? "node"}-${index}`}
-                  className="inline-flex items-center rounded border border-zinc-700/60 bg-zinc-800/40 px-2 py-0.5 font-mono text-[11px] text-zinc-400"
-                >
-                  {location.field_name
-                    ? `${location.field_name} · ${truncateId(location.source_node_id)}`
-                    : truncateId(location.source_node_id)}
                 </span>
               ))}
             </div>

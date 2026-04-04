@@ -1,6 +1,15 @@
 "use client";
 
 import { analysisActions } from "@/actions/bevor";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Subnav, SubnavButton } from "@/components/ui/subnav";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,15 +20,6 @@ import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
 import { FindingUpdateBody } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Check,
   ChevronDown,
@@ -186,17 +186,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
 
     const affectedScopes = finding.affected_scopes ?? [];
     const hasAffectedScopes = affectedScopes.length > 0;
-
-    const hasLocations = finding.locations?.length > 0;
-    const locationOptions = [
-      { source_node_id: finding.node_id, field_name: "entrypoint" },
-      ...finding.locations,
-    ];
-
-    const typeLabel =
-      finding.type == null || finding.type === ""
-        ? ""
-        : finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    const typeLabel = finding.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
     return (
       <>
@@ -370,31 +360,6 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                       title={scopeNodeId}
                     >
                       {truncateId(scopeNodeId)}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {hasLocations && (
-                <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-border">
-                  <span className="text-[11px] text-zinc-500 uppercase tracking-wide">
-                    Locations
-                  </span>
-                  {locationOptions.map((location, index) => (
-                    <button
-                      key={`${location.source_node_id}-${location.field_name ?? "node"}-${index}`}
-                      type="button"
-                      onClick={() => setSelectedNodeId(location.source_node_id)}
-                      className={cn(
-                        "inline-flex items-center rounded px-2 py-0.5 text-[11px] font-mono transition-colors border",
-                        selectedNodeId === location.source_node_id
-                          ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
-                          : "border-zinc-700/60 bg-zinc-800/40 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-300",
-                      )}
-                    >
-                      {location.field_name
-                        ? `${location.field_name} · ${truncateId(location.source_node_id)}`
-                        : truncateId(location.source_node_id)}
                     </button>
                   ))}
                 </div>

@@ -429,11 +429,10 @@ export const CodePreview: React.FC<{
   teamSlug: string;
   projectSlug: string;
 }> = ({ teamSlug, projectSlug }) => {
-  const query = { page_size: "3", project_slug: projectSlug };
   const { data: codes, isLoading } = useQuery({
-    queryKey: generateQueryKey.codes(teamSlug, query),
+    queryKey: generateQueryKey.codes(teamSlug, { page_size: "3", project_slug: projectSlug }),
     queryFn: async () =>
-      codeActions.getVersions(teamSlug, query).then((r) => {
+      codeActions.getVersions(teamSlug, { page_size: 3, project_slug: projectSlug }).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
