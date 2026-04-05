@@ -1,4 +1,4 @@
-import { ProjectSchema, UserSchema } from "@/types/api/responses/business";
+import { ProjectSchema, TeamSchema, UserSchema } from "@/types/api/responses/business";
 
 export type ChatRole = "user" | "system";
 export type ChatType = "code" | "analysis";
@@ -29,7 +29,7 @@ export interface ChatMessageSchema {
 export interface ChatSchema {
   id: string;
   created_at: string;
-  team_id: string;
+  team: TeamSchema;
   project: ProjectSchema;
   user: UserSchema;
   total_messages: number;

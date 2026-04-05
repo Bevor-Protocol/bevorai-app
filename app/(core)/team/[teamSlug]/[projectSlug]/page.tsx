@@ -6,9 +6,13 @@ import { AsyncComponent } from "@/types";
 import { FindingStatusEnum } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import ProjectClient, {
+import {
   AnalysesPreview,
   ProjectActivities,
+  ProjectChats,
+  ProjectHeading,
+  ProjectMetadata,
+  ProjectToggle,
   ValidatedFindings,
 } from "./project-client";
 
@@ -52,15 +56,22 @@ const ProjectPage: AsyncComponent<ProjectPageProps> = async ({ params }) => {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Container subnav={<ProjectSubnav />}>
-        <div className="max-w-7xl mx-auto py-8">
-          <ProjectClient teamSlug={teamSlug} projectSlug={projectSlug} />
-          <div className="py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
+        <div className="mx-auto max-w-7xl py-8">
+          <div className="mb-8 flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <ProjectHeading teamSlug={teamSlug} projectSlug={projectSlug} />
+            </div>
+            <ProjectToggle teamSlug={teamSlug} projectSlug={projectSlug} />
+          </div>
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[2fr_1fr]">
             <div className="min-w-0 space-y-8">
+              <ProjectMetadata teamSlug={teamSlug} projectSlug={projectSlug} />
               <ValidatedFindings teamSlug={teamSlug} projectSlug={projectSlug} />
               <AnalysesPreview teamSlug={teamSlug} projectSlug={projectSlug} userId={user.id} />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex flex-col gap-4">
               <ProjectActivities teamSlug={teamSlug} projectSlug={projectSlug} />
+              <ProjectChats teamSlug={teamSlug} projectSlug={projectSlug} />
             </div>
           </div>
         </div>

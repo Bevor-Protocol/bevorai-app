@@ -1,9 +1,11 @@
 import LucideIcon from "@/components/lucide-icon";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ItemType } from "@/types";
 import { ActivitySchema } from "@/types/api/responses/business";
 import { formatDate } from "@/utils/helpers";
 import { Activity } from "lucide-react";
 import Link from "next/link";
+import React from "react";
 
 // Method mapper
 const methodMap: Record<string, string> = {
@@ -55,42 +57,60 @@ const getEntityRoute = (activity: ActivitySchema): string => {
 
 const ActivityList: React.FC<{
   activities: ActivitySchema[];
+  isLoading?: boolean;
+  emptyMessage?: string;
   className?: string;
   showHeader?: boolean;
-}> = ({ activities, className, showHeader = true }) => {
+}> = ({
+  activities,
+  isLoading = false,
+  emptyMessage = "No activity in this project yet.",
+  className,
+  showHeader = true,
+}) => {
   return (
     <div className={className}>
       {showHeader && (
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-2">
           <Activity className="size-4" />
           <h3 className="text-lg font-semibold">Recent Activity</h3>
         </div>
       )}
-      <div>
-        {activities.map((activity) => {
-          const methodText = methodMap[activity.method] || activity.method;
-          const assetType = entityTypeToAssetType[activity.entity_type];
-          const entityText = entityTypeToText[activity.entity_type] || activity.entity_type;
-          const route = getEntityRoute(activity);
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+        </div>
+      ) : activities.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+      ) : (
+        <div>
+          {activities.map((activity) => {
+            const methodText = methodMap[activity.method] || activity.method;
+            const assetType = entityTypeToAssetType[activity.entity_type];
+            const entityText = entityTypeToText[activity.entity_type] || activity.entity_type;
+            const route = getEntityRoute(activity);
 
-          return (
-            <div
-              key={activity.id}
-              className="flex items-center gap-2 py-2 text-sm text-muted-foreground whitespace-nowrap"
-            >
-              <LucideIcon assetType={assetType} className="size-4 shrink-0" />
-              <span className="truncate">
-                {activity.user.username} {methodText} a{" "}
-                <Link href={route} className="text-foreground/80 font-medium">
-                  {entityText}
-                </Link>
-                {" · "}
-                {formatDate(activity.created_at)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+            return (
+              <div
+                key={activity.id}
+                className="flex items-center gap-2 py-2 text-sm text-muted-foreground whitespace-nowrap"
+              >
+                <LucideIcon assetType={assetType} className="size-4 shrink-0" />
+                <span className="truncate">
+                  {activity.user.username} {methodText} a{" "}
+                  <Link href={route} className="text-foreground/80 font-medium">
+                    {entityText}
+                  </Link>
+                  {" · "}
+                  {formatDate(activity.created_at)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

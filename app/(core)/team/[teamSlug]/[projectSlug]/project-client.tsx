@@ -3,13 +3,14 @@
 import {
   activityActions,
   analysisActions,
+  chatActions,
   codeActions,
-  githubActions,
   projectActions,
 } from "@/actions/bevor";
 import ActivityList from "@/components/activity";
 import { AnalysisVersionCompactElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
+import ChatList from "@/components/chats";
 import LucideIcon from "@/components/lucide-icon";
 import {
   AlertDialog,
@@ -51,7 +52,7 @@ import { useFormReducer } from "@/hooks/useFormReducer";
 import { AnalysesQueryParams } from "@/types/api/requests/security";
 import { ProjectDetailedSchema } from "@/types/api/responses/business";
 import { FindingSchema, FindingStatusEnum } from "@/types/api/responses/security";
-import { generateQueryKey, QUERY_KEYS } from "@/utils/constants";
+import { generateQueryKey } from "@/utils/constants";
 import { formatDate, formatNumber } from "@/utils/helpers";
 import { projectFormSchema, ProjectFormValues } from "@/utils/schema";
 import {
@@ -355,7 +356,7 @@ export const ProjectActivities: React.FC<{ teamSlug: string; projectSlug: string
   teamSlug,
   projectSlug,
 }) => {
-  const { data: activities = [] } = useQuery({
+  const { data: activities = [], isLoading } = useQuery({
     queryKey: generateQueryKey.projectActivities(projectSlug),
     queryFn: () =>
       activityActions.getProjectActivities(teamSlug, projectSlug).then((r) => {
@@ -364,7 +365,27 @@ export const ProjectActivities: React.FC<{ teamSlug: string; projectSlug: string
       }),
   });
 
-  return <ActivityList activities={activities} />;
+  return <ActivityList activities={activities} isLoading={isLoading} />;
+};
+
+export const ProjectChats: React.FC<{ teamSlug: string; projectSlug: string }> = ({
+  teamSlug,
+  projectSlug,
+}) => {
+  const { data: chats, isLoading } = useQuery({
+    queryKey: generateQueryKey.chats(teamSlug, { project_slug: projectSlug }),
+    queryFn: () =>
+      chatActions
+        .getSecurityChats(teamSlug, {
+          project_slug: projectSlug,
+        })
+        .then((r) => {
+          if (!r.ok) throw r;
+          return r.data;
+        }),
+  });
+
+  return <ChatList chats={chats?.results ?? []} isLoading={isLoading} />;
 };
 
 export const AnalysesPreview: React.FC<{
@@ -673,7 +694,7 @@ export const ValidatedFindings: React.FC<{ teamSlug: string; projectSlug: string
   );
 };
 
-const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
+export const ProjectHeading: React.FC<{ teamSlug: string; projectSlug: string }> = ({
   teamSlug,
   projectSlug,
 }) => {
@@ -686,57 +707,57 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
       }),
   });
 
-  const { data: branches } = useQuery({
-    queryKey: [QUERY_KEYS.GITHUB_BRANCHES, project.github_repo_id],
+  return (
+    <>
+      <h1 className="mb-2 text-3xl font-semibold tracking-tight">{project.name}</h1>
+      {project.github_repo && (
+        <a
+          href={project.github_repo.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="my-2 inline-flex items-center gap-1.5 rounded-full border bg-muted px-2 py-0.5 font-mono text-xs transition-colors hover:bg-muted/80"
+        >
+          <div className="relative size-4 shrink-0">
+            <Image
+              src={project.github_repo.account.avatar_url}
+              alt={project.github_repo.account.login}
+              fill
+              className="rounded-full object-cover"
+              unoptimized
+            />
+          </div>
+          <span className="font-medium">{project.github_repo.full_name}</span>
+          {project.github_repo.is_private && (
+            <span className="text-[10px] opacity-70">• Private</span>
+          )}
+        </a>
+      )}
+    </>
+  );
+};
+
+export const ProjectMetadata: React.FC<{ teamSlug: string; projectSlug: string }> = ({
+  teamSlug,
+  projectSlug,
+}) => {
+  const { data: project } = useSuspenseQuery({
+    queryKey: generateQueryKey.project(projectSlug),
     queryFn: () =>
-      githubActions.getBranches(project.github_repo_id!).then((r) => {
+      projectActions.getProject(teamSlug, projectSlug).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
-    enabled: !!project.github_repo_id,
   });
 
-  console.log(branches);
-
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-semibold tracking-tight mb-2">{project.name}</h1>
-            {project.github_repo && (
-              <a
-                href={project.github_repo.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="my-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted border text-xs mb-2 font-mono hover:bg-muted/80 transition-colors"
-              >
-                <div className="relative size-4 shrink-0">
-                  <Image
-                    src={project.github_repo.account.avatar_url}
-                    alt={project.github_repo.account.login}
-                    fill
-                    className="rounded-full object-cover"
-                    unoptimized
-                  />
-                </div>
-                <span className="font-medium">{project.github_repo.full_name}</span>
-                {project.github_repo.is_private && (
-                  <span className="text-[10px] opacity-70">• Private</span>
-                )}
-              </a>
-            )}
-          </div>
-          <ProjectToggle teamSlug={teamSlug} projectSlug={projectSlug} />
-        </div>
-        <div className="flex flex-row gap-2 items-center text-sm text-muted-foreground">
-          <span>Owner:</span>
-          <Icon size="sm" seed={project.created_by_user.id} />
-          <span>{project.created_by_user.username}</span>
-        </div>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-row items-center gap-2 text-sm text-muted-foreground">
+        <span>Owner:</span>
+        <Icon size="sm" seed={project.created_by_user.id} />
+        <span>{project.created_by_user.username}</span>
       </div>
       {project.description && (
-        <p className="text-base text-muted-foreground leading-relaxed max-w-2xl">
+        <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
           {project.description}
         </p>
       )}
@@ -745,27 +766,25 @@ const ProjectClient: React.FC<{ teamSlug: string; projectSlug: string }> = ({
           <Calendar className="size-4" />
           <span>{formatDate(project.created_at)}</span>
         </div>
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row flex-wrap gap-2">
           <Badge variant="blue" size="sm">
             {formatNumber(project.n_codes)} codes
           </Badge>
           <Badge variant="green" size="sm">
             {formatNumber(project.n_analyses)} analyses
           </Badge>
+          {project.tags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {project.tags.map((tag, index) => (
+                <Badge key={index} variant="outline" size="sm">
+                  <Tag className="size-3" />
+                  <span>{tag}</span>
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      {project.tags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          {project.tags.map((tag, index) => (
-            <Badge key={index} variant="outline" size="sm">
-              <Tag className="size-3" />
-              <span>{tag}</span>
-            </Badge>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
-
-export default ProjectClient;

@@ -9,7 +9,7 @@ import {
 } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { useQuery } from "@tanstack/react-query";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import CodeWithAnnotations, { FindingWithNode } from "./code-with-annotations";
 import FileTreeFindings from "./file-tree-findings";
 
@@ -36,6 +36,8 @@ const CombinedView: React.FC<CombinedViewProps> = ({
   const { fileId, handleFileChange } = useCode();
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
   const [expandedFindingIds, setExpandedFindingIds] = useState<Set<string>>(new Set());
+  /** When set, the file tree will not auto-expand folders for this finding (e.g. "show in code" / eye). */
+  const skipTreeExpandForFindingRef = useRef<string | null>(null);
 
   const allVersionNodesQuery = useQuery({
     queryKey: generateQueryKey.codeNodes(codeVersionId),
@@ -65,6 +67,7 @@ const CombinedView: React.FC<CombinedViewProps> = ({
 
   const handleFindingClick = useCallback(
     (finding: FindingSchema) => {
+      skipTreeExpandForFindingRef.current = null;
       const fwn = allFindingsWithNodes.find((x) => x.finding.id === finding.id);
       if (!fwn) return;
       const { node } = fwn;
@@ -79,20 +82,26 @@ const CombinedView: React.FC<CombinedViewProps> = ({
     [allFindingsWithNodes, fileId, handleFileChange],
   );
 
-  const handleToggleFinding = useCallback(
-    (findingId: string) => {
-      let willExpand = false;
-      setExpandedFindingIds((prev) => {
-        willExpand = !prev.has(findingId);
-        const next = new Set(prev);
-        if (willExpand) next.add(findingId);
-        else next.delete(findingId);
-        return next;
-      });
-      setSelectedFindingId(findingId);
-      if (willExpand) {
-        const fwn = allFindingsWithNodes.find((x) => x.finding.id === findingId);
-        if (fwn && fileId !== fwn.node.file_id) handleFileChange(fwn.node.file_id);
+  /** Sidebar finding header: expand/collapse only. Selection + code scroll come from code clicks or search. */
+  const handleToggleFinding = useCallback((findingId: string) => {
+    setExpandedFindingIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(findingId)) next.delete(findingId);
+      else next.add(findingId);
+      return next;
+    });
+  }, []);
+
+  /** Jump to this finding in the code viewer (scroll + highlight) without toggling card expand. */
+  const handleShowFindingInCode = useCallback(
+    (finding: FindingSchema) => {
+      const fwn = allFindingsWithNodes.find((x) => x.finding.id === finding.id);
+      if (!fwn) return;
+      const { node } = fwn;
+      skipTreeExpandForFindingRef.current = finding.id;
+      setSelectedFindingId(finding.id);
+      if (fileId !== node.file_id) {
+        handleFileChange(node.file_id);
       }
     },
     [allFindingsWithNodes, fileId, handleFileChange],
@@ -100,6 +109,7 @@ const CombinedView: React.FC<CombinedViewProps> = ({
 
   const selectFindingFromCode = useCallback(
     (findingId: string) => {
+      skipTreeExpandForFindingRef.current = null;
       setSelectedFindingId(findingId);
       setExpandedFindingIds((prev) => new Set(prev).add(findingId));
       const fwn = allFindingsWithNodes.find((x) => x.finding.id === findingId);
@@ -109,7 +119,7 @@ const CombinedView: React.FC<CombinedViewProps> = ({
   );
 
   return (
-    <div className="flex h-full min-h-0 w-full gap-2">
+    <div className="flex h-full min-h-0 min-w-0 w-full gap-2">
       <FileTreeFindings
         teamSlug={teamSlug}
         projectSlug={projectSlug}
@@ -122,14 +132,18 @@ const CombinedView: React.FC<CombinedViewProps> = ({
         selectedFindingId={selectedFindingId}
         expandedFindingIds={expandedFindingIds}
         onFindingClick={handleFindingClick}
+        onShowFindingInCode={handleShowFindingInCode}
         onToggleFinding={handleToggleFinding}
         onAddFindingToContext={onAddFindingToContext}
+        skipTreeExpandForFindingRef={skipTreeExpandForFindingRef}
       />
-      <CodeWithAnnotations
-        findingsWithNodes={findingsForCurrentFile}
-        selectedFindingId={selectedFindingId}
-        onSelectFinding={selectFindingFromCode}
-      />
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+        <CodeWithAnnotations
+          findingsWithNodes={findingsForCurrentFile}
+          selectedFindingId={selectedFindingId}
+          onSelectFinding={selectFindingFromCode}
+        />
+      </div>
     </div>
   );
 };

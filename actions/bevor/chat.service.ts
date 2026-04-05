@@ -55,7 +55,7 @@ export const getSecurityChats = apiRequest<
   Pagination<ChatIndex>
 >(async (teamSlug, query) => {
   const searchParams = buildSearchParams(query as { [key: string]: string });
-  return graphApi
+  return securityApi
     .get(`/chats?${searchParams}`, { headers: { "bevor-team-slug": teamSlug } })
     .then((response) => withRequestId(response, response.data));
 });

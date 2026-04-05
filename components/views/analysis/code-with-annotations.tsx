@@ -214,7 +214,7 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
 
       <div
         ref={scrollContainerRef}
-        className="flex-1 min-h-0 overflow-auto border border-t-0 border-border rounded-b-lg"
+        className="no-scrollbar flex-1 min-h-0 overflow-auto border border-t-0 border-border rounded-b-lg"
         id="code-holder"
       >
         {isLoading ? (
@@ -244,7 +244,7 @@ const CodeWithAnnotations: React.FC<CodeWithAnnotationsProps> = ({
                   key={lineNum}
                   className={cn("flex min-w-0 items-stretch", isSelectedLine && "bg-blue-500/8")}
                 >
-                  <div className="min-w-0 flex-1 overflow-x-auto">
+                  <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto">
                     <div
                       className="m-0 shiki github-dark shiki-container p-0"
                       style={{

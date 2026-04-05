@@ -54,7 +54,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const { selectedChatId, isMaximized, chatType } = useChat();
+  const { selectedChatId, isMaximized } = useChat();
 
   useEffect(() => {
     setBrowserStreamKey(null);
@@ -73,10 +73,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const chatQuery = useQuery({
     queryKey: generateQueryKey.chat(selectedChatId!),
     queryFn: () =>
-      (chatType === "analysis"
-        ? chatActions.getSecurityChat(teamSlug, selectedChatId!)
-        : chatActions.getCodeChat(teamSlug, selectedChatId!)
-      ).then((r) => {
+      chatActions.getSecurityChat(teamSlug, selectedChatId!).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
@@ -224,7 +221,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         throw new Error(`Failed to serialize message: ${errorMessage}`);
       }
 
-      const streamService = chatType === "analysis" ? "security" : "graph";
+      const streamService = "security";
       const apiBaseUrl = await authActions.getBaseUrl();
 
       const mintStreamKey = async (): Promise<string> => {
@@ -465,8 +462,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col bg-background grow min-h-0 min-w-0")}>
-      <div className="flex-1 min-h-0 min-w-0 flex flex-col">
+    <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col bg-background overflow-hidden")}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {chatMessageQuery.isLoading && (
           <div className="flex items-center justify-center h-full">
             <Loader className="size-6" />
@@ -477,7 +474,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         )}
         {(chatMessageQuery.data ?? []).length > 0 && chatQuery.data && (
           <ScrollArea
-            className="min-h-0 min-w-0 no-scrollbar chat-holder"
+            className="min-h-0 min-w-0 flex-1 no-scrollbar chat-holder"
             ref={messagesContainerRef}
             viewportRef={scrollViewportRef as React.RefObject<HTMLDivElement>}
           >

@@ -1,7 +1,7 @@
 "use client";
 
 import { analysisActions, chatActions } from "@/actions/bevor";
-import { useChatPanelPreferences } from "@/providers/localStore";
+import { persistChatPanelCookie, type ChatPanelCookieState } from "@/lib/chat-panel-cookie";
 import { DraftFindingSchema, FindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
@@ -17,8 +17,6 @@ import { toast } from "sonner";
 
 export type ChatAttribute = { type: "node" | "finding"; id: string; name: string };
 
-export type ChatType = "code" | "analysis";
-
 interface ChatContextValue {
   showSettings: boolean;
   setShowSettings: React.Dispatch<React.SetStateAction<boolean>>;
@@ -26,8 +24,8 @@ interface ChatContextValue {
   toggleExpanded: () => void;
   isMaximized: boolean;
   toggleMaximized: () => void;
-  selectedChatId: string | null;
-  setSelectedChatId: (chatId: string | null) => void;
+  selectedChatId?: string;
+  setSelectedChatId: (chatId: string | undefined) => void;
   attributes: ChatAttribute[];
   addAttribute: (attribute: ChatAttribute) => void;
   removeAttribute: (type: "node" | "finding", id: string) => void;
@@ -44,9 +42,7 @@ interface ChatContextValue {
     void,
     unknown
   >;
-  chatType: ChatType;
-  codeId: string | null;
-  analysisNodeId: string | null;
+  analysisId: string;
   teamSlug: string;
   projectSlug: string;
   findings?: DraftFindingSchema[];
@@ -70,78 +66,78 @@ interface ChatProviderProps {
   children: React.ReactNode;
   teamSlug: string;
   projectSlug: string;
-  chatType: ChatType;
-  codeId?: string | null;
-  analysisNodeId?: string | null;
-  initialChatId: string | null;
-  keyboardShortcut?: boolean;
+  analysisId: string;
+  initialChatId?: string;
+  /** Initial expanded state (pass server-resolved value from `cookies()` + `getChatPanelStateFromCookie`). */
+  open: boolean;
+  /** Initial maximized state from the same cookie read. */
+  maximized?: boolean;
 }
 
 export const ChatProvider: React.FC<ChatProviderProps> = ({
   children,
   teamSlug,
   projectSlug,
-  chatType,
-  codeId,
+  analysisId,
   initialChatId,
-  analysisNodeId = null,
+  open,
+  maximized = false,
 }) => {
   const queryClient = useQueryClient();
-  const { prefs: resolvedPanel, setPrefs: setPanelPrefs } = useChatPanelPreferences();
+  const [panel, setPanel] = useState<ChatPanelCookieState>(() => ({
+    isExpanded: open,
+    isMaximized: maximized,
+  }));
 
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(initialChatId);
+  const setPanelPrefs = useCallback(
+    (value: ChatPanelCookieState | ((prev: ChatPanelCookieState) => ChatPanelCookieState)) => {
+      setPanel((prev) => {
+        const next = typeof value === "function" ? value(prev) : value;
+        persistChatPanelCookie(next);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const [selectedChatId, setSelectedChatId] = useState<string | undefined>(initialChatId);
   const [attributes, setAttributes] = useState<ChatAttribute[]>([]);
   const [showSettings, setShowSettings] = useState(!initialChatId);
 
   const draftQuery = useQuery({
-    queryKey: generateQueryKey.analysisFindings(analysisNodeId ?? ""),
+    queryKey: generateQueryKey.analysisFindings(analysisId),
     queryFn: () =>
-      analysisActions.getAnalysisFindings(teamSlug, analysisNodeId!).then((r) => {
+      analysisActions.getAnalysisFindings(teamSlug, analysisId).then((r) => {
         if (!r.ok) throw r;
         return r.data;
       }),
-    enabled: chatType === "analysis" && !!analysisNodeId,
   });
 
   const toggleExpanded = useCallback(() => {
-    setPanelPrefs({ ...resolvedPanel, isExpanded: !resolvedPanel.isExpanded });
-  }, [resolvedPanel, setPanelPrefs]);
+    setPanelPrefs((prev) => ({ ...prev, isExpanded: !prev.isExpanded }));
+  }, [setPanelPrefs]);
 
   const toggleMaximized = useCallback(() => {
-    setPanelPrefs({ ...resolvedPanel, isMaximized: !resolvedPanel.isMaximized });
-  }, [resolvedPanel, setPanelPrefs]);
+    setPanelPrefs((prev) => ({ ...prev, isMaximized: !prev.isMaximized }));
+  }, [setPanelPrefs]);
 
   const createChatMutation = useMutation({
     mutationFn: async () => {
-      if (chatType === "analysis") {
-        if (!analysisNodeId) throw new Error("analysisNodeId is required");
-        return chatActions
-          .initiateAnalysisChat(teamSlug, {
-            analysis_id: analysisNodeId,
-          })
-          .then((r) => {
-            if (!r.ok) throw r;
-            return r.data;
-          });
-      } else if (chatType === "code") {
-        if (!codeId) throw new Error("codeId is required");
-        return chatActions.initiateCodeChat(teamSlug, { code_version_id: codeId }).then((r) => {
+      return chatActions
+        .initiateAnalysisChat(teamSlug, {
+          analysis_id: analysisId,
+        })
+        .then((r) => {
           if (!r.ok) throw r;
           return r.data;
         });
-      } else {
-        throw new Error("invalid chatType");
-      }
     },
     onSuccess: ({ id, toInvalidate }) => {
       toInvalidate.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
       setSelectedChatId(id);
-      setPanelPrefs({
-        isExpanded: true,
-        isMaximized: resolvedPanel.isMaximized,
-      });
+      setPanelPrefs((prev) => ({ isExpanded: true, isMaximized: prev.isMaximized }));
       setShowSettings(false);
     },
     onError: (err) => {
@@ -154,15 +150,12 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     const down = (e: KeyboardEvent): void => {
       if (e.key === "l" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setPanelPrefs({
-          ...resolvedPanel,
-          isExpanded: !resolvedPanel.isExpanded,
-        });
+        setPanelPrefs((prev) => ({ ...prev, isExpanded: !prev.isExpanded }));
       }
     };
     document.addEventListener("keydown", down);
     return (): void => document.removeEventListener("keydown", down);
-  }, [resolvedPanel, setPanelPrefs]);
+  }, [setPanelPrefs]);
 
   const addAttribute = useCallback((attribute: ChatAttribute) => {
     setAttributes((prev) => {
@@ -203,9 +196,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   }, []);
 
   const value: ChatContextValue = {
-    isExpanded: resolvedPanel.isExpanded,
+    isExpanded: panel.isExpanded,
     toggleExpanded,
-    isMaximized: resolvedPanel.isMaximized,
+    isMaximized: panel.isMaximized,
     toggleMaximized,
     selectedChatId,
     setSelectedChatId,
@@ -217,9 +210,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     removeFinding,
     clearFindings,
     createChatMutation,
-    chatType,
-    codeId: codeId ?? null,
-    analysisNodeId,
+    analysisId,
     teamSlug,
     projectSlug,
     showSettings,

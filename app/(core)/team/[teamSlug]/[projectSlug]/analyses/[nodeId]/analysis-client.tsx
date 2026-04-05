@@ -47,7 +47,7 @@ const AnalysisClient: React.FC<AnalysisClientProps> = ({
 
   return (
     <CodeProvider codeId={codeVersionId} initialFileId={null} teamSlug={teamSlug}>
-      <div className="flex flex-1 min-h-0">
+      <div className="flex min-h-0 min-w-0 flex-1">
         <CombinedView
           codeVersionId={codeVersionId}
           teamSlug={teamSlug}

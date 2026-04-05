@@ -1,18 +1,9 @@
 "use client";
 
 import { ItemType } from "@/types";
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
-type localStorageKeys = "bevor:starred" | "bevor:chat-panel";
-
-const CHAT_PANEL_SYNC_EVENT = "bevor:chat-panel:sync";
+type localStorageKeys = "bevor:starred";
 
 export interface StarredItem {
   id: string;
@@ -22,116 +13,8 @@ export interface StarredItem {
   url: string;
 }
 
-export interface ChatPanelPreferences {
-  isExpanded: boolean;
-  isMaximized: boolean;
-}
-
-/** Legacy `bevor:chat-panel` stored a single boolean (expanded). */
-export const normalizeChatPanelPrefs = (raw: unknown): ChatPanelPreferences | null => {
-  if (raw === null || raw === undefined) return null;
-  if (typeof raw === "boolean") {
-    return { isExpanded: raw, isMaximized: false };
-  }
-  if (typeof raw === "object" && raw !== null && "isExpanded" in raw) {
-    const o = raw as Record<string, unknown>;
-    return {
-      isExpanded: Boolean(o.isExpanded),
-      isMaximized: Boolean(o.isMaximized),
-    };
-  }
-  return null;
-};
-
-/** Frozen snapshots so useSyncExternalStore's getSnapshot stays referentially stable. */
-const CHAT_PANEL_SNAPSHOTS: Record<string, ChatPanelPreferences> = {
-  "true,false": Object.freeze({ isExpanded: true, isMaximized: false }),
-  "true,true": Object.freeze({ isExpanded: true, isMaximized: true }),
-  "false,false": Object.freeze({ isExpanded: false, isMaximized: false }),
-  "false,true": Object.freeze({ isExpanded: false, isMaximized: true }),
-};
-
-const freezeChatPanelPrefs = (p: ChatPanelPreferences): ChatPanelPreferences => {
-  return CHAT_PANEL_SNAPSHOTS[`${p.isExpanded},${p.isMaximized}`] ?? { ...p };
-};
-
-/**
- * SSR snapshot must share the same reference as the client's "closed" state so hydration
- * matches when the panel is saved closed, and getServerSnapshot must never allocate.
- */
-const CHAT_PANEL_SERVER_SNAPSHOT = CHAT_PANEL_SNAPSHOTS["false,false"];
-
-let chatPanelSnapshotCache: { storageSig: string; snapshot: ChatPanelPreferences } | null = null;
-
-/** Client-only: read prefs from localStorage (missing key → product default: expanded). */
-const getChatPanelSnapshot = (): ChatPanelPreferences => {
-  let raw: string | null;
-  try {
-    raw = window.localStorage.getItem("bevor:chat-panel");
-  } catch {
-    raw = null;
-  }
-
-  const storageSig = raw === null ? "\0__missing__" : raw;
-
-  if (chatPanelSnapshotCache?.storageSig === storageSig) {
-    return chatPanelSnapshotCache.snapshot;
-  }
-
-  let prefs: ChatPanelPreferences;
-  if (!raw) {
-    prefs = CHAT_PANEL_SNAPSHOTS["true,false"];
-  } else {
-    try {
-      const normalized = normalizeChatPanelPrefs(JSON.parse(raw));
-      prefs = normalized ? freezeChatPanelPrefs(normalized) : CHAT_PANEL_SNAPSHOTS["true,false"];
-    } catch {
-      prefs = CHAT_PANEL_SNAPSHOTS["true,false"];
-    }
-  }
-
-  chatPanelSnapshotCache = { storageSig, snapshot: prefs };
-  return prefs;
-};
-
-const getChatPanelServerSnapshot = (): ChatPanelPreferences => CHAT_PANEL_SERVER_SNAPSHOT;
-
-const subscribeChatPanel = (onStoreChange: () => void): (() => void) => {
-  const handler = (): void => onStoreChange();
-  window.addEventListener("storage", handler);
-  window.addEventListener(CHAT_PANEL_SYNC_EVENT, handler);
-  return () => {
-    window.removeEventListener("storage", handler);
-    window.removeEventListener(CHAT_PANEL_SYNC_EVENT, handler);
-  };
-};
-
-export const writeChatPanelPreferences = (value: ChatPanelPreferences): void => {
-  window.localStorage.setItem("bevor:chat-panel", JSON.stringify(value));
-  window.dispatchEvent(new Event(CHAT_PANEL_SYNC_EVENT));
-};
-
-/** Synchronous client read + SSR-safe server snapshot; avoids flash when panel is saved closed. */
-export const useChatPanelPreferences = (): {
-  prefs: ChatPanelPreferences;
-  setPrefs: (value: ChatPanelPreferences) => void;
-} => {
-  const prefs = useSyncExternalStore(
-    subscribeChatPanel,
-    getChatPanelSnapshot,
-    getChatPanelServerSnapshot,
-  );
-
-  const setPrefs = useCallback((value: ChatPanelPreferences): void => {
-    writeChatPanelPreferences(value);
-  }, []);
-
-  return { prefs, setPrefs };
-};
-
 type LocalStorageData = {
   "bevor:starred": StarredItem[];
-  "bevor:chat-panel": ChatPanelPreferences;
 };
 
 type ArrayKeys = {
@@ -230,9 +113,6 @@ export const LocalStorageProvider: React.FC<LocalStorageProviderProps> = ({ chil
         const item = localStorage.getItem(key);
         if (!item) return null;
         const parsed = JSON.parse(item) as unknown;
-        if (key === "bevor:chat-panel") {
-          return (normalizeChatPanelPrefs(parsed) ?? null) as LocalStorageData[K];
-        }
         return parsed as LocalStorageData[K];
       } catch {
         return null;
@@ -259,10 +139,6 @@ export const LocalStorageProvider: React.FC<LocalStorageProviderProps> = ({ chil
     <K extends localStorageKeys>(key: K, value: LocalStorageData[K]): void => {
       if (!isClient) return;
       localStorage.setItem(key, JSON.stringify(value));
-
-      if (key === "bevor:chat-panel") {
-        window.dispatchEvent(new Event(CHAT_PANEL_SYNC_EVENT));
-      }
 
       // Update local state cache for reactive updates
       setStateCache((prev) => ({ ...prev, [key]: value }));
@@ -304,10 +180,6 @@ export const LocalStorageProvider: React.FC<LocalStorageProviderProps> = ({ chil
     (key: localStorageKeys): void => {
       if (!isClient) return;
       localStorage.removeItem(key);
-
-      if (key === "bevor:chat-panel") {
-        window.dispatchEvent(new Event(CHAT_PANEL_SYNC_EVENT));
-      }
 
       // Update local state cache for reactive updates
       setStateCache((prev) => ({ ...prev, [key]: undefined }));

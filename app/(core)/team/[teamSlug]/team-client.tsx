@@ -1,10 +1,11 @@
 "use client";
 
-import { activityActions, analysisActions, projectActions } from "@/actions/bevor";
+import { activityActions, analysisActions, chatActions, projectActions } from "@/actions/bevor";
 import CreateProjectModal from "@/components/Modal/create-project";
 import ActivityList from "@/components/activity";
 import { AnalysisVersionElement } from "@/components/analysis/element";
 import { AnalysisEmpty } from "@/components/analysis/empty";
+import ChatList from "@/components/chats";
 import { ProjectElement } from "@/components/projects/element";
 import { ProjectEmpty } from "@/components/projects/empty";
 import { Button } from "@/components/ui/button";
@@ -357,6 +358,19 @@ export const TeamActivities: React.FC<{ teamSlug: string }> = ({ teamSlug }) => 
   });
 
   return <ActivityList activities={activities} className="w-full" />;
+};
+
+export const TeamChats: React.FC<{ teamSlug: string }> = ({ teamSlug }) => {
+  const { data: chats, isLoading } = useQuery({
+    queryKey: generateQueryKey.chats(teamSlug, {}),
+    queryFn: () =>
+      chatActions.getSecurityChats(teamSlug, {}).then((r) => {
+        if (!r.ok) throw r;
+        return r.data;
+      }),
+  });
+
+  return <ChatList chats={chats?.results ?? []} isLoading={isLoading} />;
 };
 
 export const TeamMembers: React.FC<{ team: TeamDetailedSchema }> = ({ team }) => {

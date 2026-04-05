@@ -11,10 +11,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Subnav, SubnavButton } from "@/components/ui/subnav";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat";
+import { useCode } from "@/providers/code";
 import { DraftFindingSchema, FindingStatusEnum } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { truncateId } from "@/utils/helpers";
@@ -22,19 +28,20 @@ import { FindingUpdateBody } from "@/utils/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
+  CheckCircle2,
   ChevronDown,
-  ChevronUp,
+  CircleDot,
+  Eye,
   MessageSquare,
   Pencil,
   ShieldCheck,
-  ShieldPlus,
   ThumbsDown,
   ThumbsUp,
   Trash2,
   Undo2,
   X,
 } from "lucide-react";
-import { forwardRef, JSX, useState } from "react";
+import { forwardRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { FindingFormDialog } from "./finding-form-dialog";
@@ -45,9 +52,13 @@ interface InlineFindingCardProps {
   projectSlug: string;
   nodeId: string;
   codeVersionId: string;
+  /** Source file path for this finding’s anchor node (optional). */
+  filePath?: string | null;
   isOwner: boolean;
   isExpanded: boolean;
   onToggle: () => void;
+  /** Select this finding in the code viewer and scroll to it (sidebar control). */
+  onShowInCode?: () => void;
   validatedFindingNames?: Set<string>;
   onAddFindingToContext?: (finding: DraftFindingSchema) => void;
 }
@@ -82,33 +93,46 @@ const SEVERITY_CONFIG: Record<
   },
 };
 
-const getFindingStatusText = (status: FindingStatusEnum): JSX.Element => {
-  if (status === FindingStatusEnum.VALIDATED) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] bg-green-500/10 text-green-400 border border-green-500/20">
-        <Check className="size-2.5" />
-        validated
-      </span>
-    );
-  }
-  if (status === FindingStatusEnum.INVALIDATED) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] bg-red-500/10 text-red-400 border border-red-500/20">
-        <X className="size-2.5" />
-        invalidated
-      </span>
-    );
-  }
-  if (status === FindingStatusEnum.UNRESOLVED) {
-    return (
-      <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] bg-zinc-800/60 text-zinc-500 border border-zinc-700/40">
-        not acknowledged
-      </span>
-    );
-  }
+const FINDING_STATUS_MENU: {
+  value: FindingStatusEnum;
+  label: string;
+  compact: string;
+  Icon: typeof CircleDot;
+  itemClass: string;
+}[] = [
+  {
+    value: FindingStatusEnum.UNRESOLVED,
+    label: "Not acknowledged",
+    compact: "Not acknowledged",
+    Icon: CircleDot,
+    itemClass: "text-zinc-400",
+  },
+  {
+    value: FindingStatusEnum.VALIDATED,
+    label: "Validated",
+    compact: "Validated",
+    Icon: ShieldCheck,
+    itemClass: "text-green-400",
+  },
+  {
+    value: FindingStatusEnum.INVALIDATED,
+    label: "Invalidated",
+    compact: "Invalid",
+    Icon: X,
+    itemClass: "text-red-400",
+  },
+  {
+    value: FindingStatusEnum.REMEDIATED,
+    label: "Remediated",
+    compact: "Remediated",
+    Icon: CheckCircle2,
+    itemClass: "text-blue-400",
+  },
+];
 
-  return <></>;
-};
+const findingStatusMenuMap = Object.fromEntries(
+  FINDING_STATUS_MENU.map((o) => [o.value, o]),
+) as Record<FindingStatusEnum, (typeof FINDING_STATUS_MENU)[number]>;
 
 const getSeverityConfig = (level: string): { [key: string]: string } =>
   SEVERITY_CONFIG[level.toLowerCase()] ?? {
@@ -118,6 +142,12 @@ const getSeverityConfig = (level: string): { [key: string]: string } =>
     label: level.toUpperCase(),
   };
 
+const FINDING_CARD_TABS = [
+  { id: "description" as const, label: "Description" },
+  { id: "recommendation" as const, label: "Recommendation" },
+  { id: "feedback" as const, label: "Feedback" },
+];
+
 const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
   (
     {
@@ -125,14 +155,17 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
       teamSlug,
       nodeId,
       codeVersionId,
+      filePath,
       isOwner,
       isExpanded,
       onToggle,
+      onShowInCode,
       onAddFindingToContext,
     },
     ref,
   ) => {
     void codeVersionId;
+    const { handleFileChange, nodesQuery } = useCode();
     const { selectedChatId } = useChat();
     const [selectedNodeId, setSelectedNodeId] = useState<string>(finding.node_id);
     const [tab, setTab] = useState("description");
@@ -142,6 +175,18 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
     const [deleteMode, setDeleteMode] = useState<"remove" | "revert">("remove");
 
     const queryClient = useQueryClient();
+
+    const handleSelectedNodeId = (nodeId: string): void => {
+      setSelectedNodeId(nodeId);
+      if (!nodesQuery.data) return;
+      const targetNode = nodesQuery.data.find((node) => node.id == nodeId);
+      if (!targetNode) return;
+
+      handleFileChange(targetNode.file_id, {
+        start: targetNode.src_start_pos,
+        end: targetNode.src_end_pos,
+      });
+    };
 
     const invalidateAnalysisFindings = (): void => {
       void queryClient.invalidateQueries({ queryKey: generateQueryKey.analysisFindings(nodeId) });
@@ -182,6 +227,9 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
     const canRemoveCommitted = isOwner && !finding.is_draft;
     const canUpdateFeedbackOrStatus = !pendingDelete;
 
+    const statusMenuEntry = findingStatusMenuMap[finding.status];
+    const StatusTriggerIcon = statusMenuEntry.Icon;
+
     const sevConfig = getSeverityConfig(finding.level);
 
     const affectedScopes = finding.affected_scopes ?? [];
@@ -193,153 +241,177 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
         <div
           ref={ref}
           className={cn(
-            "border-l-[3px] my-1 rounded-sm overflow-hidden min-w-0 max-w-full",
-            "bg-zinc-950 border border-border border-l-[3px]",
+            "my-1 w-full min-w-0 max-w-full overflow-hidden rounded-sm border border-border border-l-[3px] bg-zinc-950",
             sevConfig.border,
             pendingDelete && "opacity-60",
           )}
         >
-          <div className="flex items-start cursor-pointer select-none" onClick={onToggle}>
-            <div className="flex-1 min-w-0 px-3 pt-2.5 pb-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] tracking-wider border shrink-0",
-                    sevConfig.badge,
-                  )}
-                >
-                  {sevConfig.label}
-                </span>
-                <span
-                  className="text-[13px] font-semibold text-foreground truncate min-w-0 leading-snug"
-                  title={finding.name}
-                >
-                  {finding.name}
-                </span>
+          <div className="cursor-pointer select-none" onClick={onToggle}>
+            <div className="flex min-w-0 max-w-full items-center gap-2 px-3 pt-2.5 pb-1">
+              <div className="min-w-0 flex-1">
+                {filePath ? (
+                  <p className="truncate font-mono text-[10px] text-zinc-500" title={filePath}>
+                    {filePath}
+                  </p>
+                ) : null}
               </div>
-
-              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                {typeLabel ? (
-                  <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono bg-zinc-800/80 text-zinc-400 border border-zinc-700/60">
-                    {typeLabel}
-                  </span>
+              <div
+                className="flex shrink-0 flex-wrap items-center justify-end gap-1.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {onShowInCode ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => onShowInCode()}
+                    className="h-6 w-6 shrink-0 p-0 text-zinc-500 hover:text-zinc-300"
+                    title="Show in code"
+                  >
+                    <Eye className="size-3.5" />
+                  </Button>
                 ) : null}
-                {getFindingStatusText(finding.status)}
-                {finding.is_draft ? (
-                  <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/25">
-                    Draft
-                  </span>
+                {canEditContent ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditOpen(true)}
+                    className="h-6 w-6 shrink-0 p-0 text-zinc-500 hover:text-zinc-300"
+                    title="Edit finding"
+                  >
+                    <Pencil className="size-3.5" />
+                  </Button>
                 ) : null}
-                {finding.operation === "delete" ? (
-                  <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] bg-red-500/10 text-red-400 border border-red-500/25">
-                    Pending removal
-                  </span>
+                {canRevertDraft ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDeleteMode("revert");
+                      setDeleteOpen(true);
+                    }}
+                    className="h-6 w-6 shrink-0 p-0 text-zinc-500 hover:text-zinc-300"
+                    title="Revert staged change"
+                  >
+                    <Undo2 className="size-3.5" />
+                  </Button>
                 ) : null}
-                {finding.operation && finding.operation !== "delete" ? (
-                  <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25">
-                    Staged {finding.operation}
-                  </span>
+                {canRemoveCommitted ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDeleteMode("remove");
+                      setDeleteOpen(true);
+                    }}
+                    className="h-6 w-6 shrink-0 p-0 text-zinc-500 hover:text-red-400"
+                    title="Remove finding"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 ) : null}
+                {onAddFindingToContext && selectedChatId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAddFindingToContext(finding)}
+                    className="h-6 w-6 shrink-0 p-0 text-zinc-500 hover:text-zinc-300"
+                    title="Add to chat context"
+                  >
+                    <MessageSquare className="size-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
 
-            <div
-              className="flex items-center gap-1.5 px-3 pt-2.5 pb-2 shrink-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {canEditContent ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditOpen(true)}
-                  className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
-                  title="Edit finding"
-                >
-                  <Pencil className="size-3.5" />
-                </Button>
-              ) : null}
-              {canRevertDraft ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setDeleteMode("revert");
-                    setDeleteOpen(true);
-                  }}
-                  className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
-                  title="Revert staged change"
-                >
-                  <Undo2 className="size-3.5" />
-                </Button>
-              ) : null}
-              {canRemoveCommitted ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setDeleteMode("remove");
-                    setDeleteOpen(true);
-                  }}
-                  className="h-6 w-6 p-0 text-zinc-500 hover:text-red-400"
-                  title="Remove finding"
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
-              ) : null}
-              {finding.status == FindingStatusEnum.VALIDATED ? (
-                <span className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] bg-green-500/10 text-green-400 border border-green-500/20 cursor-default">
-                  <ShieldCheck className="size-3" />
-                  Validated
-                </span>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!canUpdateFeedbackOrStatus}
-                  onClick={() =>
-                    updateMutation.mutate({
-                      findingId: finding.id,
-                      data: { status: FindingStatusEnum.VALIDATED },
-                    })
-                  }
-                  className="h-6 text-[11px] px-2 gap-1 text-zinc-400 hover:text-foreground border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/60 disabled:opacity-60"
-                >
-                  <ShieldPlus className="size-3" />
-                  Validate
-                </Button>
-              )}
-
-              {onAddFindingToContext && selectedChatId && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onAddFindingToContext(finding)}
-                  className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
-                  title="Add to chat context"
-                >
-                  <MessageSquare className="size-3.5" />
-                </Button>
-              )}
+            <div className="min-w-0 max-w-full px-3 pb-1.5">
+              <p
+                className="min-w-0 truncate text-[13px] font-semibold leading-snug text-foreground"
+                title={finding.name}
+              >
+                {finding.name}
+              </p>
             </div>
-            <button
-              className="flex items-start px-2.5 pt-3 text-zinc-500 hover:text-zinc-300 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggle();
-              }}
-            >
-              {isExpanded ? (
-                <ChevronUp className="size-3.5" />
-              ) : (
-                <ChevronDown className="size-3.5" />
-              )}
-            </button>
+
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-1.5 px-3 pb-2 pt-1">
+              <span
+                className={cn(
+                  "inline-flex shrink-0 items-center truncate rounded border px-1.5 py-0.5 text-[10px] tracking-wider",
+                  sevConfig.badge,
+                )}
+              >
+                {sevConfig.label}
+              </span>
+              {typeLabel ? (
+                <span
+                  className="inline-flex min-w-0 max-w-[min(100%,24rem)] items-center truncate rounded border border-zinc-700/60 bg-zinc-800/80 px-1.5 py-0.5 font-mono text-[11px] text-zinc-400"
+                  title={typeLabel}
+                >
+                  {typeLabel}
+                </span>
+              ) : null}
+              <span className="inline-flex shrink-0" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={!canUpdateFeedbackOrStatus || updateMutation.isPending}
+                      className={cn(
+                        "inline-flex min-w-0 max-w-[min(100%,12rem)] cursor-pointer items-center gap-1 rounded border border-zinc-700/60 bg-zinc-800/80 px-1.5 py-0.5 font-mono text-[11px] leading-none transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 [&_svg]:block [&_svg]:shrink-0",
+                        statusMenuEntry.itemClass,
+                      )}
+                      title="Finding status"
+                    >
+                      <StatusTriggerIcon className="size-3" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate">{statusMenuEntry.compact}</span>
+                      <ChevronDown className="size-3 opacity-60" aria-hidden />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-52">
+                    {FINDING_STATUS_MENU.map(({ value, label, Icon, itemClass }) => (
+                      <DropdownMenuItem
+                        key={value}
+                        disabled={value === finding.status || updateMutation.isPending}
+                        className={cn("text-sm", itemClass)}
+                        onSelect={() =>
+                          updateMutation.mutate({
+                            findingId: finding.id,
+                            data: { status: value },
+                          })
+                        }
+                      >
+                        <Icon className="size-3.5 shrink-0" />
+                        {label}
+                        {value === finding.status ? (
+                          <Check className="size-3.5 ml-auto shrink-0 opacity-80" />
+                        ) : null}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </span>
+              {finding.is_draft ? (
+                <span className="inline-flex items-center rounded border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-400">
+                  Draft
+                </span>
+              ) : null}
+              {finding.operation === "delete" ? (
+                <span className="inline-flex items-center rounded border border-red-500/25 bg-red-500/10 px-1.5 py-0.5 text-[10px] text-red-400">
+                  Pending removal
+                </span>
+              ) : null}
+              {finding.operation && finding.operation !== "delete" ? (
+                <span className="inline-flex items-center rounded border border-blue-500/25 bg-blue-500/10 px-1.5 py-0.5 text-[10px] text-blue-400">
+                  Staged {finding.operation}
+                </span>
+              ) : null}
+            </div>
           </div>
 
           {isExpanded && (
             <div className="min-w-0 max-w-full border-t border-border">
               {hasAffectedScopes && (
-                <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-border">
+                <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
                   <span
                     className="text-[11px] text-zinc-500 uppercase tracking-wide shrink-0"
                     title="Analysis scopes (entry points) affected by this finding"
@@ -350,7 +422,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                     <button
                       key={`${scopeNodeId}-${scopeIndex}`}
                       type="button"
-                      onClick={() => setSelectedNodeId(scopeNodeId)}
+                      onClick={() => handleSelectedNodeId(scopeNodeId)}
                       className={cn(
                         "inline-flex items-center rounded px-2 py-0.5 text-[11px] font-mono transition-colors border",
                         selectedNodeId === scopeNodeId
@@ -366,51 +438,51 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
               )}
 
               <div className="flex min-w-0 max-w-full flex-col">
-                <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-2 border-b border-border">
-                  <Subnav className="w-fit px-0">
-                    <SubnavButton
-                      isActive={tab === "description"}
-                      shouldHighlight
-                      onClick={() => setTab("description")}
-                    >
-                      Description
-                    </SubnavButton>
-                    <SubnavButton
-                      isActive={tab === "recommendation"}
-                      shouldHighlight
-                      onClick={() => setTab("recommendation")}
-                    >
-                      Recommendation
-                    </SubnavButton>
-                    <SubnavButton
-                      isActive={tab === "feedback"}
-                      shouldHighlight
-                      onClick={() => setTab("feedback")}
-                    >
-                      Feedback
-                    </SubnavButton>
-                  </Subnav>
-                  <span className="text-[10px] font-mono text-zinc-600 border border-zinc-700/40 rounded px-1.5 py-0.5">
-                    {truncateId(finding.id)}
-                  </span>
+                <div className="flex min-w-0 max-w-full items-center px-2 py-1">
+                  <div
+                    className="no-scrollbar flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-x-auto"
+                    role="tablist"
+                  >
+                    {FINDING_CARD_TABS.map(({ id, label }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        role="tab"
+                        aria-selected={tab === id}
+                        onClick={() => setTab(id)}
+                        className={cn(
+                          "shrink-0 rounded-md px-2 py-1 text-sm font-medium transition-colors",
+                          tab === id
+                            ? "bg-zinc-800 text-zinc-100"
+                            : "text-zinc-500 hover:bg-zinc-800/40 hover:text-zinc-300",
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="min-w-0 max-w-full px-3 py-3">
                   {tab === "description" && (
                     <div className="min-w-0 max-w-full space-y-3">
                       {finding.explanation && (
-                        <ReactMarkdown className="markdown text-sm">
-                          {finding.explanation}
-                        </ReactMarkdown>
+                        <div className="no-scrollbar min-w-0 max-w-full overflow-x-auto">
+                          <ReactMarkdown className="markdown text-sm">
+                            {finding.explanation}
+                          </ReactMarkdown>
+                        </div>
                       )}
                       {finding.reference && (
                         <div className="min-w-0 max-w-full space-y-1.5 border-t border-border pt-2">
                           <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
                             Reference
                           </p>
-                          <ReactMarkdown className="markdown text-sm">
-                            {finding.reference}
-                          </ReactMarkdown>
+                          <div className="no-scrollbar min-w-0 max-w-full overflow-x-auto">
+                            <ReactMarkdown className="markdown text-sm">
+                              {finding.reference}
+                            </ReactMarkdown>
+                          </div>
                         </div>
                       )}
                       {!finding.explanation && !finding.reference && (
@@ -419,7 +491,7 @@ const InlineFindingCard = forwardRef<HTMLDivElement, InlineFindingCardProps>(
                     </div>
                   )}
                   {tab === "recommendation" && (
-                    <div className="min-w-0 max-w-full">
+                    <div className="no-scrollbar min-w-0 max-w-full overflow-x-auto">
                       {finding.recommendation ? (
                         <ReactMarkdown className="markdown text-sm">
                           {finding.recommendation}

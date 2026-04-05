@@ -2,11 +2,15 @@ import { analysisActions, codeActions } from "@/actions/bevor";
 import Container from "@/components/container";
 import AnalysisSubnav from "@/components/subnav/analysis";
 import AnalysisMetadata from "@/components/views/analysis/metadata";
+import GlobalChatPanel from "@/components/views/chat/global-panel";
+import { CHAT_PANEL_COOKIE_NAME, getChatPanelStateFromCookie } from "@/lib/chat-panel-cookie";
 import { getQueryClient } from "@/lib/config/query";
+import { ChatProvider } from "@/providers/chat";
 import { AsyncComponent } from "@/types";
 import type { DraftFindingSchema } from "@/types/api/responses/security";
 import { generateQueryKey } from "@/utils/constants";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { cookies } from "next/headers";
 import AnalysisWorkspaceClient from "./analysis-workspace-client";
 
 type ResolvedParams = {
@@ -24,6 +28,11 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   const queryClient = getQueryClient();
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
+
+  const cookieStore = await cookies();
+  const chatPanelCookie = getChatPanelStateFromCookie(
+    cookieStore.get(CHAT_PANEL_COOKIE_NAME)?.value,
+  );
 
   let initialFinding: DraftFindingSchema | undefined;
 
@@ -71,7 +80,7 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
       }),
     ]);
   } else {
-    await queryClient.prefetchQuery({
+    await queryClient.fetchQuery({
       queryKey: generateQueryKey.codeFiles(codeVersionId),
       queryFn: () =>
         codeActions.getFiles(resolvedParams.teamSlug, codeVersionId).then((r) => {
@@ -86,19 +95,34 @@ const AnalysisPage: AsyncComponent<Props> = async ({ params, searchParams }) => 
   }
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <Container subnav={<AnalysisSubnav />} contain>
-        <AnalysisMetadata {...resolvedParams} allowActions isOwner={isOwner} />
-        <AnalysisWorkspaceClient
-          codeVersionId={codeVersionId}
-          teamSlug={resolvedParams.teamSlug}
-          projectSlug={resolvedParams.projectSlug}
-          nodeId={resolvedParams.nodeId}
-          initialFinding={initialFinding}
-          isOwner={isOwner}
-        />
-      </Container>
-    </HydrationBoundary>
+    <ChatProvider
+      key={`${resolvedParams.nodeId}-analysis`}
+      teamSlug={resolvedParams.teamSlug}
+      projectSlug={resolvedParams.projectSlug}
+      analysisId={resolvedParams.nodeId}
+      initialChatId={resolvedSearchParams.chatId}
+      open={chatPanelCookie.isExpanded || !!resolvedSearchParams.chatId}
+      maximized={chatPanelCookie.isMaximized}
+    >
+      <div className="flex min-h-0 min-w-0 flex-1">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <HydrationBoundary state={dehydrate(queryClient)}>
+            <Container subnav={<AnalysisSubnav />} contain>
+              <AnalysisMetadata {...resolvedParams} allowActions isOwner={isOwner} />
+              <AnalysisWorkspaceClient
+                codeVersionId={codeVersionId}
+                teamSlug={resolvedParams.teamSlug}
+                projectSlug={resolvedParams.projectSlug}
+                nodeId={resolvedParams.nodeId}
+                initialFinding={initialFinding}
+                isOwner={isOwner}
+              />
+            </Container>
+          </HydrationBoundary>
+        </div>
+        <GlobalChatPanel />
+      </div>
+    </ChatProvider>
   );
 };
 
